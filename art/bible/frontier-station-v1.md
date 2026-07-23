@@ -2,7 +2,8 @@
 
 Status: provisional POC visual baseline  
 Revision: 2026-07-23  
-Scope: `station-route-v1` and the bounded three-asset generator bake-off
+Scope: `station-route-v1`, the bounded three-asset generator bake-off, and
+approved full-POC roster planning
 
 ## Purpose and authority
 
@@ -29,9 +30,11 @@ not like unrelated generated objects placed in the same room.
   primary character proportion, armor, material, and silhouette reference.
 
 These images establish visual direction, not exact geometry or gameplay
-contracts. The depicted shield, weapons, party arrangement, and effects do not
-assign or change any character ability. Character kits remain as documented in
-the gameplay specifications.
+contracts. The approved roster now assigns Vanguard's carbine, Operator's
+pistol, and Protector's shotgun as presentation constraints. The depicted
+shield, party arrangement, and effects do not assign or change any character
+ability; the shield remains outside the approved roster. Character mechanics
+remain as documented in the gameplay specifications.
 
 ## Visual pillars
 
@@ -83,7 +86,15 @@ The current route establishes the initial dimensional language:
 
 Structural floors, walls, doors, posts, and cutaway pieces are dimensionally
 authored in Blender. Do not use diffusion-generated meshes as structural
-modules. Generated candidates are limited initially to props and machine forms.
+modules. Before the Phase 2 exit, generated candidates are limited to the three
+bounded bake-off IDs. When an owning phase is active and its brief is
+production-ready, Tripo may also provide the humanoid-body and handheld-weapon
+candidates reserved in `docs/POC-ASSET-ROSTER.md`.
+
+The production evacuation airlock visibly opens before completion presentation.
+Its frame, moving leaves, clearance, pivot, and collision interfaces are
+dimensionally authored. A generated candidate may contribute only a decorative
+panel or insert that survives the normal cleanup and review pipeline.
 
 Modules snap on the 1 m grid. Half-grid offsets are allowed for trim, attached
 utilities, and set dressing, not for structural connections. Large wall panels
@@ -114,6 +125,14 @@ split upper and lower presentation, as described in `docs/ARCHITECTURE.md`.
 - Layered dark fabric beneath light neutral armor plates.
 - Cyan identity and equipment accents used sparingly.
 - Faces and role-specific silhouettes matter more than small costume detail.
+- Vanguard reads through a broad two-handed carbine, Operator through a compact
+  pistol and lighter technical silhouette, and Protector through a broad
+  two-handed shotgun. These are separate weapon assets.
+- Fixed handheld weapons remain separate assets, with plausible hand and
+  holster attachment. They are holstered during exploration; their draw, ready,
+  and firing silhouettes must read from above.
+- Firearms use broad, retro-industrial masses and restrained high-tech accents;
+  thin barrels and tiny attachments must not carry role readability.
 
 ### Security machines
 
@@ -121,8 +140,15 @@ split upper and lower presentation, as described in `docs/ARCHITECTURE.md`.
 - One unmistakable red or red-orange sensor/threat focus.
 - Stable-looking feet or supports; avoid fragile needle limbs.
 - Silhouette and telegraph direction must remain clear from above.
-- The current concept shows squat and tall variants, but no runtime enemy asset,
-  dimensions, behavior assignment, or stable ID has been accepted yet.
+- Each complete machine exposes a readable attack direction and articulation
+  for an integrated weapon, whether published separately as a rigid child or
+  built into the assembly, or an unmistakable reinforced body-contact surface.
+  A red sensor by itself does not explain how the machine attacks.
+- Body attackers need enough compression, lean, or recoil range for wind-up and
+  recovery; integrated weapons need visible muzzle and aiming clearance.
+- The roster selects a compact body-ram presentation and a taller
+  integrated-firearm presentation. Production dimensions, stable gameplay IDs,
+  attack ranges, timings, and tuning remain unaccepted until Phase 4.
 
 Faction names, logos, serial text, and final lore markings remain provisional.
 Do not bake them into meshes or textures during this spike.
@@ -193,8 +219,9 @@ A POC asset is acceptable only when:
 - its role reads at the default camera and at 20 m;
 - it respects the palette semantics and neighboring detail density;
 - its dimensions, pivot, forward direction, and material slots match its brief;
+- a combatant satisfies `docs/ATTACK-PRESENTATION.md` through its complete
+  character-and-weapon or machine assembly;
 - it survives Blender and Godot review without malformed geometry or import
   warnings;
 - its provenance and commercial-use status are recorded; and
 - prominent assets receive explicit human visual approval.
-

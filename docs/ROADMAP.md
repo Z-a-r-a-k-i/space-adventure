@@ -44,13 +44,21 @@ Status: planned and non-gating.
 
 Before the Phase 2 human gate closes, visual preproduction may run one controlled three-asset bake-off covering a service terminal, wall utility, and compact security-drone body. The experiment is defined in `art/experiments/3d-generator-bakeoff-2026-07.md` and is capped at disposable candidates plus Blender baselines. It may establish art direction and measure whether a generator saves cleanup time; it does not replace greybox gameplay, alter the live route, select a permanent provider, begin Phase 3 or Phase 6, or authorize production-scale asset generation.
 
+The complete approved POC target inventory may be maintained in
+`POC-ASSET-ROSTER.md` as planning documentation during this period. Roster
+approval does not expand the experiment or authorize execution on asset IDs
+beyond the three listed above.
+
 Exit: each of the three briefs has bounded Tripo, Meshy, and Blender evidence or a documented provider failure; the experiment records provenance, tactical-camera captures, measurements, and a result of `tripo`, `meshy`, `blender`, or `none`. This exit does not affect the Phase 2 status or human-playthrough requirement.
 
 ## Phase 3 — party and conversation slice
 
 Status: deferred until the Phase 2 human-playthrough gate passes.
 
-- Add protagonist-kit selection and fixed weapon/ability definitions.
+- Add protagonist-kit selection. The presentation weapons are already selected
+  as Vanguard carbine, Operator pistol, and Protector shotgun; define their
+  stable gameplay attacks and the three active abilities before producing
+  ability-specific art.
 - Add the recruitable companion, portraits, individual and group selection, simple formation movement, and party observations.
 - Add the two authored conversations and one observable choice consequence.
 - Verify dialogue state validation, recruitment, pause behavior, and both kit paths.
@@ -60,7 +68,9 @@ Exit: the player starts alone, recruits the companion through conversation, and 
 ## Phase 4 — active-pause combat slice
 
 - Add basic attacks, one active ability per character, cooldowns, health, damage, healing-item use, and readable pending actions.
-- Add at most two hostile machine behaviors, target acquisition, telegraphs, victory, defeat, and restart.
+- Add the approved body-ram drone and integrated-gun sentry as at most two
+  hostile machine behaviors, with target acquisition, telegraphs, victory,
+  defeat, and restart.
 - Tune action replacement, basic-attack repetition, target visibility, and pause rhythm through repeated play.
 - Add core, CLI, Godot headless, and graphical combat checks.
 
@@ -68,7 +78,9 @@ Exit: active pause materially helps coordinate both characters; the encounter is
 
 ## Phase 5 — authored POC completion
 
-- Join the tutorial, conversations, traversal, optional interaction, item use, encounter, choice consequence, and completion summary into one 8–12 minute flow.
+- Join the tutorial, conversations, traversal, optional interaction, item use,
+  encounter, choice consequence, visibly opening evacuation airlock, and
+  completion summary into one 8–12 minute flow.
 - Add only the sound, effects, and UI polish needed for comprehension.
 - Test both protagonist kits and tune the critical path.
 - Record manual playtests and address blockers before adding breadth.
@@ -77,7 +89,9 @@ Exit: five consecutive full manual playthroughs complete without a blocker; both
 
 ## Phase 6 — POC production hardening
 
-- Pass one representative character or environment asset through the Blender, GLB, multi-angle, Godot import, and structured-review pipeline.
+- Re-run and audit one accepted representative character or environment asset
+  through the hardened Blender, GLB, multi-angle, Godot import, and
+  structured-review pipeline from a clean checkout.
 - Document encounter, dialogue, scenario, and asset authoring from a clean checkout.
 - Establish startup, frame-time, memory, test-duration, and artifact-size baselines.
 - Exercise parallel-agent work on genuinely separate subsystems and fix observed coordination problems.

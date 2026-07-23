@@ -10,6 +10,12 @@ This test is separate from the scored three-asset SpaceAdventure generator
 bake-off. It must not be treated as a production design or imported into the
 game without a separate licensing and art review.
 
+The later head-bump idea is useful attack-source exploration, not a change to
+this test's status. A production walker inspired by this silhouette would need
+a new complete-machine brief under `docs/ATTACK-PRESENTATION.md`, including a
+reinforced front contact surface, marker, rig, wind-up, strike, and
+recovery. The sensor lens itself must not be treated as the impact surface.
+
 ## Why this input
 
 The reference stresses several common image-to-3D failure modes in one model:

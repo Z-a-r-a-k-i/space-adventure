@@ -68,7 +68,10 @@ The POC tests one short authored pass through this loop. A later roguelite struc
 - Point-and-click 3D exploration with an elevated tactical camera.
 - Two-character active-pause combat against one hostile group.
 - Authored NPC interaction with one observable choice consequence.
-- One fixed weapon per character and one usable healing item; no generalized inventory system.
+- One fixed weapon per party character and one usable healing item; no
+  generalized inventory system.
+- Each hostile combatant archetype has an authored basic attack presented
+  through a handheld or integrated weapon, or a readable body attack.
 - Structured automation that can complete and inspect the real scenario.
 - Primitive and reviewed low-poly presentation only.
 

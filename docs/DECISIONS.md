@@ -106,3 +106,27 @@ Status: accepted for the dialogue experiment.
 When the player types dialogue, the submitted text is the protagonist's exact spoken utterance. The game does not rewrite it into another line or silently change its meaning. Authored response suggestions provide a convenient canonical voice without limiting free-form input.
 
 Typed text remains untrusted content. It cannot establish world facts, grant authority, or directly cause gameplay effects; NPCs may reject or challenge unsupported claims, and only validated deterministic transitions can change authoritative state.
+
+## ADR 0014 — Attack rules are independent from weapon presentation
+
+Status: accepted for combat and asset planning; implementation remains in
+Phases 3 and 4.
+
+Every production combatant declares at least one credible attack source before
+its model, rig, or animation is approved. The presentation source is
+`handheld`, `integrated`, or `body`; these are art and Godot profiles, not
+different gameplay architectures.
+
+The pure core owns stable attack identity, target validity, range, fixed-tick
+timing, movement, resolution, damage, interruption, and repetition. Godot
+consumes observations and events to attach weapons and play rigs, animations,
+telegraphs, effects, and audio. Animation callbacks, mesh collisions, sockets,
+and asset node paths never mutate authoritative gameplay.
+
+Humanoid handheld weapons are separate presentation assets even when their POC
+loadout is fixed. Integrated machine weapons may remain permanent parts of the
+machine, and a body attacker needs no weapon when its striking surface and
+motion are clear. These choices do not add weapon switching, ammunition,
+reload, equipment slots, or generalized inventory. Detailed production gates
+are defined in `ATTACK-PRESENTATION.md`; the approved POC presentation profiles
+and phase-scoped target inventory are recorded in `POC-ASSET-ROSTER.md`.
