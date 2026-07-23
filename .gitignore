@@ -1,0 +1,40 @@
+# Godot-generated state
+game/.godot/
+game/.godot-codex-user/
+
+# .NET-generated state
+**/bin/
+**/obj/
+TestResults/
+
+# Generated diagnostics, isolated user data, and captures
+artifacts/
+
+# The Godot AI plugin is linked locally, never vendored.
+game/addons/godot_ai/
+
+# Generated visual-review output
+game/review-output/*
+!game/review-output/.gitkeep
+
+# Local editor and OS files
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+
+# Local secrets and credentials
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Blender recovery files
+*.blend1
+*.blend2

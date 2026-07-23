@@ -1,0 +1,40 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpaceAdventure.Core", "src\SpaceAdventure.Core\SpaceAdventure.Core.csproj", "{1EBD9E71-3075-47BB-A0C1-6CDDC06753DE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpaceAdventure.Game", "game\SpaceAdventure.Game.csproj", "{2ED28A8C-39C1-4B0A-B1AD-96B18D681CE1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpaceAdventure.Core.Tests", "tests\SpaceAdventure.Core.Tests\SpaceAdventure.Core.Tests.csproj", "{37DEAA1D-E28C-4071-A887-4EEB694A0A54}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpaceAdventure.SimCli", "tools\SpaceAdventure.SimCli\SpaceAdventure.SimCli.csproj", "{44A07623-247D-40F0-94D5-6EB351F79F3D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1EBD9E71-3075-47BB-A0C1-6CDDC06753DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1EBD9E71-3075-47BB-A0C1-6CDDC06753DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1EBD9E71-3075-47BB-A0C1-6CDDC06753DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1EBD9E71-3075-47BB-A0C1-6CDDC06753DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2ED28A8C-39C1-4B0A-B1AD-96B18D681CE1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2ED28A8C-39C1-4B0A-B1AD-96B18D681CE1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2ED28A8C-39C1-4B0A-B1AD-96B18D681CE1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2ED28A8C-39C1-4B0A-B1AD-96B18D681CE1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37DEAA1D-E28C-4071-A887-4EEB694A0A54}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37DEAA1D-E28C-4071-A887-4EEB694A0A54}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37DEAA1D-E28C-4071-A887-4EEB694A0A54}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37DEAA1D-E28C-4071-A887-4EEB694A0A54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44A07623-247D-40F0-94D5-6EB351F79F3D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44A07623-247D-40F0-94D5-6EB351F79F3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44A07623-247D-40F0-94D5-6EB351F79F3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44A07623-247D-40F0-94D5-6EB351F79F3D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

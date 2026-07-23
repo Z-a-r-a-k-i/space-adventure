@@ -1,0 +1,10 @@
+<Project Sdk="Godot.NET.Sdk/4.7.1">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>SpaceAdventure.Game</RootNamespace>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\src\SpaceAdventure.Core\SpaceAdventure.Core.csproj" />
+  </ItemGroup>
+</Project>

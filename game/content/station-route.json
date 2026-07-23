@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "content_revision": "station-route-v1",
+  "scenario_id": "scenario.station_route",
+  "protagonist": {
+    "id": "actor.protagonist",
+    "display_name": "Protagonist",
+    "movement_speed_meters_per_second": 4.0
+  },
+  "briefing_objective": {
+    "id": "objective.speak_to_survivor",
+    "text": "Speak with the survivor."
+  },
+  "destination_objective": {
+    "id": "objective.reach_evacuation_airlock",
+    "text": "Reach the evacuation airlock."
+  },
+  "interactions": [
+    {
+      "id": "interaction.survivor",
+      "kind": "npc",
+      "prompt": "Speak with the survivor",
+      "use_radius_meters": 1.5,
+      "effect": "begin_briefing_dialogue",
+      "dialogue": {
+        "speaker": "Survivor",
+        "line": "The station is failing. The evacuation airlock is still reachable through the service corridor.",
+        "response": {
+          "id": "response.survivor_acknowledged",
+          "text": "Understood. I will reach the airlock."
+        }
+      }
+    },
+    {
+      "id": "interaction.service_terminal",
+      "kind": "environment",
+      "prompt": "Inspect the service terminal",
+      "use_radius_meters": 1.25,
+      "effect": "record_observation",
+      "result_text": "The terminal reports intermittent power along the service corridor."
+    },
+    {
+      "id": "interaction.evacuation_airlock",
+      "kind": "destination",
+      "prompt": "Enter the evacuation airlock",
+      "use_radius_meters": 1.5,
+      "effect": "complete_scenario",
+      "result_text": "You reached the evacuation airlock."
+    }
+  ]
+}

@@ -1,0 +1,200 @@
+# Frontier station visual bible
+
+Status: provisional POC visual baseline  
+Revision: 2026-07-23  
+Scope: `station-route-v1` and the bounded three-asset generator bake-off
+
+## Purpose and authority
+
+This document translates the approved concept artwork and current greybox into
+repeatable art constraints. It governs presentation only. `docs/PRODUCT.md`,
+`docs/POC.md`, and `docs/DECISIONS.md` remain authoritative for product scope,
+gameplay, character kits, and mechanics. The current Godot scene remains
+authoritative for navigation, collision, interaction placement, and stable IDs
+until an explicitly reviewed replacement is integrated.
+
+The visual target is stylized, low-poly, industrial science fiction that stays
+clear from an elevated tactical camera. It should feel authored and cohesive,
+not like unrelated generated objects placed in the same room.
+
+## Approved visual references
+
+- [Station route key art](../concepts/frontier-station-v1/station-route-key-art.png)
+  is the primary environment, lighting, modularity, terminal, and destination
+  reference.
+- [Tactical-pause combat](../concepts/frontier-station-v1/tactical-pause-combat.png)
+  is the primary encounter-readability, cover, hostile-machine, telegraph, and
+  effect-color reference.
+- [POC crew lineup](../concepts/frontier-station-v1/poc-crew-lineup.png) is the
+  primary character proportion, armor, material, and silhouette reference.
+
+These images establish visual direction, not exact geometry or gameplay
+contracts. The depicted shield, weapons, party arrangement, and effects do not
+assign or change any character ability. Character kits remain as documented in
+the gameplay specifications.
+
+## Visual pillars
+
+1. **Readable at tactical distance.** A player must distinguish doors,
+   interactables, threats, cover, and character roles without zooming in.
+2. **Chunky modular construction.** Large panels, structural ribs, chamfered
+   frames, exposed utility runs, and broad armor plates dominate the silhouette.
+3. **Dark shell, purposeful color.** Most surfaces are restrained navy and
+   neutral metal. Saturated color communicates route, interaction, destination,
+   allegiance, or danger.
+4. **Controlled detail density.** Each asset gets one dominant mass and a small
+   number of medium details. Tiny greebles never carry gameplay meaning.
+5. **Replaceable production inputs.** Shared dimensions, materials, pivots, and
+   stable wrapper IDs matter more than preserving any generator's raw output.
+
+## Tactical-camera constraints
+
+The current implementation uses:
+
+| Property | Current value |
+|---|---:|
+| Perspective field of view | 48 degrees |
+| Camera distance | 7.5–20.0 m |
+| Default distance | 14.5 m |
+| Camera pitch | 0.45–1.15 radians |
+| Default pitch | 0.90 radians |
+| Reference review frame | 1280×720 |
+
+Review every candidate at the default camera and at both zoom limits. A
+gameplay-significant shape or color cue must survive the 20 m view. Do not rely
+on text, thin wires, tiny lamps, surface scratches, or features smaller than
+approximately 0.10 m for identification. Dominant silhouette breaks should
+normally be at least 0.20 m.
+
+## Environment module rules
+
+The current route establishes the initial dimensional language:
+
+| Element | Current value |
+|---|---:|
+| Authoring grid | 1.0 m, with 0.5 m trim subdivisions |
+| Clear corridor width | 4.0 m |
+| Floor slab thickness | 0.20 m |
+| Main wall height | 2.60 m |
+| Main wall thickness | 0.30 m |
+| Junction post | 0.38 × 2.80 × 0.38 m |
+| Retained wall-cutaway base | 0.45 m |
+| Wall-cutaway transition | 0.15 seconds |
+
+Structural floors, walls, doors, posts, and cutaway pieces are dimensionally
+authored in Blender. Do not use diffusion-generated meshes as structural
+modules. Generated candidates are limited initially to props and machine forms.
+
+Modules snap on the 1 m grid. Half-grid offsets are allowed for trim, attached
+utilities, and set dressing, not for structural connections. Large wall panels
+use a small number of deliberate seams. A repeated module may vary through
+attached props, light state, decals, or damage masks without changing its
+connection geometry.
+
+Current camera occluders are world-up meshes that collapse to a 0.45 m base.
+Any asset tested in the live route must preserve the existing occluder IDs and
+must remain readable throughout that transition. Production walls may later
+split upper and lower presentation, as described in `docs/ARCHITECTURE.md`.
+
+## Shape language
+
+### Frontier station
+
+- Rectangular and chamfered primary forms.
+- Thick structural ribs and capped junction posts.
+- Recessed wall panels and floor plates with broad borders.
+- Utility boxes, vents, tanks, and pipe bundles grouped into readable clusters.
+- Corners and openings reinforced rather than razor thin.
+- Repetition is intentional; asymmetry comes from set dressing and state.
+
+### Crew
+
+- Human proportions with mild heroic exaggeration.
+- Broad boots, gloves, shoulder forms, and readable equipment silhouettes.
+- Layered dark fabric beneath light neutral armor plates.
+- Cyan identity and equipment accents used sparingly.
+- Faces and role-specific silhouettes matter more than small costume detail.
+
+### Security machines
+
+- Compact, angular armored masses with clearly separated locomotion elements.
+- One unmistakable red or red-orange sensor/threat focus.
+- Stable-looking feet or supports; avoid fragile needle limbs.
+- Silhouette and telegraph direction must remain clear from above.
+- The current concept shows squat and tall variants, but no runtime enemy asset,
+  dimensions, behavior assignment, or stable ID has been accepted yet.
+
+Faction names, logos, serial text, and final lore markings remain provisional.
+Do not bake them into meshes or textures during this spike.
+
+## Palette and state semantics
+
+The current greybox colors are anchors, not a requirement to reproduce every
+literal in a texture:
+
+| Provisional material ID | Role | Current anchor |
+|---|---|---|
+| `mat.station.background` | Void/background | `#05070B` |
+| `mat.station.floor.dark` | Floor shell | `#111B26` |
+| `mat.station.wall.dark` | Wall shell | `#1F2B3B` |
+| `mat.station.trim.cyan` | Route and utility trim | `#0F85AD` |
+| `mat.crew.accent.cyan` | Player/selection identity | `#14A8E0` |
+| `mat.state.caution.amber` | Survivor, emergency, caution | `#F58F29` |
+| `mat.state.optional.violet` | Optional inspectable terminal | `#853DE0` |
+| `mat.state.destination.green` | Destination and completion | `#29C76E` |
+| `mat.state.threat.red` | Hostile sensor and telegraph | Defined in-engine |
+
+Color semantics take precedence over concept-art decoration. Purple must not
+read as the destination, green must not mark an optional prop, and hostile red
+must not be reused as neutral station trim. Never make color the only signal:
+pair it with silhouette, placement, iconography, or animation.
+
+## Materials, bevels, and surface detail
+
+- Prefer a controlled shared palette and reusable trim/material families over a
+  unique texture set for every prop.
+- Large station surfaces are moderately metallic and matte. The current floor
+  and wall anchors use metallic values around 0.28–0.35 and roughness around
+  0.68–0.74.
+- Structural hard edges use visible bevels, normally 0.03–0.08 m with one or
+  two segments and stable weighted normals. Small props normally use
+  0.01–0.04 m bevels.
+- Emission belongs on screens, route strips, sensors, and purposeful lamps.
+  Bloom, holograms, shield surfaces, warning cones, and selection rings are
+  authored in Godot rather than baked into base color.
+- Generated base color must be de-lit. Reject baked highlights, cast shadows,
+  ambient glow, camera-facing gradients, and fake depth.
+- Use one large form, two to five medium forms, and restrained small detail.
+  Avoid uniform panel noise and randomly scattered bolts.
+- The frontier station may show light edge wear and maintenance history.
+  Heavy grime, corrosion, gore, and catastrophic damage are outside this
+  visual spike.
+
+## Generated-asset policy for this revision
+
+- Use clean isolated or multi-view references. Do not generate a complete room
+  or a complete encounter as one mesh.
+- Tripo and Meshy are evaluation providers, not dependencies or sources of
+  truth.
+- Generated candidates may supply a base mesh or texture draft. Blender 5.2
+  LTS remains the editable source for accepted work.
+- Normalize scale, pivot, axes, parts, topology, UVs, material IDs, and naming
+  before review.
+- Never publish directly from a provider or provider plugin into Godot.
+- Preserve the raw candidate, prompt, input hashes, provider model/version,
+  settings, job ID or seed when available, and licensing record.
+- A candidate may lose to a manually authored Blender version. “None” is a
+  valid result of the bake-off.
+
+## Approval bar
+
+A POC asset is acceptable only when:
+
+- its role reads at the default camera and at 20 m;
+- it respects the palette semantics and neighboring detail density;
+- its dimensions, pivot, forward direction, and material slots match its brief;
+- it survives Blender and Godot review without malformed geometry or import
+  warnings;
+- its provenance and commercial-use status are recorded; and
+- prominent assets receive explicit human visual approval.
+
