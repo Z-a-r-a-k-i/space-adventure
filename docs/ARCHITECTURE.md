@@ -130,6 +130,29 @@ Phase 2 exercises this with movement and contextual interaction. A running order
 
 Basic attacks repeat against an explicitly assigned target until invalidated or replaced; active abilities remain explicit orders. Combat start triggers one automatic pause. All subsequent POC pausing is manual.
 
+## Combat attack and presentation boundary
+
+Every combatant's basic attack has a stable gameplay identity independent of
+how the model appears to deliver it. Handheld, integrated, and body-based
+attacks use the same authoritative command, action, timing, and damage path.
+The core owns target validation, range and affected area, approach movement,
+fixed-tick wind-up and recovery, resolution, interruption, repetition, damage,
+and defeat.
+
+Godot maps the stable attack identity to a reviewed presentation profile. That
+profile owns the weapon scene when separate, attachment nodes, rig and clips,
+muzzle or contact markers, telegraph rendering, effects, and audio. The core
+owns any telegraph geometry or timing that communicates authoritative danger.
+Model node paths, sockets, animation callbacks, and physical weapon collisions
+never apply damage or advance authoritative state.
+
+Attack observations and events expose enough phase and timing information for
+presentation to align wind-up, release or contact, and recovery. Exact combat
+event types and content schemas are defined with the Phase 4 slice rather than
+added to the current route schema early. Combat clips remain in-place for the
+POC: Godot follows observed gameplay position, and animation root motion does
+not become an alternate movement authority. See `ATTACK-PRESENTATION.md`.
+
 ## Events and observations
 
 Events are immutable facts with at least an event sequence, simulation tick, event type, and typed data. The runtime retains a bounded recent buffer for tools and presentation. Implemented route events include command acceptance/rejection, primary-action assignment/failure, movement arrival, dialogue start and response, interaction completion, objective change, and scenario completion. Recruitment, combat, healing, cooldown, victory, and defeat events remain later work.

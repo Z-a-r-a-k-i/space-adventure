@@ -50,6 +50,11 @@ The experiment does not include characters, rigging, animation, a complete
 station module set, direct scene replacement, API integration, or provider
 plugins.
 
+The security-drone entry is scored only as a body and topology candidate.
+Attack-source readiness, weapon integration, rigging, and animation are
+explicitly outside its score; winning the bake-off does not satisfy the
+production combatant gate in `docs/ATTACK-PRESENTATION.md`.
+
 Evaluation accounts may be used only when their terms permit the intended
 test. Any candidate considered for later acceptance must have documented
 commercial-use, attribution, privacy, retention, and training terms acceptable

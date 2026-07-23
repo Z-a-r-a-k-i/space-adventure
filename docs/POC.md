@@ -23,7 +23,8 @@ Names, factions, final lore, and visual tone remain provisional until the contro
 5. Cross a short traversal area with one optional terminal, container, or environmental observation.
 6. Use one healing item or preserve it for the encounter.
 7. Resolve one tactical encounter using both characters.
-8. Reach the evacuation airlock and receive an explicit completion summary.
+8. Reach the evacuation airlock, see it open, and receive an explicit
+   completion summary.
 
 The critical path always demonstrates recruitment and combat. A dialogue choice changes an observable detail such as route access, available information, starting position, support machinery, or the number and placement of enemies.
 
@@ -44,8 +45,24 @@ The critical path always demonstrates recruitment and combat. A dialogue choice 
 ## Character and inventory acceptance
 
 - The player chooses between two simple protagonist kits before entering the level.
+- Vanguard and Operator are distinct selectable protagonist presentations.
+  The selected protagonist and the fixed Protector companion are the only two
+  controllable characters in a playthrough; the station survivor is a fourth,
+  noncontrollable human presentation.
 - Each possible protagonist has one fixed weapon, a repeatable basic attack, and one distinctive active ability.
 - The fixed companion supplies a complementary weapon and active ability.
+- The approved presentation loadouts are a separate two-handed carbine for
+  Vanguard, a separate compact pistol for Operator, and a separate two-handed
+  shotgun for Protector.
+- A humanoid's fixed handheld weapon is a separate presentation asset with
+  authored hand, holster, and attack markers. This supports visible draw and
+  ready states without adding weapon switching, ammunition, reload, equipment
+  slots, or a generalized inventory.
+- Party firearms are holstered during exploration and transferred
+  deterministically to hand attachments for combat presentation.
+- Each human uses one fixed complete outfit in the POC. Separate undersuit and
+  armor objects may be retained in editable art sources for future whole-outfit
+  variants, but they are not runtime equipment items or individual armor slots.
 - Character information displays role, health, weapon, ability, and carried healing item.
 - One healing item can be inspected and used on a valid party member.
 - The POC does not include loot generation, equipment comparison, encumbrance, crafting, vendor screens, or a general-purpose inventory grid.
@@ -53,6 +70,18 @@ The critical path always demonstrates recruitment and combat. A dialogue choice 
 ## Combat acceptance
 
 - Hostiles perceive, acquire targets, move into range, attack, and can be defeated.
+- The two approved hostile presentation archetypes are a compact body-source
+  ram drone and a taller sentry with an integrated firearm. Their exact
+  gameplay identities, ranges, timings, and tuning are defined during the
+  combat phase rather than inferred from their models.
+- Every party member and hostile combatant archetype has at least one visually
+  plausible basic-attack source: handheld, integrated, or body-based.
+- Attack source, facing, wind-up, release or contact, and recovery are readable
+  from the tactical camera. A weaponless machine must still communicate how it
+  attacks.
+- Gameplay owns range, affected area, telegraph timing, target validity,
+  movement, and damage. Animations and effects present observed attack state
+  and events; they never resolve damage.
 - At least one party ability targets a position, hostile, or ally so coordinated pause is materially useful.
 - Hostile intent or dangerous actions are telegraphed clearly enough to support an interrupt, reposition, focus-fire, or defensive response.
 - Basic attacks repeat against an explicitly assigned target; abilities remain player-directed.
@@ -82,17 +111,33 @@ The critical path always demonstrates recruitment and combat. A dialogue choice 
 ## Content budget
 
 - One authored greybox station level with a start, service section, encounter space, and destination.
-- Two selectable protagonist kits and one fixed companion.
+- Four distinct human presentations: Vanguard and Operator alternatives, one
+  fixed Protector companion, and one station survivor. A playthrough still
+  controls exactly the selected protagonist plus Protector.
 - Two meaningful NPC interactions.
-- One hostile machine group with at most two enemy behaviors.
-- One fixed weapon per character, one active ability per character, and one healing-item type.
+- One hostile machine group using the body-ram drone and integrated-gun sentry
+  presentations, with at most those two enemy behaviors.
+- One fixed weapon and basic attack per party character, one fixed basic attack
+  per hostile combatant archetype, one active ability per party character, and
+  one healing-item type.
+- One visibly opening evacuation-airlock assembly.
 - One observable choice consequence.
 - Primitive or explicitly reviewed low-poly assets only.
 - Minimal sound and effects only after interaction readability works.
 
+The complete planned 3D, rig, animation, 2D, and effects inventory is recorded
+in `POC-ASSET-ROSTER.md`. Its approval does not override the production gates in
+`ROADMAP.md`.
+
 ## Explicit non-goals
 
-No procedural level, roguelite run structure, metaprogression, save migration, runtime model call, generalized quest engine, ship simulation, vehicle movement, boarding, crafting, economy, reputation simulation, multiplayer, or production-scale asset generation belongs in this POC.
+No procedural level, roguelite run structure, metaprogression, save migration,
+runtime model call, generalized quest engine, ship simulation, vehicle
+movement, boarding, crafting, economy, reputation simulation, or multiplayer
+belongs in this POC. The finite inventory in `POC-ASSET-ROSTER.md` is bounded,
+phase-scoped POC art production. Automated bulk generation, uncontrolled
+variants, reusable content libraries, and assets beyond that inventory remain
+production-scale work and are outside the POC.
 
 ## Exit gate
 

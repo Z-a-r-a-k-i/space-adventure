@@ -99,6 +99,10 @@ Useful but stage-specific tools:
 - Blender 5.2 LTS plus the official Blender MCP: model and asset-pipeline work only.
 - ImageMagick, FFmpeg, glTF Transform, and the Khronos glTF Validator: install when their corresponding visual-review and publication stages are implemented, not as bootstrap blockers.
 
+The reproducible setup for the dedicated Tripo/Blender/Godot-review machine is
+in `docs/ART-WORKSTATION.md`. The existing `godot-ai-plugin` is the Godot AI
+Control integration; no second Godot-control addon is required.
+
 ## Documentation map
 
 - `docs/PRODUCT.md`: product vision and scope boundaries.
@@ -109,6 +113,12 @@ Useful but stage-specific tools:
 - `docs/PLAYTESTS.md`: manual milestone-gate protocol and retained outcomes.
 - `docs/DIALOGUE-AI.md`: controlled dialogue-provider design.
 - `docs/ART-PIPELINE.md`: asset creation, publication, and visual QA.
+- `docs/ART-WORKSTATION.md`: dedicated Windows art-machine installation and
+  verification checklist.
+- `docs/POC-ASSET-ROSTER.md`: approved model, rig, animation, 2D, and VFX
+  target inventory with phase-scoped production authority.
+- `docs/ATTACK-PRESENTATION.md`: weapon, attack-source, rig, and animation
+  contract for combatant assets.
 - `docs/ROADMAP.md`: milestone order and exit gates.
 - `docs/OPEN-QUESTIONS.md`: unresolved choices and recommended defaults.
 

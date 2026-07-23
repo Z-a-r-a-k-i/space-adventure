@@ -22,6 +22,16 @@ The combat concept shows both a tall machine and squat machines. This bake-off
 targets the central armored body of a squat ground variant. Locomotion parts,
 rigging, animation, weapons, and behavior remain outside the experiment.
 
+This isolated body is an explicit exception to the production combatant gate
+in `docs/ATTACK-PRESENTATION.md`. Any later complete security machine receives
+a new assembly asset ID and brief that chooses a `handheld`, `integrated`, or
+`body` attack source before rigging or animation. Do not add speculative weapon
+or contact markers to this body-only candidate.
+
+The approved POC roster reserves `machine.security.ram_drone.v1` for a new
+complete body-source machine. That reservation does not promote or assign this
+isolated bake-off body to the production enemy.
+
 ## Bounds and coordinates
 
 Because no runtime drone exists, these are provisional benchmark dimensions:
@@ -128,5 +138,5 @@ attachment regions, unusable normals, and UV distortion.
 
 This body cannot enter the live game until the combat milestone defines its
 presentation wrapper, locomotion, collider, behavior, telegraphs, and stable
-runtime identity.
-
+runtime identity, and its complete assembly passes the attack-presentation
+contract.

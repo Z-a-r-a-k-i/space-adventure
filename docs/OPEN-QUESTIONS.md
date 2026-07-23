@@ -14,6 +14,22 @@ There are no unresolved questions blocking the documented POC or bootstrap. New 
 - Combat automatically pauses when it starts; all later pausing is manual in the POC.
 - Free camera yaw with constrained pitch and zoom, plus orientation reset.
 - Vanguard and Operator protagonist kits with a Protector-style fixed companion.
+- Vanguard, Operator, Protector, and the station survivor are four distinct
+  human presentations on one normalized humanoid skeleton; a playthrough still
+  controls only the selected protagonist plus Protector.
+- Vanguard uses a separate two-handed carbine, Operator a separate compact
+  pistol, and Protector a separate two-handed shotgun.
+- Each POC human has one fixed complete outfit. Editable Blender sources retain
+  a fitted undersuit and major armor pieces for future whole-outfit variants,
+  but no individual armor slots or equipment system are implied.
+- Party firearms are holstered during exploration and visibly drawn for
+  combat.
+- The hostile presentation pair is a compact body-ram security drone and a
+  taller integrated-gun security sentry.
+- The evacuation airlock visibly opens before completion presentation.
+- Exact active abilities remain intentionally deferred to Phase 3; their
+  props, clips, icons, and effects are not invented during asset planning. The
+  concept-art shield is not assigned to an ability.
 - Exactly two controllable characters in the POC; early UI and architecture must not rule out four later.
 - Compact automatic group formation with no formation editor.
 - Free-text input is the protagonist's exact spoken utterance; the game does not rewrite it into different dialogue.
@@ -25,4 +41,7 @@ There are no unresolved questions blocking the documented POC or bootstrap. New 
 - An optional Codex CLI provider may use the developer's ChatGPT sign-in for private automated experiments; it remains replaceable and outside authoritative state.
 - Dialogue profiles select model, reasoning effort, and Fast mode independently, with Sol/medium/Fast-off as the initial quality baseline.
 - Low-poly presentation and a controlled, replaceable art pipeline.
+- Every production combatant declares a handheld, integrated, or body-based
+  attack source before model and animation approval; all three share the same
+  authoritative gameplay boundary.
 - Both structured automation and real graphical playtests are required.

@@ -2,7 +2,8 @@
 
 Status: provisional POC visual baseline  
 Revision: 2026-07-23  
-Scope: `station-route-v1` and the bounded three-asset generator bake-off
+Scope: `station-route-v1`, the bounded three-asset generator bake-off, and
+approved full-POC roster planning
 
 ## Purpose and authority
 
@@ -27,11 +28,26 @@ not like unrelated generated objects placed in the same room.
   effect-color reference.
 - [POC crew lineup](../concepts/frontier-station-v1/poc-crew-lineup.png) is the
   primary character proportion, armor, material, and silhouette reference.
+- [Approved Vanguard turnaround](../reference-sheets/frontier-station-v1/poc-models/vanguard-character-turnaround-v1.png)
+  freezes Vanguard's face, body proportions, fixed outfit, palette, and broad
+  silhouette. Its empty thigh carry hardware remains provisional until the
+  approved carbine and character are fitted as a normalized 3D assembly.
+- [Approved Vanguard carbine](../reference-sheets/frontier-station-v1/poc-models/vanguard-carbine-turnaround-v1.png),
+  [Operator pistol](../reference-sheets/frontier-station-v1/poc-models/operator-pistol-turnaround-v1.png),
+  and [Protector shotgun](../reference-sheets/frontier-station-v1/poc-models/protector-shotgun-turnaround-v1.png)
+  freeze the three handheld-weapon directions. Grip, support-hand, carry, and
+  muzzle interfaces remain subject to normalized 3D assembly checks.
+- [Approved Operator turnaround](../reference-sheets/frontier-station-v1/poc-models/operator-character-turnaround-v1.png)
+  and [Protector turnaround](../reference-sheets/frontier-station-v1/poc-models/protector-character-turnaround-v1.png)
+  freeze their identities, proportions, fixed outfits, palettes, and broad
+  silhouettes. The Protector has no shield.
 
 These images establish visual direction, not exact geometry or gameplay
-contracts. The depicted shield, weapons, party arrangement, and effects do not
-assign or change any character ability. Character kits remain as documented in
-the gameplay specifications.
+contracts. The approved roster now assigns Vanguard's carbine, Operator's
+pistol, and Protector's shotgun as presentation constraints. The depicted
+shield, party arrangement, and effects do not assign or change any character
+ability; the shield remains outside the approved roster. Character mechanics
+remain as documented in the gameplay specifications.
 
 ## Visual pillars
 
@@ -83,7 +99,15 @@ The current route establishes the initial dimensional language:
 
 Structural floors, walls, doors, posts, and cutaway pieces are dimensionally
 authored in Blender. Do not use diffusion-generated meshes as structural
-modules. Generated candidates are limited initially to props and machine forms.
+modules. Before the Phase 2 exit, generated candidates are limited to the three
+bounded bake-off IDs. When an owning phase is active and its brief is
+production-ready, Tripo may also provide the humanoid-body and handheld-weapon
+candidates reserved in `docs/POC-ASSET-ROSTER.md`.
+
+The production evacuation airlock visibly opens before completion presentation.
+Its frame, moving leaves, clearance, pivot, and collision interfaces are
+dimensionally authored. A generated candidate may contribute only a decorative
+panel or insert that survives the normal cleanup and review pipeline.
 
 Modules snap on the 1 m grid. Half-grid offsets are allowed for trim, attached
 utilities, and set dressing, not for structural connections. Large wall panels
@@ -112,8 +136,22 @@ split upper and lower presentation, as described in `docs/ARCHITECTURE.md`.
 - Human proportions with mild heroic exaggeration.
 - Broad boots, gloves, shoulder forms, and readable equipment silhouettes.
 - Layered dark fabric beneath light neutral armor plates.
+- Each human has one fixed complete outfit for the POC. The editable source
+  uses a fitted navy technical undersuit with clearly separable major armor
+  pieces; those seams support production and possible future whole-outfit
+  variants, not current equipment slots.
+- Hidden undersuit geometry may be masked or omitted under rigid armor to avoid
+  clipping. A literal complete unclothed body is unnecessary.
 - Cyan identity and equipment accents used sparingly.
 - Faces and role-specific silhouettes matter more than small costume detail.
+- Vanguard reads through a broad two-handed carbine, Operator through a compact
+  pistol and lighter technical silhouette, and Protector through a broad
+  two-handed shotgun. These are separate weapon assets.
+- Fixed handheld weapons remain separate assets, with plausible hand and
+  holster attachment. They are holstered during exploration; their draw, ready,
+  and firing silhouettes must read from above.
+- Firearms use broad, retro-industrial masses and restrained high-tech accents;
+  thin barrels and tiny attachments must not carry role readability.
 
 ### Security machines
 
@@ -121,8 +159,15 @@ split upper and lower presentation, as described in `docs/ARCHITECTURE.md`.
 - One unmistakable red or red-orange sensor/threat focus.
 - Stable-looking feet or supports; avoid fragile needle limbs.
 - Silhouette and telegraph direction must remain clear from above.
-- The current concept shows squat and tall variants, but no runtime enemy asset,
-  dimensions, behavior assignment, or stable ID has been accepted yet.
+- Each complete machine exposes a readable attack direction and articulation
+  for an integrated weapon, whether published separately as a rigid child or
+  built into the assembly, or an unmistakable reinforced body-contact surface.
+  A red sensor by itself does not explain how the machine attacks.
+- Body attackers need enough compression, lean, or recoil range for wind-up and
+  recovery; integrated weapons need visible muzzle and aiming clearance.
+- The roster selects a compact body-ram presentation and a taller
+  integrated-firearm presentation. Production dimensions, stable gameplay IDs,
+  attack ranges, timings, and tuning remain unaccepted until Phase 4.
 
 Faction names, logos, serial text, and final lore markings remain provisional.
 Do not bake them into meshes or textures during this spike.
@@ -178,6 +223,10 @@ pair it with silhouette, placement, iconography, or animation.
   truth.
 - Generated candidates may supply a base mesh or texture draft. Blender 5.2
   LTS remains the editable source for accepted work.
+- For humanoids, use part-aware generation or segmentation when it produces a
+  cleaner editable undersuit-and-armor source. Complete segmentation, part
+  completion, retopology or remeshing, cleanup, and fitting before the shared
+  rig; these operations invalidate provider skeletons and weights.
 - Normalize scale, pivot, axes, parts, topology, UVs, material IDs, and naming
   before review.
 - Never publish directly from a provider or provider plugin into Godot.
@@ -193,8 +242,9 @@ A POC asset is acceptable only when:
 - its role reads at the default camera and at 20 m;
 - it respects the palette semantics and neighboring detail density;
 - its dimensions, pivot, forward direction, and material slots match its brief;
+- a combatant satisfies `docs/ATTACK-PRESENTATION.md` through its complete
+  character-and-weapon or machine assembly;
 - it survives Blender and Godot review without malformed geometry or import
   warnings;
 - its provenance and commercial-use status are recorded; and
 - prominent assets receive explicit human visual approval.
-

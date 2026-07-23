@@ -106,3 +106,50 @@ Status: accepted for the dialogue experiment.
 When the player types dialogue, the submitted text is the protagonist's exact spoken utterance. The game does not rewrite it into another line or silently change its meaning. Authored response suggestions provide a convenient canonical voice without limiting free-form input.
 
 Typed text remains untrusted content. It cannot establish world facts, grant authority, or directly cause gameplay effects; NPCs may reject or challenge unsupported claims, and only validated deterministic transitions can change authoritative state.
+
+## ADR 0014 — Attack rules are independent from weapon presentation
+
+Status: accepted for combat and asset planning; implementation remains in
+Phases 3 and 4.
+
+Every production combatant declares at least one credible attack source before
+its model, rig, or animation is approved. The presentation source is
+`handheld`, `integrated`, or `body`; these are art and Godot profiles, not
+different gameplay architectures.
+
+The pure core owns stable attack identity, target validity, range, fixed-tick
+timing, movement, resolution, damage, interruption, and repetition. Godot
+consumes observations and events to attach weapons and play rigs, animations,
+telegraphs, effects, and audio. Animation callbacks, mesh collisions, sockets,
+and asset node paths never mutate authoritative gameplay.
+
+Humanoid handheld weapons are separate presentation assets even when their POC
+loadout is fixed. Integrated machine weapons may remain permanent parts of the
+machine, and a body attacker needs no weapon when its striking surface and
+motion are clear. These choices do not add weapon switching, ammunition,
+reload, equipment slots, or generalized inventory. Detailed production gates
+are defined in `ATTACK-PRESENTATION.md`; the approved POC presentation profiles
+and phase-scoped target inventory are recorded in `POC-ASSET-ROSTER.md`.
+
+## ADR 0015 — Fixed POC outfits retain modular editable sources
+
+Status: accepted for the POC art pipeline; implementation remains in Phase 3.
+
+Each human is presented and reviewed in one fixed complete outfit. The POC
+does not equip separate chest, leg, boot, glove, or other armor items and does
+not add armor compatibility rules or generalized equipment UI.
+
+The Blender source retains a close-fitting technical undersuit and major armor,
+footwear, glove, and accessory pieces as named objects on the normalized shared
+humanoid skeleton when practical. The published GLB may keep multiple skinned
+meshes, but Godot treats the approved combination as one outfit. Hidden
+undersuit or body polygons may be omitted beneath rigid armor to prevent
+clipping; a complete unclothed body is not a requirement. Handheld weapons
+remain separate under ADR 0014.
+
+Provider part generation, segmentation, part completion, retopology,
+low-poly conversion, remeshing, and fitting occur before final rigging because
+mesh reconstruction invalidates skeletons and weights. Blender owns the final
+topology, fit, rig, weights, attachments, and export. Whole-outfit variants are
+the preferred future extension. Individual equipment slots require a separate
+product and architecture decision.
