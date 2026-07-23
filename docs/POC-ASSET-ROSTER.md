@@ -10,7 +10,9 @@ Revision: 2026-07-23
 This document is the inventory and dependency plan for the complete first
 playable. `POC.md` remains authoritative for gameplay acceptance,
 `ATTACK-PRESENTATION.md` for combatant presentation interfaces, `ROADMAP.md`
-for when work may begin, and `ART-PIPELINE.md` for publication and review.
+for when work may begin, `ART-PIPELINE.md` for publication and review, and
+`TRIPO-PRODUCTION-HANDOFF.md` for the dedicated generation agent's operational
+Studio, Blender, rigging, and animation sequence.
 
 Approval of this roster authorizes reserved asset IDs, production briefs,
 reference sheets, estimates, and dependency planning. It does not by itself
@@ -47,6 +49,9 @@ active and the item has a production-ready brief.
 6. The three active abilities remain POC requirements, but their exact
    mechanics are intentionally deferred. Do not invent ability-specific props,
    clips, icons, or effects before those definitions are accepted.
+7. Each human appears in one fixed complete outfit in the POC. Blender retains
+   a fitted undersuit and major armor pieces as named editable objects on the
+   shared skeleton, but Godot does not expose them as equipment slots.
 
 The shield depicted in the crew concept is not assigned to a character,
 weapon, or active ability by this roster.
@@ -60,10 +65,10 @@ required presentation is 2D and VFX only.
 
 | Group | Reserved asset ID | Required result | Candidate and final-authoring path | Owning phase |
 |---|---|---|---|---|
-| Vanguard | `character.crew.vanguard.v1` | Distinct selectable protagonist with carbine-compatible hand and holster attachments | Tripo may provide a body candidate; Blender owns the normalized topology, shared rig, skinning, sockets, materials, and final GLB | Phase 3 |
-| Operator | `character.crew.operator.v1` | Distinct selectable protagonist with pistol-compatible hand and holster attachments | Tripo candidate, then the same Blender normalization and shared rig | Phase 3 |
-| Protector | `character.crew.protector.v1` | Distinct fixed recruitable companion with shotgun-compatible hand and holster attachments | Tripo candidate, then the same Blender normalization and shared rig | Phase 3 |
-| Station survivor | `character.npc.station_survivor.v1` | Distinct noncombatant NPC on the shared humanoid skeleton | Tripo candidate or an authored body variant, finalized in Blender | Phase 3 |
+| Vanguard | `character.crew.vanguard.v1` | Distinct selectable protagonist with one fixed outfit plus carbine-compatible hand and holster attachments | Tripo may provide a part-aware body/outfit candidate; Blender owns the modular editable source, normalized topology, shared rig, skinning, sockets, materials, and final fixed-outfit GLB | Phase 3 |
+| Operator | `character.crew.operator.v1` | Distinct selectable protagonist with one fixed outfit plus pistol-compatible hand and holster attachments | Tripo candidate, then the same Blender modular-source normalization and shared rig | Phase 3 |
+| Protector | `character.crew.protector.v1` | Distinct fixed recruitable companion with one fixed outfit plus shotgun-compatible hand and holster attachments | Tripo candidate, then the same Blender modular-source normalization and shared rig | Phase 3 |
+| Station survivor | `character.npc.station_survivor.v1` | Distinct noncombatant NPC with one fixed outfit on the shared humanoid skeleton | Tripo candidate or an authored body/outfit variant, finalized as a modular Blender source and fixed runtime outfit | Phase 3 |
 | Vanguard carbine | `weapon.crew.vanguard_carbine.v1` | Separate broad two-handed carbine with primary grip, support grip, and muzzle markers | Tripo candidate, then Blender hard-surface cleanup and marker placement | Phase 3 |
 | Operator pistol | `weapon.crew.operator_pistol.v1` | Separate compact pistol with primary grip and muzzle markers | Tripo candidate, then Blender hard-surface cleanup and marker placement | Phase 3 |
 | Protector shotgun | `weapon.crew.protector_shotgun.v1` | Separate broad two-handed shotgun with primary grip, support grip, and muzzle markers | Tripo candidate, then Blender hard-surface cleanup and marker placement | Phase 3 |
@@ -88,6 +93,26 @@ The airlock assembly may publish its frame, moving leaf or leaves, and
 control/status panel separately. Collision, navigation, occlusion metadata, and
 interactive wrappers are authored in Godot rather than accepted from a
 generator.
+
+## Humanoid source and runtime outfit policy
+
+The four human Blender sources retain a fitted technical undersuit and major
+armor, footwear, glove, and accessory pieces as separate named objects where
+practical. They are fitted and weighted to one normalized skeleton. Hidden
+undersuit or body polygons may be masked or omitted beneath rigid armor to
+avoid clipping; no anatomically complete body under the outfit is required.
+
+The POC publishes and reviews one fixed complete outfit per human. A GLB may
+contain several named skinned meshes, but its reviewed combination is one
+runtime presentation, not an inventory of equippable items. Weapons remain
+separate because draw, holster, grip, and attack presentation require it.
+
+For a generated candidate, part-aware generation or segmentation is followed
+by part completion, retopology or remeshing, cleanup, and fitting before the
+shared rig is finalized. These mesh operations invalidate generated skeletons
+and weights. Blender owns the final object boundaries, topology, rig, weights,
+attachments, and export. A future phase may first add whole-outfit variants;
+individual armor slots require a separate gameplay and compatibility design.
 
 ## Humanoid rig and animation matrix
 
@@ -209,10 +234,10 @@ cover system.
    wall-utility, and isolated drone-body bake-off. Record provider provenance,
    licensing, measurements, cleanup time, tactical-camera evidence, and the
    selected result or `none`.
-2. **Phase 3:** lock production reference sheets, create one shared humanoid
-   rig baseline, validate one complete character-plus-weapon assembly, then
-   produce the remaining human and weapon profiles plus exploration and
-   dialogue clips.
+2. **Phase 3:** lock production reference sheets, finish all part segmentation,
+   completion, remeshing, and outfit fitting before the shared humanoid rig,
+   validate one fixed-outfit character-plus-weapon assembly, then produce the
+   remaining human and weapon profiles plus exploration and dialogue clips.
 3. **Phase 4:** define authoritative attacks, timings, and abilities before
    production enemy rigs, combat clips, healing presentation, telegraphs, and
    effects are finalized.

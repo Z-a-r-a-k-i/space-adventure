@@ -15,7 +15,9 @@ The POC begins with Godot primitives and simple authored materials. Blender is o
 
 The dedicated Windows machine checklist and known-good MCP revisions are
 recorded in `ART-WORKSTATION.md`. The approved full-POC target inventory and
-phase ownership are recorded in `POC-ASSET-ROSTER.md`.
+phase ownership are recorded in `POC-ASSET-ROSTER.md`. The operational
+Studio-to-Blender-to-Godot instructions for the dedicated generation agent are
+recorded in `TRIPO-PRODUCTION-HANDOFF.md`.
 
 MCP actions are useful for exploration and review, but repeatable pipeline operations eventually live in versioned Blender scripts or explicit profiles. A successful interactive session is not sufficient provenance.
 
@@ -40,16 +42,51 @@ Generation prompts derive from asset briefs and the art bible. They are not the 
 1. Write an asset brief with a stable asset ID.
 2. Generate or model raw candidates and record provenance.
 3. Review candidates and select an editable source.
-4. Normalize scale, orientation, origin, naming, materials, sockets, and rig.
-5. Run mechanical validation.
-6. Publish a GLB into a staging area.
-7. Render standardized Blender review views.
-8. Import the exact published GLB into the Godot asset gallery.
-9. Render standardized in-engine review views.
-10. Perform structured agent review and, where required, human review.
-11. Approve the asset or return it for a named revision.
+4. Finish segmentation, part completion, retopology or remeshing, fitting, and
+   other mesh-changing work.
+5. Normalize scale, orientation, origin, naming, materials, sockets, and rig.
+6. Run mechanical validation.
+7. Publish a GLB into a staging area.
+8. Render standardized Blender review views.
+9. Import the exact published GLB into the Godot asset gallery.
+10. Render standardized in-engine review views.
+11. Perform structured agent review and, where required, human review.
+12. Approve the asset or return it for a named revision.
 
 Direct `.blend` imports are not the controlled runtime publication path.
+
+## Humanoid outfit source workflow
+
+Each POC human publishes one reviewed fixed-outfit assembly. Godot does not
+equip separate boots, gloves, leg armor, chest armor, or other clothing items,
+and the art hierarchy does not create gameplay equipment slots.
+
+The editable Blender source preserves future options without increasing POC
+scope:
+
+- a close-fitting dark navy technical undersuit is the base presentation; an
+  anatomically complete hidden body is not required;
+- torso, left and right shoulder, forearm, leg or knee, footwear, glove, and
+  major accessory pieces remain clearly named objects when practical;
+- all outfit pieces use the normalized shared humanoid skeleton;
+- body or undersuit polygons fully hidden by rigid armor may be masked or
+  omitted to prevent clipping; and
+- the published GLB may retain multiple named skinned meshes, but Godot treats
+  their reviewed combination as one inseparable outfit.
+
+This supports a future whole-outfit replacement first. Individual equipment
+slots, compatibility rules, and inventory semantics require a later gameplay
+decision and are not implied by the source-object names. Distinct body
+proportions may still require per-character armor fitting.
+
+When a provider exposes part-aware generation, request separated parts or
+segment the accepted static candidate. Run segmentation, part completion,
+retopology, low-poly conversion, remeshing, and armor fitting before binding to
+the shared skeleton: those mesh operations invalidate provider skeletons and
+weights. Preserve the raw candidate and each accepted processed version with
+provenance. Blender owns the final topology, object boundaries, fit, skeleton,
+weights, attachments, and export; provider rigs and animations are disposable
+diagnostic inputs.
 
 ## Asset brief
 
@@ -185,10 +222,12 @@ Initially favor AI for concept exploration, palette and material candidates, mod
 Before the Phase 2 exit, generated candidates remain limited to the three
 bounded bake-off IDs. When an owning phase is active and its brief is
 production-ready, Tripo may provide humanoid-body and handheld-weapon candidates
-as separate assets. Structural modules remain dimensionally authored in
-Blender. Integrated weapons need a readable line of fire and movable clearance;
-body attackers need a reinforced contact region and sufficient articulation.
-Generated rigs and animations remain untrusted inputs until normalized and
-reviewed through the complete attack assembly.
+as separate assets. A humanoid candidate may use provider part generation or
+segmentation, but all mesh reconstruction and fitting precedes the shared
+Blender rig as defined above. Structural modules remain dimensionally authored
+in Blender. Integrated weapons need a readable line of fire and movable
+clearance; body attackers need a reinforced contact region and sufficient
+articulation. Generated rigs and animations remain untrusted inputs until
+normalized and reviewed through the complete attack assembly.
 
 Keep the gameplay-facing asset contract stable so improved tools can replace early art one asset ID at a time without changing gameplay code, level logic, or saved state.

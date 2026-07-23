@@ -59,6 +59,10 @@ Status: deferred until the Phase 2 human-playthrough gate passes.
   as Vanguard carbine, Operator pistol, and Protector shotgun; define their
   stable gameplay attacks and the three active abilities before producing
   ability-specific art.
+- Produce each human as one fixed runtime outfit on the shared skeleton while
+  retaining the fitted undersuit and major armor pieces as modular Blender
+  source objects. Finish segmentation, remeshing, and fitting before rigging;
+  do not add runtime armor slots.
 - Add the recruitable companion, portraits, individual and group selection, simple formation movement, and party observations.
 - Add the two authored conversations and one observable choice consequence.
 - Verify dialogue state validation, recruitment, pause behavior, and both kit paths.

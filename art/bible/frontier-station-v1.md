@@ -28,6 +28,19 @@ not like unrelated generated objects placed in the same room.
   effect-color reference.
 - [POC crew lineup](../concepts/frontier-station-v1/poc-crew-lineup.png) is the
   primary character proportion, armor, material, and silhouette reference.
+- [Approved Vanguard turnaround](../reference-sheets/frontier-station-v1/poc-models/vanguard-character-turnaround-v1.png)
+  freezes Vanguard's face, body proportions, fixed outfit, palette, and broad
+  silhouette. Its empty thigh carry hardware remains provisional until the
+  approved carbine and character are fitted as a normalized 3D assembly.
+- [Approved Vanguard carbine](../reference-sheets/frontier-station-v1/poc-models/vanguard-carbine-turnaround-v1.png),
+  [Operator pistol](../reference-sheets/frontier-station-v1/poc-models/operator-pistol-turnaround-v1.png),
+  and [Protector shotgun](../reference-sheets/frontier-station-v1/poc-models/protector-shotgun-turnaround-v1.png)
+  freeze the three handheld-weapon directions. Grip, support-hand, carry, and
+  muzzle interfaces remain subject to normalized 3D assembly checks.
+- [Approved Operator turnaround](../reference-sheets/frontier-station-v1/poc-models/operator-character-turnaround-v1.png)
+  and [Protector turnaround](../reference-sheets/frontier-station-v1/poc-models/protector-character-turnaround-v1.png)
+  freeze their identities, proportions, fixed outfits, palettes, and broad
+  silhouettes. The Protector has no shield.
 
 These images establish visual direction, not exact geometry or gameplay
 contracts. The approved roster now assigns Vanguard's carbine, Operator's
@@ -123,6 +136,12 @@ split upper and lower presentation, as described in `docs/ARCHITECTURE.md`.
 - Human proportions with mild heroic exaggeration.
 - Broad boots, gloves, shoulder forms, and readable equipment silhouettes.
 - Layered dark fabric beneath light neutral armor plates.
+- Each human has one fixed complete outfit for the POC. The editable source
+  uses a fitted navy technical undersuit with clearly separable major armor
+  pieces; those seams support production and possible future whole-outfit
+  variants, not current equipment slots.
+- Hidden undersuit geometry may be masked or omitted under rigid armor to avoid
+  clipping. A literal complete unclothed body is unnecessary.
 - Cyan identity and equipment accents used sparingly.
 - Faces and role-specific silhouettes matter more than small costume detail.
 - Vanguard reads through a broad two-handed carbine, Operator through a compact
@@ -204,6 +223,10 @@ pair it with silhouette, placement, iconography, or animation.
   truth.
 - Generated candidates may supply a base mesh or texture draft. Blender 5.2
   LTS remains the editable source for accepted work.
+- For humanoids, use part-aware generation or segmentation when it produces a
+  cleaner editable undersuit-and-armor source. Complete segmentation, part
+  completion, retopology or remeshing, cleanup, and fitting before the shared
+  rig; these operations invalidate provider skeletons and weights.
 - Normalize scale, pivot, axes, parts, topology, UVs, material IDs, and naming
   before review.
 - Never publish directly from a provider or provider plugin into Godot.

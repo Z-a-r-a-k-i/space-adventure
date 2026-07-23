@@ -13,7 +13,9 @@ control revisions without making either MCP a shipped-game dependency.
 
 Completing this setup or connecting its tools does not authorize asset
 generation. `ROADMAP.md` and `POC-ASSET-ROSTER.md` govern the current executable
-scope.
+scope. After setup, the generation agent follows
+`TRIPO-PRODUCTION-HANDOFF.md` for the signed-in Studio, Blender, animation, and
+Godot-review procedure.
 
 `godot-ai-plugin` is the **Godot AI Control** integration used by this project.
 Do not install a second Godot-control addon.

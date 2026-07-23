@@ -48,6 +48,16 @@ The local `godot-ai-plugin` is an optional external development addon. It may in
 
 Blender and its MCP are used only for an active art task. Do not start Blender for gameplay, documentation, or ordinary C# work.
 
+Before an active Tripo or asset-production task, read
+`docs/ART-PIPELINE.md`, `docs/TRIPO-PRODUCTION-HANDOFF.md`,
+`docs/POC-ASSET-ROSTER.md`, `docs/ATTACK-PRESENTATION.md`, the frontier-station
+visual bible, the active asset brief, and the approved reference-sheet
+provenance. Tripo Studio uses the signed-in browser subscription workflow; do
+not introduce an API key or provider-to-Godot publication path. Preserve raw
+outputs and provenance, complete mesh reconstruction before rigging, and treat
+generated rigs and animations as Blender-retargeted donor inputs rather than
+production authority.
+
 ## Parallel work
 
 Use one branch and Git worktree per implementation agent, with explicit subsystem or path ownership. Worktrunk may manage those worktrees, but raw Git worktrees remain supported.

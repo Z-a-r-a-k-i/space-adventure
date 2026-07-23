@@ -60,6 +60,9 @@ The critical path always demonstrates recruitment and combat. A dialogue choice 
   slots, or a generalized inventory.
 - Party firearms are holstered during exploration and transferred
   deterministically to hand attachments for combat presentation.
+- Each human uses one fixed complete outfit in the POC. Separate undersuit and
+  armor objects may be retained in editable art sources for future whole-outfit
+  variants, but they are not runtime equipment items or individual armor slots.
 - Character information displays role, health, weapon, ability, and carried healing item.
 - One healing item can be inspected and used on a valid party member.
 - The POC does not include loot generation, equipment comparison, encumbrance, crafting, vendor screens, or a general-purpose inventory grid.

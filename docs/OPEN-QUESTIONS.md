@@ -19,6 +19,9 @@ There are no unresolved questions blocking the documented POC or bootstrap. New 
   controls only the selected protagonist plus Protector.
 - Vanguard uses a separate two-handed carbine, Operator a separate compact
   pistol, and Protector a separate two-handed shotgun.
+- Each POC human has one fixed complete outfit. Editable Blender sources retain
+  a fitted undersuit and major armor pieces for future whole-outfit variants,
+  but no individual armor slots or equipment system are implied.
 - Party firearms are holstered during exploration and visibly drawn for
   combat.
 - The hostile presentation pair is a compact body-ram security drone and a
