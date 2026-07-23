@@ -24,11 +24,14 @@ generation.
 
 ## Input image roles
 
-1. `../../../concepts/frontier-station-v1/poc-crew-lineup.png` — subject identity,
-   armor language, palette, proportions, and rendering-style reference. Only
-   the left-most Vanguard informed the subject.
-2. `../station-service-terminal-turnaround-v1.png` — clean 2 × 2 turnaround
-   layout reference only; its terminal design did not inform the character.
+1. `../../../concepts/frontier-station-v1/poc-crew-lineup.png` (SHA-256:
+   `2f2363d10defd95c4ee8bfe4a89decb168698f491415632b05cba24ec9544dd5`) —
+   subject identity, armor language, palette, proportions, and rendering-style
+   reference. Only the left-most Vanguard informed the subject.
+2. `../station-service-terminal-turnaround-v1.png` (SHA-256:
+   `b433bae19a05a506257692b0e9e5c13235295cb3306acfb56a2166eb15c85503`) —
+   clean 2 × 2 turnaround layout reference only; its terminal design did not
+   inform the character.
 
 ## Generation prompt
 

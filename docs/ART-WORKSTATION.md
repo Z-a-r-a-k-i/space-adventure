@@ -182,8 +182,18 @@ known-good revisions:
 $GodotAiRepository = "D:\Tools\godot-ai-plugin"
 $BlenderMcpRepository = "D:\Tools\blender_mcp"
 
-git -C $GodotAiRepository rev-parse HEAD
-git -C $BlenderMcpRepository rev-parse HEAD
+$ExpectedGodotAiCommit = "c26e4fb6582213324ef367760ba4414176ee472a"
+$ExpectedBlenderMcpCommit = "03004fd0216bfe5e0a3d9ac9b47d5efadc3d78c4"
+
+if ((git -C $GodotAiRepository rev-parse HEAD).Trim() -ne
+    $ExpectedGodotAiCommit) {
+    throw "Godot AI plugin revision does not match the documented pin."
+}
+
+if ((git -C $BlenderMcpRepository rev-parse HEAD).Trim() -ne
+    $ExpectedBlenderMcpCommit) {
+    throw "Blender MCP revision does not match the documented pin."
+}
 
 uv --directory "$BlenderMcpRepository\mcp" sync --frozen
 uv --directory "$BlenderMcpRepository\mcp" run blender-mcp --help

@@ -22,12 +22,14 @@ asset brief.
 
 ## Input image roles
 
-1. `../../../concepts/frontier-station-v1/poc-crew-lineup.png` — visual
-   language and rough weapon-subject reference; only the left-most Vanguard
-   and his carbine informed the subject.
-2. `vanguard-character-turnaround-v1.png` — approved character scale, palette,
-   outfit, and equipment reference; the character was not copied into the
-   output.
+1. `../../../concepts/frontier-station-v1/poc-crew-lineup.png` (SHA-256:
+   `2f2363d10defd95c4ee8bfe4a89decb168698f491415632b05cba24ec9544dd5`) —
+   visual language and rough weapon-subject reference; only the left-most
+   Vanguard and his carbine informed the subject.
+2. `vanguard-character-turnaround-v1.png` (SHA-256:
+   `66858ffda50cb37a113d6a3eeb66165fb57de02d60372a7b1551008bd349d0db`) —
+   approved character scale, palette, outfit, and equipment reference; the
+   character was not copied into the output.
 
 ## Generation prompt
 
@@ -36,7 +38,7 @@ Use case: stylized-concept
 Asset type: production reference sheet for the separate 3D game weapon `weapon.crew.vanguard_carbine.v1`
 Primary request: Create a brand-new model-ready reference sheet for the Vanguard's fixed two-handed carbine. Image 1 is a visual-language and rough weapon-subject reference: use the LEFT-MOST Vanguard's carbine as inspiration, but refine it into one coherent manufacturable weapon. Image 2 is an approved character scale, palette, and equipment reference; do not redesign the character.
 Scene/backdrop: perfectly clean pale cool-gray studio background divided into four equal panels by thin neutral divider lines; no environment
-Subject: exactly one broad retro-industrial science-fiction carbine, medium-long and clearly two-handed, with a sturdy squared receiver, short thick barrel, compact stock, primary pistol grip, clearly reachable forward support grip, inset vent cuts, restrained warm-gray armor plates over a dark navy/charcoal mechanical body, tiny sparse cyan status accents, mild practical wear. Preserve a clear line from stock through barrel and a readable muzzle opening. No loose magazine, ammunition, sling, scope, bayonet, shield, hands, or character.
+Subject: exactly one broad retro-industrial science-fiction carbine, medium-long and clearly two-handed, with a sturdy squared receiver, short thick barrel, compact stock, primary pistol grip, clearly reachable forward support grip, inset vent cuts, restrained warm-gray armor plates over a dark navy/charcoal mechanical body, tiny sparse cyan status accents, mild practical wear. Preserve a clear line from stock through barrel and a readable muzzle opening. No loose magazine, ammunition, sling, scope, bayonet, shield, full character, or hands holding the weapon; the only permitted human element is the small neutral forearm-and-hand scale silhouette specified below.
 Style/medium: polished stylized low-poly 3D hard-surface concept render, late-1990s Fallout-inspired industrial science-fiction with restrained cyberpunk accents, model-ready construction, broad readable shapes rather than tiny greebles
 Composition/framing: four consistent views of the exact same weapon at identical scale: strict left side profile, top view, front/muzzle view, and front-right three-quarter view; near-orthographic camera; entire weapon visible with generous padding. Include one small simple neutral human forearm-and-hand scale silhouette beside the side view only, not holding the weapon.
 Lighting/mood: even neutral studio lighting that reveals form and material separation; minimal soft grounding; no dramatic glow or fog

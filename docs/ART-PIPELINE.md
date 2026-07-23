@@ -158,8 +158,9 @@ Validation should check:
 - Missing textures, invalid paths, UV availability, and unexpected embedded data.
 - Skeleton hierarchy, bone count, weights, deformation coverage, and root behavior.
 - Required clips, clip duration, looping, root motion, and key-pose availability.
-- Combatant attack-profile completeness; unique attachment, grip, muzzle, and
-  contact markers; and marker parenting and orientation.
+- Combatant attack-profile completeness; source-applicable attachment, grip,
+  muzzle, and contact markers from `ATTACK-PRESENTATION.md`, including their
+  parenting and orientation.
 - Hand and holster alignment, two-handed support placement, weapon and body
   clearance, integrated aim/recoil pivots, and body-strike contact placement
   in the exact reviewed assembly.

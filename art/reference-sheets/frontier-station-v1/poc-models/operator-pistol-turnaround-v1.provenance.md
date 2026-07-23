@@ -22,9 +22,10 @@ asset brief.
 
 ## Input image roles
 
-1. `../../../concepts/frontier-station-v1/poc-crew-lineup.png` — Operator
-   identity, palette, visual language, and rough pistol-subject reference; only
-   the center character informed the subject.
+1. `../../../concepts/frontier-station-v1/poc-crew-lineup.png` (SHA-256:
+   `2f2363d10defd95c4ee8bfe4a89decb168698f491415632b05cba24ec9544dd5`) —
+   Operator identity, palette, visual language, and rough pistol-subject
+   reference; only the center character informed the subject.
 
 ## Generation prompt
 
@@ -33,7 +34,7 @@ Use case: stylized-concept
 Asset type: production reference sheet for the separate 3D game weapon `weapon.crew.operator_pistol.v1`
 Primary request: Create a brand-new model-ready reference sheet for the Operator's fixed compact pistol. Image 1 is the character, palette, visual-language, and rough weapon-subject reference: use the CENTER female Operator's pistol as inspiration, but refine it into one coherent manufacturable weapon. Do not include or redesign the character.
 Scene/backdrop: perfectly clean pale cool-gray studio background divided into four equal panels by thin neutral divider lines; no environment
-Subject: exactly one compact retro-industrial science-fiction sidearm with a short chunky barrel, squared slide/upper housing, comfortable primary grip, protected trigger, dark navy/charcoal mechanical body, restrained warm-gray protective plates, one or two tiny cyan status accents, mild practical wear, and a clearly modeled muzzle opening. It should suit a quick technical Operator rather than a heavy trooper: compact, agile, distinctive, but still robust and readable from an elevated tactical camera. No magazine beside it, ammunition, suppressor, scope, stock, shield, hands, or character.
+Subject: exactly one compact retro-industrial science-fiction sidearm with a short chunky barrel, squared slide/upper housing, comfortable primary grip, protected trigger, dark navy/charcoal mechanical body, restrained warm-gray protective plates, one or two tiny cyan status accents, mild practical wear, and a clearly modeled muzzle opening. It should suit a quick technical Operator rather than a heavy trooper: compact, agile, distinctive, but still robust and readable from an elevated tactical camera. No magazine beside it, ammunition, suppressor, scope, stock, shield, full character, or hands holding the weapon; the only permitted human element is the small neutral hand scale silhouette specified below.
 Style/medium: polished stylized low-poly 3D hard-surface concept render, late-1990s Fallout-inspired industrial science-fiction with restrained cyberpunk accents, model-ready construction, broad readable shapes rather than tiny greebles
 Composition/framing: four consistent views of the exact same pistol at identical scale: strict left side profile, top view, front/muzzle view, and front-right three-quarter view; near-orthographic camera; entire weapon visible with generous padding. Include one small simple neutral hand scale silhouette beside the side view only, not holding the weapon.
 Lighting/mood: even neutral studio lighting that reveals form and material separation; minimal soft grounding; no dramatic glow or fog

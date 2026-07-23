@@ -22,8 +22,9 @@ brief.
 
 ## Input image roles
 
-1. `../../../concepts/frontier-station-v1/poc-crew-lineup.png` — subject
-   identity, outfit language, palette, proportions, and rendering-style
+1. `../../../concepts/frontier-station-v1/poc-crew-lineup.png` (SHA-256:
+   `2f2363d10defd95c4ee8bfe4a89decb168698f491415632b05cba24ec9544dd5`) —
+   subject identity, outfit language, palette, proportions, and rendering-style
    reference; only the right-most Protector informed the subject. The shield
    was excluded.
 
