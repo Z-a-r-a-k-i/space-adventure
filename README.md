@@ -4,11 +4,11 @@ SpaceAdventure is the working title for a single-player 3D science-fiction party
 
 ## Repository status
 
-Phase 1, the C# technical bootstrap, is complete. The Phase 2 start-to-destination walking skeleton is implemented, including its automated and graphical verification surfaces and a greybox wall-cutaway POC. A human playthrough is still pending, so Phase 2 has not passed its exit gate and Phase 3 remains deferred.
+Phase 1, the C# technical bootstrap, and the Phase 2 start-to-destination walking skeleton are complete. Phase 2 includes automated and graphical verification, a greybox wall-cutaway POC, and an owner-operated physical-input playthrough completed on 2026-07-24. Phase 3, the party and conversation slice, is active.
 
 The current main scene is a small authored station route, not the complete 8–12 minute POC. It provides one protagonist, point movement over a real navigation mesh, tactical pause, a fixed survivor exchange, an optional service-terminal interaction, an evacuation-airlock objective, and explicit completion. Party control, kit selection, recruitment, branching dialogue, combat, inventory, and runtime model dialogue are later phases.
 
-The next action is a human playthrough of the Phase 2 route and correction of any usability blocker it reveals. Follow the short protocol in `docs/PLAYTESTS.md`; milestone sequencing remains in `docs/ROADMAP.md`.
+The next milestone work is the Phase 3 party and conversation slice. The validated Phase 2 protocol and record remain in `docs/PLAYTESTS.md`; milestone sequencing remains in `docs/ROADMAP.md`.
 
 ## Agreed foundation
 

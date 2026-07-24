@@ -1,6 +1,6 @@
 # SpaceAdventure art-production continuation report
 
-Status: bounded Phase 2 continuation reconciled; provisional wall selection pending owner review; experiment incomplete
+Status: Phase 2 gate passed after merge; provisional wall selection pending owner review; experiment incomplete
 
 Date: 2026-07-24
 
@@ -14,6 +14,24 @@ Baseline: `origin/main` at
 Original art-run baseline:
 `1f3d941800a05398221026da53108668c22d12d6`
 
+## Post-merge Phase 2 gate closure
+
+After PR #4 merged as `94f4e5b`, the project owner completed the documented
+fresh-process Phase 2 route protocol on a second machine. The owner supplied
+physical keyboard and pointer input through AnyDesk; no agent input injection
+was used. Physical target clicking, pause and pending-order replacement,
+camera controls, wall cutaway and restoration, survivor targeting,
+dialogue-button clicking, optional terminal inspection, and airlock completion
+were exercised. The owner validated the run, reported that it worked well, and
+identified no blocker.
+
+The tested live route retained its intended greybox presentation. Staged and
+machine-local production art was not expected in that gameplay scene, and its
+absence did not block route usability or completion. This human record closes
+the Phase 2 exit gate and activates Phase 3. It does not complete the separate
+generator bake-off, accept the provisional wall selection, or retroactively
+accept the six excluded character and weapon attempts.
+
 ## Authorization and phase scope
 
 The project owner authorized autonomous continuation, provisional selection,
@@ -26,12 +44,13 @@ Tripo exports remain on this dedicated art workstation at their run-local
 expected paths, byte sizes, hashes, and provenance manifests. Off-machine
 online storage is deferred; Tripo remains only a best-effort recovery source.
 
-The latest-main rebase did not pass the Phase 2 gameplay gate:
+At the time of the retained bake-off branch's pre-merge reconciliation, the
+latest-main rebase had not passed the Phase 2 gameplay gate:
 
-- Phase 2 is implemented but its required human playthrough remains pending.
-- The Phase 2 exit gate has not passed.
+- Phase 2 was implemented but its required human playthrough remained pending.
+- The Phase 2 exit gate had not passed.
 - Commit `71ea25e` adds ADR 0016's brief-scoped offline-production lane, but it
-  does not activate Phase 3 or later gameplay integration.
+  did not activate Phase 3 or later gameplay integration.
 - Production-lane refinement for the three bake-off IDs remains blocked until
   the entire comparison is complete and frozen.
 
