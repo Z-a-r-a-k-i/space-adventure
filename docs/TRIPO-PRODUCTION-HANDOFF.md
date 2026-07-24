@@ -40,8 +40,9 @@ spending credits or inventing content.
    name, and export as untrusted input until Blender and Godot review pass.
 4. Preserve the raw candidate unchanged in the ignored run-local workstation
    cache before editing, segmenting, remeshing, rigging, or converting it.
-   Commit its path, size, hash, and provenance manifest rather than the raw
-   payload.
+   Commit its provider/task reference, path, size, and provenance manifest
+   rather than the raw payload. Do not content-hash the raw or another large 3D
+   binary.
 5. Complete every mesh-changing operation before final rigging. Segmentation,
    part completion, Smart Low-Poly, quad conversion, and other remeshing
    reconstruct geometry and invalidate skeletal data.
@@ -95,10 +96,12 @@ The art worktree must be separate from every active gameplay worktree. Follow
 and a distinct MCP port. During offline production, do not edit
 `game/project.godot`, live gameplay scenes, shared content schemas, or imported-
 asset registries. Keep staged GLBs and the local review project under
-`artifacts/reviews/<asset-id>/<asset-hash>/` and
+`artifacts/reviews/<asset-id>/<asset-revision>/` and
 `artifacts/godot-asset-gallery/<worktree-id>/`. Those ignored paths are review
 staging, not publication. Moving a GLB to `game/Assets/Published/` or adding
 shared gallery infrastructure requires a separately assigned integration owner.
+For a Tripo-backed asset, `<asset-revision>` is exactly the repository `run_id`;
+the Tripo `task_id` is a separate field used for provider recovery.
 
 The provider-comparison work authorized before the Phase 2 human-playthrough
 gate closes is the bounded bake-off for:
@@ -261,9 +264,10 @@ For every selected candidate:
 5. Generate or repair textures only after topology and parts are stable.
    Preserve palette regions and remove baked lighting; tiny surface detail must
    not carry gameplay readability.
-6. Download and hash a static GLB with materials and textures before using Auto
-   Rig. Keep any additional OBJ or FBX only when it provides information the
-   GLB does not.
+6. Download and record a static GLB with materials and textures before using
+   Auto Rig. Record its task/run reference, path, filename, export settings,
+   and byte size without computing a content hash. Keep any additional OBJ or
+   FBX only when it provides information the GLB does not.
 7. Import a copy into Blender. Never publish directly from Tripo or a provider
    bridge into Godot.
 
@@ -291,8 +295,10 @@ For a compatible neutral-pose humanoid or creature candidate:
    silhouette, or timing needs.
 4. Request in-place motion where Studio exposes it. Root translation from a
    provider clip is not gameplay authority.
-5. Export the rigged base plus useful preset clips as GLB or FBX and hash every
-   file. Preserve the pre-rig static export beside them.
+5. Export the rigged base plus useful preset clips as GLB or FBX and record
+   every filename, task/version reference, export setting, path, and byte size.
+   Do not separately hash those large binary files. Preserve the pre-rig static
+   export beside them.
 
 Tripo's skeleton, skin weights, and preset clips are donor or diagnostic inputs.
 Do not repeat animation generation across all four humans until one donor
@@ -405,29 +411,40 @@ art/generated/<asset-id>/<run-id>/raw/
 - Tripo Studio plan and privacy state;
 - exact live model, settings, task ID, and visible credit use;
 - input filenames and SHA-256 hashes;
-- output filenames and SHA-256 hashes;
+- output filenames, byte sizes, and provider task/version references;
 - every Studio operation and version branch;
 - export formats;
 - source-image ownership and provider licensing URLs with retrieval date; and
 - known defects and the next intended Blender operation.
 
-`raw-export.manifest.json` records the Tripo task ID and one entry for every
-cached payload, including its expected cache-relative path, original filename,
-byte size, SHA-256, export format and settings, and last successful local
-verification date. The manifest also records credit use and
-plan/privacy/licensing state. It records a non-secret off-machine archive
-locator and restore verification when such storage is introduced. Do not
+New or updated `raw-export.manifest.json` files use schema version 2 and record
+top-level `run_id` and provider `task_id` fields plus one entry for every cached
+payload. Each entry includes its expected cache-relative path, original
+filename, byte size, export format and settings,
+`local_presence_checked_utc`, and `local_presence_status` (`present` or
+`missing`). They omit binary content hashes. The manifest also records credit
+use and plan/privacy/licensing state. It records a non-secret off-machine
+archive locator and restore check when such storage is introduced. Existing
+schema-version-1 hash fields are historical and are not recomputed. Do not
 record a private Studio URL, session URL, cookie, token, account identifier,
 or temporary download link.
 
 The raw cache is hydrated manually from a locally retained export, Tripo
-Studio, or a future private archive. Before Blender uses it, verify both its
-byte size and SHA-256 against the committed manifest. A missing cache entry is
-a clear source-hydration requirement, not permission to generate a substitute.
-Tripo Studio history is a best-effort recovery source: its advertised storage
-features are not a durability guarantee. Keep each local raw export until an
-off-machine copy is verified or the project owner explicitly approves
-eviction.
+Studio, or a future private archive. Before Blender uses it, verify that the
+manifested path exists and compare its byte size. Do not read the whole file
+merely to calculate or verify a hash. A missing cache entry is a clear
+source-hydration requirement, not permission to generate a substitute. An
+unexpected size requires manual confirmation against the trusted local copy or
+provider task. Tripo Studio history is a best-effort recovery source: its
+advertised storage features are not a durability guarantee. Keep each local
+raw export until an off-machine copy is checked or the project owner explicitly
+approves eviction.
+
+Presence and size establish cache availability only. Same-size corruption or
+substitution can pass those checks. If corruption is suspected or an
+integrity-sensitive restore is required, hydrate from the exact Tripo task or a
+trusted local/private-archive copy and run the normal structural Blender and
+glTF validation gates. Do not hash the large binary merely to compare it.
 
 Normal clones, CI, game builds, runtime imports, and published assets must be
 self-contained and must not require Tripo access or the raw cache.
@@ -435,7 +452,10 @@ self-contained and must not require Tripo access or the raw cache.
 Accepted editable sources later move to `art/source/<asset-id>/`. Published GLBs
 move to `game/Assets/Published/` only after the normal validation and approval
 gates. Review evidence belongs under
-`artifacts/reviews/<asset-id>/<asset-hash>/`.
+`artifacts/reviews/<asset-id>/<asset-revision>/`. Existing hash-keyed review
+directories remain valid historical evidence and do not need renaming.
+Provider-backed review manifests and findings set `asset_revision` to the exact
+repository `run_id` and record the provider `task_id` separately.
 
 ## Rejection and stop conditions
 
