@@ -208,3 +208,40 @@ any later quality-oriented work is recorded as production work and excluded
 from the bake-off scorecard. No production-lane work may begin for any of the
 three bake-off asset IDs until the whole experiment's scorecards, baselines,
 and result are finalized and frozen.
+
+## ADR 0017 — Tripo raw exports use an ignored workstation cache
+
+Status: accepted by the project owner on 2026-07-24.
+
+Untouched Tripo exports are retained at
+`art/generated/<asset-id>/<run-id>/raw/` on the dedicated art workstation, but
+that directory is ignored by Git. Raw Tripo payloads are production inputs,
+not game-runtime dependencies, and do not belong in the repository or its LFS
+history by default. This decision does not set storage policy for another
+provider.
+
+Each run commits a `raw-export.manifest.json` containing the provider and task
+ID plus one entry for every cached payload: expected cache-relative path,
+original filename, format and export settings, byte size, SHA-256, and last
+successful local verification. The manifest also records
+plan/privacy/licensing state and credit use. Prompts, approved inputs,
+settings, selection decisions, processing records, editable Blender sources,
+and publishable outputs remain versioned under the normal pipeline rules.
+
+Raw-dependent Blender tooling must refuse a missing or hash-mismatched cache
+file. Normal clones, CI, game builds, and runtime publication do not fetch
+from Tripo and do not require the raw cache. The existing art workstation is
+the authoritative local cache while art production remains on that machine.
+
+Tripo task IDs and Studio history are best-effort recovery aids, not a durable
+archive. Tripo's terms disclaim an obligation to store outputs and allow
+storage limits or deletion. Off-machine archival is deferred; when the owner
+adds private online storage, the manifest records a non-secret archive locator
+and verified restore date. Until then, the accepted risk is that simultaneous
+loss of the workstation cache and provider copy makes the untouched raw export
+unrecoverable, while retained Blender sources and game assets remain usable.
+
+Do not delete a locally cached raw export merely because its manifest is
+committed. Eviction requires either a verified off-machine copy or a separate
+owner decision. Never commit provider session URLs, cookies, tokens, account
+identifiers, or temporary download links.

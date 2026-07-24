@@ -38,8 +38,10 @@ spending credits or inventing content.
    bounded generator bake-off is a separate explicit authorization.
 3. Treat every Tripo mesh, material, skeleton, weight, animation, pivot, scale,
    name, and export as untrusted input until Blender and Godot review pass.
-4. Preserve the raw candidate before editing, segmenting, remeshing, rigging,
-   or converting it.
+4. Preserve the raw candidate unchanged in the ignored run-local workstation
+   cache before editing, segmenting, remeshing, rigging, or converting it.
+   Commit its path, size, hash, and provenance manifest rather than the raw
+   payload.
 5. Complete every mesh-changing operation before final rigging. Segmentation,
    part completion, Smart Low-Poly, quad conversion, and other remeshing
    reconstruct geometry and invalidate skeletal data.
@@ -174,9 +176,9 @@ every input crop before upload.
    as fused legs, missing back geometry, wrong weapon silhouette, or unusable
    asymmetry. One to three raw candidates will often be enough, but production
    work has no general hard candidate cap.
-7. Preserve the untouched result and its render before any later Studio
-   operation. Use Studio history's **Save as New Version** before a destructive
-   branch when available.
+7. Preserve the untouched result in the ignored run-local cache and preserve
+   its review evidence before any later Studio operation. Use Studio history's
+   **Save as New Version** before a destructive branch when available.
 8. Select one promising source for active cleanup at a time. Invest
    subscription credits in completing that source properly: useful
    segmentation, part completion, topology or texture branches, rig
@@ -372,21 +374,27 @@ pre-approve the 3D candidate, rig, or animations.
 
 ## Repository deliverables
 
-For each Tripo run, retain:
+For each Tripo run, commit:
 
 ```text
 art/generated/<asset-id>/<run-id>/
   input/
     prompt.txt
     <lossless-view-crops>
-  raw/
-    <untouched-static-export>
-    <optional-rigged-or-animation-donor-exports>
   evidence/
     settings/
     studio-review/
+  raw-export.manifest.json
   metadata.md
   selection.md
+```
+
+Retain the provider payload locally at the matching ignored cache path:
+
+```text
+art/generated/<asset-id>/<run-id>/raw/
+  <untouched-static-export>
+  <optional-rigged-or-animation-donor-exports>
 ```
 
 `metadata.md` records:
@@ -402,6 +410,27 @@ art/generated/<asset-id>/<run-id>/
 - export formats;
 - source-image ownership and provider licensing URLs with retrieval date; and
 - known defects and the next intended Blender operation.
+
+`raw-export.manifest.json` records the Tripo task ID and one entry for every
+cached payload, including its expected cache-relative path, original filename,
+byte size, SHA-256, export format and settings, and last successful local
+verification date. The manifest also records credit use and
+plan/privacy/licensing state. It records a non-secret off-machine archive
+locator and restore verification when such storage is introduced. Do not
+record a private Studio URL, session URL, cookie, token, account identifier,
+or temporary download link.
+
+The raw cache is hydrated manually from a locally retained export, Tripo
+Studio, or a future private archive. Before Blender uses it, verify both its
+byte size and SHA-256 against the committed manifest. A missing cache entry is
+a clear source-hydration requirement, not permission to generate a substitute.
+Tripo Studio history is a best-effort recovery source: its advertised storage
+features are not a durability guarantee. Keep each local raw export until an
+off-machine copy is verified or the project owner explicitly approves
+eviction.
+
+Normal clones, CI, game builds, runtime imports, and published assets must be
+self-contained and must not require Tripo access or the raw cache.
 
 Accepted editable sources later move to `art/source/<asset-id>/`. Published GLBs
 move to `game/Assets/Published/` only after the normal validation and approval
@@ -482,3 +511,12 @@ Retrieved 2026-07-23:
 - [Tripo auto-rig workflow](https://www.tripo3d.ai/blog/how-to-rig-an-ai-generated-character)
   recommends a clean neutral mesh, joint preview, and export to Blender or an
   engine for further correction.
+
+Retrieved 2026-07-24:
+
+- [Tripo Terms of User Agreement](https://www.tripo3d.ai/terms) states that
+  Tripo has no obligation to store inputs or outputs, may impose storage
+  limits, and may delete account content when service access terminates.
+- [Tripo pricing](https://www.tripo3d.ai/pricing) advertises plan-dependent
+  model storage and edit history. Those product features do not override the
+  storage disclaimers in the terms.

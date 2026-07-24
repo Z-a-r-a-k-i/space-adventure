@@ -256,8 +256,10 @@ pair it with silhouette, placement, iconography, or animation.
 - Normalize scale, pivot, axes, parts, topology, UVs, material IDs, and naming
   before review.
 - Never publish directly from a provider or provider plugin into Godot.
-- Preserve the raw candidate, prompt, input hashes, provider model/version,
-  settings, job ID or seed when available, and licensing record.
+- For Tripo, preserve the raw candidate unchanged in the ignored run-local
+  workstation cache. Commit its expected path, size, SHA-256, prompt, input
+  hashes, provider model/version, settings, job ID or seed when available, and
+  licensing record. Another provider requires its own recorded storage policy.
 - Use subscription credits to improve selected assets through named,
   reviewable operations rather than stopping at the first viable result or
   generating unreviewed variants. The bounded bake-off retains its separate

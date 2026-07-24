@@ -1,8 +1,54 @@
 # 3D generator bake-off — July 2026
 
-Status: planned, bounded, and non-gating  
-Revision: 2026-07-23  
+Status: partially executed, bounded, and non-gating; no provider decision
+
+Revision: 2026-07-24
+
 Scope: visual preproduction only
+
+## Execution status — 2026-07-24
+
+The bounded continuation has produced two Tripo rows and one preflight
+blocker. It has **not** completed the three-way experiment and does not select
+a provider:
+
+| Asset | Tripo | Meshy | Blender-only baseline | Current decision |
+|---|---|---|---|---|
+| `prop.station.service_terminal.v1` | One 55-credit candidate; raw export preserved in the ignored workstation cache; Blender/Godot tactical review completed | Not run; no result or documented provider failure | Editable comparator exists, but its 30-minute authoring clock was not recorded | Open. The Tripo result is useful as a renderer/readability comparison but fails the experiment hard gate because 42 boundary and 64 non-manifold edges remain |
+| `prop.station.wall_utility.v1` | One 55-credit candidate; raw export preserved in the ignored workstation cache; passes Blender and isolated Godot gates | Not run; no result or documented provider failure | Not run | Open. Tripo candidate is provisionally strongest among completed evidence, pending the missing comparator and owner review |
+| `machine.security_drone.body.v1` | Not run; dedicated approved provider-neutral body-only input pack is missing | Not run | Not run | Blocked at preflight with zero credits; the production ram-drone and utility-walker references are invalid substitutes |
+
+The exact terminal and wall task IDs, settings, credit records, raw-export
+manifests, cleanup history, and review evidence are committed under
+`art/generated/`. The untouched raw payloads remain at the matching ignored
+run-local paths on the dedicated workstation. The drone blocker is retained at
+`art/generated/machine.security_drone.body.v1/PREFLIGHT-BLOCKED-2026-07-24.md`.
+The retained terminal and wall run IDs predate commit `71ea25e`'s mandatory
+`__bakeoff__` token. Their legacy paths remain unchanged for provenance; every
+new experiment run must use the current naming format.
+
+### Provisional surviving-candidate score
+
+Only candidates that pass the hard gates are scored. The service terminal is
+therefore not scored. The wall-utility score is provisional because there is
+no Meshy result or Blender-only timing baseline to compare against it.
+
+| Category | Weight | Wall utility | Evidence note |
+|---|---:|---:|---|
+| Tactical silhouette and role | 25% | 4 | Reads as wall infrastructure at 7.5, 14.5, and 20 m |
+| Match to the visual bible | 15% | 4 | Preserves the approved grille, enclosure, copper runs, clamps, and restrained cyan accent |
+| Cleanup efficiency | 20% | 4 | Final deterministic cleanup took 27.853 seconds; cumulative automated repair trials took 272.018 seconds and active human cleanup remained under the cap |
+| Geometry and editability | 15% | 4 | 2,764 triangles, one mesh, closed spatial-weld diagnostic, flat rear mounting plane |
+| UV and material control | 10% | 4 | Two materials and one embedded 1024-pixel base/normal/RM texture set |
+| GLB and Godot behavior | 10% | 5 | Exact 1.20 × 0.80 × 0.22 m bounds, correct signed depth, no import or scene-validation errors |
+| Provenance and licensing | 5% | 5 | Inputs, task, settings, privacy state, credits, raw/derived hashes, and evidence retained |
+| **Weighted score** | **100%** | **4.15 / 5** | Provisional; not a provider adoption decision |
+
+Known experiment gaps are the missing Meshy result or documented provider
+failure for all three rows, missing wall/drone Blender baselines, missing
+terminal baseline timing, missing provider-generation elapsed times, and the
+blocked drone input pack. These gaps do not affect the separate Phase 2 human
+playthrough gate.
 
 ## Decision question
 
@@ -82,7 +128,9 @@ whole-scene image-to-3D inputs. Crop or redraw the individual subject first.
 2. Record the input hashes and provider settings before generation.
 3. Allow at most two raw generations per provider per asset.
 4. Select at most one raw candidate per provider per asset for cleanup.
-5. Retain the raw selected candidate unchanged.
+5. Retain the raw selected candidate unchanged. Tripo runs use the ignored
+   run-local cache and commit its size, SHA-256, expected path, and task ID;
+   another provider requires its own recorded storage policy.
 6. Normalize a copy in Blender 5.2 LTS.
 7. Stop generated-candidate cleanup after 30 minutes of active Blender work.
 8. Produce one Blender-only baseline with a 30-minute active-work cap.
@@ -162,7 +210,7 @@ Blender baseline in useful active time without failing a hard gate.
 
 ## Provenance record
 
-Create a metadata file beside each retained raw candidate containing:
+Create tracked metadata at the run root containing:
 
 - asset ID and run ID;
 - UTC generation date;
@@ -177,16 +225,27 @@ Create a metadata file beside each retained raw candidate containing:
 - source-image ownership or license;
 - provider terms and licensing URLs with retrieval date;
 - whether the provider may use uploads or outputs for training;
-- download format and any provider-side remesh/retexture stages; and
+- download format and any provider-side remesh/retexture stages;
 - all subsequent Blender editing steps.
+
+For Tripo, also commit `raw-export.manifest.json` with the task ID and one
+entry per ignored cached payload containing its path, filename, format,
+settings, byte size, SHA-256, and last successful local verification. Another
+provider follows its own recorded storage decision.
 
 Never store API keys, authentication cookies, account IDs, personal billing
 data, or private provider URLs in the repository.
 
 ## Storage and publication
 
-- Raw and normalized candidate sources follow
+- Tracked metadata, manifests, inputs, and normalized candidate sources follow
   `art/generated/<asset-id>/<run-id>/`.
+- Untouched Tripo payloads follow the ignored local cache path
+  `art/generated/<asset-id>/<run-id>/raw/`. Tripo is a best-effort recovery
+  source, not the archive. Keep the cache entry until an off-machine copy is
+  verified or the project owner approves eviction.
+- Do not apply ADR 0017 to another provider without a recorded storage
+  decision.
 - Editable accepted sources follow `art/source/<asset-id>/`.
 - Review captures and manifests follow
   `artifacts/reviews/<asset-id>/<asset-hash>/`.
