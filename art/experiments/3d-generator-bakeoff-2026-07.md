@@ -100,8 +100,8 @@ quality-oriented Tripo work beyond them uses an
 `<asset-id>__prod__tripo__<model>__<yyyy-mm-dd>__<nn>` run ID, follows an
 accepted production-ready art brief, and is excluded from this experiment's
 cleanup clock, scorecard, and result. Production-lane work for all three IDs is
-blocked until every provider result, Blender baseline, scorecard, and final
-experiment decision is complete and frozen.
+blocked until every provider result or documented provider failure, Blender
+baseline, scorecard, and final experiment decision is complete and frozen.
 
 ## Cleanup clock
 

@@ -178,11 +178,12 @@ shared content schemas, or imported-asset registries without a separately
 assigned integration-owner task.
 
 “Accepted” is a recorded approval, not an agent inference. The brief must name
-its status as `accepted for offline source production`, approval date, approver,
-authorized asset ID, and any blocked gameplay fields. The project owner or an
-art owner explicitly delegated in a versioned task or decision may approve it.
-Authoring or being assigned a brief does not grant approval authority, and a
-production agent may not self-approve unless that delegation is explicit.
+its status as `accepted for offline source production`, approval date,
+approver, authorized asset ID and operations, any blocked gameplay fields,
+production owner, and dedicated worktree. The project owner or an art owner
+explicitly delegated in a versioned task or decision may approve it. Authoring
+or being assigned a brief does not grant approval authority, and a production
+agent may not self-approve unless that delegation is explicit.
 
 The Tripo Studio subscription is a prepaid production resource, not a scarce
 per-request API budget. There is no general hard attempt cap and the agent does
