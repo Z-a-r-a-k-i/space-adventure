@@ -33,7 +33,7 @@ Exit: a clean checkout can run the same minimal typed command through a core tes
 
 ## Phase 2 — start-to-destination walking skeleton
 
-Status: implemented; automated and graphical verification are implemented, but the required human playthrough is pending. Phase 2 has not passed its exit gate.
+Status: completed on 2026-07-24. Automated and graphical verification and the required owner-operated physical-input playthrough have passed.
 
 - Greybox the compact station route with a start and evacuation-airlock destination.
 - Add one controllable protagonist, elevated tactical camera, point movement, navigation, interaction, objective state, and completion.
@@ -42,7 +42,7 @@ Status: implemented; automated and graphical verification are implemented, but t
 
 Implemented evidence includes the authored `station_route.tscn`, versioned `station-route.json` content, pure-core route tests and CLI scenario, real-Godot `station-route` headless smoke, runtime observation/input helpers, the graphical control path, the opaque cached-AABB wall-cutaway POC, and its deterministic 1280×720 PNG/JSON capture command. The automated route performs the mandatory survivor exchange, optional terminal inspection, and airlock completion through the same typed commands used by human input. The capture keeps gameplay paused while exercising settled cut → clear-view restore → re-cut states through live camera yaw, then records the original final view. It provides repeatable lifecycle and final-frame evidence, not proof of perceived smoothness or absence of flicker and not a replacement for human judgment.
 
-Exit remains: a human and an agent can independently move from the start, interact, and reach the destination through the real Godot level. The human must also confirm that walls cut away and restore readably across normal camera movement. The agent path is implemented; record a human playthrough and resolve any usability blocker before changing this phase to completed or beginning Phase 3.
+Exit passed: a human and an agent independently moved from the start, interacted, and reached the destination through the real Godot level. On 2026-07-24 the owner completed the documented fresh-process physical-input protocol, confirmed readable wall cutaway and restoration across normal camera movement, and reported no usability blocker.
 
 ### Bounded visual preproduction spike
 
@@ -70,7 +70,7 @@ Exit: each of the three briefs has bounded Tripo, Meshy, and Blender evidence or
 
 ## Phase 3 — party and conversation slice
 
-Status: deferred until the Phase 2 human-playthrough gate passes.
+Status: active. The Phase 2 human-playthrough gate passed on 2026-07-24.
 
 - Add protagonist-kit selection. The presentation weapons are already selected
   as Vanguard carbine, Operator pistol, and Protector shotgun; define their

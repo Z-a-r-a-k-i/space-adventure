@@ -24,8 +24,9 @@ approver, asset ID, authorized offline scope, phase-blocked fields, and
 dedicated worktree. Only the project owner or an explicitly delegated art owner
 may grant it; the brief author or production agent cannot infer approval.
 
-Until the Phase 2 human-playthrough gate passes, provider-comparison evidence
-remains limited to the three entries in the bounded generator bake-off:
+The Phase 2 human-playthrough gate passed on 2026-07-24. The separate,
+non-gating provider comparison remains limited to the three entries in the
+bounded generator bake-off:
 
 - `prop.station.service_terminal.v1`;
 - `prop.station.wall_utility.v1`; and
