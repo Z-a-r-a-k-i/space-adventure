@@ -100,6 +100,8 @@ asset registries. Keep staged GLBs and the local review project under
 `artifacts/godot-asset-gallery/<worktree-id>/`. Those ignored paths are review
 staging, not publication. Moving a GLB to `game/Assets/Published/` or adding
 shared gallery infrastructure requires a separately assigned integration owner.
+For a Tripo-backed asset, `<asset-revision>` is exactly the repository `run_id`;
+the Tripo `task_id` is a separate field used for provider recovery.
 
 The provider-comparison work authorized before the Phase 2 human-playthrough
 gate closes is the bounded bake-off for:
@@ -416,14 +418,16 @@ art/generated/<asset-id>/<run-id>/raw/
 - known defects and the next intended Blender operation.
 
 New or updated `raw-export.manifest.json` files use schema version 2 and record
-the Tripo task ID plus one entry for every cached payload, including its
-expected cache-relative path, original filename, byte size, export format and
-settings, and last successful local presence check. They omit binary content
-hashes. The manifest also records credit use and plan/privacy/licensing state.
-It records a non-secret off-machine archive locator and restore check when such
-storage is introduced. Existing schema-version-1 hash fields are historical
-and are not recomputed. Do not record a private Studio URL, session URL,
-cookie, token, account identifier, or temporary download link.
+top-level `run_id` and provider `task_id` fields plus one entry for every cached
+payload. Each entry includes its expected cache-relative path, original
+filename, byte size, export format and settings,
+`local_presence_checked_utc`, and `local_presence_status` (`present` or
+`missing`). They omit binary content hashes. The manifest also records credit
+use and plan/privacy/licensing state. It records a non-secret off-machine
+archive locator and restore check when such storage is introduced. Existing
+schema-version-1 hash fields are historical and are not recomputed. Do not
+record a private Studio URL, session URL, cookie, token, account identifier,
+or temporary download link.
 
 The raw cache is hydrated manually from a locally retained export, Tripo
 Studio, or a future private archive. Before Blender uses it, verify that the
@@ -450,6 +454,8 @@ move to `game/Assets/Published/` only after the normal validation and approval
 gates. Review evidence belongs under
 `artifacts/reviews/<asset-id>/<asset-revision>/`. Existing hash-keyed review
 directories remain valid historical evidence and do not need renaming.
+Provider-backed review manifests and findings set `asset_revision` to the exact
+repository `run_id` and record the provider `task_id` separately.
 
 ## Rejection and stop conditions
 

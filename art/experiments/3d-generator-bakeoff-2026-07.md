@@ -231,11 +231,12 @@ Create tracked metadata at the run root containing:
 - download format and any provider-side remesh/retexture stages;
 - all subsequent Blender editing steps.
 
-For Tripo, also commit a schema-version-2 `raw-export.manifest.json` with the
-task ID and one entry per ignored cached payload containing its path, filename,
-format, settings, byte size, and last successful local presence check. Omit
-binary hash fields. Another provider follows its own recorded storage
-decision.
+For Tripo, also commit a schema-version-2 `raw-export.manifest.json` with
+top-level `run_id` and provider `task_id` fields. Each ignored cached-payload
+entry contains its path, filename, format, settings, byte size,
+`local_presence_checked_utc`, and `local_presence_status` (`present` or
+`missing`). Omit binary hash fields. Another provider follows its own recorded
+storage decision.
 
 Never store API keys, authentication cookies, account IDs, personal billing
 data, or private provider URLs in the repository.
@@ -253,7 +254,9 @@ data, or private provider URLs in the repository.
 - Editable accepted sources follow `art/source/<asset-id>/`.
 - Review captures and manifests follow
   `artifacts/reviews/<asset-id>/<asset-revision>/`. Existing hash-keyed
-  directories remain valid historical evidence.
+  directories remain valid historical evidence. For a provider-backed
+  candidate, `<asset-revision>` is exactly the repository `run_id`; review
+  findings record that value and keep the provider `task_id` separate.
 - Nothing enters `game/Assets/Published/` solely because it won this experiment.
   It must complete the normal asset lifecycle and receive the required review.
 - Interaction nodes, collision, navigation, and gameplay stable IDs remain

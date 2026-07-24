@@ -220,13 +220,15 @@ not game-runtime dependencies, and do not belong in the repository or its LFS
 history by default. This decision does not set storage policy for another
 provider.
 
-Each run commits a `raw-export.manifest.json` containing the provider and task
-ID plus one entry for every cached payload: expected cache-relative path,
-original filename, format and export settings, byte size, and last successful
-local presence check. The manifest also records
-plan/privacy/licensing state and credit use. Prompts, approved inputs,
-settings, selection decisions, processing records, editable Blender sources,
-and publishable outputs remain versioned under the normal pipeline rules.
+Each run commits a `raw-export.manifest.json` containing the provider,
+top-level repository run ID, and provider task ID plus one entry for every
+cached payload: expected cache-relative path, original filename, format and
+export settings, byte size,
+`local_presence_checked_utc`, and `local_presence_status` (`present` or
+`missing`). The manifest also records plan/privacy/licensing state and credit
+use. Prompts, approved inputs, settings, selection decisions, processing
+records, editable Blender sources, and publishable outputs remain versioned
+under the normal pipeline rules.
 
 Raw-dependent Blender tooling must refuse a missing cache file and flag an
 unexpected byte size for manual review. It must not read an entire raw payload
@@ -268,6 +270,13 @@ When integrity-sensitive recovery is needed or corruption is suspected,
 restore the exact task export or another trusted local/private-archive copy,
 then perform the normal structural import and validation checks. Do not hash
 the large file merely to compare it.
+
+The repository `run_id` is the canonical `asset_revision` for every
+provider-backed review. The provider `task_id` is recorded separately for
+generation and recovery. Review directories and findings use the `run_id`, so
+they join directly to the top-level `run_id` in `raw-export.manifest.json`;
+tracked derivatives additionally record their repository path and introducing
+Git commit.
 
 Tracked binary sources and published outputs rely on normal Git/LFS revision
 identity and repository history. The art pipeline does not add a second

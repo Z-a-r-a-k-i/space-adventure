@@ -166,24 +166,35 @@ artifacts/reviews/<asset-id>/<asset-revision>/
 artifacts/godot-asset-gallery/<worktree-id>/
 ```
 
+`asset_revision` is the canonical review join key. For a provider-backed
+candidate it is exactly the repository `run_id`, never the provider `task_id`.
+Use that `run_id` as the `<asset-revision>` path component, record it at the
+top level of `raw-export.manifest.json`, and include it in every review finding.
+The provider `task_id` remains a separate generation and recovery reference in
+the same manifest. Tracked normalized sources and published outputs retain the
+provider run's `asset_revision` and additionally record their repository path
+and introducing Git commit.
+
 Untouched Tripo exports are not repository deliverables. Download each export
 before processing and retain it at the documented run-local `raw/` path on the
 dedicated art workstation. Commit a neighboring `raw-export.manifest.json`
-with the provider task ID and one entry per cached payload, including its
-expected relative path, original filename, byte size, export settings, and last
-local presence check. Reference the ignored payload by provider, task/run ID,
-path, filename, and size; these fields prove availability, not content
-identity, because same-size corruption or substitution can pass silently. Do
-not stream the file merely to compute or verify a content hash. If integrity is
-in doubt, restore the exact provider-task export or another trusted copy and
-run the normal structural import and validation checks. New or updated
-manifests use schema version 2 and omit raw-binary hash fields. Existing
-schema-version-1 hashes are historical metadata and are not recomputed. Record
-privacy/licensing state at the run level. Tripo recovery is best-effort; it
-does not replace the local cache. When an off-machine archive is introduced,
-add its non-secret locator and restore-check date to the manifest. Normal
-clones, CI, game builds, and runtime publication must not depend on either the
-cache or Tripo. This policy does not silently apply to another provider.
+with top-level `run_id` and provider `task_id` fields plus one entry per cached
+payload. Each entry includes its expected relative path, original filename,
+byte size, export settings, `local_presence_checked_utc`, and
+`local_presence_status` (`present` or `missing`). Reference the ignored payload
+by provider, run ID, task ID, path, filename, and size; these fields prove
+availability, not content identity, because same-size corruption or
+substitution can pass silently. Do not stream the file merely to compute or
+verify a content hash. If integrity is in doubt, restore the exact
+provider-task export or another trusted copy and run the normal structural
+import and validation checks. New or updated manifests use schema version 2
+and omit raw-binary hash fields. Existing schema-version-1 hashes are
+historical metadata and are not recomputed. Record privacy/licensing state at
+the run level. Tripo recovery is best-effort; it does not replace the local
+cache. When an off-machine archive is introduced, add its non-secret locator
+and restore-check date to the manifest. Normal clones, CI, game builds, and
+runtime publication must not depend on either the cache or Tripo. This policy
+does not silently apply to another provider.
 
 Large accepted binary sources use Git LFS if repository size demonstrates the
 need. One worker owns one asset ID at a time because binary sources merge
@@ -244,8 +255,9 @@ It outputs labeled PNG files, a contact sheet, and a JSON review manifest. This 
 Use a neutral studio, fixed framing, fixed lights, fixed resolution, fixed color management, consistent padding, and an explicit render-profile version. Render the published GLB in both Blender and Godot: Blender reveals source and topology problems, while Godot reveals import, material, skeleton, animation, scale, and tactical-readability problems.
 
 The agent inspects the contact sheet first, then opens any questionable view at
-full resolution. Findings name the asset, tracked revision or provider run,
-render profile, view, severity, and violated brief or art-bible rule.
+full resolution. Findings record the asset ID, canonical `asset_revision`,
+provider `task_id` when applicable, render profile, view, severity, and
+violated brief or art-bible rule.
 
 ## Tool roles
 
