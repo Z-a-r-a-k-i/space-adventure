@@ -221,6 +221,8 @@ Create tracked metadata at the run root containing:
 - prompt text and prompt SHA-256;
 - input filenames and SHA-256 hashes;
 - output filenames, byte sizes, and provider task/version references;
+- repository-relative paths and the introducing Git commit for tracked
+  normalized Blender sources and published GLBs;
 - account privacy setting and plan tier;
 - credits consumed and attributable cost;
 - source-image ownership or license;

@@ -436,6 +436,12 @@ advertised storage features are not a durability guarantee. Keep each local
 raw export until an off-machine copy is checked or the project owner explicitly
 approves eviction.
 
+Presence and size establish cache availability only. Same-size corruption or
+substitution can pass those checks. If corruption is suspected or an
+integrity-sensitive restore is required, hydrate from the exact Tripo task or a
+trusted local/private-archive copy and run the normal structural Blender and
+glTF validation gates. Do not hash the large binary merely to compare it.
+
 Normal clones, CI, game builds, runtime imports, and published assets must be
 self-contained and must not require Tripo access or the raw cache.
 

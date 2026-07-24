@@ -248,7 +248,7 @@ committed. Eviction requires either a verified off-machine copy or a separate
 owner decision. Never commit provider session URLs, cookies, tokens, account
 identifiers, or temporary download links.
 
-## ADR 0018 — large 3D binaries use reference-based identity
+## ADR 0018 — large 3D binaries use reference-based provenance
 
 Status: accepted by the project owner on 2026-07-24.
 
@@ -258,18 +258,24 @@ FBX, OBJ, provider archives, or other large 3D binary files. Repeatedly reading
 those files consumed workstation time and CPU without improving the current
 single-workstation recovery model.
 
-Ignored provider payloads are identified by stable asset ID, run ID, provider
+Ignored provider payloads are referenced by stable asset ID, run ID, provider
 task or job ID, original filename, expected cache-relative path, export format
-and settings, and byte size. Presence and size are sufficient for routine
-hydration checks. A missing file remains a blocker; an unexpected size requires
-manual confirmation against the provider task or trusted local copy rather
-than a hash calculation.
+and settings, and byte size. Presence and size are availability checks, not
+content identity or integrity proof: same-size corruption or substitution can
+pass silently. A missing file remains a blocker, and an unexpected size
+requires manual confirmation against the provider task or trusted local copy.
+When integrity-sensitive recovery is needed or corruption is suspected,
+restore the exact task export or another trusted local/private-archive copy,
+then perform the normal structural import and validation checks. Do not hash
+the large file merely to compare it.
 
 Tracked binary sources and published outputs rely on normal Git/LFS revision
 identity and repository history. The art pipeline does not add a second
-file-content hash. Small prompt, settings, manifest, script, reference-image,
-and review-evidence files may continue to use hashes where they are cheap and
-already part of a deterministic contract.
+file-content hash. Their production metadata records the repository-relative
+path and introducing Git commit so a derived artifact is identifiable
+independently of its provider task. Small prompt, settings, manifest, script,
+reference-image, and review-evidence files may continue to use hashes where
+they are cheap and already part of a deterministic contract.
 
 New or updated `raw-export.manifest.json` files use schema version 2 and omit
 binary `sha256` fields. Existing schema-version-1 hashes and hash-keyed review
