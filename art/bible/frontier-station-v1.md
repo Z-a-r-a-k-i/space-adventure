@@ -41,6 +41,31 @@ not like unrelated generated objects placed in the same room.
   and [Protector turnaround](../reference-sheets/frontier-station-v1/poc-models/protector-character-turnaround-v1.png)
   freeze their identities, proportions, fixed outfits, palettes, and broad
   silhouettes. The Protector has no shield.
+- [Approved station survivor](../reference-sheets/frontier-station-v1/poc-models/station-survivor-turnaround-v1.png),
+  [security ram drone](../reference-sheets/frontier-station-v1/poc-models/security-ram-drone-turnaround-v1.png),
+  and [security gun sentry](../reference-sheets/frontier-station-v1/poc-models/security-gun-sentry-turnaround-v1.png)
+  freeze the remaining character and hostile-machine visual directions. The
+  machine pose studies define articulation intent, not authoritative attacks
+  or finished animation.
+- [Approved wall utility](../reference-sheets/frontier-station-v1/poc-models/station-wall-utility-turnaround-v1.png)
+  and [field aid](../reference-sheets/frontier-station-v1/poc-models/field-aid-turnaround-v1.png)
+  freeze their prop directions. The field aid uses selected alternative 2 from
+  its exploration sheet.
+- [Approved structure kit](../reference-sheets/frontier-station-v1/poc-models/station-structure-kit-reference-v1.png)
+  and [evacuation airlock](../reference-sheets/frontier-station-v1/poc-models/evacuation-airlock-reference-v1.png)
+  freeze environment visual direction only; Blender remains authoritative for
+  dimensions, grid connections, parts, pivots, travel, and clearances.
+- [POC UI and effects directions](../reference-sheets/frontier-station-v1/poc-ui/README.md)
+  define the retained portrait, equipment-icon, tactical-marker, hostile-
+  telegraph, combat/healing-effect, station-state, party-HUD, and authored-
+  dialogue presentation language. They do not define gameplay state,
+  targeting, range, timing, collision, damage, dialogue availability, or
+  outcomes.
+- [POC animation key-pose directions](../reference-sheets/frontier-station-v1/poc-animation/README.md)
+  define retained weapon-transfer, basic-attack, locomotion, recovery, and
+  shutdown silhouettes for the three party profiles and two machine
+  archetypes. They do not approve a rig, clip timing, root motion, socket
+  transform, hit shape, projectile, damage, or ability.
 
 These images establish visual direction, not exact geometry or gameplay
 contracts. The approved roster now assigns Vanguard's carbine, Operator's
