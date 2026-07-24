@@ -101,10 +101,26 @@ Every brief states:
 - References, allowed variations, and forbidden traits.
 - Generator, model, version, seed, source files, editing history, and licensing notes.
 
+Offline execution additionally requires a durable approval block in the brief:
+
+- status exactly `accepted for offline source production`;
+- approval date and approving project owner or explicitly delegated art owner;
+- the authorized asset ID and offline operations;
+- unresolved gameplay fields marked `phase-blocked`; and
+- the assigned production owner and dedicated branch/worktree.
+
+The brief author or assigned production agent cannot infer or self-grant this
+approval. Explicit delegation must be recorded in a versioned task or decision.
+
 A row in `POC-ASSET-ROSTER.md` reserves scope and an asset ID; it is not a
-production-ready brief. Generation, modeling, rigging, or animation begins only
-when the owning roadmap phase is active and every applicable field above is
-accepted.
+production-ready brief. Offline source production may begin before the owning
+gameplay phase only when the asset has an approved visual reference, an
+accepted production-ready art brief with every applicable field above,
+assigned ownership, and resolved licensing and privacy prerequisites. This
+lane may produce review candidates, editable Blender sources, staged GLBs, and
+isolated asset-gallery evidence. It does not replace live greybox content or
+authorize gameplay-coupled finalization and integration before the owning
+roadmap phase.
 
 Every production combatant brief additionally follows
 `ATTACK-PRESENTATION.md`. Before model generation or rigging it selects a
@@ -144,9 +160,19 @@ art/generated/<asset-id>/<run-id>/
 game/Assets/Published/
 tools/blender/
 artifacts/reviews/<asset-id>/<asset-hash>/
+artifacts/godot-asset-gallery/<worktree-id>/
 ```
 
 Large accepted binary sources use Git LFS if repository size demonstrates the need. One worker owns one asset ID at a time because binary sources merge poorly.
+
+Before live integration is authorized, staged GLBs and their isolated review
+project remain under the ignored `artifacts/` paths above. Do not create a
+gallery scene in `game/`, modify `game/project.godot`, or touch a shared scene
+or imported-asset registry for offline review. Moving an approved GLB into
+`game/Assets/Published/` and creating reusable gallery infrastructure require
+an integration-owner task. Each art worker uses a dedicated branch/worktree,
+local Godot user data, logs, and MCP port as defined in
+`AGENT-AUTOMATION.md`.
 
 ## Mechanical validation
 
@@ -220,15 +246,28 @@ Avoid strict PNG hashes across GPUs. Prefer mechanical checks, configuration has
 
 Initially favor AI for concept exploration, palette and material candidates, modular variations, proxy meshes, texture drafts, and reference boards. Do not assume current text-to-3D output has usable topology, rigs, animation, consistency, scale, or licensing provenance.
 
-Before the Phase 2 exit, generated candidates remain limited to the three
-bounded bake-off IDs. When an owning phase is active and its brief is
-production-ready, Tripo may provide humanoid-body and handheld-weapon candidates
-as separate assets. A humanoid candidate may use provider part generation or
-segmentation, but all mesh reconstruction and fitting precedes the shared
-Blender rig as defined above. Structural modules remain dimensionally authored
-in Blender. Integrated weapons need a readable line of fire and movable
-clearance; body attackers need a reinforced contact region and sufficient
-articulation. Generated rigs and animations remain untrusted inputs until
-normalized and reviewed through the complete attack assembly.
+Before the Phase 2 exit, the controlled provider-comparison evidence remains
+limited to the three bounded bake-off IDs and its fixed attempt caps. Separate
+offline source production may proceed for another approved roster asset under
+ADR 0016 when its reference, production-ready art brief, ownership, licensing,
+and privacy gates pass. That work must use a production run ID and must not be
+reported as bake-off evidence. Production and bake-off runs use the explicit
+`__prod__` and `__bakeoff__` lane tokens defined in
+`TRIPO-PRODUCTION-HANDOFF.md`.
+
+Tripo may provide humanoid-body and handheld-weapon candidates as separate
+assets. A humanoid candidate may use provider part generation or segmentation,
+but all mesh reconstruction and fitting precedes the shared Blender rig as
+defined above. Structural modules remain dimensionally authored in Blender.
+Integrated weapons need a readable line of fire and movable clearance; body
+attackers need a reinforced contact region and sufficient articulation.
+Generated rigs and animations remain untrusted inputs until normalized and
+reviewed through the complete attack assembly.
+
+Subscription-credit availability supports thorough completion rather than
+large unreviewed candidate pools. Select a promising source early, then use
+targeted provider operations and animation donors wherever they improve the
+finished asset. Do not stop solely because the first viable candidate exists,
+and do not repeat an unchanged failed operation merely to consume credits.
 
 Keep the gameplay-facing asset contract stable so improved tools can replace early art one asset ID at a time without changing gameplay code, level logic, or saved state.

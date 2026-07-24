@@ -1,8 +1,9 @@
 # Tripo production handoff
 
-Status: approved operating procedure; work authorization remains phase-scoped
+Status: approved operating procedure; offline art authorization is
+brief-scoped and gameplay integration remains phase-scoped
 
-Revision: 2026-07-23
+Revision: 2026-07-24
 
 ## Purpose
 
@@ -13,7 +14,7 @@ animation donors, Blender finalization, Godot review, evidence, and reporting.
 
 It does not replace:
 
-- `ROADMAP.md` for phase authorization;
+- `ROADMAP.md` for gameplay-phase authorization and integration;
 - `POC-ASSET-ROSTER.md` for the bounded asset inventory and animation coverage;
 - `ART-PIPELINE.md` for publication and review;
 - `ATTACK-PRESENTATION.md` for combatant, weapon, marker, and clip contracts;
@@ -29,9 +30,12 @@ spending credits or inventing content.
    existing Chrome session. The subscription-credit workflow is the baseline;
    do not use the Tripo API, store an API key, or add an API integration.
 2. An approved image is a visual anchor, not a production-ready brief. Begin
-   generation only when the owning roadmap phase is active and the asset has an
-   accepted brief, unless the asset is explicitly inside the current bounded
-   generator bake-off.
+   offline source production only when the approved roster asset has an
+   accepted production-ready art brief, assigned ownership, and resolved
+   licensing and privacy prerequisites. The owning gameplay phase does not
+   need to be active for this offline lane. Live greybox replacement,
+   gameplay-coupled finalization, and integration remain phase-scoped. The
+   bounded generator bake-off is a separate explicit authorization.
 3. Treat every Tripo mesh, material, skeleton, weight, animation, pivot, scale,
    name, and export as untrusted input until Blender and Godot review pass.
 4. Preserve the raw candidate before editing, segmenting, remeshing, rigging,
@@ -60,27 +64,71 @@ Before opening Tripo for an asset, record all of the following:
 - stable asset ID and owning phase;
 - accepted production brief or explicit bake-off authorization;
 - approved reference-sheet filename and SHA-256;
-- assigned agent and worktree or path ownership;
+- assigned agent, dedicated art branch/worktree, owned asset ID, and exact
+  writable repository paths;
 - intended candidate class: static prop, handheld weapon, humanoid, body-source
   machine, or integrated-weapon machine;
 - required scale, forward direction, material regions, moving parts, sockets,
   rig profile, animation coverage, and tactical-camera review distance;
 - current Tripo plan tier, privacy setting, and commercial-use status; and
-- one run ID:
-  `<asset-id>__tripo__<live-model-id>__<yyyy-mm-dd>__<nn>`.
+- one unambiguous production run ID:
+  `<asset-id>__prod__tripo__<live-model-id>__<yyyy-mm-dd>__<nn>`; or
+- for the bounded experiment only, one bake-off run ID:
+  `<asset-id>__bakeoff__tripo__<live-model-id>__<yyyy-mm-dd>__<nn>`.
 
-If the brief, phase authorization, licensing, privacy, or ownership is missing,
-stop and report the missing prerequisite. Do not use a convenient default.
+If the brief, applicable authorization, licensing, privacy, or ownership is
+missing, stop and report the missing prerequisite. Do not use a convenient
+default.
 
-The only Tripo work authorized before the Phase 2 human-playthrough gate closes
-is the bounded bake-off for:
+An accepted production brief records status
+`accepted for offline source production`, approval date, approver, authorized
+asset ID and operations, phase-blocked gameplay fields, production owner, and
+dedicated worktree. Approval comes from the project owner or an art owner whose
+delegation is recorded in a versioned task or decision. Brief authorship or
+asset assignment is not approval, and the production agent cannot self-approve
+without that explicit delegation.
+
+The art worktree must be separate from every active gameplay worktree. Follow
+`AGENT-AUTOMATION.md`: use worktree-local Godot user data, logs, editor state,
+and a distinct MCP port. During offline production, do not edit
+`game/project.godot`, live gameplay scenes, shared content schemas, or imported-
+asset registries. Keep staged GLBs and the local review project under
+`artifacts/reviews/<asset-id>/<asset-hash>/` and
+`artifacts/godot-asset-gallery/<worktree-id>/`. Those ignored paths are review
+staging, not publication. Moving a GLB to `game/Assets/Published/` or adding
+shared gallery infrastructure requires a separately assigned integration owner.
+
+The provider-comparison work authorized before the Phase 2 human-playthrough
+gate closes is the bounded bake-off for:
 
 - `prop.station.service_terminal.v1`;
 - `prop.station.wall_utility.v1`; and
 - `machine.security_drone.body.v1`.
 
-The approved crew and weapon sheets are ready for production-brief preparation,
-but their Phase 3 generation is not authorized by visual approval alone.
+No production-lane work may begin for any of those three IDs until the whole
+bake-off's provider results, Blender baselines, scorecards, and final decisions
+are complete and frozen. This prevents later refinement from influencing the
+controlled comparison.
+
+The approved crew, weapon, machine, prop, and environment sheets are ready for
+production-brief preparation. Once an approved roster asset receives an
+accepted production-ready art brief, its separate offline source-production
+lane may run under ADR 0016 even when its gameplay phase is not active. Use a
+`__prod__` run ID, not a `__bakeoff__` run ID, and keep its results out of the
+bake-off scorecard.
+
+Before the owning gameplay phase, offline work may include reference crops,
+generation, targeted candidate branches, part completion, topology, textures,
+provider rig and animation donors, Blender finalization, staged GLBs, and the
+isolated Godot asset gallery. It may not include:
+
+- replacing content in the live route or encounter;
+- gameplay scene wiring or stable gameplay definitions;
+- ability-specific props, clips, icons, or effects;
+- final attack timing, telegraph, hit, damage, or target-shape synchronization;
+  or
+- work whose unresolved gameplay dependency would force the agent to invent a
+  mechanic.
 
 ## Prepare provider inputs
 
@@ -121,15 +169,23 @@ every input crop before upload.
    part, seed or retry, and other visible settings; marketing model names in
    this repository are not substitutes for live identifiers.
 5. Capture the settings and task or model identifier before generation.
-6. Generate one candidate and inspect every view before retrying. Use a retry
-   only for a named defect, such as fused legs, missing back geometry, wrong
-   weapon silhouette, or unusable asymmetry. Record the reason and credits.
+6. Generate an initial candidate and inspect every view before choosing the
+   next operation. Create a targeted alternative only for a named defect, such
+   as fused legs, missing back geometry, wrong weapon silhouette, or unusable
+   asymmetry. One to three raw candidates will often be enough, but production
+   work has no general hard candidate cap.
 7. Preserve the untouched result and its render before any later Studio
    operation. Use Studio history's **Save as New Version** before a destructive
    branch when available.
-8. Select at most one candidate for cleanup at a time. Available credits are
-   not a reason to continue after a viable candidate or to retain unreviewed
-   variants.
+8. Select one promising source for active cleanup at a time. Invest
+   subscription credits in completing that source properly: useful
+   segmentation, part completion, topology or texture branches, rig
+   diagnostics, and animation donors. Do not stop merely because the first
+   viable candidate exists, and do not make candidate count a goal.
+9. For every charged operation, record the purpose, settings, task or version
+   ID, visible credit cost, result, and keep/reject decision. Do not repeat an
+   unchanged failed operation or retain an unreviewed branch merely to consume
+   credits.
 
 ## Part policy by asset class
 
@@ -228,7 +284,9 @@ For a compatible neutral-pose humanoid or creature candidate:
    skeleton specification, task ID, and credits.
 3. Apply a small diagnostic set first: neutral idle, walk, run, shoot or attack,
    hurt, fall or down, and turn when those presets exist in the live Studio
-   library.
+   library. Once retargeting is proven, use additional provider credits
+   freely for donor variants that address named coverage, deformation,
+   silhouette, or timing needs.
 4. Request in-place motion where Studio exposes it. Root translation from a
    provider clip is not gameplay authority.
 5. Export the rigged base plus useful preset clips as GLB or FBX and hash every
@@ -334,6 +392,7 @@ art/generated/<asset-id>/<run-id>/
 `metadata.md` records:
 
 - asset and run IDs;
+- lane: `production` or `bakeoff`;
 - UTC date;
 - Tripo Studio plan and privacy state;
 - exact live model, settings, task ID, and visible credit use;
@@ -359,20 +418,28 @@ Reject or stop when:
   without redesign;
 - a character cannot maintain a continuous deforming base under its armor;
 - hidden surfaces, non-manifold geometry, paper-thin parts, texture lighting,
-  or topology remain unsuitable after the brief's cleanup cap;
+  or topology remain unsuitable after reasonable targeted provider and Blender
+  branches;
 - the complete assembly cannot satisfy grip, support hand, carry, aim, recoil,
   or attack clearance;
 - the rig cannot survive required stress poses;
 - the asset does not read at the 20 m tactical view;
 - licensing, privacy, provenance, or provider version is unclear; or
-- the owning phase, brief, or asset ownership changes.
+- the applicable authorization, brief, or asset ownership changes.
 
-Report the named failure and preserve evidence. Do not spend credits indefinitely
-trying to rescue a candidate that violates the approved design.
+Report the named failure and preserve evidence. Reject the failing branch, not
+the quality goal: switch to a targeted alternative or to Blender when that is
+the better repair path. Stop when the asset passes its applicable reviews, the
+provider cannot improve the named defect, or the next unresolved step belongs
+to a later gameplay phase. This prevents unproductive repetition; it does not
+require stopping after the first viable result or conserving prepaid monthly
+credits.
 
 ## Recommended execution order
 
-When the relevant phases and briefs are active:
+When the relevant production briefs are accepted, perform offline source work
+in this order. Any gameplay-coupled step still waits for its owning roadmap
+phase:
 
 1. Prove the current bounded bake-off separately; it does not create production
    combatants.
@@ -384,10 +451,14 @@ When the relevant phases and briefs are active:
    complete assembly before producing their final weapon-specific clips.
 5. Add the survivor on the same skeleton after its reference and brief are
    approved.
-6. Generate and rig the production machines only after their Phase 4 attacks
-   and briefs are accepted.
-7. Author the exact station structure and airlock in Blender during Phase 5;
-   use Tripo only for the explicitly permitted decorative candidates.
+6. Generate the production-machine forms and prove the required articulation
+   after their offline art briefs accept the roster's body-ram and integrated-
+   gun source classes. Final attack clips, timing, telegraph synchronization,
+   and live integration wait for their Phase 4 attacks.
+7. Author the exact station structure and airlock in Blender when their
+   production briefs are accepted; use Tripo only for explicitly permitted
+   decorative candidates. Live route replacement and airlock gameplay
+   integration wait for Phase 5.
 
 Never generate all humanoid animations before the first complete
 character-plus-weapon assembly and Godot retarget proof succeeds.

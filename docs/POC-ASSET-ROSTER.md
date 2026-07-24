@@ -1,9 +1,9 @@
 # POC asset roster and animation plan
 
-Status: approved POC target inventory; production authorization remains
-phase-scoped
+Status: approved POC target inventory; offline source production is
+brief-scoped and gameplay integration remains phase-scoped
 
-Revision: 2026-07-23
+Revision: 2026-07-24
 
 ## Authority and milestone status
 
@@ -16,22 +16,30 @@ Studio, Blender, rigging, and animation sequence.
 
 Approval of this roster authorizes reserved asset IDs, production briefs,
 reference sheets, estimates, and dependency planning. It does not by itself
-authorize generation, modeling, rigging, animation, GLB publication, Godot
-integration, or replacement of greybox content.
+authorize execution. An approved roster asset may enter offline source
+production under ADR 0016 when it also has an approved visual reference, an
+accepted production-ready art brief, assigned ownership, and resolved licensing
+and privacy prerequisites. “Accepted” requires a recorded status, date,
+approver, asset ID, authorized offline scope, phase-blocked fields, and
+dedicated worktree. Only the project owner or an explicitly delegated art owner
+may grant it; the brief author or production agent cannot infer approval.
 
-Until the Phase 2 human-playthrough gate passes, executable asset work remains
-limited to the three entries in the bounded generator bake-off:
+Until the Phase 2 human-playthrough gate passes, provider-comparison evidence
+remains limited to the three entries in the bounded generator bake-off:
 
 - `prop.station.service_terminal.v1`;
 - `prop.station.wall_utility.v1`; and
 - `machine.security_drone.body.v1`.
 
 The third entry is an isolated, disposable body candidate. It is not the
-production ram drone reserved below. For every other roster item, the dedicated
-art machine may prepare briefs, reference sheets, estimates, and dependency
-notes, but must not spend generation credits or begin modeling, rigging,
-animation, publication, or Godot integration until the owning roadmap phase is
-active and the item has a production-ready brief.
+production ram drone reserved below. Work on other approved roster items is
+recorded as offline production rather than added to the experiment. Before the
+owning gameplay phase, that lane may spend generation credits, model, complete
+parts and topology, texture, create provider rig or animation donors, finish
+Blender sources, publish staged review GLBs, and use the isolated Godot asset
+gallery. It must not replace live greybox content, wire gameplay scenes,
+invent unresolved mechanics, or finalize ability-specific and attack-timing
+presentation.
 
 ## Approved presentation decisions
 
@@ -230,10 +238,13 @@ cover system.
 
 ## Generation and approval order
 
-1. **Before the Phase 2 exit:** execute only the bounded service-terminal,
-   wall-utility, and isolated drone-body bake-off. Record provider provenance,
-   licensing, measurements, cleanup time, tactical-camera evidence, and the
-   selected result or `none`.
+1. **Before the Phase 2 exit:** keep the controlled provider comparison bounded
+   to the service terminal, wall utility, and isolated drone body. Separately,
+   approved roster items with production-ready art briefs may progress through
+   offline source production and isolated review under ADR 0016. Do not report
+   that work as bake-off evidence or integrate it into live gameplay. For the
+   three bake-off IDs, freeze the entire experiment before starting any
+   production-lane refinement.
 2. **Phase 3:** lock production reference sheets, finish all part segmentation,
    completion, remeshing, and outfit fitting before the shared humanoid rig,
    validate one fixed-outfit character-plus-weapon assembly, then produce the
@@ -249,6 +260,11 @@ cover system.
 
 Tripo output is always an untrusted candidate. It is preserved with provenance,
 normalized in Blender, validated, rendered in Blender and Godot, and explicitly
-accepted or rejected. Available account credits are not an acceptance
-criterion; every production brief still defines its own attempt, review, and
-stop conditions.
+accepted or rejected. Subscription credits should be used productively to
+complete selected assets rather than conserved after the first viable result.
+There is no general production attempt cap and no target number of variants:
+select a promising source early, create alternatives only for named defects,
+and invest in segmentation, completion, topology, textures, rig diagnostics,
+and animation donors where they improve the finished work. Credits consumed
+are not an acceptance criterion; every production brief and review gate still
+applies.

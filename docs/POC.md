@@ -126,8 +126,9 @@ The critical path always demonstrates recruitment and combat. A dialogue choice 
 - Minimal sound and effects only after interaction readability works.
 
 The complete planned 3D, rig, animation, 2D, and effects inventory is recorded
-in `POC-ASSET-ROSTER.md`. Its approval does not override the production gates in
-`ROADMAP.md`.
+in `POC-ASSET-ROSTER.md`. Its approval alone does not authorize execution.
+ADR 0016 governs brief-scoped offline source production; `ROADMAP.md` governs
+gameplay-coupled finalization and live integration.
 
 ## Explicit non-goals
 
@@ -135,9 +136,11 @@ No procedural level, roguelite run structure, metaprogression, save migration,
 runtime model call, generalized quest engine, ship simulation, vehicle
 movement, boarding, crafting, economy, reputation simulation, or multiplayer
 belongs in this POC. The finite inventory in `POC-ASSET-ROSTER.md` is bounded,
-phase-scoped POC art production. Automated bulk generation, uncontrolled
-variants, reusable content libraries, and assets beyond that inventory remain
-production-scale work and are outside the POC.
+approved POC art scope. Its offline sources may be produced ahead of their
+gameplay phases under ADR 0016, while finalization and integration remain
+phase-scoped. Automated bulk generation, uncontrolled variants, reusable
+content libraries, and assets beyond that inventory remain production-scale
+work and are outside the POC.
 
 ## Exit gate
 

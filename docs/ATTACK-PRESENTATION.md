@@ -3,7 +3,7 @@
 Status: accepted preproduction contract; gameplay implementation remains in
 Phases 3 and 4.
 
-Revision: 2026-07-23
+Revision: 2026-07-24
 
 ## Purpose
 
@@ -18,9 +18,14 @@ an equipment system to the POC.
 
 The approved POC roster now selects the presentation loadouts summarized below.
 Those selections do not define stable gameplay attack identities, ranges,
-timings, damage, active abilities, or encounter tuning. Those remain Phase 3
-and 4 dependencies and must exist before the matching production combatant
-brief is approved.
+timings, damage, active abilities, or encounter tuning. An offline
+source-production brief may use the approved source class, visible delivery,
+parts, interfaces, and articulation to authorize static modeling, shared-rig
+work, assembly fitting, generic reusable motion, and provider animation donors.
+It marks unresolved gameplay fields explicitly rather than inventing them.
+Stable gameplay identities and timing remain Phase 3 and 4 dependencies and
+must exist before final attack clips, synchronization, production combatant
+approval, or live integration.
 
 Disposable shape or topology experiments may explicitly exclude this contract.
 They do not become production combatants until a complete assembly passes it.
@@ -121,6 +126,15 @@ Every production combatant brief lists:
 
 The brief references gameplay range and timing; it does not duplicate them as
 art-authored authority.
+
+For offline source production before the owning gameplay phase, the brief may
+mark the stable gameplay attack reference, exact timing, movement permissions,
+and telegraph/VFX synchronization as phase-blocked. The approved source class,
+separate weapon relationship, visible attack direction, required parts,
+markers, clearances, articulation, and review assembly must already be fixed.
+This limited approval supports geometry, shared rigs, attachments, stress
+poses, generic reusable clips, and animation-donor evaluation. It cannot pass
+final animation or Godot combatant approval.
 
 Every separate handheld weapon also receives its own asset brief. It cross-links
 the compatible combatant and rig profiles and owns its bounds, material and

@@ -109,8 +109,8 @@ Typed text remains untrusted content. It cannot establish world facts, grant aut
 
 ## ADR 0014 — Attack rules are independent from weapon presentation
 
-Status: accepted for combat and asset planning; implementation remains in
-Phases 3 and 4.
+Status: accepted for combat and asset planning; offline source work follows
+ADR 0016 and gameplay implementation remains in Phases 3 and 4.
 
 Every production combatant declares at least one credible attack source before
 its model, rig, or animation is approved. The presentation source is
@@ -133,7 +133,8 @@ and phase-scoped target inventory are recorded in `POC-ASSET-ROSTER.md`.
 
 ## ADR 0015 — Fixed POC outfits retain modular editable sources
 
-Status: accepted for the POC art pipeline; implementation remains in Phase 3.
+Status: accepted for the POC art pipeline; offline source work follows ADR
+0016 and runtime integration remains in Phase 3.
 
 Each human is presented and reviewed in one fixed complete outfit. The POC
 does not equip separate chest, leg, boot, glove, or other armor items and does
@@ -153,3 +154,57 @@ mesh reconstruction invalidates skeletons and weights. Blender owns the final
 topology, fit, rig, weights, attachments, and export. Whole-outfit variants are
 the preferred future extension. Individual equipment slots require a separate
 product and architecture decision.
+
+## ADR 0016 — Subscription credits prioritize complete asset quality
+
+Status: accepted for offline POC art production.
+
+Offline source production is authorized independently from gameplay-phase
+activation when an approved roster asset has an approved visual reference, an
+accepted production-ready art brief, clear ownership, and resolved licensing
+and privacy prerequisites. This lane may generate and refine candidates,
+complete parts and topology, texture, test provider rigs and animation donors,
+finish the editable Blender source, publish review GLBs to staging, and inspect
+them in the isolated Godot asset gallery. It does not authorize replacement of
+live greybox content, gameplay wiring, ability-specific work, final
+attack-timing synchronization, or other integration owned by a later roadmap
+phase.
+
+Offline work uses a dedicated art branch/worktree with explicit asset-ID and
+path ownership, worktree-local Godot state, and a distinct MCP port. Staged
+GLBs and the isolated review project remain under ignored `artifacts/` paths.
+The art worker does not edit `game/project.godot`, live gameplay scenes,
+shared content schemas, or imported-asset registries without a separately
+assigned integration-owner task.
+
+“Accepted” is a recorded approval, not an agent inference. The brief must name
+its status as `accepted for offline source production`, approval date,
+approver, authorized asset ID and operations, any blocked gameplay fields,
+production owner, and dedicated worktree. The project owner or an art owner
+explicitly delegated in a versioned task or decision may approve it. Authoring
+or being assigned a brief does not grant approval authority, and a production
+agent may not self-approve unless that delegation is explicit.
+
+The Tripo Studio subscription is a prepaid production resource, not a scarce
+per-request API budget. There is no general hard attempt cap and the agent does
+not stop merely because the first viable candidate exists. It should select a
+promising source early, then spend credits productively on the operations and
+targeted alternatives that improve the finished asset: useful segmentation,
+part completion, topology branches, texture repair, rig diagnostics, and
+animation donors. Multiple candidates are created only when they answer a
+named quality problem; candidate count is not a goal.
+
+Every charged operation records its purpose, settings, task or version ID,
+visible credit cost, result, and keep/reject decision. Repeating an unchanged
+failed operation or preserving unreviewed variants is not productive use.
+Work stops when the asset passes its applicable reviews, the provider cannot
+improve the named defect, or Blender is the better next tool—not simply to
+conserve unused monthly credits.
+
+Credits consumed never waive the asset brief, attack-presentation contract,
+provenance, Blender ownership, Godot review, or human approval requirements.
+The bounded provider bake-off retains its scientific attempt and cleanup caps;
+any later quality-oriented work is recorded as production work and excluded
+from the bake-off scorecard. No production-lane work may begin for any of the
+three bake-off asset IDs until the whole experiment's scorecards, baselines,
+and result are finalized and frozen.
