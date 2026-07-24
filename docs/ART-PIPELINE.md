@@ -162,7 +162,7 @@ art/generated/<asset-id>/<run-id>/
 art/generated/<asset-id>/<run-id>/raw/  # ignored for Tripo runs
 game/Assets/Published/
 tools/blender/
-artifacts/reviews/<asset-id>/<asset-hash>/
+artifacts/reviews/<asset-id>/<asset-revision>/
 artifacts/godot-asset-gallery/<worktree-id>/
 ```
 
@@ -170,13 +170,17 @@ Untouched Tripo exports are not repository deliverables. Download each export
 before processing and retain it at the documented run-local `raw/` path on the
 dedicated art workstation. Commit a neighboring `raw-export.manifest.json`
 with the provider task ID and one entry per cached payload, including its
-expected relative path, byte size, SHA-256, export settings, and last local
-verification date. Record privacy/licensing state at the run level. Tripo
-recovery is best-effort; it does not replace the local cache. When an
-off-machine archive is introduced, add its non-secret locator and verification
-date to the manifest. Normal clones, CI, game builds, and runtime publication
-must not depend on either the cache or Tripo. This policy does not silently
-apply to another provider.
+expected relative path, original filename, byte size, export settings, and last
+local presence check. Identify the ignored payload by provider, task/run ID,
+path, filename, and size; do not stream the file merely to compute or verify a
+content hash. New or updated manifests use schema version 2 and omit raw-binary
+hash fields. Existing schema-version-1 hashes are historical metadata and are
+not recomputed. Record privacy/licensing state at the run level. Tripo recovery
+is best-effort; it does not replace the local cache. When an off-machine
+archive is introduced, add its non-secret locator and restore-check date to
+the manifest. Normal clones, CI, game builds, and runtime publication must not
+depend on either the cache or Tripo. This policy does not silently apply to
+another provider.
 
 Large accepted binary sources use Git LFS if repository size demonstrates the
 need. One worker owns one asset ID at a time because binary sources merge
@@ -209,7 +213,13 @@ Validation should check:
   in the exact reviewed assembly.
 - GLB structure and Godot import diagnostics.
 
-Record exact tool versions and SHA-256 hashes for the source, brief, normalization profile, published GLB, and render profile.
+Record exact tool versions and stable revisions for the source, brief,
+normalization profile, published GLB, and render profile. Small tracked text,
+configuration, prompt, and reference-image files may retain SHA-256 provenance.
+Do not separately hash `.blend`, GLB, FBX, OBJ, provider archives, or other
+large 3D binaries: tracked files use their normal Git/LFS revision identity,
+while ignored provider payloads use the manifest's provider/task reference,
+path, filename, and byte size.
 
 ## Standard multi-angle review
 
@@ -229,7 +239,9 @@ It outputs labeled PNG files, a contact sheet, and a JSON review manifest. This 
 
 Use a neutral studio, fixed framing, fixed lights, fixed resolution, fixed color management, consistent padding, and an explicit render-profile version. Render the published GLB in both Blender and Godot: Blender reveals source and topology problems, while Godot reveals import, material, skeleton, animation, scale, and tactical-readability problems.
 
-The agent inspects the contact sheet first, then opens any questionable view at full resolution. Findings name the asset, hash, render profile, view, severity, and violated brief or art-bible rule.
+The agent inspects the contact sheet first, then opens any questionable view at
+full resolution. Findings name the asset, tracked revision or provider run,
+render profile, view, severity, and violated brief or art-bible rule.
 
 ## Tool roles
 

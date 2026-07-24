@@ -14,6 +14,12 @@ Baseline: `origin/main` at
 Original art-run baseline:
 `1f3d941800a05398221026da53108668c22d12d6`
 
+Storage-policy note: ADR 0018 supersedes this report's earlier requirement to
+recompute hashes for raw or other large 3D binaries. The recorded hashes below
+remain historical evidence only; routine inventory, hydration, migration, and
+validation use provider/task references, paths, filenames, sizes, and normal
+Git/LFS revision identity.
+
 ## Post-merge Phase 2 gate closure
 
 After PR #4 merged as `94f4e5b`, the project owner completed the documented

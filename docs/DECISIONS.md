@@ -222,16 +222,18 @@ provider.
 
 Each run commits a `raw-export.manifest.json` containing the provider and task
 ID plus one entry for every cached payload: expected cache-relative path,
-original filename, format and export settings, byte size, SHA-256, and last
-successful local verification. The manifest also records
+original filename, format and export settings, byte size, and last successful
+local presence check. The manifest also records
 plan/privacy/licensing state and credit use. Prompts, approved inputs,
 settings, selection decisions, processing records, editable Blender sources,
 and publishable outputs remain versioned under the normal pipeline rules.
 
-Raw-dependent Blender tooling must refuse a missing or hash-mismatched cache
-file. Normal clones, CI, game builds, and runtime publication do not fetch
-from Tripo and do not require the raw cache. The existing art workstation is
-the authoritative local cache while art production remains on that machine.
+Raw-dependent Blender tooling must refuse a missing cache file and flag an
+unexpected byte size for manual review. It must not read an entire raw payload
+solely to calculate or verify a content hash. Normal clones, CI, game builds,
+and runtime publication do not fetch from Tripo and do not require the raw
+cache. The existing art workstation is the authoritative local cache while art
+production remains on that machine.
 
 Tripo task IDs and Studio history are best-effort recovery aids, not a durable
 archive. Tripo's terms disclaim an obligation to store outputs and allow
@@ -245,3 +247,31 @@ Do not delete a locally cached raw export merely because its manifest is
 committed. Eviction requires either a verified off-machine copy or a separate
 owner decision. Never commit provider session URLs, cookies, tokens, account
 identifiers, or temporary download links.
+
+## ADR 0018 — large 3D binaries use reference-based identity
+
+Status: accepted by the project owner on 2026-07-24.
+
+The art pipeline no longer requires SHA-256 or another separately computed
+content hash for raw provider exports, donor exports, `.blend` sources, GLB,
+FBX, OBJ, provider archives, or other large 3D binary files. Repeatedly reading
+those files consumed workstation time and CPU without improving the current
+single-workstation recovery model.
+
+Ignored provider payloads are identified by stable asset ID, run ID, provider
+task or job ID, original filename, expected cache-relative path, export format
+and settings, and byte size. Presence and size are sufficient for routine
+hydration checks. A missing file remains a blocker; an unexpected size requires
+manual confirmation against the provider task or trusted local copy rather
+than a hash calculation.
+
+Tracked binary sources and published outputs rely on normal Git/LFS revision
+identity and repository history. The art pipeline does not add a second
+file-content hash. Small prompt, settings, manifest, script, reference-image,
+and review-evidence files may continue to use hashes where they are cheap and
+already part of a deterministic contract.
+
+New or updated `raw-export.manifest.json` files use schema version 2 and omit
+binary `sha256` fields. Existing schema-version-1 hashes and hash-keyed review
+directories remain valid historical records, but agents must not recompute
+those hashes during inventory, migration, hydration, or routine validation.

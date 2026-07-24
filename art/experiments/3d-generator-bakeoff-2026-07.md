@@ -41,7 +41,7 @@ no Meshy result or Blender-only timing baseline to compare against it.
 | Geometry and editability | 15% | 4 | 2,764 triangles, one mesh, closed spatial-weld diagnostic, flat rear mounting plane |
 | UV and material control | 10% | 4 | Two materials and one embedded 1024-pixel base/normal/RM texture set |
 | GLB and Godot behavior | 10% | 5 | Exact 1.20 × 0.80 × 0.22 m bounds, correct signed depth, no import or scene-validation errors |
-| Provenance and licensing | 5% | 5 | Inputs, task, settings, privacy state, credits, raw/derived hashes, and evidence retained |
+| Provenance and licensing | 5% | 5 | Inputs, task, settings, privacy state, credits, raw task/path/size records, tracked derived revisions, and evidence retained |
 | **Weighted score** | **100%** | **4.15 / 5** | Provisional; not a provider adoption decision |
 
 Known experiment gaps are the missing Meshy result or documented provider
@@ -129,7 +129,8 @@ whole-scene image-to-3D inputs. Crop or redraw the individual subject first.
 3. Allow at most two raw generations per provider per asset.
 4. Select at most one raw candidate per provider per asset for cleanup.
 5. Retain the raw selected candidate unchanged. Tripo runs use the ignored
-   run-local cache and commit its size, SHA-256, expected path, and task ID;
+   run-local cache and commit its size, expected path, and task ID without
+   computing a binary content hash;
    another provider requires its own recorded storage policy.
 6. Normalize a copy in Blender 5.2 LTS.
 7. Stop generated-candidate cleanup after 30 minutes of active Blender work.
@@ -219,7 +220,7 @@ Create tracked metadata at the run root containing:
 - job ID, task ID, and seed when exposed;
 - prompt text and prompt SHA-256;
 - input filenames and SHA-256 hashes;
-- output filenames and SHA-256 hashes;
+- output filenames, byte sizes, and provider task/version references;
 - account privacy setting and plan tier;
 - credits consumed and attributable cost;
 - source-image ownership or license;
@@ -228,10 +229,11 @@ Create tracked metadata at the run root containing:
 - download format and any provider-side remesh/retexture stages;
 - all subsequent Blender editing steps.
 
-For Tripo, also commit `raw-export.manifest.json` with the task ID and one
-entry per ignored cached payload containing its path, filename, format,
-settings, byte size, SHA-256, and last successful local verification. Another
-provider follows its own recorded storage decision.
+For Tripo, also commit a schema-version-2 `raw-export.manifest.json` with the
+task ID and one entry per ignored cached payload containing its path, filename,
+format, settings, byte size, and last successful local presence check. Omit
+binary hash fields. Another provider follows its own recorded storage
+decision.
 
 Never store API keys, authentication cookies, account IDs, personal billing
 data, or private provider URLs in the repository.
@@ -244,11 +246,12 @@ data, or private provider URLs in the repository.
   `art/generated/<asset-id>/<run-id>/raw/`. Tripo is a best-effort recovery
   source, not the archive. Keep the cache entry until an off-machine copy is
   verified or the project owner approves eviction.
-- Do not apply ADR 0017 to another provider without a recorded storage
-  decision.
+- Do not apply ADR 0017 or ADR 0018 to another provider without a recorded
+  storage decision.
 - Editable accepted sources follow `art/source/<asset-id>/`.
 - Review captures and manifests follow
-  `artifacts/reviews/<asset-id>/<asset-hash>/`.
+  `artifacts/reviews/<asset-id>/<asset-revision>/`. Existing hash-keyed
+  directories remain valid historical evidence.
 - Nothing enters `game/Assets/Published/` solely because it won this experiment.
   It must complete the normal asset lifecycle and receive the required review.
 - Interaction nodes, collision, navigation, and gameplay stable IDs remain
@@ -265,8 +268,8 @@ The experiment is complete when all three asset rows have:
 - provenance records; and
 - a decision of `tripo`, `meshy`, `blender`, or `none`.
 
-Freeze the completed scorecards, measurements, evidence hashes, baselines, and
-decisions before opening a `__prod__` run for any of the three asset IDs.
+Freeze the completed scorecards, measurements, evidence manifests, baselines,
+and decisions before opening a `__prod__` run for any of the three asset IDs.
 
 Completion does not pass the Phase 2 human-playthrough gate, begin Phase 3, or
 complete the Phase 6 representative-asset pipeline.

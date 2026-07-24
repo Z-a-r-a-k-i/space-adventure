@@ -260,8 +260,10 @@ cover system.
    representative accepted asset.
 
 Tripo output is always an untrusted candidate. Its untouched export is retained
-in the ignored run-local workstation cache while its path, size, hash, and
-provenance are committed. It is normalized in Blender, validated, rendered in
+in the ignored run-local workstation cache while its provider/task reference,
+path, size, and provenance are committed. Large 3D binaries are not
+content-hashed; tracked sources and outputs use their normal Git/LFS revision
+identity. The candidate is normalized in Blender, validated, rendered in
 Blender and Godot, and explicitly accepted or rejected. Subscription credits
 should be used productively to complete selected assets rather than conserved
 after the first viable result.

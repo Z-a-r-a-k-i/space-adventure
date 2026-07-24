@@ -12,8 +12,12 @@ write into another worktree. The v3 publisher was also narrowed to the
 retained run-local raw export and v2 editable source so the cleaned review
 branch does not require duplicate transient v1/v2 GLBs. Under ADR 0017 the
 `raw/` payload is an ignored workstation cache entry; hydrate it at the
-manifested path and verify its size and SHA-256 before rerunning a raw-dependent
-script. Existing final artifacts were not regenerated.
+manifested path and verify only its presence and byte size before rerunning a
+raw-dependent script. Do not rehash the payload. The asset-specific scripts
+retain historical hash constants and records from their original executions;
+before any future rerun, replace a raw-file hash preflight with the current
+path-and-size check rather than recomputing it. Existing final artifacts were
+not regenerated.
 
 | Script | Executed revision | Current path-safe revision |
 |---|---|---|

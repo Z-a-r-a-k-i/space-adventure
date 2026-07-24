@@ -257,9 +257,12 @@ pair it with silhouette, placement, iconography, or animation.
   before review.
 - Never publish directly from a provider or provider plugin into Godot.
 - For Tripo, preserve the raw candidate unchanged in the ignored run-local
-  workstation cache. Commit its expected path, size, SHA-256, prompt, input
-  hashes, provider model/version, settings, job ID or seed when available, and
-  licensing record. Another provider requires its own recorded storage policy.
+  workstation cache. Commit its expected path, size, provider task/run
+  reference, prompt, small input-file hashes, provider model/version, settings,
+  job ID or seed when available, and licensing record. Do not compute a
+  content hash for the raw or another large 3D binary; tracked binary sources
+  and outputs use normal Git/LFS revision identity. Another provider requires
+  its own recorded storage policy.
 - Use subscription credits to improve selected assets through named,
   reviewable operations rather than stopping at the first viable result or
   generating unreviewed variants. The bounded bake-off retains its separate
