@@ -54,9 +54,11 @@ Before an active Tripo or asset-production task, read
 visual bible, the active asset brief, and the approved reference-sheet
 provenance. Tripo Studio uses the signed-in browser subscription workflow; do
 not introduce an API key or provider-to-Godot publication path. Preserve raw
-outputs and provenance, complete mesh reconstruction before rigging, and treat
-generated rigs and animations as Blender-retargeted donor inputs rather than
-production authority.
+outputs unchanged in the ignored run-local workstation cache, commit their
+paths, sizes, hashes, and provenance, complete mesh reconstruction before
+rigging, and treat generated rigs and animations as Blender-retargeted donor
+inputs rather than production authority. Tripo is a best-effort recovery
+source, not the project's durable archive.
 
 Offline source production is authorized independently of gameplay-phase
 activation only for an approved roster asset with an approved reference,

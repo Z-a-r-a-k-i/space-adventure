@@ -258,10 +258,12 @@ cover system.
 5. **Phase 6:** harden the reusable publication and review tooling with a
    representative accepted asset.
 
-Tripo output is always an untrusted candidate. It is preserved with provenance,
-normalized in Blender, validated, rendered in Blender and Godot, and explicitly
-accepted or rejected. Subscription credits should be used productively to
-complete selected assets rather than conserved after the first viable result.
+Tripo output is always an untrusted candidate. Its untouched export is retained
+in the ignored run-local workstation cache while its path, size, hash, and
+provenance are committed. It is normalized in Blender, validated, rendered in
+Blender and Godot, and explicitly accepted or rejected. Subscription credits
+should be used productively to complete selected assets rather than conserved
+after the first viable result.
 There is no general production attempt cap and no target number of variants:
 select a promising source early, create alternatives only for named defects,
 and invest in segmentation, completion, topology, textures, rig diagnostics,

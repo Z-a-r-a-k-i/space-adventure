@@ -1,0 +1,8 @@
+art/generated/** -text
+tools/art/** -text
+tools/blender/** -text
+
+*.blend filter=lfs diff=lfs merge=lfs -text
+*.glb filter=lfs diff=lfs merge=lfs -text
+art/generated/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+art/generated/**/*.png filter=lfs diff=lfs merge=lfs -text

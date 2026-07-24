@@ -1,0 +1,79 @@
+{
+  "actions": [],
+  "armatures": [],
+  "asset_id": "prop.station.wall_utility.v1",
+  "blender_version": "5.2.0 LTS",
+  "bounds_max_blender_units": [
+    0.490494,
+    0.148666,
+    0.555267
+  ],
+  "bounds_min_blender_units": [
+    -0.490494,
+    -0.148666,
+    0.0
+  ],
+  "bounds_size_blender_units": [
+    0.980988,
+    0.297333,
+    0.555267
+  ],
+  "images": [
+    {
+      "colorspace": "sRGB",
+      "file_format": "JPEG",
+      "name": "prop.station.wall_utility.v1__raw__tripo-v3.1__candidate-01_basecolor.jpg",
+      "packed": true,
+      "size": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "colorspace": "Non-Color",
+      "file_format": "JPEG",
+      "name": "prop.station.wall_utility.v1__raw__tripo-v3.1__candidate-01_normal.jpg",
+      "packed": true,
+      "size": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "colorspace": "Non-Color",
+      "file_format": "JPEG",
+      "name": "prop.station.wall_utility.v1__raw__tripo-v3.1__candidate-01_rm.jpg",
+      "packed": true,
+      "size": [
+        4096,
+        4096
+      ]
+    }
+  ],
+  "import_result": [
+    "FINISHED"
+  ],
+  "inspected_utc": "2026-07-24T08:58:46.424403+00:00",
+  "materials": [
+    "tripo_material_d70c8cf9-165d-4c76-b8cb-cc020d76432b"
+  ],
+  "mesh_breakdown": [
+    {
+      "data": "meshes[0]",
+      "materials": [
+        "tripo_material_d70c8cf9-165d-4c76-b8cb-cc020d76432b"
+      ],
+      "matrix_world_identity": true,
+      "name": "tripo_node_d70c8cf9-165d-4c76-b8cb-cc020d76432b",
+      "parent": null,
+      "triangles": 1943381,
+      "vertices": 1017000
+    }
+  ],
+  "mesh_objects": 1,
+  "raw_bytes": 58219864,
+  "raw_path": "art/generated/prop.station.wall_utility.v1/prop.station.wall_utility.v1__tripo__v3.1-best-quality__2026-07-24__01/raw/prop.station.wall_utility.v1__raw__tripo-v3.1__candidate-01.glb",
+  "raw_sha256": "7D1B87029212C9DA8757DABBA7643B7811808F124FFEC7E80C4A7E546F969059",
+  "triangles": 1943381,
+  "vertices": 1017000
+}

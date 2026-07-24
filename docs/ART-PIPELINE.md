@@ -83,9 +83,11 @@ When a provider exposes part-aware generation, request separated parts or
 segment the accepted static candidate. Run segmentation, part completion,
 retopology, low-poly conversion, remeshing, and armor fitting before binding to
 the shared skeleton: those mesh operations invalidate provider skeletons and
-weights. Preserve the raw candidate and each accepted processed version with
-provenance. Blender owns the final topology, object boundaries, fit, skeleton,
-weights, attachments, and export; provider rigs and animations are disposable
+weights. For Tripo runs, preserve the raw candidate unchanged in the ignored
+run-local cache. Other providers require their own recorded storage policy.
+Preserve each accepted processed version with versioned provenance. Blender
+owns the final topology, object boundaries, fit, skeleton, weights,
+attachments, and export; provider rigs and animations are disposable
 diagnostic inputs.
 
 ## Asset brief
@@ -157,13 +159,28 @@ art/materials/
 art/rigs/
 art/source/<asset-id>/
 art/generated/<asset-id>/<run-id>/
+art/generated/<asset-id>/<run-id>/raw/  # ignored for Tripo runs
 game/Assets/Published/
 tools/blender/
 artifacts/reviews/<asset-id>/<asset-hash>/
 artifacts/godot-asset-gallery/<worktree-id>/
 ```
 
-Large accepted binary sources use Git LFS if repository size demonstrates the need. One worker owns one asset ID at a time because binary sources merge poorly.
+Untouched Tripo exports are not repository deliverables. Download each export
+before processing and retain it at the documented run-local `raw/` path on the
+dedicated art workstation. Commit a neighboring `raw-export.manifest.json`
+with the provider task ID and one entry per cached payload, including its
+expected relative path, byte size, SHA-256, export settings, and last local
+verification date. Record privacy/licensing state at the run level. Tripo
+recovery is best-effort; it does not replace the local cache. When an
+off-machine archive is introduced, add its non-secret locator and verification
+date to the manifest. Normal clones, CI, game builds, and runtime publication
+must not depend on either the cache or Tripo. This policy does not silently
+apply to another provider.
+
+Large accepted binary sources use Git LFS if repository size demonstrates the
+need. One worker owns one asset ID at a time because binary sources merge
+poorly.
 
 Before live integration is authorized, staged GLBs and their isolated review
 project remain under the ignored `artifacts/` paths above. Do not create a
