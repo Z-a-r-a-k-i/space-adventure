@@ -1,6 +1,12 @@
 # Roadmap
 
-Milestones use playable outcomes and exit gates rather than speculative dates. Each phase should leave the project runnable and should avoid building the next phase's systems early.
+Milestones use playable outcomes and exit gates rather than speculative dates.
+Each phase should leave the project runnable and should avoid building the next
+phase's gameplay systems early. Offline source production for an approved
+roster asset may proceed ahead of its gameplay phase under ADR 0016 when its
+reference, production-ready art brief, ownership, licensing, and privacy gates
+pass. Staged art and isolated asset-gallery review do not activate the owning
+gameplay phase or authorize live content replacement and integration.
 
 ## Phase 0 — document and baseline agreement
 
@@ -42,12 +48,23 @@ Exit remains: a human and an agent can independently move from the start, intera
 
 Status: planned and non-gating.
 
-Before the Phase 2 human gate closes, visual preproduction may run one controlled three-asset bake-off covering a service terminal, wall utility, and compact security-drone body. The experiment is defined in `art/experiments/3d-generator-bakeoff-2026-07.md` and is capped at disposable candidates plus Blender baselines. It may establish art direction and measure whether a generator saves cleanup time; it does not replace greybox gameplay, alter the live route, select a permanent provider, begin Phase 3 or Phase 6, or authorize production-scale asset generation.
+Before the Phase 2 human gate closes, visual preproduction may run one
+controlled three-asset bake-off covering a service terminal, wall utility, and
+compact security-drone body. The experiment is defined in
+`art/experiments/3d-generator-bakeoff-2026-07.md` and is capped at disposable
+candidates plus Blender baselines. It may establish art direction and measure
+whether a generator saves cleanup time; it does not replace greybox gameplay,
+alter the live route, select a permanent provider, or begin Phase 3 or Phase 6.
+Quality-oriented offline production authorized separately under ADR 0016 uses
+`__prod__` run IDs and is excluded from the experiment and its scorecard. For
+the three experiment IDs themselves, production work remains blocked until the
+whole bake-off's evidence, scorecards, baselines, and result are frozen.
 
 The complete approved POC target inventory may be maintained in
-`POC-ASSET-ROSTER.md` as planning documentation during this period. Roster
-approval does not expand the experiment or authorize execution on asset IDs
-beyond the three listed above.
+`POC-ASSET-ROSTER.md` during this period. Roster approval alone neither expands
+the experiment nor authorizes execution. Offline production of another roster
+asset additionally requires its approved reference and production-ready art
+brief; gameplay-coupled finalization still waits for the owning phase.
 
 Exit: each of the three briefs has bounded Tripo, Meshy, and Blender evidence or a documented provider failure; the experiment records provenance, tactical-camera captures, measurements, and a result of `tripo`, `meshy`, `blender`, or `none`. This exit does not affect the Phase 2 status or human-playthrough requirement.
 
@@ -59,10 +76,10 @@ Status: deferred until the Phase 2 human-playthrough gate passes.
   as Vanguard carbine, Operator pistol, and Protector shotgun; define their
   stable gameplay attacks and the three active abilities before producing
   ability-specific art.
-- Produce each human as one fixed runtime outfit on the shared skeleton while
-  retaining the fitted undersuit and major armor pieces as modular Blender
-  source objects. Finish segmentation, remeshing, and fitting before rigging;
-  do not add runtime armor slots.
+- Integrate and approve each human as one fixed runtime outfit on the shared
+  skeleton, using any accepted offline source work. Complete any remaining
+  segmentation, remeshing, fitting, shared-rig, and assembly review before
+  runtime publication; do not add runtime armor slots.
 - Add the recruitable companion, portraits, individual and group selection, simple formation movement, and party observations.
 - Add the two authored conversations and one observable choice consequence.
 - Verify dialogue state validation, recruitment, pause behavior, and both kit paths.

@@ -58,6 +58,22 @@ outputs and provenance, complete mesh reconstruction before rigging, and treat
 generated rigs and animations as Blender-retargeted donor inputs rather than
 production authority.
 
+Offline source production is authorized independently of gameplay-phase
+activation only for an approved roster asset with an approved reference,
+accepted production-ready art brief, assigned ownership, and resolved
+licensing and privacy prerequisites. Brief acceptance must record the project
+owner or explicitly delegated art approver; authorship or assignment is not
+self-approval. Use a dedicated art branch/worktree, owned asset IDs and paths,
+isolated Godot user data and MCP port, and never touch the active gameplay
+worktree, live scenes, `project.godot`, or shared registries during offline
+review. Select a promising source early and use subscription credits
+productively on completion, topology, textures, rig diagnostics, and animation
+donors; do not stop merely at the first viable candidate or generate variants
+without a named purpose. Live greybox replacement, gameplay wiring, ability-
+specific work, and final attack-timing integration remain roadmap-phase scoped.
+The bounded provider bake-off keeps its separate hard caps and scorecard and
+must be frozen before production work begins for any of its three asset IDs.
+
 ## Parallel work
 
 Use one branch and Git worktree per implementation agent, with explicit subsystem or path ownership. Worktrunk may manage those worktrees, but raw Git worktrees remain supported.

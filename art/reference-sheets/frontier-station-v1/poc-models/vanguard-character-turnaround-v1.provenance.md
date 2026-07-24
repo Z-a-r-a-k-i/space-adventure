@@ -19,8 +19,9 @@ Approved: 2026-07-23 by the project owner
 
 This sheet is the approved Vanguard visual anchor. Approval freezes the face,
 body proportions, fixed outfit, armor language, palette, and broad silhouette.
-It is not a production-ready character brief and does not authorize Tripo
-generation.
+It is not a production-ready character brief and does not by itself authorize
+Tripo generation. Offline source production additionally requires the accepted
+brief and other ADR 0016 gates.
 
 ## Input image roles
 

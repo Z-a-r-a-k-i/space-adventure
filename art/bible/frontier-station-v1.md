@@ -124,10 +124,11 @@ The current route establishes the initial dimensional language:
 
 Structural floors, walls, doors, posts, and cutaway pieces are dimensionally
 authored in Blender. Do not use diffusion-generated meshes as structural
-modules. Before the Phase 2 exit, generated candidates are limited to the three
-bounded bake-off IDs. When an owning phase is active and its brief is
-production-ready, Tripo may also provide the humanoid-body and handheld-weapon
-candidates reserved in `docs/POC-ASSET-ROSTER.md`.
+modules. Before the Phase 2 exit, provider-comparison evidence is limited to
+the three bounded bake-off IDs. Separately, Tripo may provide candidates for
+an approved roster asset under ADR 0016 once its visual reference and
+production-ready art brief are accepted. This offline lane does not authorize
+live gameplay integration before the owning phase.
 
 The production evacuation airlock visibly opens before completion presentation.
 Its frame, moving leaves, clearance, pivot, and collision interfaces are
@@ -257,6 +258,10 @@ pair it with silhouette, placement, iconography, or animation.
 - Never publish directly from a provider or provider plugin into Godot.
 - Preserve the raw candidate, prompt, input hashes, provider model/version,
   settings, job ID or seed when available, and licensing record.
+- Use subscription credits to improve selected assets through named,
+  reviewable operations rather than stopping at the first viable result or
+  generating unreviewed variants. The bounded bake-off retains its separate
+  hard caps.
 - A candidate may lose to a manually authored Blender version. “None” is a
   valid result of the bake-off.
 

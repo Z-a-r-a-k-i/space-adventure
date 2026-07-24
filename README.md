@@ -116,7 +116,8 @@ Control integration; no second Godot-control addon is required.
 - `docs/ART-WORKSTATION.md`: dedicated Windows art-machine installation and
   verification checklist.
 - `docs/POC-ASSET-ROSTER.md`: approved model, rig, animation, 2D, and VFX
-  target inventory with phase-scoped production authority.
+  target inventory with brief-scoped offline production and phase-scoped live
+  integration.
 - `docs/ATTACK-PRESENTATION.md`: weapon, attack-source, rig, and animation
   contract for combatant assets.
 - `docs/ROADMAP.md`: milestone order and exit gates.

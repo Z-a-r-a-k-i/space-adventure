@@ -1,16 +1,20 @@
 # POC model visual approvals
 
-Status: complete visual-reference roster; production remains phase-scoped
+Status: complete visual-reference roster; offline production additionally
+requires an accepted brief
 
-Revision: 2026-07-23
+Revision: 2026-07-24
 
 ## Approval rule
 
 Review one asset delivery at a time. A sheet may be marked `approved`,
 `revise`, or `rejected`. Approval freezes the depicted visual direction for the
-matching production brief; it does not authorize Tripo, modeling, rigging,
-animation, publication, or Godot integration. Execution remains governed by
-`docs/ROADMAP.md` and `docs/POC-ASSET-ROSTER.md`.
+matching production brief; visual approval alone does not authorize Tripo,
+modeling, rigging, animation, publication, or Godot integration. An approved
+roster asset may enter offline source production only after its production-
+ready art brief is separately accepted under ADR 0016. Gameplay-coupled
+finalization and live integration remain governed by `docs/ROADMAP.md` and
+`docs/POC-ASSET-ROSTER.md`.
 
 Character bodies and handheld weapons are separate assets. After both sheets
 are approved, the pair also receives a complete-assembly check for grip,

@@ -78,7 +78,7 @@ whole-scene image-to-3D inputs. Crop or redraw the individual subject first.
 ## Bounded run protocol
 
 1. Create a run ID in the form
-   `<asset-id>__<provider>__<model>__<yyyy-mm-dd>__<nn>`.
+   `<asset-id>__bakeoff__<provider>__<model>__<yyyy-mm-dd>__<nn>`.
 2. Record the input hashes and provider settings before generation.
 3. Allow at most two raw generations per provider per asset.
 4. Select at most one raw candidate per provider per asset for cleanup.
@@ -95,6 +95,13 @@ whole-scene image-to-3D inputs. Crop or redraw the individual subject first.
 
 The maximum is twelve raw cloud generations, six selected generated candidates,
 and three Blender baselines. Do not expand the run because one provider fails.
+These caps protect the comparison and remain unchanged by ADR 0016. Any
+quality-oriented Tripo work beyond them uses an
+`<asset-id>__prod__tripo__<model>__<yyyy-mm-dd>__<nn>` run ID, follows an
+accepted production-ready art brief, and is excluded from this experiment's
+cleanup clock, scorecard, and result. Production-lane work for all three IDs is
+blocked until every provider result, Blender baseline, scorecard, and final
+experiment decision is complete and frozen.
 
 ## Cleanup clock
 
@@ -198,6 +205,9 @@ The experiment is complete when all three asset rows have:
 - tactical-camera captures;
 - provenance records; and
 - a decision of `tripo`, `meshy`, `blender`, or `none`.
+
+Freeze the completed scorecards, measurements, evidence hashes, baselines, and
+decisions before opening a `__prod__` run for any of the three asset IDs.
 
 Completion does not pass the Phase 2 human-playthrough gate, begin Phase 3, or
 complete the Phase 6 representative-asset pipeline.

@@ -7,8 +7,11 @@ Generated: 2026-07-23
 Approved: 2026-07-23 by the project owner
 
 This batch contains five independently reviewable asset directions. Approval
-freezes visual direction for the matching future production brief; it does not
-authorize 3D generation before the owning roadmap phase and brief are ready.
+freezes visual direction for the matching future production brief; visual
+approval alone does not authorize 3D generation. Offline source production may
+begin only after the matching production-ready art brief is separately
+accepted under ADR 0016. Gameplay-coupled finalization and live integration
+remain roadmap-phase scoped.
 
 | Order | Asset ID | Sheet | Review focus | Status |
 |---:|---|---|---|---|
