@@ -194,12 +194,19 @@ part completion, topology branches, texture repair, rig diagnostics, and
 animation donors. Multiple candidates are created only when they answer a
 named quality problem; candidate count is not a goal.
 
-Every charged operation records its purpose, settings, task or version ID,
-visible credit cost, result, and keep/reject decision. Repeating an unchanged
-failed operation or preserving unreviewed variants is not productive use.
-Work stops when the asset passes its applicable reviews, the provider cannot
-improve the named defect, or Blender is the better next tool—not simply to
-conserve unused monthly credits.
+Every provider operation records its purpose, settings, task or version ID,
+result, and keep/reject decision. A displayed operation cost may be captured
+opportunistically when it is already visible, but cost is not an acceptance
+criterion. Repeating an unchanged failed operation or preserving unreviewed
+variants is not productive use. Work stops when the asset passes its applicable
+reviews, the provider cannot improve the named defect, or Blender is the better
+next tool—not simply to conserve unused monthly credits.
+
+Amendment accepted 2026-07-24: production work does not track remaining account
+balance or reconcile historical credit totals. Existing historical observations
+may remain as provenance, but contradictory totals are removed or marked
+unknown rather than investigated. The bounded provider bake-off retains its
+separate fixed attempt caps and cost scorecard.
 
 Credits consumed never waive the asset brief, attack-presentation contract,
 provenance, Blender ownership, Godot review, or human approval requirements.
@@ -225,10 +232,12 @@ top-level repository run ID, and provider task ID plus one entry for every
 cached payload: expected cache-relative path, original filename, format and
 export settings, byte size,
 `local_presence_checked_utc`, and `local_presence_status` (`present` or
-`missing`). The manifest also records plan/privacy/licensing state and credit
-use. Prompts, approved inputs, settings, selection decisions, processing
-records, editable Blender sources, and publishable outputs remain versioned
-under the normal pipeline rules.
+`missing`). The manifest also records plan/privacy/licensing state and may
+record a displayed operation cost when it was captured opportunistically. It
+does not require an account balance or reconciled historical total. Prompts,
+approved inputs, settings, selection decisions, processing records, editable
+Blender sources, and publishable outputs remain versioned under the normal
+pipeline rules.
 
 Raw-dependent Blender tooling must refuse a missing cache file and flag an
 unexpected byte size for manual review. It must not read an entire raw payload
@@ -290,3 +299,26 @@ New or updated `raw-export.manifest.json` files use schema version 2 and omit
 binary `sha256` fields. Existing schema-version-1 hashes and hash-keyed review
 directories remain valid historical records, but agents must not recompute
 those hashes during inventory, migration, hydration, or routine validation.
+
+## ADR 0019 — asset review screenshots are local and disposable
+
+Status: accepted by the project owner on 2026-07-25.
+
+Generated concept art, approved reference sheets, and exact image inputs used
+to create an asset are durable production sources and remain versioned.
+Screenshots of Tripo Studio, Blender, Godot, build output, gallery views,
+turntables, contact sheets, and sampled animation frames are not production
+sources and are not committed as routine evidence.
+
+Asset appearance and animation are reviewed directly in the owning tool.
+Temporary frozen captures are permitted only for a named diagnostic need and
+belong under the ignored `artifacts/` tree. Agents open the minimum necessary
+capture once and do not create a repository gallery or image-hash ledger.
+
+Durable review evidence is compact text or JSON: provider task/version and
+settings, structural metrics, named defects, keep/reject/revise decisions,
+approval identity, and the tool/version used. A `visual-review.md` may cache a
+live review conclusion but must not enumerate screenshots. This keeps the
+repository focused on sources and outputs, reduces LFS and clone noise, and
+avoids repeated high-resolution image ingestion while preserving auditable
+decisions.

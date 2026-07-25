@@ -1,0 +1,29 @@
+{
+  "status": "planned; verify every value and displayed credit cost live before submission",
+  "provider": "Tripo Studio signed-in web application",
+  "api_use": false,
+  "purchase_or_upgrade_authorized": false,
+  "workflow": "Build & Refine / HD Model / multi-view image-to-3D",
+  "model": "v3.1 - Best Quality",
+  "geometry_and_texture": "Ultra",
+  "generate_in_parts": true,
+  "generate_in_parts_reason": "heavy fixed armor and upper-back carry hardware benefit from named part boundaries around one continuous deforming base",
+  "texture_8k": false,
+  "initial_candidates": 1,
+  "maximum_candidates": 2,
+  "retry_policy": "one retry only for a named brief failure",
+  "rig_profile": "rig.crew.humanoid.v1",
+  "weapon_in_character_generation": false,
+  "ability_specific_content": false,
+  "displayed_credit_cost": null,
+  "visible_balance_before": null,
+  "privacy_setting": null,
+  "slot_policy": {
+    "Front": "input/front.png",
+    "Left": "input/left.png",
+    "Back": "input/back.png",
+    "Right": null,
+    "validation_only": "input/front-right-3q.png",
+    "note": "Do not label the approved front-right three-quarter crop as a strict Right elevation unless the live workflow explicitly accepts auxiliary perspective views."
+  }
+}

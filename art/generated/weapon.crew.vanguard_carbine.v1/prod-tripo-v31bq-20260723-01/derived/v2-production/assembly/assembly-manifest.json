@@ -1,0 +1,150 @@
+{
+  "asset_id": "weapon.crew.vanguard_carbine.v1",
+  "attachment_interpretation": "Full exported pose-socket transform. The primary hand socket rest orientation is the weapon-frame correction; the holster socket therefore carries its reviewed relative rotation.",
+  "blender_version": "5.2.0 LTS",
+  "character_action_datablocks": [
+    "anim.humanoid.dialogue_idle",
+    "anim.humanoid.dialogue_listen",
+    "anim.humanoid.dialogue_speak",
+    "anim.humanoid.down",
+    "anim.humanoid.draw",
+    "anim.humanoid.fire_recoil",
+    "anim.humanoid.hit_reaction",
+    "anim.humanoid.holster",
+    "anim.humanoid.idle_armed",
+    "anim.humanoid.idle_holstered",
+    "anim.humanoid.interact_terminal",
+    "anim.humanoid.locomotion_armed",
+    "anim.humanoid.locomotion_holstered",
+    "anim.humanoid.raise_aim",
+    "anim.humanoid.recovery",
+    "anim.humanoid.use_healing"
+  ],
+  "character_armature": "VanguardRig",
+  "character_bones": 59,
+  "character_glb": {
+    "bytes": 11728016,
+    "path": "C:\\Developpement\\space-adventure-art-production\\game\\Assets\\Published\\character.crew.vanguard.v1.glb"
+  },
+  "character_import_result": [
+    "FINISHED"
+  ],
+  "compatible_character": "character.crew.vanguard.v1",
+  "decision": "pass",
+  "defects": [
+    {
+      "code": "held-contact-overlap",
+      "finding": "The fitted held pose contains mesh contact at hands/stock; inspect the close render for visible body or armor clipping.",
+      "severity": "review",
+      "triangle_pair_overlaps": 1308
+    }
+  ],
+  "evaluated_action": "anim.humanoid.idle_armed",
+  "evaluated_frame": 1,
+  "generated_utc": "2026-07-24T15:26:35.949338+01:00",
+  "hand_attachment": {
+    "collisions": {
+      "overlapping_mesh_pairs": [
+        {
+          "character_mesh": "VanguardBody",
+          "triangle_pair_overlaps": 1052,
+          "weapon_mesh": "weapon.vanguard_carbine.body"
+        },
+        {
+          "character_mesh": "VanguardDeformingBase",
+          "triangle_pair_overlaps": 256,
+          "weapon_mesh": "weapon.vanguard_carbine.body"
+        }
+      ],
+      "triangle_pair_overlaps": 1308
+    },
+    "left_palm_position_m": [
+      0.12791897,
+      -0.47891507,
+      1.19885063
+    ],
+    "left_wrist_position_m": [
+      0.12364715,
+      -0.4681522,
+      1.22655809
+    ],
+    "muzzle_line": {
+      "character_hits": [],
+      "clear": true,
+      "direction": [
+        -0.25881892,
+        -0.96592587,
+        -1.2E-07
+      ],
+      "origin_m": [
+        0.06111279,
+        -0.71724421,
+        1.33873546
+      ]
+    },
+    "primary_grip_position_m": [
+      0.21404754,
+      -0.1469446,
+      1.23050046
+    ],
+    "socket_position_m": [
+      0.21404754,
+      -0.1469446,
+      1.23050046
+    ],
+    "support_grip_position_m": [
+      0.12478234,
+      -0.47962648,
+      1.19563556
+    ],
+    "support_hand_gap_m": 0.00454767,
+    "weapon_bounds_max_m": [
+      0.33612955,
+      0.09163821,
+      1.4170357
+    ],
+    "weapon_bounds_min_m": [
+      -0.00167235,
+      -0.73406744,
+      1.14703536
+    ]
+  },
+  "holster_attachment": {
+    "collisions": {
+      "overlapping_mesh_pairs": [],
+      "triangle_pair_overlaps": 0
+    },
+    "primary_grip_position_m": [
+      0.2,
+      0.42000002,
+      1.34999979
+    ],
+    "socket_position_m": [
+      0.2,
+      0.42000002,
+      1.34999979
+    ],
+    "weapon_bounds_max_m": [
+      0.2648809,
+      0.50346506,
+      1.57955027
+    ],
+    "weapon_bounds_min_m": [
+      0.13488077,
+      0.23346473,
+      0.75955033
+    ]
+  },
+  "scope": "Disposable exact staging assembly review only. Neither staging GLB nor the character source was modified. Gameplay identity, timing, range, and damage were not inferred.",
+  "weapon_glb": {
+    "bytes": 143676,
+    "path": "C:\\Developpement\\space-adventure-art-production\\game\\Assets\\Published\\weapon.crew.vanguard_carbine.v1.glb"
+  },
+  "weapon_import_result": [
+    "FINISHED"
+  ],
+  "visual_review": {
+    "method": "direct live Blender assembly inspection",
+    "artifact_policy": "temporary renders are local under ignored artifacts/ and are not tracked"
+  }
+}

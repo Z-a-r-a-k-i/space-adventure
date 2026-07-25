@@ -75,10 +75,11 @@ remains provisional pending the owner's final visual review. The terminal is
 retained only as a renderer/readability comparator because it fails the
 geometry hard gate.
 
-After rebasing onto commit `71ea25e`, the provisional game-project copies,
-dedicated gallery scenes, and standardized review renders were returned to
-ignored local staging under `artifacts/`. The tracked source work, provenance,
-and derived review GLBs remain on this branch. The live route,
+After rebasing onto commit `71ea25e`, the provisional game-project copies and
+dedicated gallery scenes were returned to ignored local staging under
+`artifacts/`; disposable review renders were not retained as repository
+evidence. The tracked source work, provenance, and derived review GLBs remain
+on this branch. The live route,
 `game/project.godot`, shared registries, gameplay wrappers, and normal
 publication paths remain unchanged.
 
@@ -102,7 +103,9 @@ read during rebase reconciliation.
 
 The two retained tasks predate the lane-token rule. Their original paths remain
 unchanged to preserve provenance, while both metadata records now declare
-`lane: bakeoff` and require the current naming format for any new run.
+`lane: bakeoff`. The `__prod__` and `__bakeoff__` tokens above describe the
+then-current policy; new runs use the compact convention in
+`PATH-CONVENTIONS.md`.
 
 The earlier reference-package baseline at `1f3d941` added or corrected 41
 files, including 24 approved PNGs. Its images were visually inspected and
@@ -123,29 +126,25 @@ Those later-phase corrections and the new offline-production policy were
 understood but do not reclassify this bounded Phase 2 evidence as production
 work or promote later-phase gameplay integration.
 
-## Credit ledger
+## Provider-operation provenance
 
-| Scope | Asset | Run/task | Candidates | Credits | Account balance |
-|---|---|---|---:|---:|---|
-| Retained Phase 2 | Service terminal | `d3014f04-3de4-45ba-9502-90d6f80ea67b` | 1 | 55 | historical run: 25,145 to 25,090 |
-| Out of scope, untracked | Vanguard | free c01 `b18e331b-0699-453d-ad8e-a71ffa0e373c`; charged c02 `c889d05a-90fe-4186-85eb-12d4eceafb35` | 2 | 55 | 25,090 to 25,035 |
-| Out of scope, untracked | Vanguard carbine | `01bb9aea-6b10-419d-bbeb-9648c9867a97` | 1 | 55 | 25,035 to 24,980 |
-| Out of scope, untracked | Operator | `dd18ffbe-b4bb-4035-9a82-d87da93d9d8a` | 1 | 55 | 24,980 to 24,925 |
-| Out of scope, untracked | Operator pistol | `615ff81e-441e-4cea-b123-109cc93d65a3`; charged c01 plus free c02 retry | 2 | 55 | 24,925 to 24,870 |
-| Out of scope, untracked | Protector | `1fb3f3bb-1f0c-49cd-a9bd-87cf2a4abe75` | 1 | 55 | 24,870 to 24,815 |
-| Out of scope, untracked | Protector shotgun | `83d827a9-9149-4aea-8ef1-d52fb5c83a21` | 1 | 55 | 24,815 to 24,760 |
-| Retained Phase 2 | Wall utility | `162d5614-e586-4a2b-a9b6-bbfe71d8caf9` | 1 | 55 | 24,760 to 24,705 |
-| Retained Phase 2 | Disposable drone body | no run created | 0 | 0 | unchanged |
+| Scope | Asset | Run/task | Candidates | Displayed operation cost |
+|---|---|---|---:|---:|
+| Retained Phase 2 | Service terminal | `d3014f04-3de4-45ba-9502-90d6f80ea67b` | 1 | 55 |
+| Out of scope, untracked | Vanguard | free c01 `b18e331b-0699-453d-ad8e-a71ffa0e373c`; charged c02 `c889d05a-90fe-4186-85eb-12d4eceafb35` | 2 | 55 |
+| Out of scope, untracked | Vanguard carbine | `01bb9aea-6b10-419d-bbeb-9648c9867a97` | 1 | 55 |
+| Out of scope, untracked | Operator | `dd18ffbe-b4bb-4035-9a82-d87da93d9d8a` | 1 | 55 |
+| Out of scope, untracked | Operator pistol | `615ff81e-441e-4cea-b123-109cc93d65a3`; charged c01 plus free c02 retry | 2 | 55 |
+| Out of scope, untracked | Protector | `1fb3f3bb-1f0c-49cd-a9bd-87cf2a4abe75` | 1 | 55 |
+| Out of scope, untracked | Protector shotgun | `83d827a9-9149-4aea-8ef1-d52fb5c83a21` | 1 | 55 |
+| Retained Phase 2 | Wall utility | `162d5614-e586-4a2b-a9b6-bbfe71d8caf9` | 1 | 55 |
+| Retained Phase 2 | Disposable drone body | no run created | 0 | not applicable |
 
-Credits charged during the dedicated-machine continuation after the historical
-terminal run: **385**.
-
-Credits represented by the two retained bounded Phase 2 runs: **110**.
-
-Credits represented by the excluded later-phase attempts: **330**.
-
-Total observed charge across the historical terminal and all continuation
-activity: **440**.
+The task IDs and operation outcomes are the useful provenance. Historical
+account-balance chains and aggregate credit totals were removed on 2026-07-24:
+they are not acceptance criteria, and missing or contradictory totals are not
+worth reconstructing. Displayed per-operation costs above are retained only as
+observations from the existing evidence.
 
 For the retained Phase 2 runs, no purchase, upgrade, API, segmentation,
 provider retopology, provider retexture, rigging, or animation operation was
@@ -171,10 +170,8 @@ renderer/readability comparison; not a surviving bake-off candidate.
   corrected `-Z` front, two materials.
 - The ignored local terminal gallery contains a hidden, correctly sized
   greybox sibling; the live route is intentionally unchanged on this branch.
-- Fresh Godot 4.7.1 import, exact scene load, runtime tree, and 14.5 m capture:
-  pass.
-- Exact-hash local evidence retains the 7.5, 14.5, and 20 m comparator review
-  set.
+- Fresh Godot 4.7.1 import, exact scene load, runtime tree, and direct live
+  tactical review: pass.
 - The editable provider shell still has 42 boundary edges and 64 non-manifold
   edges. They are not visibly open in the isolated gallery, but they violate
   the experiment's geometry hard gate. The terminal is therefore not scored
@@ -183,15 +180,6 @@ renderer/readability comparison; not a surviving bake-off candidate.
 
 Ignored local validation staging:
 `artifacts/reviews/prop.station.service_terminal.v1/1EA04834A19627B94AC004574C5EF1F9A62961FF80B60BFD1C579BFF061FB121/godot/validation.md`
-
-Tactical capture SHA-256 values:
-
-- 7.5 m:
-  `C21AB76F20C795796F937AC65A2E3F35CD68A6A938E94FC01A93E4D81E2E1B3A`
-- 14.5 m:
-  `D503B44306A9C2E0E0EE462926620E331ACC5BFC22DE877F7F9FB2E3537DB0F0`
-- 20 m:
-  `85680A055597BA3FBC92EE848A4E730A305826A3F2315FB8E09E303E80FFDF3D`
 
 ### `prop.station.wall_utility.v1`
 
@@ -231,20 +219,11 @@ provisionally selected pending owner review and missing comparison rows.
   cumulative automated repair trials took 272.018 seconds; active human
   cleanup remained below the 30-minute cap.
 - The exact derived GLB passed local Godot import, scene validation, runtime
-  inspection, hidden-fallback verification, and visual review at 7.5, 14.5,
-  and 20 m with zero editor/debugger/dialog errors.
+  inspection, hidden-fallback verification, and direct live review at 7.5,
+  14.5, and 20 m with zero editor/debugger/dialog errors.
 
 Ignored local standardized Godot evidence:
 `artifacts/reviews/prop.station.wall_utility.v1/104B03AAF161192610D9F8F1089B092C1D1EE6140F1333C13FAE3235F1E6BAF2/godot/`
-
-Tactical capture SHA-256 values:
-
-- 7.5 m:
-  `360AA5D83F00C09ED3159396E54CDCFCB1D9B6A238416E4181354A36091AFCA9`
-- 14.5 m:
-  `905AFEDA47E41EA44185870C121CB7D5E3AA92C14B0DECC9EE064C8AE269A539`
-- 20 m:
-  `8B876B4A7EAADE1A116523398C355A50B7072C244EF942A110C07DC73414D462`
 
 ### `machine.security_drone.body.v1`
 
@@ -321,8 +300,6 @@ assessment.
 
 - The terminal derived-artifact ledger replays 19/19 retained inputs and
   outputs.
-- The terminal and wall Studio evidence manifests replay 6/6 and 7/7 entries,
-  respectively.
 - The wall derived-artifact ledger replays 19/19 retained inputs and outputs.
 - Both ignored raw-cache files are present on the dedicated workstation and
   match the committed manifest sizes and SHA-256 values. Normal clones and CI
@@ -354,20 +331,13 @@ assessment.
   `character.crew.protector.v1`, and
   `weapon.crew.protector_shotgun.v1`; reconciliation did not move, stage,
   delete, or validate them.
-- Both task UUIDs are recorded consistently in metadata, and the wall UUID is
-  also retained in the generating-screenshot filename. Neither UUID is legible
-  inside the captured Studio pixels, so strict screenshot-visible task-ID
-  evidence remains an honest provenance gap.
+- Both task UUIDs are recorded consistently in metadata and provider
+  manifests.
 - Accepted GLB, Blender, and generated-input binaries are assigned to Git LFS
   through `.gitattributes`. Untouched Tripo payloads and standardized review
   binaries remain ignored.
-- Full-window Studio evidence retains the numeric credit balance,
-  notification badge, and thumbnails of other SpaceAdventure generations
-  needed to explain the account-balance chain. It contains no email,
-  credential, token, private task URL, or API key. The repository is currently
-  private, but this evidence should be cropped or separately archived before
-  any future public release if those surrounding thumbnails are not intended
-  for disclosure.
+- Studio appearance was reviewed live. Full-window UI screenshots are
+  disposable local artifacts and are not repository provenance.
 - These two legacy runs predate the mandatory lane token and the current
   preflight ownership record. Their paths are preserved for provenance,
   metadata explicitly labels them `bakeoff`, and the original preflight did
@@ -388,13 +358,13 @@ Completed:
 - isolated branch/worktree;
 - exact terminal migration and byte-for-byte audit;
 - fresh terminal import, runtime scene inspection, fallback verification, and
-  14.5 m capture;
-- wall-utility approved input pack, hashes, live settings, task ID, credit
-  evidence, selection screenshots, ignored local raw export, tracked
+  direct live review;
+- wall-utility approved input pack, hashes, live settings, task ID, direct
+  Studio selection review, ignored local raw export, tracked
   raw-export manifest, and selection record;
 - wall-utility Blender normalization, rear reconstruction, retopology,
   materials, exact-hash derived GLB validation, ignored local gallery,
-  reversible greybox fallback, and 7.5/14.5/20 m captures;
+  reversible greybox fallback, and direct 7.5/14.5/20 m review;
 - drone-body preflight blocker with zero credit use.
 
 Pending:
@@ -404,8 +374,7 @@ Pending:
 - Meshy results or documented provider failures, missing Blender-only
   baselines/timing, and final provider decisions if the non-gating experiment
   is resumed;
-- owner disposition of the 321 untracked later-phase generated paths and the
-  full-window Studio evidence before any future public release;
+- owner disposition of the 321 untracked later-phase generated paths;
 - optional migration of ignored raw exports to private off-machine storage,
   with verified restore locators added to their manifests; and
 - owner visual review and independent physical-input playtest.

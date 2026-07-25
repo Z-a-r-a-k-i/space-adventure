@@ -1,0 +1,30 @@
+{
+  "status": "completed; provisionally selected",
+  "provider": "Tripo Studio signed-in web application",
+  "api_use": false,
+  "purchase_or_upgrade_authorized": false,
+  "workflow": "Build & Refine / HD Model / single-image image-to-3D",
+  "input": "input/front-right-3q.png",
+  "validation_inputs": [
+    "input/left-side.png",
+    "input/top.png",
+    "input/front-muzzle.png"
+  ],
+  "model": "v3.1 - Best Quality",
+  "geometry_and_texture": "Ultra",
+  "generate_in_parts": false,
+  "texture_8k": false,
+  "plan_displayed": "Max",
+  "privacy_setting": "Sharing Only",
+  "displayed_credit_cost": 55,
+  "charged_credits": 55,
+  "visible_balance_before": 24815,
+  "visible_balance_after": 24760,
+  "task_id": "83d827a9-9149-4aea-8ef1-d52fb5c83a21",
+  "selection": "candidate 01 provisionally selected pending owner visual review",
+  "studio_vertices": 1007701,
+  "studio_triangles": 1962119,
+  "raw_export": "raw/weapon.crew.protector_shotgun.v1__raw__tripo-v3.1__candidate-01.glb",
+  "raw_bytes": 58116884,
+  "second_candidate_generated": false
+}

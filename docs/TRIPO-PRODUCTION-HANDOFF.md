@@ -75,9 +75,14 @@ Before opening Tripo for an asset, record all of the following:
   rig profile, animation coverage, and tactical-camera review distance;
 - current Tripo plan tier, privacy setting, and commercial-use status; and
 - one unambiguous production run ID:
-  `<asset-id>__prod__tripo__<live-model-id>__<yyyy-mm-dd>__<nn>`; or
+  `prod-tripo-<model-token>-<yyyymmdd>-<nn>`; or
 - for the bounded experiment only, one bake-off run ID:
-  `<asset-id>__bakeoff__tripo__<live-model-id>__<yyyy-mm-dd>__<nn>`.
+  `bake-tripo-<model-token>-<yyyymmdd>-<nn>`.
+
+Run IDs are asset-scoped because their parent directory already contains the
+stable asset ID. The compact `<model-token>` is at most 12 characters; record
+the exact live model identifier in metadata. Follow `PATH-CONVENTIONS.md` and
+run `scripts/dev.ps1 path-check` before committing.
 
 If the brief, applicable authorization, licensing, privacy, or ownership is
 missing, stop and report the missing prerequisite. Do not use a convenient
@@ -119,7 +124,7 @@ The approved crew, weapon, machine, prop, and environment sheets are ready for
 production-brief preparation. Once an approved roster asset receives an
 accepted production-ready art brief, its separate offline source-production
 lane may run under ADR 0016 even when its gameplay phase is not active. Use a
-`__prod__` run ID, not a `__bakeoff__` run ID, and keep its results out of the
+`prod-` run ID, not a `bake-` run ID, and keep its results out of the
 bake-off scorecard.
 
 Before the owning gameplay phase, offline work may include reference crops,
@@ -164,8 +169,8 @@ every input crop before upload.
 
 ## Tripo Studio generation procedure
 
-1. Open the live model-generation workspace and confirm the signed-in plan,
-   privacy state, and displayed credit cost.
+1. Open the live model-generation workspace and confirm the signed-in plan and
+   privacy state.
 2. Select **Build & Refine**, not One-Click, when the asset needs controlled
    parts, topology, or a later rig.
 3. Choose image-to-3D multi-view and upload the prepared crops as one model.
@@ -173,24 +178,27 @@ every input crop before upload.
    it. Record the exact live generation model, quality, topology, texture, PBR,
    part, seed or retry, and other visible settings; marketing model names in
    this repository are not substitutes for live identifiers.
-5. Capture the settings and task or model identifier before generation.
+5. Record the settings and task or model identifier as text before generation;
+   do not use a Studio screenshot as provenance.
 6. Generate an initial candidate and inspect every view before choosing the
    next operation. Create a targeted alternative only for a named defect, such
    as fused legs, missing back geometry, wrong weapon silhouette, or unusable
    asymmetry. One to three raw candidates will often be enough, but production
    work has no general hard candidate cap.
-7. Preserve the untouched result in the ignored run-local cache and preserve
-   its review evidence before any later Studio operation. Use Studio history's
+7. Preserve the untouched result in the ignored run-local cache and record the
+   review decision before any later Studio operation. Use Studio history's
    **Save as New Version** before a destructive branch when available.
 8. Select one promising source for active cleanup at a time. Invest
    subscription credits in completing that source properly: useful
    segmentation, part completion, topology or texture branches, rig
    diagnostics, and animation donors. Do not stop merely because the first
    viable candidate exists, and do not make candidate count a goal.
-9. For every charged operation, record the purpose, settings, task or version
-   ID, visible credit cost, result, and keep/reject decision. Do not repeat an
-   unchanged failed operation or retain an unreviewed branch merely to consume
-   credits.
+9. For every provider operation, record the purpose, settings, task or version
+   ID, result, and keep/reject decision. A displayed operation cost may be
+   copied when it is already visible, but do not navigate or inspect account
+   history to obtain it. Do not track remaining balance, reconcile historical
+   totals, repeat an unchanged failed operation, or retain an unreviewed branch
+   merely to consume credits.
 
 ## Part policy by asset class
 
@@ -287,12 +295,11 @@ For a compatible neutral-pose humanoid or creature candidate:
    limbs, no fused hands or legs, readable shoulders, elbows, hips, knees, and
    feet.
 2. Run **Auto Rig** and record the displayed rig model or version, rig type,
-   skeleton specification, task ID, and credits.
+   skeleton specification, task ID, and optional displayed operation cost.
 3. Apply a small diagnostic set first: neutral idle, walk, run, shoot or attack,
    hurt, fall or down, and turn when those presets exist in the live Studio
-   library. Once retargeting is proven, use additional provider credits
-   freely for donor variants that address named coverage, deformation,
-   silhouette, or timing needs.
+   library. Once retargeting is proven, use additional donor variants freely
+   when they address named coverage, deformation, silhouette, or timing needs.
 4. Request in-place motion where Studio exposes it. Root translation from a
    provider clip is not gameplay authority.
 5. Export the rigged base plus useful preset clips as GLB or FBX and record
@@ -357,8 +364,9 @@ together.
 
 Do not run the entire pipeline invisibly. Deliver these checkpoints:
 
-1. **Raw-candidate review:** Studio turntable or multi-angle captures, settings,
-   credit use, task ID, input hashes, and a decision of keep, retry, or reject.
+1. **Raw-candidate review:** inspect the live Studio turntable, record settings,
+   task ID, input hashes, named defects, and a decision of keep, retry, or
+   reject.
 2. **Static Blender review:** normalized bounds, topology, named parts,
    materials, wireframe, and tactical-camera silhouette.
 3. **Assembly review:** hands, holster or back mount, support grip, muzzle,
@@ -378,6 +386,11 @@ Prominent characters, combatants, hero weapons, and environments require human
 approval at their applicable checkpoints. A 2D concept approval does not
 pre-approve the 3D candidate, rig, or animations.
 
+Perform these checkpoints directly in Tripo Studio, Blender, and Godot.
+Version the textual decision and structural metrics, not screenshots of the
+tools. Temporary diagnostic captures, turntables, or sampled frames belong
+under ignored `artifacts/` paths and are not repository deliverables.
+
 ## Repository deliverables
 
 For each Tripo run, commit:
@@ -387,9 +400,6 @@ art/generated/<asset-id>/<run-id>/
   input/
     prompt.txt
     <lossless-view-crops>
-  evidence/
-    settings/
-    studio-review/
   raw-export.manifest.json
   metadata.md
   selection.md
@@ -409,7 +419,7 @@ art/generated/<asset-id>/<run-id>/raw/
 - lane: `production` or `bakeoff`;
 - UTC date;
 - Tripo Studio plan and privacy state;
-- exact live model, settings, task ID, and visible credit use;
+- exact live model, settings, task ID, and optional displayed operation cost;
 - input filenames and SHA-256 hashes;
 - output filenames, byte sizes, and provider task/version references;
 - every Studio operation and version branch;
@@ -422,12 +432,14 @@ top-level `run_id` and provider `task_id` fields plus one entry for every cached
 payload. Each entry includes its expected cache-relative path, original
 filename, byte size, export format and settings,
 `local_presence_checked_utc`, and `local_presence_status` (`present` or
-`missing`). They omit binary content hashes. The manifest also records credit
-use and plan/privacy/licensing state. It records a non-secret off-machine
+`missing`). They omit binary content hashes. The manifest records
+plan/privacy/licensing state and may record a displayed operation cost when it
+was captured without extra investigation. It does not require an account
+balance or reconciled historical total. It records a non-secret off-machine
 archive locator and restore check when such storage is introduced. Existing
-schema-version-1 hash fields are historical and are not recomputed. Do not
-record a private Studio URL, session URL, cookie, token, account identifier,
-or temporary download link.
+schema-version-1 hash and credit fields are historical and are not recomputed.
+Do not record a private Studio URL, session URL, cookie, token, account
+identifier, or temporary download link.
 
 The raw cache is hydrated manually from a locally retained export, Tripo
 Studio, or a future private archive. Before Blender uses it, verify that the
@@ -457,6 +469,12 @@ directories remain valid historical evidence and do not need renaming.
 Provider-backed review manifests and findings set `asset_revision` to the exact
 repository `run_id` and record the provider `task_id` separately.
 
+Review artifacts are disposable local working files. Do not commit Studio UI
+screenshots, Blender or Godot viewport captures, rendered turnarounds, contact
+sheets, animation frame dumps, or hashes of those images. Keep durable
+approval, rejection, defect, and validation results in `metadata.md`,
+`selection.md`, or compact text/JSON reports.
+
 ## Rejection and stop conditions
 
 Reject or stop when:
@@ -476,13 +494,13 @@ Reject or stop when:
 - licensing, privacy, provenance, or provider version is unclear; or
 - the applicable authorization, brief, or asset ownership changes.
 
-Report the named failure and preserve evidence. Reject the failing branch, not
-the quality goal: switch to a targeted alternative or to Blender when that is
-the better repair path. Stop when the asset passes its applicable reviews, the
-provider cannot improve the named defect, or the next unresolved step belongs
-to a later gameplay phase. This prevents unproductive repetition; it does not
-require stopping after the first viable result or conserving prepaid monthly
-credits.
+Report the named failure and preserve the provider/version reference and
+textual finding. Reject the failing branch, not the quality goal: switch to a
+targeted alternative or to Blender when that is the better repair path. Stop
+when the asset passes its applicable reviews, the provider cannot improve the
+named defect, or the next unresolved step belongs to a later gameplay phase.
+This prevents unproductive repetition; it does not require stopping after the
+first viable result or conserving prepaid monthly credits.
 
 ## Recommended execution order
 

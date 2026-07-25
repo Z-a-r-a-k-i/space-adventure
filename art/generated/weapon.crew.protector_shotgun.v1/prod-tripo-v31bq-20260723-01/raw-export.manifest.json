@@ -1,0 +1,40 @@
+{
+  "schema_version": 2,
+  "asset_id": "weapon.crew.protector_shotgun.v1",
+  "run_id": "prod-tripo-v31bq-20260723-01",
+  "asset_revision": "prod-tripo-v31bq-20260723-01",
+  "lane": "production",
+  "provider": {
+    "name": "Tripo Studio",
+    "product": "signed-in web application",
+    "task_id": "83d827a9-9149-4aea-8ef1-d52fb5c83a21",
+    "plan": "Max",
+    "privacy": "Sharing Only",
+    "credits_consumed": 55
+  },
+  "exports": [
+    {
+      "task_id": "83d827a9-9149-4aea-8ef1-d52fb5c83a21",
+      "filename": "weapon.crew.protector_shotgun.v1__raw__tripo-v3.1__candidate-01.glb",
+      "format": "GLB",
+      "settings": "HD Model single-image front-right three-quarter, v3.1 Best Quality, Ultra, Generate in Parts disabled, 8K disabled",
+      "cache_relative_path": "raw/weapon.crew.protector_shotgun.v1__raw__tripo-v3.1__candidate-01.glb",
+      "bytes": 58116884,
+      "selection_state": "provisionally selected pending owner visual review",
+      "credits_consumed": 55,
+      "local_presence_checked_utc": "2026-07-24T16:53:18Z",
+      "local_presence_status": "present"
+    }
+  ],
+  "storage": {
+    "class": "ignored-local-workstation-cache",
+    "game_build_dependency": false,
+    "provider_recovery": "best-effort",
+    "off_machine_archive": {
+      "status": "deferred",
+      "locator": null,
+      "verified_utc": null
+    },
+    "eviction_policy": "Requires a verified off-machine copy or a separate project-owner decision."
+  }
+}

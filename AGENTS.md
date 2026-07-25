@@ -34,7 +34,26 @@ The intended verification layers are:
 2. Deterministic CLI scenarios for commands, ticks, events, and snapshots.
 3. Godot headless smoke tests for scene and engine integration.
 4. A graphical playtest for input, navigation, camera, UI, animation, and readability.
-5. Screenshot inspection for every visual change.
+5. Direct graphical inspection in the owning tool for every visual change.
+
+For AI-assisted art, optimize visual generation and inspection rather than the
+user's chosen Codex model, reasoning effort, fast mode, or agent concurrency.
+Follow the visual-efficiency policy in `docs/ART-PIPELINE.md`: generate one
+useful concept or reference sheet by default and preserve approved artwork
+that will actually feed asset production. Review 3D candidates, meshes,
+materials, rigs, and animation directly in Tripo Studio, Blender, or Godot.
+Do not create or commit Studio screenshots, viewport screenshots, render
+turnarounds, contact sheets, animation-frame dumps, or gallery captures as
+routine asset evidence. Any temporary diagnostic capture belongs under the
+ignored `artifacts/` tree and is opened through model vision only for a named
+problem that cannot be judged efficiently in the live tool.
+
+Version textual decisions, defects, provider task or version IDs, settings,
+and structural validation metrics. A `visual-review.md` may summarize a live
+review decision, but it is not a screenshot inventory or image-hash ledger.
+Do not ask multiple agents to repeat the same live review unless the asset
+changed, a named unanswered question remains, or the project owner explicitly
+requests an independent review.
 
 `scripts/dev.ps1` is the canonical command surface. Use its `help` command to see implemented subcommands, and never report a command as passing unless it was actually run.
 
@@ -74,10 +93,25 @@ worktree, live scenes, `project.godot`, or shared registries during offline
 review. Select a promising source early and use subscription credits
 productively on completion, topology, textures, rig diagnostics, and animation
 donors; do not stop merely at the first viable candidate or generate variants
-without a named purpose. Live greybox replacement, gameplay wiring, ability-
-specific work, and final attack-timing integration remain roadmap-phase scoped.
+without a named purpose. Record the provider operation, task or version ID,
+result, and keep/reject decision. A displayed operation cost may be captured
+opportunistically, but do not track account balances, reconcile historical
+credit totals, or use cost as an acceptance criterion. Live greybox
+replacement, gameplay wiring, ability-specific work, and final attack-timing
+integration remain roadmap-phase scoped.
 The bounded provider bake-off keeps its separate hard caps and scorecard and
 must be frozen before production work begins for any of its three asset IDs.
+
+## Path portability
+
+Follow `docs/PATH-CONVENTIONS.md` for every new file. Keep repository-relative
+paths at or below 180 characters and run
+`pwsh -NoProfile -File scripts/dev.ps1 path-check` before committing. Stable
+asset IDs appear once in the directory hierarchy; compact run IDs and local
+artifact filenames must not repeat them or contain provider task UUIDs. Do not
+add a long-path exception for new work without explicit project-owner approval.
+Git `core.longpaths`, short worktree roots, and local application success do
+not waive the portable-path budget.
 
 ## Parallel work
 

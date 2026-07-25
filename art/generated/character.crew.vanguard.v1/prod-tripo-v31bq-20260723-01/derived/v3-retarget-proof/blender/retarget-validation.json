@@ -1,0 +1,170 @@
+{
+  "generated_utc": "2026-07-24T15:27:22.711564+00:00",
+  "blender_version": "5.2.0 LTS",
+  "status": "provisional donor retarget staging proof passed",
+  "asset_id": "character.crew.vanguard.v1",
+  "rig_profile": "rig.crew.humanoid.v1",
+  "staging_blend": "C:\\Developpement\\space-adventure-art-production\\art\\generated\\character.crew.vanguard.v1\\prod-tripo-v31bq-20260723-01\\derived\\v3-retarget-proof\\blender\\vanguard-idle-retarget-proof.blend",
+  "staging_blend_bytes": 11960360,
+  "staging_glb": "C:\\Developpement\\space-adventure-art-production\\art\\generated\\character.crew.vanguard.v1\\prod-tripo-v31bq-20260723-01\\derived\\v3-retarget-proof\\blender\\vanguard-idle-retarget-proof.glb",
+  "staging_glb_bytes": 11812252,
+  "source_validation": {
+    "source": "C:\\Developpement\\space-adventure-art-production\\art\\source\\character.crew.vanguard.v1\\vanguard-character-v1.blend",
+    "donor": "C:\\Developpement\\space-adventure-art-production\\art\\generated\\character.crew.vanguard.v1\\prod-tripo-v31bq-20260723-01\\raw\\character.crew.vanguard.v1__donor__tripo-humanoid-v1__idle.glb",
+    "donor_bytes": 79317132,
+    "donor_action": "NlaTrack",
+    "donor_frame_range": [
+      1,
+      369
+    ],
+    "donor_rig_model": "v1.0 - Good for Humanoid",
+    "donor_task_id": "c889d05a-90fe-4186-85eb-12d4eceafb35",
+    "clip": "idle",
+    "target_action": "anim.humanoid.idle_holstered",
+    "target_frame_range": [
+      1.0,
+      369.0
+    ],
+    "mapped_bones": {
+      "Pelvis": "pelvis",
+      "Waist": "spine_01",
+      "Spine01": "spine_02",
+      "Spine02": "spine_03",
+      "NeckTwist02": "neck_01",
+      "Head": "head",
+      "L_Clavicle": "clavicle_l",
+      "L_Upperarm": "upperarm_l",
+      "L_UpperarmTwist01": "upperarm_twist_l",
+      "L_Forearm": "lowerarm_l",
+      "L_ForearmTwist01": "lowerarm_twist_l",
+      "L_Hand": "hand_l",
+      "R_Clavicle": "clavicle_r",
+      "R_Upperarm": "upperarm_r",
+      "R_UpperarmTwist01": "upperarm_twist_r",
+      "R_Forearm": "lowerarm_r",
+      "R_ForearmTwist01": "lowerarm_twist_r",
+      "R_Hand": "hand_r",
+      "L_Thigh": "thigh_l",
+      "L_Calf": "calf_l",
+      "L_Foot": "foot_l",
+      "L_ToeBase": "toe_l",
+      "R_Thigh": "thigh_r",
+      "R_Calf": "calf_r",
+      "R_Foot": "foot_r",
+      "R_ToeBase": "toe_r"
+    },
+    "maximum_rotation_delta_degrees": {
+      "calf_l": 5.593041,
+      "calf_r": 6.156067,
+      "clavicle_l": 7.550448,
+      "clavicle_r": 8.890116,
+      "foot_l": 9.000731,
+      "foot_r": 29.427737,
+      "hand_l": 15.172461,
+      "hand_r": 31.461159,
+      "head": 0.954495,
+      "lowerarm_l": 15.172461,
+      "lowerarm_r": 20.024112,
+      "lowerarm_twist_l": 14.885574,
+      "lowerarm_twist_r": 18.141551,
+      "neck_01": 16.615873,
+      "pelvis": 14.652003,
+      "spine_01": 20.383843,
+      "spine_02": 4.228287,
+      "spine_03": 0.60132,
+      "thigh_l": 8.554638,
+      "thigh_r": 22.774983,
+      "toe_l": 9.130887,
+      "toe_r": 26.038382,
+      "upperarm_l": 27.484613,
+      "upperarm_r": 18.985949,
+      "upperarm_twist_l": 27.207019,
+      "upperarm_twist_r": 18.785033
+    },
+    "checks": {
+      "action_contract_preserved": true,
+      "target_action_multiframe": true,
+      "root_motion_absent": true,
+      "mapped_motion_present": true,
+      "donor_objects_removed": true
+    }
+  },
+  "fresh_import_validation": {
+    "armatures": [
+      "VanguardRig"
+    ],
+    "bones": 59,
+    "actions": {
+      "anim.humanoid.dialogue_idle": [
+        0.8,
+        0.8
+      ],
+      "anim.humanoid.dialogue_listen": [
+        0.8,
+        0.8
+      ],
+      "anim.humanoid.dialogue_speak": [
+        0.8,
+        0.8
+      ],
+      "anim.humanoid.down": [
+        0.8,
+        0.8
+      ],
+      "anim.humanoid.draw": [
+        0.8,
+        0.8
+      ],
+      "anim.humanoid.fire_recoil": [
+        0.8,
+        0.8
+      ],
+      "anim.humanoid.hit_reaction": [
+        0.8,
+        0.8
+      ],
+      "anim.humanoid.holster": [
+        0.8,
+        0.8
+      ],
+      "anim.humanoid.idle_armed": [
+        0.8,
+        0.8
+      ],
+      "anim.humanoid.idle_holstered": [
+        0.8,
+        295.200012
+      ],
+      "anim.humanoid.interact_terminal": [
+        0.8,
+        0.8
+      ],
+      "anim.humanoid.locomotion_armed": [
+        0.8,
+        0.8
+      ],
+      "anim.humanoid.locomotion_holstered": [
+        0.8,
+        0.8
+      ],
+      "anim.humanoid.raise_aim": [
+        0.8,
+        0.8
+      ],
+      "anim.humanoid.recovery": [
+        0.8,
+        0.8
+      ],
+      "anim.humanoid.use_healing": [
+        0.8,
+        0.8
+      ]
+    },
+    "checks": {
+      "one_armature": true,
+      "expected_action_present": true,
+      "expected_action_multiframe": true,
+      "action_contract_preserved": true
+    }
+  }
+}

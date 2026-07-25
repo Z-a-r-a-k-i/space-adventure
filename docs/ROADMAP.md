@@ -56,7 +56,7 @@ candidates plus Blender baselines. It may establish art direction and measure
 whether a generator saves cleanup time; it does not replace greybox gameplay,
 alter the live route, select a permanent provider, or begin Phase 3 or Phase 6.
 Quality-oriented offline production authorized separately under ADR 0016 uses
-`__prod__` run IDs and is excluded from the experiment and its scorecard. For
+`prod-` run IDs and is excluded from the experiment and its scorecard. For
 the three experiment IDs themselves, production work remains blocked until the
 whole bake-off's evidence, scorecards, baselines, and result are frozen.
 
@@ -72,14 +72,34 @@ Exit: each of the three briefs has bounded Tripo, Meshy, and Blender evidence or
 
 Status: active. The Phase 2 human-playthrough gate passed on 2026-07-24.
 
+On 2026-07-24 the owner explicitly authorized production and provisional
+integration of the approved roster assets on the dedicated art branch. This
+scope change permits Blender-owned source work, provisional GLB publication,
+and isolated asset-gallery integration while retaining an immediate greybox
+fallback. It does not define attacks or abilities, approve final visuals,
+replace the live station-route actors, or bypass the shared-rig and complete-
+assembly gates.
+
+Vanguard production-art implementation is postponed as of 2026-07-24. The
+approved 2D character and carbine references remain the intended direction, but
+the current generated 3D character, weapon fit, rig, animations, and complete
+assembly are not approved for live use. Keep the existing Vanguard greybox
+while party selection, recruitment, conversation, movement, and kit-path
+functionality are implemented and playtested. This postponement does not remove
+Vanguard from the POC or redefine the kit; it only moves production-art
+completion and live replacement to a later Phase 3 pass after the rest of the
+slice is proven.
+
 - Add protagonist-kit selection. The presentation weapons are already selected
   as Vanguard carbine, Operator pistol, and Protector shotgun; define their
   stable gameplay attacks and the three active abilities before producing
   ability-specific art.
 - Integrate and approve each human as one fixed runtime outfit on the shared
-  skeleton, using any accepted offline source work. Complete any remaining
-  segmentation, remeshing, fitting, shared-rig, and assembly review before
-  runtime publication; do not add runtime armor slots.
+  skeleton, using any accepted offline source work. Vanguard is the explicit
+  temporary exception above. Before its later runtime publication, complete
+  source revision or reselection, segmentation, remeshing, fitting, shared-rig,
+  character-plus-carbine grip and holster assembly, animation review, tactical
+  Godot captures, and final human approval. Do not add runtime armor slots.
 - Add the recruitable companion, portraits, individual and group selection, simple formation movement, and party observations.
 - Add the two authored conversations and one observable choice consequence.
 - Verify dialogue state validation, recruitment, pause behavior, and both kit paths.

@@ -10,7 +10,7 @@
       ],
       "id": "bounds",
       "pass": true,
-      "requirement": "1.20 x 0.22 x 0.80 m in Blender (\u00b12%)"
+      "requirement": "1.20 x 0.22 x 0.80 m in Blender (±2%)"
     },
     {
       "actual": {
@@ -61,31 +61,31 @@
       "actual": 2764,
       "id": "triangles",
       "pass": true,
-      "requirement": "\u2264 3000"
+      "requirement": "≤ 3000"
     },
     {
       "actual": 1,
       "id": "mesh_objects",
       "pass": true,
-      "requirement": "1\u20134"
+      "requirement": "1–4"
     },
     {
       "actual": 2,
       "id": "materials",
       "pass": true,
-      "requirement": "\u2264 3"
+      "requirement": "≤ 3"
     },
     {
       "actual": 1,
       "id": "texture_sets",
       "pass": true,
-      "requirement": "\u2264 1"
+      "requirement": "≤ 1"
     },
     {
       "actual": 1024,
       "id": "texture_resolution",
       "pass": true,
-      "requirement": "\u2264 1024"
+      "requirement": "≤ 1024"
     },
     {
       "actual": [
@@ -116,7 +116,7 @@
           "name": "wall_utility.body",
           "spatial_weld_diagnostic": {
             "boundary_edges": 0,
-            "distance_m": 1e-06,
+            "distance_m": 1E-06,
             "loose_vertices": 0,
             "merged": 1955,
             "non_manifold_edges": 0,
@@ -230,7 +230,7 @@
             "non_manifold_edges": 2942,
             "spatial_weld_diagnostic": {
               "boundary_edges": 0,
-              "distance_m": 1e-06,
+              "distance_m": 1E-06,
               "loose_vertices": 0,
               "merged": 1955,
               "non_manifold_edges": 0,
@@ -293,7 +293,7 @@
     "path": "art/generated/prop.station.wall_utility.v1/prop.station.wall_utility.v1__tripo__v3.1-best-quality__2026-07-24__01/derived/prop.station.wall_utility.v1__clean__tripo-v3.1__candidate-01.glb",
     "sha256": "104B03AAF161192610D9F8F1089B092C1D1EE6140F1333C13FAE3235F1E6BAF2"
   },
-  "generated_utc": "2026-07-24T08:59:18.250954+00:00",
+  "generated_utc": "2026-07-24T09:59:18.250954+01:00",
   "operations": {
     "no_collision_authored": true,
     "no_provider_rig_or_animation_retained": true,
@@ -494,7 +494,7 @@
       "import_result": [
         "FINISHED"
       ],
-      "inspected_utc": "2026-07-24T08:58:46.424403+00:00",
+      "inspected_utc": "2026-07-24T09:58:46.424403+01:00",
       "materials": [
         "tripo_material_d70c8cf9-165d-4c76-b8cb-cc020d76432b"
       ],
@@ -521,123 +521,6 @@
     "path": "art/generated/prop.station.wall_utility.v1/prop.station.wall_utility.v1__tripo__v3.1-best-quality__2026-07-24__01/raw/prop.station.wall_utility.v1__raw__tripo-v3.1__candidate-01.glb",
     "sha256": "7D1B87029212C9DA8757DABBA7643B7811808F124FFEC7E80C4A7E546F969059"
   },
-  "review": {
-    "contact_sheet": {
-      "bytes": 4428350,
-      "file": "contact-sheet.png",
-      "sha256": "C065B8BE086F30376263BDC7B1CD451EE1DBCDC68B5423D3D81E110A75E57743"
-    },
-    "directory": "artifacts/reviews/prop.station.wall_utility.v1/104B03AAF161192610D9F8F1089B092C1D1EE6140F1333C13FAE3235F1E6BAF2/blender",
-    "engine": "BLENDER_EEVEE",
-    "look": "AgX - Medium High Contrast",
-    "manifest": {
-      "bytes": 2817,
-      "file": "render-manifest.json",
-      "sha256": "954B8385F8307F22DE11F8C758CA0110CDEABE6609B33A94A973A21350A96B15"
-    },
-    "renders": [
-      {
-        "bytes": 597665,
-        "camera_location_blender_m": [
-          0.0,
-          3.0,
-          0.4
-        ],
-        "file": "front.png",
-        "name": "front",
-        "ortho_scale_m": 1.38,
-        "projection": "orthographic",
-        "sha256": "28E12644EFF6167FC20846355C32CD9CEC45B09D6068A60F7735ED43746D0BBB",
-        "target_blender_m": [
-          0.0,
-          0.11,
-          0.4
-        ],
-        "wire_overlay": false
-      },
-      {
-        "bytes": 514358,
-        "camera_location_blender_m": [
-          0.0,
-          -3.0,
-          0.4
-        ],
-        "file": "back.png",
-        "name": "back",
-        "ortho_scale_m": 1.38,
-        "projection": "orthographic",
-        "sha256": "62E6C31E4FB88706153D16F4D85A51B119120AEB5E3D86B174D6650F9A45F86D",
-        "target_blender_m": [
-          0.0,
-          0.11,
-          0.4
-        ],
-        "wire_overlay": false
-      },
-      {
-        "bytes": 555639,
-        "camera_location_blender_m": [
-          3.0,
-          0.11,
-          0.4
-        ],
-        "file": "right.png",
-        "name": "right",
-        "ortho_scale_m": 1.06,
-        "projection": "orthographic",
-        "sha256": "1193A291837FA8034D9738A9514DF79AC9AA8339F6669BFB45E4051E17B574E1",
-        "target_blender_m": [
-          0.0,
-          0.11,
-          0.4
-        ],
-        "wire_overlay": false
-      },
-      {
-        "bytes": 663140,
-        "camera_location_blender_m": [
-          2.4,
-          2.7,
-          1.55
-        ],
-        "file": "front-right-3q.png",
-        "name": "front-right-3q",
-        "ortho_scale_m": 1.48,
-        "projection": "orthographic",
-        "sha256": "C1C552B3BC319DF21E64CA828C02B58268267D5FFA451AF9901F75264BC56B27",
-        "target_blender_m": [
-          0.0,
-          0.11,
-          0.4
-        ],
-        "wire_overlay": false
-      },
-      {
-        "bytes": 885621,
-        "camera_location_blender_m": [
-          2.4,
-          2.7,
-          1.55
-        ],
-        "file": "wireframe-front-right-3q.png",
-        "name": "wireframe-front-right-3q",
-        "ortho_scale_m": 1.48,
-        "projection": "orthographic",
-        "sha256": "4423EB84D2C03A9CEB92CE2F14C02EE5890E8CB7E52D969133C67449B5B3F36A",
-        "target_blender_m": [
-          0.0,
-          0.11,
-          0.4
-        ],
-        "wire_overlay": true
-      }
-    ],
-    "resolution": [
-      800,
-      800
-    ],
-    "view_transform": "AgX"
-  },
   "run_id": "prop.station.wall_utility.v1__tripo__v3.1-best-quality__2026-07-24__01",
   "source": {
     "bytes": 3550000,
@@ -655,5 +538,9 @@
     "review_renders": 3.375,
     "save_blend": 0.013,
     "texture_resize_and_pack": 0.767
+  },
+  "visual_review": {
+    "method": "direct live Blender and Godot inspection",
+    "artifact_policy": "temporary renders are local under ignored artifacts/ and are not tracked"
   }
 }

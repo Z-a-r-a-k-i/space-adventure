@@ -42,8 +42,8 @@ Status: candidate 01 passed the Blender and isolated Godot gates; raw export pre
 - Visible balance after submission: 24,705 credits
 - API use: none
 - Purchase or upgrade: none
-- Final settings evidence:
-  `evidence/settings/tripo-preflight-front-right-v3.1-55credits.png`
+- Final settings are recorded here and in the neighboring settings record;
+  disposable Studio screenshots are not versioned.
 
 ## Provider rights, privacy, and retention record
 
@@ -116,13 +116,9 @@ did not expose a text-prompt field. No substitute prompt was entered.
 - Credits consumed: 55
 - Studio-generated asset label: `futuristic machine panel 3d model`
 - Studio topology display: 1,943,381 triangle faces and 1,017,000 vertices
-- Generating-state evidence:
-  `evidence/studio-review/candidate01-generating-task-162d5614-e586-4a2b-a9b6-bbfe71d8caf9.png`
 - Provider-side segmentation, retopology, texturing, rigging, and animation:
   none
 - Export format: GLB with the current 4K generated texture
-- Export-settings evidence:
-  `evidence/settings/candidate01-export-glb-current-4k.png`
 - Raw export:
   `raw/prop.station.wall_utility.v1__raw__tripo-v3.1__candidate-01.glb`
 - Raw export bytes: 58,219,864
@@ -139,20 +135,8 @@ same SHA-256 above. One exact copy was placed in `raw/`; the other download was
 not added to the repository. No additional credit or provider operation was
 charged.
 
-## Evidence hashes
-
-| File | Bytes | SHA-256 |
-|---|---:|---|
-| `evidence/settings/tripo-preflight-front-right-v3.1-55credits.png` | 96057 | `40806E34C7F2EBB53656D88B7F926E4169442B48BA8294F0955281C42441BFB1` |
-| `evidence/settings/candidate01-export-glb-current-4k.png` | 129858 | `37C0279746B73FE8EF072A3B262F3FFBA6CA933FBD6BD29C39E854CABD9C94D9` |
-| `evidence/studio-review/candidate01-generating-task-162d5614-e586-4a2b-a9b6-bbfe71d8caf9.png` | 149500 | `F95E3E8175A6A9A0C32CCA79009C5528D0D861581221FE0EBE33466E8FCD6A0D` |
-| `evidence/studio-review/candidate01-complete-front.png` | 133539 | `C3C3CA642B78B3D871AE09E3954330896496BE1CFB4C0B65405FF1AE610BE063` |
-| `evidence/studio-review/candidate01-quarter.png` | 133417 | `11B7694EE695E5082F62A528D692CE4FF83F1EEA6E739FE8C40CC5B7969F7B51` |
-| `evidence/studio-review/candidate01-side.png` | 125340 | `D336E32844D8DF492D3B643A4623327B3391A6E3F44C9A74DCC9BEFEF2E22F4E` |
-| `evidence/studio-review/candidate01-back.png` | 123482 | `F83AEE0B868074889AB0A58DF37DAD38DEA908A995FA9C93A89FC986AA9A3C69` |
-
-The complete nine-file screenshot inventory is also recorded in
-`evidence/evidence-hashes.sha256`.
+Candidate 01 was reviewed directly in Studio's live front, quarter, side, and
+rear views. The durable findings and selection decision are recorded below.
 
 ## Provisional selection
 
@@ -251,8 +235,8 @@ Ignored local standardized Blender review staging is under:
   stable asset ID or the live station route.
 - Scene validation: 0 errors, 0 warnings, 4 dependencies.
 - Godot editor errors, debugger errors, and blocking dialogs: 0.
-- Tactical-camera captures passed visual inspection at 7.5, 14.5, and 20 m.
-  The grille, utility runs, enclosure mass, orientation, and silhouette remain
+- Direct live tactical-camera review passed at 7.5, 14.5, and 20 m. The
+  grille, utility runs, enclosure mass, orientation, and silhouette remain
   readable at their intended review distances.
 
 Ignored local standardized Godot review staging is under:

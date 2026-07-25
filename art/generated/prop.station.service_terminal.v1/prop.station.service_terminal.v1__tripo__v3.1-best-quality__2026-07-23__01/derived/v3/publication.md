@@ -59,20 +59,16 @@ and after the executed build. Superseded duplicate outputs are documented by
 hash but not retained in this cleaned branch. No Tripo operation or credit was
 used.
 
-## Review evidence
+## Review record
 
 Ignored local exact-hash review staging:
 
 `artifacts/reviews/prop.station.service_terminal.v1/1EA04834A19627B94AC004574C5EF1F9A62961FF80B60BFD1C579BFF061FB121/`
 
-- `render-manifest.json`
-  (`53811B1C6AF29D0BC8852417FFAF3B1429F3AA7779C5A389C672477627FA5F4B`)
-- `contact-sheet.png`
-  (`C5B3006B8C3FE0A6ACC387EBBA5660A74ACB34EECF158DA94670DA7DDEA493AA`)
-
-The review renderer is explicitly configured for the v3 fresh-import `+Y`
-review front, which corresponds to exported `-Z`. Godot import and tactical
-camera evidence remain the authoritative orientation check.
+The review profile is explicitly configured for the v3 fresh-import `+Y`
+review front, which corresponds to exported `-Z`. Direct Blender and Godot
+inspection remains the authoritative orientation check. Disposable local
+captures are not repository evidence.
 
 ## Godot validation
 
@@ -83,13 +79,12 @@ gallery and imported copy now remain under ignored local staging. No Godot
 corrective rotation, live-route replacement, or gameplay-contract change was
 introduced.
 
-Dedicated `-Z`-front captures at 7.5, 14.5, and 20 m show the violet display.
-Fresh import, 14 pure .NET tests, the unchanged station-route smoke test, and
-the dedicated gallery health run passed. The local dedicated captures are
-display-readability comparison evidence; they do not override the topology
-hard-gate rejection.
+Direct live review at 7.5, 14.5, and 20 m showed the violet display. Fresh
+import, 14 pure .NET tests, the unchanged station-route smoke test, and the
+dedicated gallery health run passed. Readability does not override the
+topology hard-gate rejection.
 
-Exact settings, image hashes, validation output, fallback state, and remaining
-defects are recorded in:
+Exact settings, validation output, fallback state, and remaining defects are
+recorded in:
 
 `artifacts/reviews/prop.station.service_terminal.v1/1EA04834A19627B94AC004574C5EF1F9A62961FF80B60BFD1C579BFF061FB121/godot/validation.md`
