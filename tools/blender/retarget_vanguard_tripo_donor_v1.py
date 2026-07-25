@@ -246,6 +246,17 @@ def export_target(
         raise RuntimeError(f"Staging GLB export failed: {result}")
 
 
+def action_data_paths(action: bpy.types.Action) -> set[str]:
+    """Return every animated data path from a Blender 5.2 layered action."""
+    return {
+        fcurve.data_path
+        for layer in action.layers
+        for strip in layer.strips
+        for channelbag in strip.channelbags
+        for fcurve in channelbag.fcurves
+    }
+
+
 def fresh_import_report(output: Path, expected_action: str) -> dict[str, object]:
     bpy.ops.wm.read_factory_settings(use_empty=True)
     result = bpy.ops.import_scene.gltf(filepath=str(output))
@@ -409,10 +420,14 @@ bpy.ops.wm.save_as_mainfile(filepath=str(staging_blend), check_existing=False)
 export_target(target, staging_glb)
 
 action_names = set(bpy.data.actions.keys())
+animated_data_paths = action_data_paths(action)
 source_checks = {
     "action_contract_preserved": action_names == EXPECTED_ACTIONS,
     "target_action_multiframe": action.frame_range[1] > action.frame_range[0],
-    "root_motion_absent": target.pose.bones["root"].location.length <= 1.0e-8,
+    "root_motion_absent": (
+        "location" not in animated_data_paths
+        and 'pose.bones["root"].location' not in animated_data_paths
+    ),
     "mapped_motion_present": max(motion_degrees.values()) > 0.1,
     "donor_objects_removed": not any(
         name in bpy.data.objects for name in imported_object_names
