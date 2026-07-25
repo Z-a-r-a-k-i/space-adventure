@@ -49,7 +49,7 @@ accepted. The live game keeps its Vanguard greybox.
 |---|---|---:|---:|---|
 | Vanguard c01 | `b18e331b-0699-453d-ad8e-a71ffa0e373c` | 1 | 0 | Rejected: duplicate rear face |
 | Vanguard c02 | `c889d05a-90fe-4186-85eb-12d4eceafb35` | 1 | 55 | Provisionally selected |
-| Vanguard humanoid donor rig | `c889d05a-90fe-4186-85eb-12d4eceafb35` | 1 | 20 | Four shared retarget proofs passed; nine diagnostic clips preserved |
+| Vanguard humanoid donor rig | `c889d05a-90fe-4186-85eb-12d4eceafb35` | 1 | 20 | Four shared retarget proofs passed; seven diagnostic presets and two dialogue donors preserved |
 | Vanguard carbine c01 | `01bb9aea-6b10-419d-bbeb-9648c9867a97` | 1 | 55 | Provisionally selected |
 | Operator c01 | `dd18ffbe-b4bb-4035-9a82-d87da93d9d8a` | 1 | 55 | Provisionally selected |
 | Operator pistol c01/c02 | `615ff81e-441e-4cea-b123-109cc93d65a3` | 2 | 55 | c01 rejected; zero-credit Free Retry c02 selected as offline reconstruction source |

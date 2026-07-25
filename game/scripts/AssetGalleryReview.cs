@@ -108,8 +108,12 @@ public partial class AssetGalleryReview : Node3D
     private Camera3D SelectCamera(string cameraName)
     {
         Camera3D? selectedCamera = null;
+        var reviewCameras = GetNodeOrNull<Node>("ReviewCameras")
+            ?? throw new CaptureFailureException(
+                "camera_container_unavailable",
+                "The gallery scene has no 'ReviewCameras' node.");
 
-        foreach (var child in GetNode("ReviewCameras").GetChildren())
+        foreach (var child in reviewCameras.GetChildren())
         {
             if (child is not Camera3D camera)
             {
@@ -197,8 +201,11 @@ public partial class AssetGalleryReview : Node3D
 
     private void ConfigureVanguardAnimation()
     {
-        var vanguard = GetNode(
-            "Slots/Slot01_Vanguard/ProductionPresentation/Vanguard");
+        var vanguard = GetNodeOrNull<Node>(
+                "Slots/Slot01_Vanguard/ProductionPresentation/Vanguard")
+            ?? throw new CaptureFailureException(
+                "vanguard_node_unavailable",
+                "The gallery scene has no published Vanguard presentation node.");
         var player = vanguard.FindChild(
             "AnimationPlayer",
             recursive: true,
@@ -374,7 +381,9 @@ public partial class AssetGalleryReview : Node3D
             + $"{width}x{height}|bytes={bytes}|"
             + $"contract={_animationContract}|"
             + $"requested={FormatInvariant(_requestedAnimationPositionSeconds, "F6")}s|"
-            + $"actual={FormatInvariant(actualPosition, "F6")}s|result=Ok");
+            + $"actual={FormatInvariant(actualPosition, "F6")}s|"
+            + $"tolerance={FormatInvariant(AnimationPositionToleranceSeconds, "F6")}s|"
+            + "mode=graphical|result=Ok");
         GetTree().Quit(0);
     }
 

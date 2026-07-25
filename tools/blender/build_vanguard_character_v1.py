@@ -362,27 +362,6 @@ def keep_largest_connected_component(obj) -> dict:
     }
 
 
-def inset_surface(obj, meters: float) -> None:
-    bm = bmesh.new()
-    bm.from_mesh(obj.data)
-    bm.normal_update()
-    for vertex in bm.verts:
-        normal = vertex.normal.normalized()
-        vertex.co -= normal * meters
-    bmesh.ops.smooth_vert(
-        bm,
-        verts=list(bm.verts),
-        factor=0.12,
-        use_axis_x=True,
-        use_axis_y=True,
-        use_axis_z=True,
-    )
-    bm.normal_update()
-    bm.to_mesh(obj.data)
-    bm.free()
-    obj.data.update()
-
-
 def build_continuous_deforming_base() -> tuple[object, dict]:
     """Create one conservative continuous undersuit shell beneath raw details.
 
@@ -732,55 +711,6 @@ def candidate_bones_for_vertex(point: Vector) -> list[str]:
     if z > 1.00:
         return ["spine_02", "spine_01", "pelvis"]
     return ["pelvis", "spine_01", f"thigh_{side}"]
-
-
-def bind_mesh(obj, armature_obj) -> dict:
-    for group in list(obj.vertex_groups):
-        obj.vertex_groups.remove(group)
-
-    bones = {
-        bone.name: (bone.head_local.copy(), bone.tail_local.copy())
-        for bone in armature_obj.data.bones
-        if bone.use_deform and bone.name != "root"
-    }
-    groups = {
-        name: obj.vertex_groups.new(name=name)
-        for name in bones
-    }
-
-    max_assigned = 0
-    for vertex in obj.data.vertices:
-        point = vertex.co
-        distances = []
-        for name in candidate_bones_for_vertex(point):
-            if name not in bones:
-                continue
-            start, end = bones[name]
-            distance = point_segment_distance(point, start, end)
-            distances.append((distance, name))
-        distances.sort(key=lambda item: item[0])
-        chosen = distances[:MAX_INFLUENCES]
-        raw_weights = [1.0 / max(0.012, distance) ** 2 for distance, _ in chosen]
-        total = sum(raw_weights)
-        if total <= 0.0:
-            chosen = [(0.0, "pelvis")]
-            raw_weights = [1.0]
-            total = 1.0
-        for raw_weight, (_, name) in zip(raw_weights, chosen):
-            groups[name].add([vertex.index], raw_weight / total, "REPLACE")
-        max_assigned = max(max_assigned, len(chosen))
-
-    modifier = obj.modifiers.new("Armature", "ARMATURE")
-    modifier.object = armature_obj
-    modifier.use_vertex_groups = True
-    modifier.use_bone_envelopes = False
-    obj.parent = armature_obj
-    obj.matrix_parent_inverse = armature_obj.matrix_world.inverted()
-    return {
-        "method": "region-constrained inverse-distance weights on shared rig",
-        "maximum_assigned_influences": max_assigned,
-        "vertex_groups": len(obj.vertex_groups),
-    }
 
 
 def bind_meshes_automatic(mesh_objects, armature_obj) -> dict:
