@@ -74,10 +74,10 @@ review branch. No second Tripo generation or additional credit was used.
 
 ## Material revision v2
 
-Godot imported v1 mechanically, but station-lighting captures made its housing
-nearly black and its violet display unreadable beyond 7.5 m. A separate v2
-material review export addresses the presentation defect without changing
-geometry.
+Godot imported v1 mechanically, but direct station-lighting review found its
+housing nearly black and its violet display unreadable beyond 7.5 m. A
+separate v2 material review export addresses the presentation defect without
+changing geometry.
 
 V2 assigns 33 UV-confirmed screen faces to the exact
 `mat.state.optional.violet` material with restrained emission and applies a
@@ -86,8 +86,8 @@ conservative shadow lift to a duplicated housing base-color map. It remains at
 envelope.
 
 The v2 Blender review passed its material/readability checks. The retained v2
-editable source and final v3 review export preserve that revision; final local
-Godot 7.5, 14.5, and 20 m captures remain comparison evidence.
+editable source and final v3 review export preserve that revision. Tactical
+readability was reviewed directly in Godot at 7.5, 14.5, and 20 m.
 
 ## Orientation normalization v3
 
@@ -102,8 +102,9 @@ preserves the retained shape, exact 0.80 × 1.30 × 0.42 m bounds, ground
 contact, 3,979 triangles, two materials, emission, UVs, and all three embedded
 texture payloads. Fresh import places the violet primitive at negative Z.
 
-Godot `-Z`-front captures at 7.5, 14.5, and 20 m show the violet interaction
-accent, and fresh isolated-gallery import and health checks pass. Candidate 01
-remains rejected at the bake-off geometry hard gate and is retained only as a
-renderer/orientation comparator. See `derived/v3/publication.md` and the local
-exact-hash review staging directory.
+Direct Godot review at 7.5, 14.5, and 20 m found the violet interaction
+accent readable, and fresh isolated-gallery import and health checks pass.
+Candidate 01 remains rejected at the bake-off geometry hard gate and is
+retained only as a renderer/orientation comparator. See
+`derived/v3/publication.md`; any temporary review staging remains local and
+ignored.

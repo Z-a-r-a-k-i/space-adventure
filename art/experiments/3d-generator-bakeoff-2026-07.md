@@ -25,7 +25,8 @@ run-local paths on the dedicated workstation. The drone blocker is retained at
 `art/generated/machine.security_drone.body.v1/PREFLIGHT-BLOCKED-2026-07-24.md`.
 The retained terminal and wall run IDs predate commit `71ea25e`'s mandatory
 `__bakeoff__` token. Their legacy paths remain unchanged for provenance; every
-new experiment run must use the current naming format.
+new experiment run uses the compact `bake-` convention in
+`docs/PATH-CONVENTIONS.md`.
 
 ### Provisional surviving-candidate score
 
@@ -124,7 +125,8 @@ whole-scene image-to-3D inputs. Crop or redraw the individual subject first.
 ## Bounded run protocol
 
 1. Create a run ID in the form
-   `<asset-id>__bakeoff__<provider>__<model>__<yyyy-mm-dd>__<nn>`.
+   `bake-<provider>-<model-token>-<yyyymmdd>-<nn>` beneath the asset-ID
+   directory.
 2. Record the input hashes and provider settings before generation.
 3. Allow at most two raw generations per provider per asset.
 4. Select at most one raw candidate per provider per asset for cleanup.
@@ -145,8 +147,8 @@ whole-scene image-to-3D inputs. Crop or redraw the individual subject first.
 The maximum is twelve raw cloud generations, six selected generated candidates,
 and three Blender baselines. Do not expand the run because one provider fails.
 These caps protect the comparison and remain unchanged by ADR 0016. Any
-quality-oriented Tripo work beyond them uses an
-`<asset-id>__prod__tripo__<model>__<yyyy-mm-dd>__<nn>` run ID, follows an
+quality-oriented Tripo work beyond them uses a
+`prod-tripo-<model-token>-<yyyymmdd>-<nn>` run ID, follows an
 accepted production-ready art brief, and is excluded from this experiment's
 cleanup clock, scorecard, and result. Production-lane work for all three IDs is
 blocked until every provider result or documented provider failure, Blender
@@ -274,7 +276,7 @@ The experiment is complete when all three asset rows have:
 - a decision of `tripo`, `meshy`, `blender`, or `none`.
 
 Freeze the completed scorecards, measurements, evidence manifests, baselines,
-and decisions before opening a `__prod__` run for any of the three asset IDs.
+and decisions before opening a `prod-` run for any of the three asset IDs.
 
 Completion does not pass the Phase 2 human-playthrough gate, begin Phase 3, or
 complete the Phase 6 representative-asset pipeline.

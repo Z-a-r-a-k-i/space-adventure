@@ -1,0 +1,145 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/AssetGalleryReview.cs" id="1_review"]
+[ext_resource type="PackedScene" path="res://Assets/Published/character.crew.vanguard.v1.glb" id="2_vanguard"]
+[ext_resource type="PackedScene" path="res://Assets/Published/weapon.crew.vanguard_carbine.v1.glb" id="3_carbine"]
+
+[sub_resource type="Environment" id="Environment_gallery"]
+background_mode = 1
+background_color = Color(0.012, 0.021, 0.04, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.22, 0.3, 0.44, 1)
+ambient_light_energy = 1.35
+tonemap_mode = 4
+ssao_enabled = true
+ssao_radius = 0.8
+ssao_intensity = 1.2
+
+[sub_resource type="StandardMaterial3D" id="Material_floor"]
+albedo_color = Color(0.045, 0.065, 0.095, 1)
+metallic = 0.2
+roughness = 0.76
+
+[sub_resource type="StandardMaterial3D" id="Material_fallback"]
+albedo_color = Color(0.34, 0.38, 0.44, 1)
+metallic = 0.12
+roughness = 0.74
+
+[node name="AssetGallery" type="Node3D"]
+script = ExtResource("1_review")
+editor_description = "Phase 3 provisional Vanguard and separate-carbine review. Every production presentation has a sibling greybox fallback."
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_gallery")
+
+[node name="Floor" type="CSGBox3D" parent="."]
+position = Vector3(0, -0.05, 0.35)
+material_override = SubResource("Material_floor")
+size = Vector3(8, 0.1, 6)
+
+[node name="Slots" type="Node3D" parent="."]
+
+[node name="Slot01_Vanguard" type="Node3D" parent="Slots"]
+position = Vector3(-1.15, 0, 0)
+metadata/asset_id = "character.crew.vanguard.v1"
+metadata/asset_revision = "prod-tripo-v31bq-20260723-01"
+metadata/review_status = "provisional_idle_locomotion_dialogue_retarget_pass_weapon_pose_revise"
+
+[node name="ProductionPresentation" type="Node3D" parent="Slots/Slot01_Vanguard"]
+rotation_degrees = Vector3(0, 180, 0)
+metadata/presentation_state = "production"
+
+[node name="Vanguard" parent="Slots/Slot01_Vanguard/ProductionPresentation" instance=ExtResource("2_vanguard")]
+
+[node name="GreyboxFallback" type="Node3D" parent="Slots/Slot01_Vanguard"]
+visible = false
+metadata/presentation_state = "fallback"
+
+[node name="BriefEnvelope_1_82m" type="CSGCylinder3D" parent="Slots/Slot01_Vanguard/GreyboxFallback"]
+position = Vector3(0, 0.91, 0)
+material_override = SubResource("Material_fallback")
+radius = 0.26
+height = 1.82
+
+[node name="Label" type="Label3D" parent="Slots/Slot01_Vanguard"]
+position = Vector3(0, 2.18, 0)
+pixel_size = 0.005
+billboard = 1
+no_depth_test = true
+modulate = Color(0.68, 0.82, 1, 1)
+text = "VANGUARD\nIDLE + LOCOMOTION + DIALOGUE PASS / POSE REVISE"
+font_size = 28
+outline_size = 8
+
+[node name="Slot02_VanguardCarbine" type="Node3D" parent="Slots"]
+position = Vector3(1.25, 1.05, 0)
+metadata/asset_id = "weapon.crew.vanguard_carbine.v1"
+metadata/asset_revision = "prod-tripo-v31bq-20260723-01"
+metadata/review_status = "provisional_static_pass_assembly_revise"
+
+[node name="ProductionPresentation" type="Node3D" parent="Slots/Slot02_VanguardCarbine"]
+rotation_degrees = Vector3(0, 90, 0)
+metadata/presentation_state = "production"
+
+[node name="VanguardCarbine" parent="Slots/Slot02_VanguardCarbine/ProductionPresentation" instance=ExtResource("3_carbine")]
+
+[node name="GreyboxFallback" type="Node3D" parent="Slots/Slot02_VanguardCarbine"]
+rotation_degrees = Vector3(0, 90, 0)
+visible = false
+metadata/presentation_state = "fallback"
+
+[node name="BriefEnvelope_0_82x0_13x0_27m" type="CSGBox3D" parent="Slots/Slot02_VanguardCarbine/GreyboxFallback"]
+material_override = SubResource("Material_fallback")
+size = Vector3(0.13, 0.27, 0.82)
+
+[node name="Label" type="Label3D" parent="Slots/Slot02_VanguardCarbine"]
+position = Vector3(0, 0.52, 0)
+pixel_size = 0.005
+billboard = 1
+no_depth_test = true
+modulate = Color(0.68, 0.82, 1, 1)
+text = "SEPARATE CARBINE\nSTATIC PASS / ASSEMBLY REVISE"
+font_size = 28
+outline_size = 8
+
+[node name="ReviewTarget" type="Marker3D" parent="."]
+position = Vector3(0, 0.9, 0)
+
+[node name="ReviewCameras" type="Node3D" parent="."]
+
+[node name="ReviewCamera7_5m" type="Camera3D" parent="ReviewCameras"]
+position = Vector3(0, 5, -6.2801275)
+rotation = Vector3(-0.57837826, 3.1415927, 0)
+fov = 48.0
+metadata/distance_metres = 7.5
+
+[node name="ReviewCamera14_5m" type="Camera3D" parent="ReviewCameras"]
+position = Vector3(0, 5, -13.908271)
+rotation = Vector3(-0.2866689, 3.1415927, 0)
+current = true
+fov = 48.0
+metadata/distance_metres = 14.5
+
+[node name="ReviewCamera20m" type="Camera3D" parent="ReviewCameras"]
+position = Vector3(0, 5, -19.57524)
+rotation = Vector3(-0.20646371, 3.1415927, 0)
+fov = 48.0
+metadata/distance_metres = 20.0
+
+[node name="KeyLight" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-0.82030475, -0.61086524, 0)
+light_color = Color(0.78, 0.88, 1, 1)
+light_energy = 2.25
+shadow_enabled = true
+
+[node name="FillLightLeft" type="OmniLight3D" parent="."]
+position = Vector3(-4, 3.5, -3)
+light_color = Color(0.46, 0.38, 0.82, 1)
+light_energy = 5.0
+omni_range = 10.0
+
+[node name="FillLightRight" type="OmniLight3D" parent="."]
+position = Vector3(4, 2.8, -2)
+light_color = Color(0.32, 0.66, 0.78, 1)
+light_energy = 3.8
+omni_range = 10.0

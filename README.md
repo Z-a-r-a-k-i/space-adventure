@@ -113,6 +113,7 @@ Control integration; no second Godot-control addon is required.
 - `docs/PLAYTESTS.md`: manual milestone-gate protocol and retained outcomes.
 - `docs/DIALOGUE-AI.md`: controlled dialogue-provider design.
 - `docs/ART-PIPELINE.md`: asset creation, publication, and visual QA.
+- `docs/PATH-CONVENTIONS.md`: portable repository path and filename budgets.
 - `docs/ART-WORKSTATION.md`: dedicated Windows art-machine installation and
   verification checklist.
 - `docs/POC-ASSET-ROSTER.md`: approved model, rig, animation, 2D, and VFX

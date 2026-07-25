@@ -1,0 +1,412 @@
+{
+  "generated_utc": "2026-07-24T14:26:01.277171+00:00",
+  "blender_version": "5.2.0 LTS",
+  "asset_id": "character.crew.vanguard.v1",
+  "source": "C:\\Developpement\\space-adventure-art-production\\art\\source\\character.crew.vanguard.v1\\vanguard-character-v1.blend",
+  "source_bytes_after_save": 11367251,
+  "weapon_source": "C:\\Developpement\\space-adventure-art-production\\art\\source\\weapon.crew.vanguard_carbine.v1\\vanguard-carbine-v1.blend",
+  "weapon_offsets": {
+    "socket.grip.primary": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "socket.grip.support": [
+      -0.00011921,
+      -0.34444952,
+      -0.03486494
+    ],
+    "socket.attack.muzzle.primary": [
+      -0.00011921,
+      -0.59044951,
+      0.10823505
+    ]
+  },
+  "palm_centers_rest_m": {
+    "l": [
+      -0.45093387,
+      -0.01678917,
+      0.87907726
+    ],
+    "r": [
+      0.44595933,
+      -0.01457668,
+      0.8805002
+    ]
+  },
+  "palm_offsets_from_wrist_rest_m": {
+    "l": [
+      0.00406614,
+      -0.01078917,
+      -0.03092277
+    ],
+    "r": [
+      -0.00904068,
+      -0.00857668,
+      -0.02949983
+    ]
+  },
+  "arm_chain_normalization": {
+    "l": {
+      "original_elbow_m": [
+        -0.40000001,
+        -0.002,
+        1.08000004
+      ],
+      "normalized_elbow_m": [
+        -0.2825,
+        -0.003,
+        1.16999996
+      ],
+      "upperarm_length_m": 0.31203404,
+      "lowerarm_length_m": 0.31203401
+    },
+    "r": {
+      "original_elbow_m": [
+        0.40000001,
+        -0.002,
+        1.08000004
+      ],
+      "normalized_elbow_m": [
+        0.2825,
+        -0.003,
+        1.16999996
+      ],
+      "upperarm_length_m": 0.31203404,
+      "lowerarm_length_m": 0.31203401
+    }
+  },
+  "arm_weight_rebalance": {
+    "VanguardBody": {
+      "vertices_redistributed": 5939,
+      "by_side": {
+        "l": 3009,
+        "r": 2930
+      },
+      "method": "smoothstep split across normalized arm-chain 0.42-0.58"
+    },
+    "VanguardDeformingBase": {
+      "vertices_redistributed": 1119,
+      "by_side": {
+        "l": 554,
+        "r": 565
+      },
+      "method": "smoothstep split across normalized arm-chain 0.42-0.58"
+    }
+  },
+  "primary_hand_socket_calibration": {
+    "original_head_m": [
+      0.46000001,
+      -0.045,
+      0.89999998
+    ],
+    "calibrated_head_m": [
+      0.44595933,
+      -0.01457668,
+      0.8805002
+    ],
+    "method": "centroid of rest-pose vertices weighted to the hand bone; large binary hashes intentionally omitted"
+  },
+  "actions": [
+    {
+      "action": "anim.humanoid.idle_armed",
+      "weapon_yaw_degrees": -15.0,
+      "right_arm": {
+        "side": "r",
+        "target": [
+          0.22499999,
+          -0.141,
+          1.25999999
+        ],
+        "elbow": [
+          0.33815259,
+          0.149225,
+          1.27819896
+        ],
+        "upperarm_length_m": 0.31203407,
+        "lowerarm_length_m": 0.31203407,
+        "hand_head": [
+          0.22500016,
+          -0.14099999,
+          1.26000011
+        ],
+        "target_error_m": 2e-07
+      },
+      "left_arm": {
+        "side": "l",
+        "target": [
+          0.12364736,
+          -0.46815243,
+          1.22655821
+        ],
+        "elbow": [
+          -0.08638065,
+          -0.23739691,
+          1.22887778
+        ],
+        "upperarm_length_m": 0.31203407,
+        "lowerarm_length_m": 0.31203407,
+        "hand_head": [
+          0.12364715,
+          -0.46815237,
+          1.22655833
+        ],
+        "target_error_m": 2.5e-07
+      },
+      "primary_socket_position_m": [
+        0.21404772,
+        -0.14694452,
+        1.23050034
+      ],
+      "support_grip_position_m": [
+        0.12478251,
+        -0.47962636,
+        1.19563544
+      ],
+      "support_wrist_position_m": [
+        0.12364715,
+        -0.46815237,
+        1.22655833
+      ],
+      "support_palm_position_m": [
+        0.1247823,
+        -0.4796263,
+        1.19563556
+      ],
+      "support_hand_gap_m": 2.5e-07,
+      "frame_range": [
+        1.0,
+        1.0
+      ],
+      "timing_authority": "none; single reviewed pose at frame 1"
+    },
+    {
+      "action": "anim.humanoid.raise_aim",
+      "weapon_yaw_degrees": -15.0,
+      "right_arm": {
+        "side": "r",
+        "target": [
+          0.205,
+          -0.20100001,
+          1.35000002
+        ],
+        "elbow": [
+          0.34252408,
+          0.04998416,
+          1.22566438
+        ],
+        "upperarm_length_m": 0.31203407,
+        "lowerarm_length_m": 0.31203407,
+        "hand_head": [
+          0.205,
+          -0.2009998,
+          1.35000002
+        ],
+        "target_error_m": 2.1e-07
+      },
+      "left_arm": {
+        "side": "l",
+        "target": [
+          0.10364714,
+          -0.52815217,
+          1.316558
+        ],
+        "elbow": [
+          -0.07314826,
+          -0.27166724,
+          1.29855466
+        ],
+        "upperarm_length_m": 0.31203407,
+        "lowerarm_length_m": 0.31203407,
+        "hand_head": [
+          0.10364708,
+          -0.52815217,
+          1.316558
+        ],
+        "target_error_m": 6e-08
+      },
+      "primary_socket_position_m": [
+        0.19404754,
+        -0.20694432,
+        1.32050025
+      ],
+      "support_grip_position_m": [
+        0.10478231,
+        -0.539626,
+        1.28563523
+      ],
+      "support_wrist_position_m": [
+        0.10364708,
+        -0.52815217,
+        1.316558
+      ],
+      "support_palm_position_m": [
+        0.10478223,
+        -0.53962612,
+        1.28563523
+      ],
+      "support_hand_gap_m": 1.4e-07,
+      "frame_range": [
+        1.0,
+        1.0
+      ],
+      "timing_authority": "none; single reviewed pose at frame 1"
+    },
+    {
+      "action": "anim.humanoid.fire_recoil",
+      "weapon_yaw_degrees": -15.0,
+      "right_arm": {
+        "side": "r",
+        "target": [
+          0.205,
+          -0.161,
+          1.37
+        ],
+        "elbow": [
+          0.3259401,
+          0.09055087,
+          1.2304976
+        ],
+        "upperarm_length_m": 0.31203407,
+        "lowerarm_length_m": 0.31203407,
+        "hand_head": [
+          0.2050001,
+          -0.16099998,
+          1.37000012
+        ],
+        "target_error_m": 1.6e-07
+      },
+      "left_arm": {
+        "side": "l",
+        "target": [
+          0.10364727,
+          -0.48815247,
+          1.33655822
+        ],
+        "elbow": [
+          -0.1118633,
+          -0.27668858,
+          1.25779605
+        ],
+        "upperarm_length_m": 0.31203407,
+        "lowerarm_length_m": 0.31203407,
+        "hand_head": [
+          0.10364705,
+          -0.48815253,
+          1.33655846
+        ],
+        "target_error_m": 3.3e-07
+      },
+      "primary_socket_position_m": [
+        0.19404766,
+        -0.16694452,
+        1.34050035
+      ],
+      "support_grip_position_m": [
+        0.10478242,
+        -0.4996264,
+        1.30563545
+      ],
+      "support_wrist_position_m": [
+        0.10364705,
+        -0.48815253,
+        1.33655846
+      ],
+      "support_palm_position_m": [
+        0.10478219,
+        -0.49962646,
+        1.30563569
+      ],
+      "support_hand_gap_m": 3.3e-07,
+      "frame_range": [
+        1.0,
+        1.0
+      ],
+      "timing_authority": "none; single reviewed pose at frame 1"
+    },
+    {
+      "action": "anim.humanoid.recovery",
+      "weapon_yaw_degrees": -15.0,
+      "right_arm": {
+        "side": "r",
+        "target": [
+          0.205,
+          -0.18099999,
+          1.33000004
+        ],
+        "elbow": [
+          0.33671588,
+          0.08557849,
+          1.23538446
+        ],
+        "upperarm_length_m": 0.31203407,
+        "lowerarm_length_m": 0.31203407,
+        "hand_head": [
+          0.20500006,
+          -0.18099996,
+          1.33000004
+        ],
+        "target_error_m": 7e-08
+      },
+      "left_arm": {
+        "side": "l",
+        "target": [
+          0.10364725,
+          -0.50815237,
+          1.29655814
+        ],
+        "elbow": [
+          -0.09377918,
+          -0.26864594,
+          1.26454675
+        ],
+        "upperarm_length_m": 0.31203407,
+        "lowerarm_length_m": 0.31203407,
+        "hand_head": [
+          0.10364728,
+          -0.50815237,
+          1.29655838
+        ],
+        "target_error_m": 2.4e-07
+      },
+      "primary_socket_position_m": [
+        0.19404761,
+        -0.1869445,
+        1.30050027
+      ],
+      "support_grip_position_m": [
+        0.10478241,
+        -0.51962632,
+        1.26563537
+      ],
+      "support_wrist_position_m": [
+        0.10364728,
+        -0.50815237,
+        1.29655838
+      ],
+      "support_palm_position_m": [
+        0.10478243,
+        -0.51962632,
+        1.26563561
+      ],
+      "support_hand_gap_m": 2.4e-07,
+      "frame_range": [
+        1.0,
+        1.0
+      ],
+      "timing_authority": "none; single reviewed pose at frame 1"
+    }
+  ],
+  "holster": {
+    "location_m": [
+      0.2,
+      0.41999999,
+      1.35000002
+    ],
+    "carry": "rear-right/back, muzzle down",
+    "selection_status": "provisional pending owner visual review"
+  },
+  "scope": "One-frame presentation pose and carry-transform fit only. No gameplay attack identity, timing, damage, range, ability, VFX, or audio authored.",
+  "decision": "provisional_revise_visible_hand_grip",
+  "known_defect": "The generated glove topology remains visibly open below the primary and support grips in close review. Static assets and socket mechanics pass; finished weapon handling animation does not."
+}

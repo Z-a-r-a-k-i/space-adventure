@@ -31,3 +31,10 @@ not regenerated.
 and defaults its GLB to ignored local review staging under `artifacts/`.
 `SPACE_ADVENTURE_BASELINE_GLB` may override that staging path explicitly.
 All six Python files parse successfully in Blender 5.2.0 LTS.
+
+Review-render scripts are diagnostic helpers, not evidence publishers. Pass an
+output directory beneath the ignored `artifacts/reviews/` tree and inspect only
+the minimum render needed for a named defect. Do not target `art/generated/`,
+commit turnarounds or frame sets, or add image paths and hashes to production
+manifests. Normal asset and animation review happens directly in Blender and
+Godot.

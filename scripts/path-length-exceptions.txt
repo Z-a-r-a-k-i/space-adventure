@@ -1,0 +1,4 @@
+# Historical paths that predate the portable-path convention.
+# Do not add new entries without explicit project-owner approval.
+art/generated/prop.station.service_terminal.v1/prop.station.service_terminal.v1__tripo__v3.1-best-quality__2026-07-23__01/derived/v3/prop.station.service_terminal.v1__clean__tripo-v3.1__candidate-01-v3.glb
+art/generated/prop.station.wall_utility.v1/prop.station.wall_utility.v1__tripo__v3.1-best-quality__2026-07-24__01/derived/prop.station.wall_utility.v1__clean__tripo-v3.1__candidate-01.glb

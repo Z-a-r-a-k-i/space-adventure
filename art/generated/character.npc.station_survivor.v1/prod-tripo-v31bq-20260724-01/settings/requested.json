@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "asset_id": "character.npc.station_survivor.v1",
+  "run_id": "prod-tripo-v31bq-20260724-01",
+  "lane": "production",
+  "provider": "Tripo Studio",
+  "workflow": "Build & Refine / HD Model / multi-view image-to-3D",
+  "model": "v3.1 - Best Quality",
+  "mesh_quality": "Ultra",
+  "topology": "Triangle",
+  "source_polycount_target": 2000000,
+  "texture_generation": false,
+  "texture_8k": false,
+  "generate_in_parts": true,
+  "segmentation_detail": "Balanced",
+  "privacy": "Sharing Only",
+  "input_slot_mapping": {
+    "Front": "input/front.png",
+    "Left": "input/left.png",
+    "Right": null,
+    "Back": "input/back.png"
+  },
+  "validation_only_input": "input/front-right-3q.png",
+  "candidate_limit": {
+    "initial": 1,
+    "named_defect_retry_maximum": 1
+  },
+  "prohibited": [
+    "Tripo API or API key",
+    "purchase or upgrade",
+    "privacy changes",
+    "weapon, shield, tool, or gameplay geometry",
+    "provider rig as production authority"
+  ]
+}

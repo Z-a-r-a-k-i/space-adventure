@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("help", "doctor", "restore", "build", "test", "scenario", "plugin-link", "import", "headless", "capture", "editor", "run")]
+    [ValidateSet("help", "doctor", "path-check", "restore", "build", "test", "scenario", "plugin-link", "import", "headless", "capture", "editor", "run")]
     [string]$Command = "help",
 
     [string]$Godot,
@@ -249,6 +249,79 @@ function Assert-NotReparsePoint {
     }
 }
 
+function Invoke-RepositoryPathCheck {
+    $portableRelativePathLimit = 180
+    $normalWindowsAbsolutePathLimit = 259
+    $exceptionsPath = Join-Path $PSScriptRoot "path-length-exceptions.txt"
+    $exceptionSet = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase)
+
+    if (Test-Path -LiteralPath $exceptionsPath -PathType Leaf) {
+        foreach ($line in Get-Content -LiteralPath $exceptionsPath) {
+            $entry = $line.Trim()
+            if ($entry.Length -eq 0 -or $entry.StartsWith("#", [System.StringComparison]::Ordinal)) {
+                continue
+            }
+
+            [void]$exceptionSet.Add($entry.Replace("\", "/"))
+        }
+    }
+
+    $repositoryPaths = @(& git ls-files --cached --others --exclude-standard)
+    if ($LASTEXITCODE -ne 0) {
+        throw "git ls-files failed with exit code $LASTEXITCODE."
+    }
+
+    $violations = @()
+    $grandfathered = @()
+    foreach ($repositoryPath in $repositoryPaths) {
+        if ([string]::IsNullOrWhiteSpace($repositoryPath)) {
+            continue
+        }
+
+        $portablePath = $repositoryPath.Replace("\", "/")
+        $absolutePath = Join-Path $repoRoot $portablePath
+        $relativeLength = $portablePath.Length
+        $absoluteLength = $absolutePath.Length
+
+        if ($relativeLength -le $portableRelativePathLimit -and
+            $absoluteLength -le $normalWindowsAbsolutePathLimit) {
+            continue
+        }
+
+        $finding = [pscustomobject]@{
+            RelativeLength = $relativeLength
+            AbsoluteLength = $absoluteLength
+            Path = $portablePath
+        }
+        if ($exceptionSet.Contains($portablePath)) {
+            $grandfathered += $finding
+        }
+        else {
+            $violations += $finding
+        }
+    }
+
+    foreach ($finding in $grandfathered) {
+        Write-Warning "Grandfathered long path ($($finding.RelativeLength) relative, $($finding.AbsoluteLength) absolute): $($finding.Path)"
+    }
+
+    if ($violations.Count -gt 0) {
+        $table = $violations |
+            Sort-Object RelativeLength -Descending |
+            Format-Table RelativeLength, AbsoluteLength, Path -AutoSize |
+            Out-String -Width 4096
+        Write-Output $table.TrimEnd()
+        throw "Repository path budget exceeded. Keep repository-relative paths at or below $portableRelativePathLimit characters and normal Windows absolute paths at or below $normalWindowsAbsolutePathLimit characters."
+    }
+
+    Write-Output "Path length check passed for $($repositoryPaths.Count) tracked and unignored paths."
+    Write-Output "Budget: relative <= $portableRelativePathLimit; normal Windows absolute <= $normalWindowsAbsolutePathLimit."
+    if ($grandfathered.Count -gt 0) {
+        Write-Output "Grandfathered historical paths: $($grandfathered.Count). Do not add new exceptions."
+    }
+}
+
 Push-Location $repoRoot
 try {
     switch ($Command) {
@@ -257,6 +330,7 @@ try {
 SpaceAdventure development commands
 
   doctor                  Report required tool and project paths
+  path-check              Enforce portable repository path-length budgets
   restore                 Restore .NET dependencies
   build                   Build the complete solution
   test                    Run pure core tests
@@ -321,6 +395,10 @@ Options:
                 GodotAiPluginLinked = (Test-Path -LiteralPath (Join-Path $pluginLink "plugin.cfg") -PathType Leaf)
                 RequiredProjectFiles = $requiredProjectFiles.Count
             } | Format-List
+        }
+        "path-check" {
+            Assert-CommandAvailable "git"
+            Invoke-RepositoryPathCheck
         }
         "restore" {
             Invoke-Checked -Description ".NET restore" -Action { dotnet restore $solution --nologo }

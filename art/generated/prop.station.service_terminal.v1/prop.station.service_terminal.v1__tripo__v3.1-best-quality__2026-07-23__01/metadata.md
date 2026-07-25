@@ -66,13 +66,12 @@ ignored local review staging under the latest policy.
 - Displayed generation cost after final input upload: 55 credits
 - API use: none
 - Purchase or upgrade: none
-- Final submitted-settings evidence:
-  `evidence/settings/tripo-pre-generation-terminal.png`
-- Evidence hashes: `evidence/evidence-hashes.sha256`
+- Final submitted settings are recorded in text and the neighboring settings
+  record; disposable Studio screenshots are not versioned.
 
 The refreshed Studio page initially displayed the 8K trial switch as enabled.
-It was explicitly disabled before submission; the final evidence shows both
-Generate in Parts and 8K Texture off.
+It was explicitly disabled before submission; the final recorded settings show
+both Generate in Parts and 8K Texture off.
 
 ## Inputs
 
@@ -118,8 +117,6 @@ evidence. It was not misrepresented as a left elevation.
 - Visible balance before submission: 25,145 credits.
 - Visible balance after submission: 25,090 credits.
 - Credits consumed by this run so far: `55`.
-- Generating-state evidence:
-  `evidence/studio-review/generating-01.png`.
 - Studio-generated asset label: `arcade machine 3d model`.
 - Raw Studio topology: 1,916,879 triangles, 1,916,879 faces, and
   1,000,557 vertices.
@@ -134,11 +131,8 @@ evidence. It was not misrepresented as a left elevation.
 - Tracked raw-export record: `raw-export.manifest.json`.
 - Local size/hash verification: passed 2026-07-24.
 - Off-machine archive: deferred by owner decision; no locator recorded.
-- Studio review evidence:
-  `evidence/studio-review/candidate-01-front.png`,
-  `evidence/studio-review/candidate-01-quarter-a.png`,
-  `evidence/studio-review/candidate-01-back.png`, and
-  `evidence/studio-review/candidate-01-angle-a.png`.
+- Candidate 01 was reviewed directly in Studio's live front, quarter, rear,
+  and alternate-angle views.
 
 No retry, segmentation, provider retopology, provider texture, rig, or
 animation operation was submitted. The raw export succeeded through the
@@ -220,9 +214,8 @@ presentation or gameplay rotation.
   from v2.
 - Additional provider credits: 0.
 
-The ignored local exact-hash Godot review staging retains the 7.5, 14.5, and
-20 m tactical-front captures, exact camera settings, verification results,
-and remaining defects:
+The ignored local Godot review staging retains the exact camera settings,
+verification results, and remaining defects:
 
 `artifacts/reviews/prop.station.service_terminal.v1/1EA04834A19627B94AC004574C5EF1F9A62961FF80B60BFD1C579BFF061FB121/godot/validation.md`
 

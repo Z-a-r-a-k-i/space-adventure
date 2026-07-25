@@ -1,0 +1,52 @@
+{
+  "schema_version": 2,
+  "asset_id": "weapon.crew.operator_pistol.v1",
+  "run_id": "prod-tripo-v31bq-20260723-01",
+  "asset_revision": "prod-tripo-v31bq-20260723-01",
+  "lane": "production",
+  "provider": {
+    "name": "Tripo Studio",
+    "product": "signed-in web application",
+    "task_id": "615ff81e-441e-4cea-b123-109cc93d65a3",
+    "plan": "Max",
+    "privacy": "Sharing Only",
+    "credits_consumed": 55
+  },
+  "exports": [
+    {
+      "task_id": "615ff81e-441e-4cea-b123-109cc93d65a3",
+      "filename": "weapon.crew.operator_pistol.v1__raw__tripo-v3.1__candidate-01.glb",
+      "format": "GLB",
+      "settings": "HD Model single-image front-right three-quarter, v3.1 Best Quality, Ultra, Generate in Parts disabled, 8K disabled",
+      "cache_relative_path": "raw/weapon.crew.operator_pistol.v1__raw__tripo-v3.1__candidate-01.glb",
+      "bytes": 59054116,
+      "selection_state": "rejected: capped muzzle",
+      "credits_consumed": 55,
+      "local_presence_checked_utc": "2026-07-24T16:53:18Z",
+      "local_presence_status": "present"
+    },
+    {
+      "task_id": "615ff81e-441e-4cea-b123-109cc93d65a3",
+      "filename": "weapon.crew.operator_pistol.v1__raw__tripo-v3.1__candidate-02.glb",
+      "format": "GLB",
+      "settings": "Free Retry from candidate 01 with the same single-image and v3.1 Best Quality settings",
+      "cache_relative_path": "raw/weapon.crew.operator_pistol.v1__raw__tripo-v3.1__candidate-02.glb",
+      "bytes": 56269344,
+      "selection_state": "provisionally selected as strongest offline cleanup source; capped bore remains",
+      "credits_consumed": 0,
+      "local_presence_checked_utc": "2026-07-24T16:53:18Z",
+      "local_presence_status": "present"
+    }
+  ],
+  "storage": {
+    "class": "ignored-local-workstation-cache",
+    "game_build_dependency": false,
+    "provider_recovery": "best-effort",
+    "off_machine_archive": {
+      "status": "deferred",
+      "locator": null,
+      "verified_utc": null
+    },
+    "eviction_policy": "Requires a verified off-machine copy or a separate project-owner decision."
+  }
+}

@@ -6,6 +6,8 @@ game/.godot-codex-user/
 **/bin/
 **/obj/
 TestResults/
+__pycache__/
+*.py[cod]
 
 # Generated diagnostics, isolated user data, and captures
 artifacts/
@@ -13,6 +15,20 @@ artifacts/
 # Untouched Tripo exports are a run-local workstation cache. Commit the
 # neighboring provenance and raw-export manifest, not the cached payload.
 art/generated/*/*tripo*/raw/
+
+# Asset-production screenshots and renders are disposable local review aids.
+# Approved concept/reference art and exact provider input crops remain tracked.
+art/generated/**/evidence/
+art/generated/**/derived/**/review/
+art/generated/**/derived/**/godot-gallery/
+art/generated/**/derived/**/blender/*.png
+art/generated/**/derived/**/assembly/*.png
+
+# Retarget proofs keep canonical text reports in Git. Duplicate staging
+# source/export binaries remain local because the accepted source .blend and
+# published game GLB are already versioned through LFS.
+art/generated/*/*tripo*/derived/**/blender/*.blend
+art/generated/*/*tripo*/derived/**/blender/*.glb
 
 # The Godot AI plugin is linked locally, never vendored.
 game/addons/godot_ai/

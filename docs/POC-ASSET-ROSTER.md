@@ -65,6 +65,30 @@ presentation.
 The shield depicted in the crew concept is not assigned to a character,
 weapon, or active ability by this roster.
 
+## Deferred Vanguard production status
+
+Status recorded 2026-07-24: postpone the current Vanguard 3D implementation
+until the rest of the Phase 3 functionality has been exercised.
+
+- The approved 2D Vanguard and carbine reference sheets remain valid visual
+  anchors. This decision does not reject the character concept or remove the
+  Vanguard kit from the POC.
+- The current generated Vanguard character and carbine candidates remain
+  revise-required evidence, not accepted production assets. Their complete
+  character-plus-weapon assembly, rig, animations, and live replacement are
+  not approved.
+- Keep the authored Vanguard greybox in the live game while protagonist
+  selection, recruitment, conversation, formation movement, and both kit paths
+  are implemented and playtested.
+- A later production pass must decide whether to repair or replace the current
+  character source, then finish topology and outfit fitting, shared-skeleton
+  skinning, hand and holster fit, carbine grip/support/muzzle markers,
+  exploration and weapon-handling animation, tactical-camera review, and final
+  human approval.
+- Only that later approval authorizes replacing the live Vanguard greybox.
+  Postponement is not implicit approval and does not authorize ability-specific
+  art or final attack-timing integration.
+
 ## Required production asset groups
 
 The roster contains fourteen production brief groups. Modular station and
@@ -246,10 +270,14 @@ cover system.
    that work as bake-off evidence or integrate it into live gameplay. For the
    three bake-off IDs, freeze the entire experiment before starting any
    production-lane refinement.
-2. **Phase 3:** lock production reference sheets, finish all part segmentation,
-   completion, remeshing, and outfit fitting before the shared humanoid rig,
-   validate one fixed-outfit character-plus-weapon assembly, then produce the
-   remaining human and weapon profiles plus exploration and dialogue clips.
+2. **Phase 3:** implement and playtest the party and conversation functionality
+   with the existing Vanguard greybox while its current generated 3D
+   implementation is deferred. For non-deferred production assets, lock
+   reference sheets, finish all part segmentation, completion, remeshing, and
+   outfit fitting before the shared humanoid rig, and validate one fixed-outfit
+   character-plus-weapon assembly. Return to Vanguard in a later Phase 3 pass
+   and complete every gate in the deferred-status section before live
+   replacement.
 3. **Phase 4:** define authoritative attacks, timings, and abilities before
    production enemy rigs, combat clips, healing presentation, telegraphs, and
    effects are finalized.

@@ -1,0 +1,118 @@
+{
+  "schema_version": 2,
+  "asset_id": "character.crew.vanguard.v1",
+  "run_id": "prod-tripo-v31bq-20260723-01",
+  "asset_revision": "prod-tripo-v31bq-20260723-01",
+  "lane": "production",
+  "legacy_run_note": "This pre-policy production run keeps its original deterministic run ID; no large binary hashes are recomputed.",
+  "provider": {
+    "name": "Tripo Studio",
+    "product": "signed-in web application",
+    "task_id": "c889d05a-90fe-4186-85eb-12d4eceafb35",
+    "plan": "Max",
+    "privacy": "Sharing Only",
+    "credits_consumed": 75,
+    "commercial_use_record": "Max plan pricing listed private models and commercial use",
+    "training_use_record": "paid inputs and outputs excluded from provider training under the recorded terms",
+    "terms_url": "https://www.tripo3d.ai/terms",
+    "pricing_url": "https://www.tripo3d.ai/pricing",
+    "policy_retrieved_utc": "2026-07-24"
+  },
+  "exports": [
+    {
+      "task_id": "b18e331b-0699-453d-ad8e-a71ffa0e373c",
+      "filename": "character.crew.vanguard.v1__raw-base__tripo-v3.1__candidate-01.glb",
+      "format": "GLB",
+      "settings": "HD Model multi-view, v3.1 Best Quality, Ultra, Generate in Parts enabled, 8K disabled",
+      "cache_relative_path": "raw/character.crew.vanguard.v1__raw-base__tripo-v3.1__candidate-01.glb",
+      "bytes": 46718744,
+      "selection_state": "rejected: duplicate complete rear face",
+      "credits_consumed": 0,
+      "local_presence_checked_utc": "2026-07-24T13:47:17Z",
+      "local_presence_status": "present"
+    },
+    {
+      "task_id": "c889d05a-90fe-4186-85eb-12d4eceafb35",
+      "filename": "character.crew.vanguard.v1__raw__tripo-v3.1__candidate-02.glb",
+      "format": "GLB",
+      "settings": "HD Model single-image, v3.1 Best Quality, Ultra, Generate in Parts disabled, 8K disabled",
+      "cache_relative_path": "raw/character.crew.vanguard.v1__raw__tripo-v3.1__candidate-02.glb",
+      "bytes": 58610072,
+      "selection_state": "provisionally selected",
+      "credits_consumed": 55,
+      "local_presence_checked_utc": "2026-07-24T13:47:17Z",
+      "local_presence_status": "present"
+    },
+    {
+      "task_id": "c889d05a-90fe-4186-85eb-12d4eceafb35",
+      "filename": "character.crew.vanguard.v1__donor__tripo-humanoid-v1__idle.glb",
+      "format": "GLB",
+      "settings": "Auto Rig v1.0 Good for Humanoid; idle preset; Export Skeleton enabled; Animation stay in Place enabled; GLB; current 4K texture",
+      "cache_relative_path": "raw/character.crew.vanguard.v1__donor__tripo-humanoid-v1__idle.glb",
+      "bytes": 79317132,
+      "selection_state": "diagnostic donor accepted for Blender retarget proof; not production authority",
+      "credits_consumed": 20,
+      "local_presence_checked_utc": "2026-07-24T15:40:00Z",
+      "local_presence_status": "present"
+    },
+    {
+      "task_id": "c889d05a-90fe-4186-85eb-12d4eceafb35",
+      "filename": "character.crew.vanguard.v1__donor__tripo-humanoid-v1__diagnostic-set.glb",
+      "format": "GLB",
+      "settings": "Auto Rig v1.0 Good for Humanoid; fall, hit_to_body_01, idle, run, shoot, turn, and walk presets; Export Skeleton enabled; Animation stay in Place enabled; GLB; current 4K texture",
+      "cache_relative_path": "raw/character.crew.vanguard.v1__donor__tripo-humanoid-v1__diagnostic-set.glb",
+      "bytes": 79801332,
+      "selection_state": "combined diagnostic donor archive accepted for Blender inspection; generic NlaTrack names require individually identified exports for authoritative clip mapping",
+      "credits_consumed": 0,
+      "local_presence_checked_utc": "2026-07-24T15:55:22Z",
+      "local_presence_status": "present"
+    },
+    {
+      "task_id": "c889d05a-90fe-4186-85eb-12d4eceafb35",
+      "filename": "character.crew.vanguard.v1__donor__tripo-humanoid-v1__walk.glb",
+      "format": "GLB",
+      "settings": "Auto Rig v1.0 Good for Humanoid; walk preset only; Export Skeleton enabled; Animation stay in Place enabled; GLB; current 4K texture",
+      "cache_relative_path": "raw/character.crew.vanguard.v1__donor__tripo-humanoid-v1__walk.glb",
+      "bytes": 79122136,
+      "selection_state": "diagnostic walk donor accepted for Blender retarget proof; not production authority",
+      "credits_consumed": 0,
+      "local_presence_checked_utc": "2026-07-24T16:00:13Z",
+      "local_presence_status": "present"
+    },
+    {
+      "task_id": "c889d05a-90fe-4186-85eb-12d4eceafb35",
+      "filename": "character.crew.vanguard.v1__donor__tripo-humanoid-v1__standing-relax.glb",
+      "format": "GLB",
+      "settings": "Auto Rig v1.0 Good for Humanoid; standing_relax preset only; Export Skeleton enabled; Animation stay in Place enabled; GLB; current 4K texture",
+      "cache_relative_path": "raw/character.crew.vanguard.v1__donor__tripo-humanoid-v1__standing-relax.glb",
+      "bytes": 79350188,
+      "selection_state": "diagnostic donor accepted for anim.humanoid.dialogue_idle Blender retarget proof; not production authority",
+      "credits_consumed": 0,
+      "local_presence_checked_utc": "2026-07-24T16:14:07Z",
+      "local_presence_status": "present"
+    },
+    {
+      "task_id": "c889d05a-90fe-4186-85eb-12d4eceafb35",
+      "filename": "character.crew.vanguard.v1__donor__tripo-humanoid-v1__wait.glb",
+      "format": "GLB",
+      "settings": "Auto Rig v1.0 Good for Humanoid; wait preset only; Export Skeleton enabled; Animation stay in Place enabled; GLB; current 4K texture",
+      "cache_relative_path": "raw/character.crew.vanguard.v1__donor__tripo-humanoid-v1__wait.glb",
+      "bytes": 79139372,
+      "selection_state": "diagnostic donor accepted for anim.humanoid.dialogue_listen Blender retarget proof; not production authority",
+      "credits_consumed": 0,
+      "local_presence_checked_utc": "2026-07-24T16:22:50Z",
+      "local_presence_status": "present"
+    }
+  ],
+  "storage": {
+    "class": "ignored-local-workstation-cache",
+    "game_build_dependency": false,
+    "provider_recovery": "best-effort",
+    "off_machine_archive": {
+      "status": "deferred",
+      "locator": null,
+      "verified_utc": null
+    },
+    "eviction_policy": "Requires a verified off-machine copy or a separate project-owner decision."
+  }
+}

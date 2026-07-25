@@ -1,0 +1,238 @@
+{
+  "generated_utc": "2026-07-24T16:25:09.293020+00:00",
+  "blender_version": "5.2.0 LTS",
+  "status": "fresh staging exports passed structural validation",
+  "publication_status": "ignored staging only; Godot assembly review pending",
+  "character_source": {
+    "asset_id": "character.crew.vanguard.v1",
+    "asset_revision": "prod-tripo-v31bq-20260723-01",
+    "provider_task_id": "c889d05a-90fe-4186-85eb-12d4eceafb35",
+    "source": "C:\\Developpement\\space-adventure-art-production\\art\\generated\\character.crew.vanguard.v1\\prod-tripo-v31bq-20260723-01\\derived\\v6-dialogue-listen-proof\\blender\\vanguard-dialogue-listen-retarget-proof.blend",
+    "source_bytes": 13171789,
+    "staging_glb": "C:\\Developpement\\space-adventure-art-production\\art\\generated\\character.crew.vanguard.v1\\prod-tripo-v31bq-20260723-01\\raw\\dialogue-listen-canonical-validation-20260724\\character.crew.vanguard.v1.glb",
+    "staging_glb_bytes": 12188056,
+    "bounds_blender_z_up": {
+      "minimum": [
+        -0.4860765,
+        -0.228836,
+        0.00010069
+      ],
+      "maximum": [
+        0.48606914,
+        0.22984716,
+        1.81884456
+      ],
+      "dimensions": [
+        0.97214568,
+        0.45868316,
+        1.81874382
+      ]
+    },
+    "triangles": 28000,
+    "mesh_objects": [
+      "VanguardBody",
+      "VanguardDeformingBase"
+    ],
+    "materials": [
+      "mat.vanguard.surface.pbr",
+      "mat.vanguard.undersuit.navy"
+    ],
+    "bones": 59,
+    "sockets": [
+      "socket.weapon.hand_primary",
+      "socket.weapon.holster_primary"
+    ],
+    "actions": [
+      "anim.humanoid.dialogue_idle",
+      "anim.humanoid.dialogue_listen",
+      "anim.humanoid.dialogue_speak",
+      "anim.humanoid.down",
+      "anim.humanoid.draw",
+      "anim.humanoid.fire_recoil",
+      "anim.humanoid.hit_reaction",
+      "anim.humanoid.holster",
+      "anim.humanoid.idle_armed",
+      "anim.humanoid.idle_holstered",
+      "anim.humanoid.interact_terminal",
+      "anim.humanoid.locomotion_armed",
+      "anim.humanoid.locomotion_holstered",
+      "anim.humanoid.raise_aim",
+      "anim.humanoid.recovery",
+      "anim.humanoid.use_healing"
+    ],
+    "one_frame_interface_actions": [
+      "anim.humanoid.dialogue_speak",
+      "anim.humanoid.down",
+      "anim.humanoid.draw",
+      "anim.humanoid.fire_recoil",
+      "anim.humanoid.hit_reaction",
+      "anim.humanoid.holster",
+      "anim.humanoid.idle_armed",
+      "anim.humanoid.interact_terminal",
+      "anim.humanoid.locomotion_armed",
+      "anim.humanoid.raise_aim",
+      "anim.humanoid.recovery",
+      "anim.humanoid.use_healing"
+    ],
+    "max_skin_influences": 4,
+    "unweighted_vertices": 0,
+    "checks": {
+      "height_within_two_percent": true,
+      "grounded": true,
+      "triangles_within_hard_limit": true,
+      "materials_exact": true,
+      "bones_within_limit": true,
+      "sockets_present": true,
+      "actions_exact": true,
+      "skin_influences_within_limit": true,
+      "no_unweighted_vertices": true,
+      "no_binary_hash_custom_fields": true,
+      "firearm_separate": true
+    }
+  },
+  "weapon_source": {
+    "asset_id": "weapon.crew.vanguard_carbine.v1",
+    "asset_revision": "prod-tripo-v31bq-20260723-01",
+    "provider_task_id": "01bb9aea-6b10-419d-bbeb-9648c9867a97",
+    "source": "C:\\Developpement\\space-adventure-art-production\\art\\source\\weapon.crew.vanguard_carbine.v1\\vanguard-carbine-v1.blend",
+    "source_bytes": 272005,
+    "staging_glb": "C:\\Developpement\\space-adventure-art-production\\art\\generated\\character.crew.vanguard.v1\\prod-tripo-v31bq-20260723-01\\raw\\dialogue-listen-canonical-validation-20260724\\weapon.crew.vanguard_carbine.v1.glb",
+    "staging_glb_bytes": 143676,
+    "bounds_blender_z_up": {
+      "minimum": [
+        -0.06511921,
+        -0.59044951,
+        -0.08346494
+      ],
+      "maximum": [
+        0.06488079,
+        0.22955045,
+        0.18653506
+      ],
+      "dimensions": [
+        0.13,
+        0.81999993,
+        0.27000001
+      ]
+    },
+    "triangles": 7398,
+    "mesh_objects": [
+      "weapon.vanguard_carbine.body"
+    ],
+    "materials": [
+      "mat.vanguard_carbine.accent.cyan",
+      "mat.vanguard_carbine.armor.warm_gray",
+      "mat.vanguard_carbine.mechanism.dark"
+    ],
+    "markers": [
+      "socket.attack.muzzle.primary",
+      "socket.grip.primary",
+      "socket.grip.support"
+    ],
+    "checks": {
+      "root_present": true,
+      "envelope_exact": true,
+      "triangles_within_hard_limit": true,
+      "materials_exact": true,
+      "markers_exact": true,
+      "no_armature": true,
+      "no_actions": true,
+      "no_binary_hash_custom_fields": true,
+      "character_separate": true
+    }
+  },
+  "character_fresh_import": {
+    "asset_id": "character.crew.vanguard.v1",
+    "path": "C:\\Developpement\\space-adventure-art-production\\art\\generated\\character.crew.vanguard.v1\\prod-tripo-v31bq-20260723-01\\raw\\dialogue-listen-canonical-validation-20260724\\character.crew.vanguard.v1.glb",
+    "bytes": 12188056,
+    "mesh_objects": [
+      "VanguardBody",
+      "VanguardDeformingBase"
+    ],
+    "triangles": 28000,
+    "materials": [
+      "mat.vanguard.surface.pbr",
+      "mat.vanguard.undersuit.navy"
+    ],
+    "armatures": [
+      "VanguardRig"
+    ],
+    "bones": 59,
+    "actions": [
+      "anim.humanoid.dialogue_idle",
+      "anim.humanoid.dialogue_listen",
+      "anim.humanoid.dialogue_speak",
+      "anim.humanoid.down",
+      "anim.humanoid.draw",
+      "anim.humanoid.fire_recoil",
+      "anim.humanoid.hit_reaction",
+      "anim.humanoid.holster",
+      "anim.humanoid.idle_armed",
+      "anim.humanoid.idle_holstered",
+      "anim.humanoid.interact_terminal",
+      "anim.humanoid.locomotion_armed",
+      "anim.humanoid.locomotion_holstered",
+      "anim.humanoid.raise_aim",
+      "anim.humanoid.recovery",
+      "anim.humanoid.use_healing"
+    ],
+    "empties": [],
+    "bounds_blender_z_up": {
+      "minimum": [
+        -0.54450494,
+        -0.36649626,
+        -0.01052865
+      ],
+      "maximum": [
+        0.64396942,
+        0.15912199,
+        1.80095077
+      ],
+      "dimensions": [
+        1.18847442,
+        0.52561826,
+        1.81147945
+      ]
+    }
+  },
+  "weapon_fresh_import": {
+    "asset_id": "weapon.crew.vanguard_carbine.v1",
+    "path": "C:\\Developpement\\space-adventure-art-production\\art\\generated\\character.crew.vanguard.v1\\prod-tripo-v31bq-20260723-01\\raw\\dialogue-listen-canonical-validation-20260724\\weapon.crew.vanguard_carbine.v1.glb",
+    "bytes": 143676,
+    "mesh_objects": [
+      "weapon.vanguard_carbine.body"
+    ],
+    "triangles": 7398,
+    "materials": [
+      "mat.vanguard_carbine.accent.cyan",
+      "mat.vanguard_carbine.armor.warm_gray",
+      "mat.vanguard_carbine.mechanism.dark"
+    ],
+    "armatures": [],
+    "bones": 0,
+    "actions": [],
+    "empties": [
+      "socket.attack.muzzle.primary",
+      "socket.grip.primary",
+      "socket.grip.support",
+      "weapon.crew.vanguard_carbine.v1"
+    ],
+    "bounds_blender_z_up": {
+      "minimum": [
+        -0.06511921,
+        -0.59044951,
+        -0.08346494
+      ],
+      "maximum": [
+        0.06488079,
+        0.22955045,
+        0.18653506
+      ],
+      "dimensions": [
+        0.13,
+        0.81999993,
+        0.27000001
+      ]
+    }
+  }
+}

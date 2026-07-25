@@ -1,0 +1,46 @@
+{
+  "schema_version": 2,
+  "asset_id": "weapon.crew.vanguard_carbine.v1",
+  "run_id": "prod-tripo-v31bq-20260723-01",
+  "asset_revision": "prod-tripo-v31bq-20260723-01",
+  "lane": "production",
+  "legacy_run_note": "This pre-policy production run keeps its original deterministic run ID; no large binary hashes are recomputed.",
+  "provider": {
+    "name": "Tripo Studio",
+    "product": "signed-in web application",
+    "task_id": "01bb9aea-6b10-419d-bbeb-9648c9867a97",
+    "plan": "Max",
+    "privacy": "Sharing Only",
+    "credits_consumed": 55,
+    "commercial_use_record": "Max plan pricing listed private models and commercial use",
+    "training_use_record": "paid inputs and outputs excluded from provider training under the recorded terms",
+    "terms_url": "https://www.tripo3d.ai/terms",
+    "pricing_url": "https://www.tripo3d.ai/pricing",
+    "policy_retrieved_utc": "2026-07-24"
+  },
+  "exports": [
+    {
+      "task_id": "01bb9aea-6b10-419d-bbeb-9648c9867a97",
+      "filename": "weapon.crew.vanguard_carbine.v1__raw__tripo-v3.1__candidate-01.glb",
+      "format": "GLB",
+      "settings": "HD Model single-image, v3.1 Best Quality, Ultra, Generate in Parts disabled, 8K disabled",
+      "cache_relative_path": "raw/weapon.crew.vanguard_carbine.v1__raw__tripo-v3.1__candidate-01.glb",
+      "bytes": 58235208,
+      "selection_state": "provisionally selected",
+      "credits_consumed": 55,
+      "local_presence_checked_utc": "2026-07-24T13:47:17Z",
+      "local_presence_status": "present"
+    }
+  ],
+  "storage": {
+    "class": "ignored-local-workstation-cache",
+    "game_build_dependency": false,
+    "provider_recovery": "best-effort",
+    "off_machine_archive": {
+      "status": "deferred",
+      "locator": null,
+      "verified_utc": null
+    },
+    "eviction_policy": "Requires a verified off-machine copy or a separate project-owner decision."
+  }
+}

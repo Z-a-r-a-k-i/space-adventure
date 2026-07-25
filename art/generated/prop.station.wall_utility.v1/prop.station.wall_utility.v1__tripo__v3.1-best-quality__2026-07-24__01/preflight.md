@@ -51,10 +51,8 @@ Live confirmation:
 - Task ID: `162d5614-e586-4a2b-a9b6-bbfe71d8caf9`.
 - Purchase, upgrade, API, provider retopology, provider rigging, and provider
   animation: not used.
-- Final settings evidence:
-  `evidence/settings/tripo-preflight-front-right-v3.1-55credits.png`.
-- Generating-state evidence:
-  `evidence/studio-review/candidate01-generating-task-162d5614-e586-4a2b-a9b6-bbfe71d8caf9.png`.
+- Final settings, task ID, and operation result are recorded above;
+  disposable Studio screenshots are not versioned.
 
 The stacked-image Studio control was inspected and rejected before submission:
 it quoted 220 credits because it would create four independent models. No

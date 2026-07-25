@@ -1,0 +1,48 @@
+{
+  "asset_id": "character.crew.vanguard.v1",
+  "render_profile": "review.blender.retarget.v1",
+  "blender_version": "5.2.0 LTS",
+  "staging_glb": "C:\\Developpement\\space-adventure-art-production\\art\\generated\\character.crew.vanguard.v1\\prod-tripo-v31bq-20260723-01\\derived\\v6-dialogue-listen-proof\\blender\\vanguard-dialogue-listen-retarget-proof.glb",
+  "staging_glb_bytes": 12188056,
+  "action": "anim.humanoid.dialogue_listen",
+  "action_frame_range": [
+    0.8000000715255737,
+    144.0
+  ],
+  "camera": {
+    "type": "orthographic",
+    "direction": "front-right three-quarter",
+    "resolution": [
+      640,
+      640
+    ]
+  },
+  "godot_gallery": {
+    "schema_version": 1,
+    "generated_utc": "2026-07-24T18:39:16Z",
+    "engine_version": "4.7.1.stable.mono.official.a13da4feb",
+    "renderer": "Vulkan Forward+",
+    "scene": "res://scenes/asset_gallery.tscn",
+    "fov_degrees": 48.0,
+    "animation_contract": "anim.humanoid.dialogue_listen",
+    "animation_requested_position_seconds": 3.0,
+    "animation_actual_position_seconds": 3.0,
+    "animation_position_tolerance_seconds": 0.001,
+    "animation_frozen_during_settling": true,
+    "render_settling_frames": 8,
+    "review_distances_meters": [
+      7.5,
+      14.5,
+      20.0
+    ],
+    "visual_review_method": "direct live Godot gallery inspection",
+    "artifact_policy": "temporary captures are local under ignored artifacts/ and are not tracked"
+  },
+  "sampled_frame_numbers": [
+    1,
+    37,
+    72,
+    108,
+    144
+  ]
+}
