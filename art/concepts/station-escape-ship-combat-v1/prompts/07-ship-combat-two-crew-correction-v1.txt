@@ -1,0 +1,5 @@
+Use case: precise-object-edit
+Asset type: corrected exploratory 16:9 game-screen presentation concept
+Input images: Image 1 is the edit target
+Primary request: Remove only the extra third tiny crew figure standing in the lower central corridor of the player ship, between the reactor room and the bottom-right service-cabinet room. Reconstruct the empty dark floor plates and nearby lighting naturally. Leave exactly two crew figures inside the player ship: one near the upper-left control room and one in the upper central corridor.
+Constraints: change only the removal of that one lower central crew figure and the small patch of floor directly behind it; preserve every other pixel-level design decision as closely as possible, including both remaining crew figures, both portrait panels, player ship geometry and rooms, damaged amber compartment and sparks, enemy ship, cyan and red-orange targeting arcs, target brackets, all HUD icons and bars, pause emblem, starfield, framing, lighting, palette, and 16:9 composition; add nothing; no text, labels, logos, or watermark

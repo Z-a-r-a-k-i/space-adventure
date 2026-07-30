@@ -322,3 +322,38 @@ live review conclusion but must not enumerate screenshots. This keeps the
 repository focused on sources and outputs, reduces LFS and clone noise, and
 avoids repeated high-resolution image ingestion while preserving auditable
 decisions.
+
+## ADR 0021 — Ship combat is a separate bounded post-POC slice
+
+Status: accepted by the project owner on 2026-07-29.
+
+ADR 0020 is intentionally not reused here because its number is reserved by
+the active Vanguard production-art decision awaiting synchronization with this
+branch.
+
+The first ship-combat experiment is Phase 7, after completion of the authored
+station POC and its production-hardening gate. It does not extend the current
+POC: that scenario still ends at the visibly opened evacuation airlock and
+completion summary.
+
+The Phase 7 slice uses the same pure C# gameplay boundary, typed commands,
+explicit fixed tick, atomic validation, structured events and snapshots, and
+tactical-pause semantics as ground play. It contains exactly two controllable
+party members aboard one escape cutter, one deterministic hostile ship,
+weapons, engines, shields, a fixed reactor budget, one weapon per ship, and one
+authored battle. Crew can move among authored rooms to operate or repair
+systems. Enemy crew are not simulated.
+
+The approved composition reference is
+`art/concepts/station-escape-ship-combat-v1/ship-combat-separated-clean-direction-v4.png`.
+It presents the player ship on the left and enemy ship on the right in separate
+strict-overhead views, both pointing upward, with a central divider and no
+movement or trajectory lines. This is an abstract tactical presentation, not a
+claim that the ships are physically side by side.
+
+The concept image authorizes only the visual direction. Final room topology,
+3D models, UI, numeric balance, and live integration wait for a deterministic
+greybox. Sector travel, free-flight physics, procedural encounters,
+progression, upgrades, oxygen, fire, breaches, missiles, drones, boarding,
+enemy-crew simulation, and multiplayer remain deferred. The complete boundary
+and exit gate are defined in `SHIP-COMBAT-POC.md`.

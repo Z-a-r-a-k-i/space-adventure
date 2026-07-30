@@ -261,6 +261,30 @@ The first three may receive briefs only when the final traversal or encounter
 layout demonstrates a readability need. They do not imply a loot, container, or
 cover system.
 
+## Post-POC exploratory visual anchors
+
+These assets remain outside the approved fourteen-brief station POC roster.
+The project owner approved the Phase 7 ship-combat composition direction on
+2026-07-29, but did not authorize offline 3D production, production briefs,
+live integration, or replacement of any current greybox.
+
+| Exploratory ID | Concept | Current decision |
+|---|---|---|
+| `environment.station.escape_launch_bay.v1` | [`station-escape-launch-bay-key-art-v1.png`](../art/concepts/station-escape-ship-combat-v1/station-escape-launch-bay-key-art-v1.png) | Possible station-to-cutter transition; layout and production remain gated |
+| `kit.station.dock_service.v1` | [`station-dock-service-prop-family-v1.png`](../art/concepts/station-escape-ship-combat-v1/station-dock-service-prop-family-v1.png) | Exploratory prop family only; not six approved production briefs |
+| `character.enemy.station_boarder.v1` | [`station-boarder-humanoid-turnaround-v1.png`](../art/concepts/station-escape-ship-combat-v1/station-boarder-humanoid-turnaround-v1.png) | Exploratory humanoid enemy only; excluded from Phase 7 ship combat |
+| `vehicle.ship.escape_cutter.v1` | [`escape-cutter-exterior-turnaround-v1.png`](../art/concepts/station-escape-ship-combat-v1/escape-cutter-exterior-turnaround-v1.png) and [`escape-cutter-interior-cutaway-v1.png`](../art/concepts/station-escape-ship-combat-v1/escape-cutter-interior-cutaway-v1.png) | Exterior and interior direction to test against the Phase 7 greybox |
+| `vehicle.ship.hostile_interceptor.v1` | [`ship-combat-separated-clean-direction-v4.png`](../art/concepts/station-escape-ship-combat-v1/ship-combat-separated-clean-direction-v4.png) | Opposing-ship silhouette is a composition anchor, not a model brief |
+| `presentation.ship_combat.separated.v1` | [`ship-combat-separated-clean-direction-v4.png`](../art/concepts/station-escape-ship-combat-v1/ship-combat-separated-clean-direction-v4.png) | Approved composition: strict overhead, player left, enemy right, bows up, central divider, no movement lines |
+
+The complete concept pack, superseded compositions, prompts, provenance, and
+review boundary are recorded in
+[`art/concepts/station-escape-ship-combat-v1/README.md`](../art/concepts/station-escape-ship-combat-v1/README.md).
+Final ship geometry, room layouts, production UI, and individual asset briefs
+remain blocked until the deterministic Phase 7 greybox proves what the battle
+actually needs. The boarder requires a separate gameplay decision because
+boarding and enemy-crew simulation are explicit Phase 7 non-goals.
+
 ## Generation and approval order
 
 1. **Before the Phase 2 exit:** keep the controlled provider comparison bounded

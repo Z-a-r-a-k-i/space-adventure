@@ -77,10 +77,15 @@ The POC tests one short authored pass through this loop. A later roguelite struc
 
 ### Post-POC candidates
 
+- The first bounded post-POC experiment is the authored escape-cutter battle
+  defined in `SHIP-COMBAT-POC.md`: two party members, two separated overhead
+  ship views, three ship systems, and one fixed encounter using the existing
+  fixed tick and active pause.
 - Deeper character progression, equipment, inventory, party relationships, and a larger authored adventure.
 - A procedural-run experiment with metaprogression only after the tactical loop is fun.
 - Controlled generative dialogue using recorded, validated provider results.
-- Ship and vehicle command, with boarding as one possible combat resolution.
+- Deeper ship and vehicle command, including boarding as a possible later
+  combat resolution, only after the bounded escape-cutter experiment.
 - Larger AI-assisted environment and content pipelines as generation quality improves.
 
 ### Still open
