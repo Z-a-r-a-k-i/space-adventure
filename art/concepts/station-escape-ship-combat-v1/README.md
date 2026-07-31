@@ -7,9 +7,8 @@ production roster, art brief, 3D source, or runtime asset
 Generated: 2026-07-29
 
 Preferred ship-combat composition:
-`ship-combat-separated-clean-direction-v4.png`. The diagonal v1, undivided
-side-by-side v2, and targeting-line v3 compositions are retained as superseded
-exploration.
+`ship-combat-separated-clean-direction-v4.png`. Only this approved
+ship-combat iteration is retained in the concept pack.
 
 Generator: built-in Codex image-generation tool
 
@@ -44,17 +43,7 @@ outside the approved station POC.
 | `station-boarder-humanoid-turnaround-v1.png` | Sealed humanoid boarder and separate compact carbine exploration | 1254 × 1254 | `49ece34cccb1fed6a064e245130709422aa6c67a6107b47c0320e6800837169b` |
 | `escape-cutter-exterior-turnaround-v1.png` | Six-view exterior candidate for the compact escape cutter | 1672 × 941 | `8febb15be1f41bb6200a60e864b0ff10f419494e2cd248f7bb2e879d6dcdb760` |
 | `escape-cutter-interior-cutaway-v1.png` | Top-down and isometric single-deck room-direction exploration | 1672 × 941 | `fbb139a9b6c0dd4ad8c15e082d239a82720df6f5c3728ddbb4ea2cb50edad4cb` |
-| `ship-combat-presentation-direction-v1.png` | Superseded diagonal 3D tactical ship-combat composition | 1672 × 941 | `131c0cdd37e2aec5cf721b27d15d3b8f275664c634a4017b3501d131c9c2f3dc` |
-| `ship-combat-side-by-side-direction-v2.png` | Superseded undivided FTL-like high-level arrangement | 1672 × 941 | `c6ef3d667106d8e68316cdb520781374c94174843bd549a00867c62e39b5d27e` |
-| `ship-combat-separated-viewports-direction-v3.png` | Superseded separated-viewports composition with targeting lines | 1672 × 941 | `b3516a8cee6b854abb97aff14df138b75703e495b4ddb52cbb86a7c3cf4480e7` |
 | `ship-combat-separated-clean-direction-v4.png` | Preferred strict top-down separated-viewports composition without targeting lines | 1672 × 941 | `0641addddbaa285e59d733a7ae5b9d245e298283df11581afbe458dc865997bc` |
-
-`provenance-inputs/ship-combat-presentation-direction-v1-initial.png` is the
-durable edit input for the final combat image. Its dimensions are 1672 × 941
-and its SHA-256 is
-`668a4cdf6937c3945f146a3088c5c975fcc1c8eac674ffd6603ce09079cb4c5b`.
-It is not a separate deliverable: the constrained edit removed an unintended
-third crew figure so the final image respects the current two-character party.
 
 ## Existing input registry
 
@@ -67,9 +56,9 @@ third crew figure so the final image respects the current two-character party.
 | `../../reference-sheets/frontier-station-v1/poc-models/station-structure-kit-reference-v1.png` | Modular hard-surface family, bevel, and studio-sheet anchor | `f518b123fc6b2f67dda71cb846cad76aa334617c72bfec5e52f4fd817e4e3738` |
 | `../../reference-sheets/frontier-station-v1/poc-models/station-survivor-turnaround-v1.png` | Four-view humanoid sheet layout and construction anchor | `3b54a69c21a563fd9685737d44ac5e55330e8ca1a0e06186655ee96f780ad169` |
 
-Generated outputs used as later inputs are identified by their output hashes in
-the table above. Exact generation and correction prompts are versioned under
-`prompts/`.
+Only retained outputs appear in the table above. Exact prompts for those
+outputs are versioned under `prompts/`; discarded ship-combat iterations and
+their edit inputs are intentionally not committed.
 
 ## Recorded review outcome
 

@@ -277,8 +277,8 @@ live integration, or replacement of any current greybox.
 | `vehicle.ship.hostile_interceptor.v1` | [`ship-combat-separated-clean-direction-v4.png`](../art/concepts/station-escape-ship-combat-v1/ship-combat-separated-clean-direction-v4.png) | Opposing-ship silhouette is a composition anchor, not a model brief |
 | `presentation.ship_combat.separated.v1` | [`ship-combat-separated-clean-direction-v4.png`](../art/concepts/station-escape-ship-combat-v1/ship-combat-separated-clean-direction-v4.png) | Approved composition: strict overhead, player left, enemy right, bows up, central divider, no movement lines |
 
-The complete concept pack, superseded compositions, prompts, provenance, and
-review boundary are recorded in
+The retained concept pack, final prompts, provenance, and review boundary are
+recorded in
 [`art/concepts/station-escape-ship-combat-v1/README.md`](../art/concepts/station-escape-ship-combat-v1/README.md).
 Final ship geometry, room layouts, production UI, and individual asset briefs
 remain blocked until the deterministic Phase 7 greybox proves what the battle
