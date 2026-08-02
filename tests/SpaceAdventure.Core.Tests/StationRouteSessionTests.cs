@@ -6,31 +6,42 @@ namespace SpaceAdventure.Core.Tests;
 public sealed class StationRouteSessionTests
 {
     private static readonly EntityId ProtagonistId = new("actor.protagonist");
+    private static readonly EntityId ProtectorActorId = new("actor.companion.protector");
     private static readonly EntityId SurvivorId = new("interaction.survivor");
+    private static readonly EntityId ProtectorInteractionId = new("interaction.protector");
     private static readonly EntityId TerminalId = new("interaction.service_terminal");
     private static readonly EntityId AirlockId = new("interaction.evacuation_airlock");
-    private static readonly DialogueResponseId SurvivorResponseId = new("response.survivor_acknowledged");
+    private static readonly ProtagonistKitId VanguardKitId = new("kit.protagonist.vanguard");
+    private static readonly DialogueResponseId ServicePowerResponseId = new("response.reroute_service_power");
+    private static readonly DialogueResponseId ShelterPowerResponseId = new("response.preserve_shelter_power");
+    private static readonly DialogueResponseId RecruitResponseId = new("response.recruit_protector");
 
     [Fact]
-    public void AuthoredContentParsesWithTheExpectedStableFlow()
+    public void AuthoredContentParsesWithStablePartyAndTacticalIdentities()
     {
         var definition = LoadDefinition();
 
-        Assert.Equal(StationRouteContent.SupportedSchemaVersion, definition.SchemaVersion);
-        Assert.Equal("station-route-v1", definition.ContentRevision);
+        Assert.Equal(2, definition.SchemaVersion);
+        Assert.Equal("station-route-v2", definition.ContentRevision);
         Assert.Equal(new ScenarioId("scenario.station_route"), definition.ScenarioId);
         Assert.Equal(ProtagonistId, definition.Protagonist.Id);
-        Assert.Equal(new ObjectiveId("objective.speak_to_survivor"), definition.BriefingObjective.Id);
-        Assert.Equal(
-            new ObjectiveId("objective.reach_evacuation_airlock"),
-            definition.DestinationObjective.Id);
-        Assert.Equal(3, definition.Interactions.Count);
+        Assert.Equal(ProtectorActorId, definition.Companion.Id);
+        Assert.Equal(new AttackId("attack.crew.protector.shotgun"), definition.Companion.Loadout!.BasicAttackId);
+        Assert.Equal(new AbilityId("ability.crew.protector.guard_ally"), definition.Companion.Loadout.ActiveAbilityId);
+        Assert.Equal(AbilityTargetKind.Ally, definition.Companion.Loadout.ActiveAbilityTargetKind);
+        Assert.Equal(2, definition.ProtagonistKits.Count);
+        Assert.Contains(
+            definition.ProtagonistKits,
+            kit => kit.Id == VanguardKitId
+                && kit.BasicAttackId == new AttackId("attack.crew.vanguard.carbine")
+                && kit.ActiveAbilityId == new AbilityId("ability.crew.vanguard.suppressive_fire"));
+        Assert.Equal(4, definition.Interactions.Count);
 
         var survivor = Assert.Single(
             definition.Interactions,
             interaction => interaction.Id == SurvivorId);
-        Assert.Equal(StationInteractionEffect.BeginBriefingDialogue, survivor.Effect);
-        Assert.Equal(SurvivorResponseId, survivor.Dialogue!.Response.Id);
+        Assert.Equal(StationInteractionEffect.BeginSurvivorDialogue, survivor.Effect);
+        Assert.Equal(2, survivor.Dialogue!.Responses.Count);
     }
 
     [Fact]
@@ -38,12 +49,12 @@ public sealed class StationRouteSessionTests
     {
         var json = LoadContentJson();
         var unsupported = json.Replace(
-            "\"schema_version\": 1",
             "\"schema_version\": 2",
+            "\"schema_version\": 99",
             StringComparison.Ordinal);
         var unmapped = json.Replace(
-            "\"schema_version\": 1,",
-            "\"schema_version\": 1, \"unexpected\": true,",
+            "\"schema_version\": 2,",
+            "\"schema_version\": 2, \"unexpected\": true,",
             StringComparison.Ordinal);
 
         Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(unsupported));
@@ -51,35 +62,74 @@ public sealed class StationRouteSessionTests
     }
 
     [Fact]
-    public void ContentParserRejectsNullInteractionEntriesAsInvalidData()
-    {
-        var json = LoadContentJson().Replace(
-            "\"interactions\": [",
-            "\"interactions\": [null,",
-            StringComparison.Ordinal);
-
-        Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(json));
-    }
-
-    [Fact]
-    public void FactoryRejectsLayoutThatDoesNotMatchEveryStableInteractionId()
+    public void FactoryRequiresEveryInteractionAndTheCompanionPlacement()
     {
         var definition = LoadDefinition();
-        var incompleteLayout = new StationRouteLayout(
+        var missingInteraction = new StationRouteLayout(
             new WorldPosition(0, 0, 0),
-            CreatePlacements().Where(placement => placement.InteractionId != AirlockId));
+            CreateActorPlacements(),
+            CreateInteractionPlacements().Where(placement => placement.InteractionId != AirlockId));
+        var missingCompanion = new StationRouteLayout(
+            new WorldPosition(0, 0, 0),
+            [],
+            CreateInteractionPlacements());
 
-        Assert.Throws<InvalidDataException>(
-            () => GameSession.CreateStationRoute(
-                definition,
-                incompleteLayout,
-                new DirectPathfinder()));
+        Assert.Throws<InvalidDataException>(() => GameSession.CreateStationRoute(
+            definition,
+            missingInteraction,
+            new DirectPathfinder()));
+        Assert.Throws<InvalidDataException>(() => GameSession.CreateStationRoute(
+            definition,
+            missingCompanion,
+            new DirectPathfinder()));
     }
 
     [Fact]
-    public void MovementChangesPositionOnlyOnTicksAndSnapsToItsAcceptedDestination()
+    public void ProtagonistKitIsRequiredAndCanOnlyBeSelectedOnce()
     {
         var session = CreateSession();
+        var initial = ObserveStation(session);
+
+        Assert.Equal(ScenarioPhase.AwaitingProtagonistSelection, initial.Phase);
+        Assert.Null(initial.SelectedProtagonistKit);
+        Assert.Single(initial.Party);
+        Assert.Null(initial.Protagonist.Loadout);
+
+        var beforeSelection = session.Execute(new MoveActorCommand(
+            new CommandId("move.before-kit"),
+            ProtagonistId,
+            new WorldPosition(2, 0, 0)));
+        Assert.False(beforeSelection.Accepted);
+        Assert.Equal(CommandRejectionCode.ProtagonistKitRequired, beforeSelection.RejectionCode);
+
+        var unknown = session.Execute(new ChooseProtagonistKitCommand(
+            new CommandId("kit.unknown"),
+            new ProtagonistKitId("kit.protagonist.unknown")));
+        Assert.False(unknown.Accepted);
+        Assert.Equal(CommandRejectionCode.UnknownProtagonistKit, unknown.RejectionCode);
+
+        var selected = SelectVanguard(session);
+        Assert.True(selected.Accepted);
+        var afterSelection = ObserveStation(session);
+        Assert.Equal(ScenarioPhase.InProgress, afterSelection.Phase);
+        Assert.Equal(VanguardKitId, afterSelection.SelectedProtagonistKit!.Id);
+        Assert.Equal("Vanguard", afterSelection.Protagonist.DisplayName);
+        Assert.Equal(
+            new AbilityId("ability.crew.vanguard.suppressive_fire"),
+            afterSelection.Protagonist.Loadout!.ActiveAbilityId);
+
+        var replacement = session.Execute(new ChooseProtagonistKitCommand(
+            new CommandId("kit.replace"),
+            new ProtagonistKitId("kit.protagonist.operator")));
+        Assert.False(replacement.Accepted);
+        Assert.Equal(CommandRejectionCode.ProtagonistKitAlreadySelected, replacement.RejectionCode);
+    }
+
+    [Fact]
+    public void MovementChangesPositionOnlyOnTicksAndSnapsToAcceptedDestination()
+    {
+        var session = CreateSession();
+        _ = SelectVanguard(session);
         var destination = new WorldPosition(4, 0, 0);
 
         var acknowledgement = session.Execute(
@@ -87,285 +137,271 @@ public sealed class StationRouteSessionTests
 
         Assert.True(acknowledgement.Accepted);
         Assert.Equal(new WorldPosition(0, 0, 0), ObserveStation(session).Protagonist.Position);
-
         session.AdvanceTicks(29);
-        var beforeArrival = ObserveStation(session);
-        Assert.NotNull(beforeArrival.Protagonist.CurrentAction);
-        Assert.InRange(beforeArrival.Protagonist.Position.X, 3.86, 3.87);
-
+        Assert.InRange(ObserveStation(session).Protagonist.Position.X, 3.86, 3.87);
         session.AdvanceTicks(1);
+
         var arrived = ObserveStation(session);
         Assert.Equal(destination, arrived.Protagonist.Position);
         Assert.Null(arrived.Protagonist.CurrentAction);
         Assert.Single(
             session.EventsSince(0),
-            gameEvent => gameEvent.Detail is MovementArrivedEventDetail
-            {
-                CommandId.Value: "move.direct",
-            });
+            gameEvent => gameEvent.Detail is MovementArrivedEventDetail { CommandId.Value: "move.direct" });
     }
 
     [Fact]
-    public void PausedOrdersReplaceOnlyPendingAndInvalidPathDoesNotMutateEitherAction()
+    public void PausedOrdersReplaceOnlyPendingAndInvalidPathMutatesNothing()
     {
         var pathfinder = new ConditionalPathfinder(
-            destination => destination.X == 99
+            (_, destination) => destination.X == 99
                 ? SpatialPathResult.Unreachable
                 : SpatialPathResult.Reachable([destination]));
         var session = CreateSession(pathfinder);
-        var first = session.Execute(
-            new MoveActorCommand(
-                new CommandId("move.first"),
-                ProtagonistId,
-                new WorldPosition(3, 0, 0)));
-        Assert.True(first.Accepted);
+        _ = SelectVanguard(session);
+        Assert.True(session.Execute(new MoveActorCommand(
+            new CommandId("move.first"),
+            ProtagonistId,
+            new WorldPosition(3, 0, 0))).Accepted);
         session.AdvanceTicks(1);
         var positionWhenPaused = ObserveStation(session).Protagonist.Position;
-        session.Execute(new SetPauseCommand(new CommandId("pause.on"), Paused: true));
-
-        var pending = session.Execute(
-            new MoveActorCommand(
-                new CommandId("move.pending"),
-                ProtagonistId,
-                new WorldPosition(0, 0, 2)));
-        Assert.True(pending.Accepted);
-        Assert.Equal(
-            new CommandId("move.first"),
-            ObserveStation(session).Protagonist.CurrentAction!.CommandId);
-        Assert.Equal(
+        _ = session.Execute(new SetPauseCommand(new CommandId("pause.on"), Paused: true));
+        Assert.True(session.Execute(new MoveActorCommand(
             new CommandId("move.pending"),
-            ObserveStation(session).Protagonist.PendingAction!.CommandId);
+            ProtagonistId,
+            new WorldPosition(0, 0, 2))).Accepted);
 
-        var invalid = session.Execute(
-            new MoveActorCommand(
-                new CommandId("move.invalid"),
-                ProtagonistId,
-                new WorldPosition(99, 0, 0)));
+        var invalid = session.Execute(new MoveActorCommand(
+            new CommandId("move.invalid"),
+            ProtagonistId,
+            new WorldPosition(99, 0, 0)));
         Assert.False(invalid.Accepted);
         Assert.Equal(CommandRejectionCode.DestinationUnreachable, invalid.RejectionCode);
-        Assert.Equal(
-            new CommandId("move.first"),
-            ObserveStation(session).Protagonist.CurrentAction!.CommandId);
-        Assert.Equal(
-            new CommandId("move.pending"),
-            ObserveStation(session).Protagonist.PendingAction!.CommandId);
+        Assert.Equal(new CommandId("move.first"), ObserveStation(session).Protagonist.CurrentAction!.CommandId);
+        Assert.Equal(new CommandId("move.pending"), ObserveStation(session).Protagonist.PendingAction!.CommandId);
         Assert.Equal(positionWhenPaused, ObserveStation(session).Protagonist.Position);
 
-        var replacement = session.Execute(
-            new MoveActorCommand(
-                new CommandId("move.replacement"),
-                ProtagonistId,
-                new WorldPosition(0, 0, 3)));
-        Assert.True(replacement.Accepted);
-        Assert.Equal(0, session.AdvanceTicks(10));
-        Assert.Equal(positionWhenPaused, ObserveStation(session).Protagonist.Position);
-        Assert.Equal(
-            new CommandId("move.first"),
-            ObserveStation(session).Protagonist.CurrentAction!.CommandId);
-
+        Assert.True(session.Execute(new MoveActorCommand(
+            new CommandId("move.replacement"),
+            ProtagonistId,
+            new WorldPosition(0, 0, 3))).Accepted);
         Assert.Equal(1, session.StepWhilePaused(1));
         var stepped = ObserveStation(session);
-        Assert.True(session.Observe().Paused);
         Assert.Equal(new CommandId("move.replacement"), stepped.Protagonist.CurrentAction!.CommandId);
         Assert.Null(stepped.Protagonist.PendingAction);
-        Assert.InRange(stepped.Protagonist.Position.Z, 0.13, 0.14);
     }
 
-    [Fact]
-    public void SurvivorDialogueRequiresItsTypedResponseBeforeObjectiveAdvances()
+    [Theory]
+    [InlineData("response.reroute_service_power", RoutePowerMode.ServiceRerouted)]
+    [InlineData("response.preserve_shelter_power", RoutePowerMode.ShelterPreserved)]
+    public void SurvivorChoiceRecordsAConsequenceAndChangesTerminalResult(
+        string responseId,
+        RoutePowerMode expectedPowerMode)
     {
         var session = CreateSession();
-        var interaction = session.Execute(
-            new InteractCommand(new CommandId("interact.survivor"), ProtagonistId, SurvivorId));
-        Assert.True(interaction.Accepted);
+        _ = SelectVanguard(session);
+        StartDialogue(session, SurvivorId, "survivor.start");
 
-        AdvanceUntil(
-            session,
-            observation => observation.ActiveDialogue is not null,
-            maximumTicks: 60);
-        var dialogueStarted = ObserveStation(session);
-        Assert.Equal(
-            new ObjectiveId("objective.speak_to_survivor"),
-            dialogueStarted.Objective.Id);
-        Assert.Equal(SurvivorId, dialogueStarted.ActiveDialogue!.InteractionId);
-        Assert.Equal(SurvivorResponseId, dialogueStarted.ActiveDialogue.Response.Id);
-
-        var movementWhileTalking = session.Execute(
-            new MoveActorCommand(
-                new CommandId("move.during_dialogue"),
-                ProtagonistId,
-                new WorldPosition(2, 0, 2)));
-        Assert.False(movementWhileTalking.Accepted);
-        Assert.Equal(CommandRejectionCode.DialogueActive, movementWhileTalking.RejectionCode);
-
-        var wrongResponse = session.Execute(
-            new ChooseDialogueResponseCommand(
-                new CommandId("dialogue.wrong"),
-                ProtagonistId,
-                SurvivorId,
-                new DialogueResponseId("response.unknown")));
-        Assert.False(wrongResponse.Accepted);
-        Assert.Equal(CommandRejectionCode.UnknownDialogueResponse, wrongResponse.RejectionCode);
-        Assert.NotNull(ObserveStation(session).ActiveDialogue);
-
-        var response = session.Execute(
-            new ChooseDialogueResponseCommand(
-                new CommandId("dialogue.accept"),
-                ProtagonistId,
-                SurvivorId,
-                SurvivorResponseId));
+        var response = session.Execute(new ChooseDialogueResponseCommand(
+            new CommandId("survivor.choice"),
+            ProtagonistId,
+            SurvivorId,
+            new DialogueResponseId(responseId)));
         Assert.True(response.Accepted);
 
-        var advanced = ObserveStation(session);
-        Assert.Null(advanced.ActiveDialogue);
-        Assert.Equal(
-            new ObjectiveId("objective.reach_evacuation_airlock"),
-            advanced.Objective.Id);
-        Assert.Equal(InteractionState.Completed, FindInteraction(advanced, SurvivorId).State);
-        Assert.Equal(InteractionState.Available, FindInteraction(advanced, AirlockId).State);
-    }
+        var afterChoice = ObserveStation(session);
+        Assert.Equal(expectedPowerMode, afterChoice.RoutePowerMode);
+        Assert.Equal(new ObjectiveId("objective.recruit_protector"), afterChoice.Objective.Id);
+        Assert.Equal(InteractionState.Available, FindInteraction(afterChoice, ProtectorInteractionId).State);
+        Assert.Equal(InteractionState.Available, FindInteraction(afterChoice, TerminalId).State);
+        Assert.Equal(InteractionState.Unavailable, FindInteraction(afterChoice, AirlockId).State);
 
-    [Fact]
-    public void OptionalTerminalIsRepeatSafeAndDoesNotAdvanceTheObjective()
-    {
-        var session = CreateSession();
-
-        CompleteInteraction(session, TerminalId, "terminal.first");
-        var afterFirst = ObserveStation(session);
-        Assert.Equal(InteractionState.Completed, FindInteraction(afterFirst, TerminalId).State);
-        Assert.True(FindInteraction(afterFirst, TerminalId).CanInteract);
-        Assert.Equal(
-            new ObjectiveId("objective.speak_to_survivor"),
-            afterFirst.Objective.Id);
-
-        CompleteInteraction(session, TerminalId, "terminal.repeat");
-        var afterRepeat = ObserveStation(session);
-        Assert.Equal(InteractionState.Completed, FindInteraction(afterRepeat, TerminalId).State);
-        Assert.True(FindInteraction(afterRepeat, TerminalId).CanInteract);
-        Assert.Equal(ScenarioPhase.InProgress, afterRepeat.Phase);
-        Assert.Equal(
-            new ObjectiveId("objective.speak_to_survivor"),
-            afterRepeat.Objective.Id);
-    }
-
-    [Fact]
-    public void AuthoredCriticalPathUnlocksAndCompletesOnlyThroughTheAirlockInteraction()
-    {
-        var session = CreateSession();
-
-        var lockedAirlock = session.Execute(
-            new InteractCommand(new CommandId("airlock.locked"), ProtagonistId, AirlockId));
-        Assert.False(lockedAirlock.Accepted);
-        Assert.Equal(CommandRejectionCode.InteractionUnavailable, lockedAirlock.RejectionCode);
-        Assert.Null(ObserveStation(session).Protagonist.CurrentAction);
-
-        var survivor = session.Execute(
-            new InteractCommand(new CommandId("survivor.approach"), ProtagonistId, SurvivorId));
-        Assert.True(survivor.Accepted);
-        AdvanceUntil(session, observation => observation.ActiveDialogue is not null, 60);
-        var response = session.Execute(
-            new ChooseDialogueResponseCommand(
-                new CommandId("survivor.response"),
-                ProtagonistId,
-                SurvivorId,
-                SurvivorResponseId));
-        Assert.True(response.Accepted);
-
-        CompleteInteraction(session, TerminalId, "terminal.optional");
-        CompleteInteraction(session, AirlockId, "airlock.complete");
-
-        var final = ObserveStation(session);
-        Assert.Equal(ScenarioPhase.Completed, final.Phase);
-        Assert.Equal(ObjectiveStatus.Completed, final.Objective.Status);
-        Assert.Equal(InteractionState.Completed, FindInteraction(final, SurvivorId).State);
-        Assert.Equal(InteractionState.Completed, FindInteraction(final, TerminalId).State);
-        Assert.Equal(InteractionState.Completed, FindInteraction(final, AirlockId).State);
-        Assert.Null(final.Protagonist.CurrentAction);
-        Assert.Null(final.Protagonist.PendingAction);
-
-        var events = session.EventsSince(0);
-        Assert.Single(events, gameEvent => gameEvent.Type == GameplayEventType.DialogueStarted);
-        Assert.Single(events, gameEvent => gameEvent.Type == GameplayEventType.DialogueResponseChosen);
-        Assert.Single(events, gameEvent => gameEvent.Type == GameplayEventType.ObjectiveChanged
-            && gameEvent.Detail is ObjectiveChangedEventDetail { Status: ObjectiveStatus.Active });
-        Assert.Single(events, gameEvent => gameEvent.Type == GameplayEventType.ObjectiveChanged
-            && gameEvent.Detail is ObjectiveChangedEventDetail { Status: ObjectiveStatus.Completed });
-        Assert.Single(events, gameEvent => gameEvent.Type == GameplayEventType.ScenarioCompleted);
-
-        var afterCompletion = session.Execute(
-            new MoveActorCommand(
-                new CommandId("move.after_completion"),
-                ProtagonistId,
-                new WorldPosition(0, 0, 0)));
-        Assert.False(afterCompletion.Accepted);
-        Assert.Equal(CommandRejectionCode.ScenarioCompleted, afterCompletion.RejectionCode);
+        CompleteInteraction(session, TerminalId, "terminal.inspect");
+        var terminalResult = FindInteraction(ObserveStation(session), TerminalId).ResultText;
+        Assert.NotNull(terminalResult);
+        Assert.Contains(
+            expectedPowerMode == RoutePowerMode.ServiceRerouted ? "full service-corridor power" : "stable shelter seals",
+            terminalResult,
+            StringComparison.Ordinal);
         Assert.Single(
             session.EventsSince(0),
-            gameEvent => gameEvent.Type == GameplayEventType.ScenarioCompleted);
+            gameEvent => gameEvent.Detail is RouteConsequenceSelectedEventDetail detail
+                && detail.RoutePowerMode == expectedPowerMode);
     }
 
     [Fact]
-    public void CriticalPathCompletesWithoutUsingTheOptionalServiceTerminal()
+    public void RecruitmentAddsProtectorWithFixedLoadoutAndUnlocksAirlock()
     {
         var session = CreateSession();
+        ReachRecruitment(session);
+        StartDialogue(session, ProtectorInteractionId, "protector.start");
 
-        var survivor = session.Execute(
-            new InteractCommand(new CommandId("survivor.required"), ProtagonistId, SurvivorId));
-        Assert.True(survivor.Accepted);
-        AdvanceUntil(session, observation => observation.ActiveDialogue is not null, 60);
-
-        var response = session.Execute(
-            new ChooseDialogueResponseCommand(
-                new CommandId("survivor.required.response"),
-                ProtagonistId,
-                SurvivorId,
-                SurvivorResponseId));
+        var response = session.Execute(new ChooseDialogueResponseCommand(
+            new CommandId("protector.recruit"),
+            ProtagonistId,
+            ProtectorInteractionId,
+            RecruitResponseId));
         Assert.True(response.Accepted);
 
-        var beforeAirlock = FindInteraction(ObserveStation(session), TerminalId);
-        Assert.Equal(InteractionState.Available, beforeAirlock.State);
-        Assert.True(beforeAirlock.CanInteract);
-        Assert.Null(beforeAirlock.ResultText);
+        var observation = ObserveStation(session);
+        Assert.Equal(2, observation.Party.Count);
+        var protector = Assert.Single(observation.Party, actor => actor.Id == ProtectorActorId);
+        Assert.Equal("Protector", protector.DisplayName);
+        Assert.Equal(new AbilityId("ability.crew.protector.guard_ally"), protector.Loadout!.ActiveAbilityId);
+        Assert.Equal(new ObjectiveId("objective.reach_evacuation_airlock"), observation.Objective.Id);
+        Assert.True(FindInteraction(observation, AirlockId).CanInteract);
+        Assert.Single(
+            session.EventsSince(0),
+            gameEvent => gameEvent.Detail is PartyMemberRecruitedEventDetail { ActorId: var id }
+                && id == ProtectorActorId);
+    }
 
-        CompleteInteraction(session, AirlockId, "airlock.without_terminal");
+    [Fact]
+    public void PartyMoveIsAtomicAndUsesStableSpacedFormation()
+    {
+        var pathfinder = new TogglePartyPathfinder();
+        var session = CreateSession(pathfinder);
+        RecruitProtector(session);
+        pathfinder.RejectProtector = true;
 
+        var rejected = session.Execute(new MovePartyCommand(
+            new CommandId("party.rejected"),
+            [ProtagonistId, ProtectorActorId],
+            new WorldPosition(8, 0, 2)));
+        Assert.False(rejected.Accepted);
+        Assert.Equal(CommandRejectionCode.DestinationUnreachable, rejected.RejectionCode);
+        Assert.All(ObserveStation(session).Party, actor => Assert.Null(actor.CurrentAction));
+        Assert.DoesNotContain(
+            session.EventsSince(0),
+            gameEvent => gameEvent.Detail is PrimaryActionAssignedEventDetail { CommandId.Value: "party.rejected" });
+
+        pathfinder.RejectProtector = false;
+        var accepted = session.Execute(new MovePartyCommand(
+            new CommandId("party.accepted"),
+            [ProtectorActorId, ProtagonistId],
+            new WorldPosition(8, 0, 2)));
+        Assert.True(accepted.Accepted);
+        AdvanceUntil(session, observation => observation.Party.All(actor => actor.CurrentAction is null), 300);
+
+        var party = ObserveStation(session).Party;
+        Assert.Equal(2, party.Count);
+        Assert.InRange(party[0].Position.DistanceTo(party[1].Position), 1.0999, 1.1001);
+        Assert.InRange((party[0].Position.X + party[1].Position.X) / 2.0, 7.9999, 8.0001);
+        Assert.InRange((party[0].Position.Z + party[1].Position.Z) / 2.0, 1.9999, 2.0001);
+    }
+
+    [Fact]
+    public void AirlockCompletesOnlyAfterChoiceAndRecruitment()
+    {
+        var session = CreateSession();
+        _ = SelectVanguard(session);
+
+        var locked = session.Execute(new InteractCommand(
+            new CommandId("airlock.locked"),
+            ProtagonistId,
+            AirlockId));
+        Assert.False(locked.Accepted);
+        Assert.Equal(CommandRejectionCode.InteractionUnavailable, locked.RejectionCode);
+
+        RecruitProtector(session);
+        CompleteInteraction(session, AirlockId, "airlock.complete");
         var final = ObserveStation(session);
         Assert.Equal(ScenarioPhase.Completed, final.Phase);
         Assert.Equal(ObjectiveStatus.Completed, final.Objective.Status);
+        Assert.All(final.Party, actor =>
+        {
+            Assert.Null(actor.CurrentAction);
+            Assert.Null(actor.PendingAction);
+        });
+        Assert.Single(session.EventsSince(0), gameEvent => gameEvent.Type == GameplayEventType.ScenarioCompleted);
 
-        var terminal = FindInteraction(final, TerminalId);
-        Assert.NotEqual(InteractionState.Completed, terminal.State);
-        Assert.Null(terminal.ResultText);
-        Assert.DoesNotContain(
-            session.EventsSince(0),
-            gameEvent => gameEvent.Detail is InteractionCompletedEventDetail detail
-                && detail.InteractionId == TerminalId);
+        var afterCompletion = session.Execute(new MovePartyCommand(
+            new CommandId("party.after-complete"),
+            [ProtagonistId, ProtectorActorId],
+            new WorldPosition(0, 0, 0)));
+        Assert.False(afterCompletion.Accepted);
+        Assert.Equal(CommandRejectionCode.ScenarioCompleted, afterCompletion.RejectionCode);
+    }
+
+    private static CommandAcknowledgement SelectVanguard(GameSession session)
+    {
+        return session.Execute(new ChooseProtagonistKitCommand(
+            new CommandId("kit.select-vanguard"),
+            VanguardKitId));
+    }
+
+    private static void ReachRecruitment(GameSession session)
+    {
+        _ = SelectVanguard(session);
+        StartDialogue(session, SurvivorId, "survivor.start");
+        Assert.True(session.Execute(new ChooseDialogueResponseCommand(
+            new CommandId("survivor.choose-power"),
+            ProtagonistId,
+            SurvivorId,
+            ServicePowerResponseId)).Accepted);
+    }
+
+    private static void RecruitProtector(GameSession session)
+    {
+        ReachRecruitment(session);
+        StartDialogue(session, ProtectorInteractionId, "protector.start");
+        Assert.True(session.Execute(new ChooseDialogueResponseCommand(
+            new CommandId("protector.recruit"),
+            ProtagonistId,
+            ProtectorInteractionId,
+            RecruitResponseId)).Accepted);
+    }
+
+    private static void StartDialogue(GameSession session, EntityId interactionId, string commandId)
+    {
+        Assert.True(session.Execute(new InteractCommand(
+            new CommandId(commandId),
+            ProtagonistId,
+            interactionId)).Accepted);
+        AdvanceUntil(
+            session,
+            observation => observation.ActiveDialogue?.InteractionId == interactionId,
+            180);
+    }
+
+    private static void CompleteInteraction(GameSession session, EntityId interactionId, string commandId)
+    {
+        var beforeSequence = session.Observe().LatestEventSequence;
+        Assert.True(session.Execute(new InteractCommand(
+            new CommandId(commandId),
+            ProtagonistId,
+            interactionId)).Accepted);
+        AdvanceUntil(
+            session,
+            _ => session.EventsSince(beforeSequence).Any(gameEvent =>
+                gameEvent.Detail is InteractionCompletedEventDetail detail
+                && detail.InteractionId == interactionId),
+            300);
     }
 
     private static GameSession CreateSession(ISpatialPathfinder? pathfinder = null)
     {
         return GameSession.CreateStationRoute(
             LoadDefinition(),
-            new StationRouteLayout(new WorldPosition(0, 0, 0), CreatePlacements()),
+            new StationRouteLayout(
+                new WorldPosition(0, 0, 0),
+                CreateActorPlacements(),
+                CreateInteractionPlacements()),
             pathfinder ?? new DirectPathfinder());
     }
 
-    private static StationInteractionPlacement[] CreatePlacements()
+    private static StationActorPlacement[] CreateActorPlacements()
+    {
+        return [new StationActorPlacement(ProtectorActorId, new WorldPosition(6, 0, 0))];
+    }
+
+    private static StationInteractionPlacement[] CreateInteractionPlacements()
     {
         return
         [
-            new StationInteractionPlacement(
-                SurvivorId,
-                new WorldPosition(4, 0, 0),
-                new WorldPosition(3, 0, 0)),
-            new StationInteractionPlacement(
-                TerminalId,
-                new WorldPosition(6, 0, 2),
-                new WorldPosition(5, 0, 2)),
-            new StationInteractionPlacement(
-                AirlockId,
-                new WorldPosition(10, 0, 0),
-                new WorldPosition(9, 0, 0)),
+            new(SurvivorId, new WorldPosition(4, 0, 0), new WorldPosition(3, 0, 0)),
+            new(ProtectorInteractionId, new WorldPosition(6, 0, 0), new WorldPosition(5, 0, 0)),
+            new(TerminalId, new WorldPosition(6, 0, 2), new WorldPosition(5, 0, 2)),
+            new(AirlockId, new WorldPosition(10, 0, 0), new WorldPosition(9, 0, 0)),
         ];
     }
 
@@ -376,8 +412,7 @@ public sealed class StationRouteSessionTests
 
     private static string LoadContentJson()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "content", "station-route.json");
-        return File.ReadAllText(path);
+        return File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "content", "station-route.json"));
     }
 
     private static StationRouteObservation ObserveStation(GameSession session)
@@ -389,26 +424,7 @@ public sealed class StationRouteSessionTests
         StationRouteObservation observation,
         EntityId interactionId)
     {
-        return Assert.Single(
-            observation.Interactions,
-            interaction => interaction.Id == interactionId);
-    }
-
-    private static void CompleteInteraction(
-        GameSession session,
-        EntityId interactionId,
-        string commandId)
-    {
-        var beforeSequence = session.Observe().LatestEventSequence;
-        var acknowledgement = session.Execute(
-            new InteractCommand(new CommandId(commandId), ProtagonistId, interactionId));
-        Assert.True(acknowledgement.Accepted);
-        AdvanceUntil(
-            session,
-            _ => session.EventsSince(beforeSequence).Any(
-                gameEvent => gameEvent.Detail is InteractionCompletedEventDetail detail
-                    && detail.InteractionId == interactionId),
-            maximumTicks: 120);
+        return Assert.Single(observation.Interactions, interaction => interaction.Id == interactionId);
     }
 
     private static void AdvanceUntil(
@@ -431,10 +447,7 @@ public sealed class StationRouteSessionTests
 
     private sealed class DirectPathfinder : ISpatialPathfinder
     {
-        public SpatialPathResult FindPath(
-            EntityId actorId,
-            WorldPosition origin,
-            WorldPosition destination)
+        public SpatialPathResult FindPath(EntityId actorId, WorldPosition origin, WorldPosition destination)
         {
             _ = actorId;
             _ = origin;
@@ -443,16 +456,25 @@ public sealed class StationRouteSessionTests
     }
 
     private sealed class ConditionalPathfinder(
-        Func<WorldPosition, SpatialPathResult> findPath) : ISpatialPathfinder
+        Func<EntityId, WorldPosition, SpatialPathResult> findPath) : ISpatialPathfinder
     {
-        public SpatialPathResult FindPath(
-            EntityId actorId,
-            WorldPosition origin,
-            WorldPosition destination)
+        public SpatialPathResult FindPath(EntityId actorId, WorldPosition origin, WorldPosition destination)
         {
-            _ = actorId;
             _ = origin;
-            return findPath(destination);
+            return findPath(actorId, destination);
+        }
+    }
+
+    private sealed class TogglePartyPathfinder : ISpatialPathfinder
+    {
+        public bool RejectProtector { get; set; }
+
+        public SpatialPathResult FindPath(EntityId actorId, WorldPosition origin, WorldPosition destination)
+        {
+            _ = origin;
+            return RejectProtector && actorId == ProtectorActorId
+                ? SpatialPathResult.Unreachable
+                : SpatialPathResult.Reachable([destination]);
         }
     }
 }

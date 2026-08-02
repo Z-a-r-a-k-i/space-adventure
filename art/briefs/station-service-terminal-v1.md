@@ -1,6 +1,7 @@
 # Asset brief — station service terminal v1
 
-Status: approved visual direction; production deferred to Phase 5
+Status: accepted by the project owner for Phase 3 production on 2026-08-02;
+integrated candidate awaiting final owner visual approval
 
 ## Contract
 
@@ -30,6 +31,6 @@ state. The model is a static presentation asset with no rig or animation.
 
 ## Production gate
 
-Author or generate a fresh static source only when Phase 5 activates the
-asset. Normalize it in Blender, validate the GLB, inspect it live in Blender
-and Godot, and keep the existing greybox wrapper until human approval.
+Author a static source dimensionally in Blender, validate the exact GLB, and
+inspect it live in Blender and Godot. The authored greybox wrapper continues to
+own identity, approach position, collision, and interaction state.

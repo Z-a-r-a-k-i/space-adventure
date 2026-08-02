@@ -222,3 +222,25 @@ without adding custom non-humanoid locomotion or skeletal-machine animation.
 Gameplay still owns attack range, timing, target validity, movement, contact,
 damage, and interruption. The approved Enforcer sheet still requires separate
 production-brief acceptance before 3D generation begins.
+
+## ADR 0023 — Static station presentation advances into Phase 3
+
+Status: accepted by the project owner on 2026-08-02.
+
+The station structure kit, service terminal, and evacuation airlock advance
+from Phase 5 into the active Phase 3 route. They are authored dimensionally in
+Blender from the approved references and published as static or rigid GLBs.
+They do not use Tripo retopology, Mixamo, skinning, or the humanoid animation
+pipeline.
+
+Godot remains authoritative for navigation, collision, lighting, stable
+interaction IDs, route state, and door timing. The imported structure exposes
+independent named walls for camera cutaway; the airlock exposes two named rigid
+leaves driven from observed completion state. Existing greybox presentation is
+hidden rather than used as a second visible layer, while its gameplay wrappers
+remain intact.
+
+This reprioritization does not advance combat, inventory, character
+replacement, wall-utility integration, or other Phase 5 polish. The integrated
+candidates require a live graphical playthrough and final project-owner visual
+approval before their briefs may be marked fully accepted.

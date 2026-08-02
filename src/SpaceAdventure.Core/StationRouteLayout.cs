@@ -2,6 +2,10 @@ using System.Collections.ObjectModel;
 
 namespace SpaceAdventure.Core;
 
+public sealed record StationActorPlacement(
+    EntityId ActorId,
+    WorldPosition Position);
+
 public sealed record StationInteractionPlacement(
     EntityId InteractionId,
     WorldPosition Position,
@@ -9,13 +13,17 @@ public sealed record StationInteractionPlacement(
 
 public sealed class StationRouteLayout
 {
-    private readonly ReadOnlyDictionary<EntityId, StationInteractionPlacement> _placements;
+    private readonly ReadOnlyDictionary<EntityId, StationActorPlacement> _actorPlacements;
+    private readonly ReadOnlyDictionary<EntityId, StationInteractionPlacement> _interactionPlacements;
+    private readonly ReadOnlyCollection<StationActorPlacement> _actorList;
     private readonly ReadOnlyCollection<StationInteractionPlacement> _interactionList;
 
     public StationRouteLayout(
         WorldPosition protagonistStart,
+        IEnumerable<StationActorPlacement> actors,
         IEnumerable<StationInteractionPlacement> interactions)
     {
+        ArgumentNullException.ThrowIfNull(actors);
         ArgumentNullException.ThrowIfNull(interactions);
         if (!protagonistStart.IsFinite)
         {
@@ -24,7 +32,25 @@ public sealed class StationRouteLayout
                 "The protagonist start position must be finite.");
         }
 
-        var placementDictionary = new Dictionary<EntityId, StationInteractionPlacement>();
+        var actorDictionary = new Dictionary<EntityId, StationActorPlacement>();
+        foreach (var placement in actors)
+        {
+            if (!placement.Position.IsFinite)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(actors),
+                    $"Actor '{placement.ActorId}' has a non-finite position.");
+            }
+
+            if (!actorDictionary.TryAdd(placement.ActorId, placement))
+            {
+                throw new ArgumentException(
+                    $"Actor placement '{placement.ActorId}' is duplicated.",
+                    nameof(actors));
+            }
+        }
+
+        var interactionDictionary = new Dictionary<EntityId, StationInteractionPlacement>();
         foreach (var placement in interactions)
         {
             if (!placement.Position.IsFinite || !placement.ApproachPosition.IsFinite)
@@ -34,7 +60,7 @@ public sealed class StationRouteLayout
                     $"Interaction '{placement.InteractionId}' has a non-finite position.");
             }
 
-            if (!placementDictionary.TryAdd(placement.InteractionId, placement))
+            if (!interactionDictionary.TryAdd(placement.InteractionId, placement))
             {
                 throw new ArgumentException(
                     $"Interaction placement '{placement.InteractionId}' is duplicated.",
@@ -43,19 +69,28 @@ public sealed class StationRouteLayout
         }
 
         ProtagonistStart = protagonistStart;
-        _placements = new ReadOnlyDictionary<EntityId, StationInteractionPlacement>(placementDictionary);
+        _actorPlacements = new ReadOnlyDictionary<EntityId, StationActorPlacement>(actorDictionary);
+        _interactionPlacements = new ReadOnlyDictionary<EntityId, StationInteractionPlacement>(interactionDictionary);
+        _actorList = new ReadOnlyCollection<StationActorPlacement>(actorDictionary.Values.ToArray());
         _interactionList = new ReadOnlyCollection<StationInteractionPlacement>(
-            placementDictionary.Values.ToArray());
+            interactionDictionary.Values.ToArray());
     }
 
     public WorldPosition ProtagonistStart { get; }
 
+    public IReadOnlyCollection<StationActorPlacement> Actors => _actorList;
+
     public IReadOnlyCollection<StationInteractionPlacement> Interactions => _interactionList;
+
+    public bool TryGetActor(EntityId actorId, out StationActorPlacement placement)
+    {
+        return _actorPlacements.TryGetValue(actorId, out placement!);
+    }
 
     public bool TryGetInteraction(
         EntityId interactionId,
         out StationInteractionPlacement placement)
     {
-        return _placements.TryGetValue(interactionId, out placement!);
+        return _interactionPlacements.TryGetValue(interactionId, out placement!);
     }
 }

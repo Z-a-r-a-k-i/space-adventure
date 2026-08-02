@@ -30,11 +30,11 @@ Status: approved target inventory; live integration remains roadmap-scoped
 | Protector shotgun | `weapon.crew.protector_shotgun.v1` | Separate shotgun with primary/support grips and muzzle | 3 |
 | Security Enforcer | `character.enemy.security_enforcer.v1` | Fixed-body humanoid security android with reinforced-forearm body attack | 4 |
 | Gun sentry | `machine.security.gun_sentry.v1` | Fixed or floating rigid sentry with aim pivot, recoil axis, and muzzle | 4 |
-| Service terminal | `prop.station.service_terminal.v1` | Readable optional-interaction hero prop | 5 |
+| Service terminal | `prop.station.service_terminal.v1` | Readable optional-interaction hero prop | 3 |
 | Wall utility | `prop.station.wall_utility.v1` | Repeatable noninteractive wall dressing | 5 |
 | Field aid | `item.healing.field_aid.v1` | Hand-scale item only if visibly handled | 4 |
-| Station kit | `kit.station.structure.v1` | Exact-grid floors, cutaway walls, junctions, route strips, and lights | 5 |
-| Evacuation airlock | `assembly.station.evacuation_airlock.v1` | Frame, opening leaves, status panel, and readable open state | 5 |
+| Station kit | `kit.station.structure.v1` | Exact-grid floors, cutaway walls, junctions, route strips, and lights | 3 |
+| Evacuation airlock | `assembly.station.evacuation_airlock.v1` | Frame, opening leaves, status panel, and readable open state | 3 |
 
 The station kit and airlock are dimensionally authored in Blender. Tripo may
 only supply decorative forms that survive cleanup.
@@ -83,6 +83,13 @@ contextual Godot review, and human visual approval. A door leaf, terminal
 screen, or status light may be a gameplay-driven rigid node without requiring
 a skeleton.
 
+The project owner advanced the station structure, service terminal, and
+evacuation airlock to Phase 3 on 2026-08-02. Their deterministic Blender
+sources and exact GLBs are integrated into the live route over the retained
+Godot collision, navigation, light, and interaction wrappers. All three pass
+technical and live graphical review; final owner visual approval remains
+pending. Their compact records are under `art/source/<asset-id>/production.md`.
+
 The retained wall-utility candidate passed its brief-specific Blender and
 isolated Godot technical checks. Its compact record and exact reviewed output
 are under
@@ -111,16 +118,17 @@ all reviews pass.
 
 ## Integration order
 
-1. Finish and approve Vanguard plus carbine without replacing the greybox.
-2. Prove one cleaned Mixamo locomotion clip and weapon-handling sequence in
+1. Obtain final owner visual approval for the integrated station structure,
+   service terminal, and evacuation airlock candidates.
+2. Finish and approve Vanguard plus carbine without replacing the character greybox.
+3. Prove one cleaned Mixamo locomotion clip and weapon-handling sequence in
    Godot.
-3. Reuse the accepted humanoid contract for Operator, Protector, survivor, and
+4. Reuse the accepted humanoid contract for Operator, Protector, survivor, and
    Security Enforcer.
-4. Define gameplay attacks and abilities before final combat timing or VFX.
-5. Produce the gun sentry only as a simple rigid enemy machine.
-6. Reuse retained validated environment candidates where they pass owner
-   review; replace remaining environment greybox only where Phase 5 readability
-   requires it.
+5. Define gameplay attacks and abilities before final combat timing or VFX.
+6. Produce the gun sentry only as a simple rigid enemy machine.
+7. Reuse the retained wall utility only after owner review; replace any other
+   environment greybox only where readability requires it.
 
 ## Post-POC visual anchors
 
