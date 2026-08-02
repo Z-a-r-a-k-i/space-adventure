@@ -42,14 +42,6 @@ The exact separate GLBs were assembled read-only in
 - rear-right holster overlap: 0 triangle pairs; and
 - held contact: 1,308 triangle-pair overlaps at hands and stock.
 
-The mechanical review passes. The visual decision remains `revise` because
-the generated glove topology reads open below both vertical grips at close
-range. No corrective weapon deformation or hidden attachment offset was
-baked. The 16 exported one-frame actions are interface landmarks, not the
-finished shared animation library.
-
-Current machine-readable reports are under `derived/v2-production/`.
-Disposable review renders remain local under ignored `artifacts/`.
-Superseded cleanup iterations remain only in the ignored workstation archive.
-Final owner visual approval, the hand-grip revision, shared donor-retarget
-proof, and gameplay attack binding remain pending.
+The static weapon remains valid. Assembly findings from the abandoned Vanguard
+rig were removed. Grip, support-hand, shoulder, muzzle-line, draw-path, and
+holster validation restart with the new human-approved Mixamo/Blender rig.

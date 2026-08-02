@@ -1,9 +1,8 @@
 # POC model visual approvals
 
-Status: complete visual-reference roster; offline production additionally
-requires an accepted brief
+Status: active visual references; rigid gun-sentry redesign pending
 
-Revision: 2026-07-24
+Revision: 2026-08-02
 
 ## Approval rule
 
@@ -32,16 +31,15 @@ support hand, holster, muzzle, articulation, and tactical-camera readability.
 | 6 | `weapon.crew.protector_shotgun.v1` | Side, top, muzzle, three-quarter, and two-hand-scale weapon views | Approved visual anchor — batch 01 |
 | 7 | `character.crew.protector.v1` | Unarmed four-view character turnaround; no shield | Approved visual anchor — batch 01 |
 | 8 | `character.npc.station_survivor.v1` | Four-view character turnaround and dialogue silhouette | Approved visual anchor — batch 02 |
-| 9 | `machine.security.ram_drone.v1` | Complete-machine turnaround plus brace, contact, and rebound silhouettes | Approved visual anchor — batch 02 |
-| 10 | `machine.security.gun_sentry.v1` | Complete-machine turnaround plus aim and recoil silhouettes | Approved visual anchor — batch 02 |
-| 11 | `prop.station.wall_utility.v1` | Front, mounting-depth side, top, and three-quarter views | Approved visual anchor — batch 02 |
+| 9 | `character.enemy.security_enforcer.v1` | Four-view humanoid T-pose turnaround | Approved visual anchor — batch 04 |
+| 11 | `prop.station.wall_utility.v1` | Front, mounting-depth side, top, and three-quarter views | 2D visual anchor approved — batch 02; retained 3D candidate owner review pending |
 | 12 | `item.healing.field_aid.v1` | Hand-scale form alternatives followed by one selected turnaround, only if visible 3D handling is retained | Alternative 2 and turnaround approved — batch 02 |
 | 13 | `kit.station.structure.v1` | Multi-piece orthographic module sheet plus assembled cutaway example | Approved visual anchor — batch 03; Blender-authored, not Tripo |
 | 14 | `assembly.station.evacuation_airlock.v1` | Part sheet plus closed/open-state sheet | Approved visual anchor — batch 03; structural parts Blender-authored |
 
-The existing `machine.security_drone.body.v1` is a separate disposable
-bake-off input, not a production model or a substitute for
-`machine.security.ram_drone.v1`.
+The previous articulated-machine directions were removed. The remaining gun
+sentry requires a new reference as a stationary rigid assembly with only aim,
+recoil, hit, and shutdown pivots.
 
 ## Shared sheet format
 

@@ -44,10 +44,9 @@ visual approval pending
 - Phase-blocked fields: authored dialogue content, dialogue availability and
   outcomes, gameplay scene replacement, stable live-scene binding, and any
   gameplay-coupled animation timing.
-- Dependency-blocked fields: final binding and retargeting to
-  `rig.crew.humanoid.v1` remain provisional until Vanguard proves the shared
-  skeleton and reusable animation-retarget workflow. No unrelated provider rig
-  may be accepted as production authority.
+- Dependency-blocked fields: final binding to `rig.crew.humanoid.v1` remains
+  provisional until Vanguard proves the human-approved Mixamo baseline and
+  Blender correction workflow.
 
 The survivor is one fixed complete outfit. Named coverall, vest, work panels,
 boots, cuffs, belt, pouches, shoulder lamp, hair, and head objects are editable
@@ -60,7 +59,7 @@ source seams, not equipment slots or interactive inventory.
 | Standing height | 1.70 m target, ±2% after normalization |
 | Published up / front | `+Y` / `-Z` |
 | Pivot | ground-plane center between feet |
-| Neutral pose | symmetrical relaxed A-pose compatible with the shared rig |
+| Neutral pose | symmetrical T-pose compatible with the shared rig |
 | Ground contact | boot soles at `Y = 0` |
 | Transform | unit scale, no shear, applied rotation |
 
@@ -137,7 +136,7 @@ Prompt:
 
 ```text
 One isolated unarmed stylized low-poly older female frontier-station survivor
-in a clean relaxed neutral A-pose. Preserve the approved turnaround identity:
+in a clean neutral T-pose. Preserve the approved turnaround identity:
 lean practical build, warm brown skin, short salt-and-pepper textured hair with
 one shaved side, tired intelligent face, dark navy padded maintenance coverall,
 worn warm-gray reinforced work vest with two broad protective chest panels,

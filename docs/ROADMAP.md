@@ -44,30 +44,6 @@ Implemented evidence includes the authored `station_route.tscn`, versioned `stat
 
 Exit passed: a human and an agent independently moved from the start, interacted, and reached the destination through the real Godot level. On 2026-07-24 the owner completed the documented fresh-process physical-input protocol, confirmed readable wall cutaway and restoration across normal camera movement, and reported no usability blocker.
 
-### Bounded visual preproduction spike
-
-Status: planned and non-gating.
-
-Before the Phase 2 human gate closes, visual preproduction may run one
-controlled three-asset bake-off covering a service terminal, wall utility, and
-compact security-drone body. The experiment is defined in
-`art/experiments/3d-generator-bakeoff-2026-07.md` and is capped at disposable
-candidates plus Blender baselines. It may establish art direction and measure
-whether a generator saves cleanup time; it does not replace greybox gameplay,
-alter the live route, select a permanent provider, or begin Phase 3 or Phase 6.
-Quality-oriented offline production authorized separately under ADR 0016 uses
-`prod-` run IDs and is excluded from the experiment and its scorecard. For
-the three experiment IDs themselves, production work remains blocked until the
-whole bake-off's evidence, scorecards, baselines, and result are frozen.
-
-The complete approved POC target inventory may be maintained in
-`POC-ASSET-ROSTER.md` during this period. Roster approval alone neither expands
-the experiment nor authorizes execution. Offline production of another roster
-asset additionally requires its approved reference and production-ready art
-brief; gameplay-coupled finalization still waits for the owning phase.
-
-Exit: each of the three briefs has bounded Tripo, Meshy, and Blender evidence or a documented provider failure; the experiment records provenance, tactical-camera captures, measurements, and a result of `tripo`, `meshy`, `blender`, or `none`. This exit does not affect the Phase 2 status or human-playthrough requirement.
-
 ## Phase 3 — party and conversation slice
 
 Status: active. The Phase 2 human-playthrough gate passed on 2026-07-24.
@@ -80,26 +56,25 @@ fallback. It does not define attacks or abilities, approve final visuals,
 replace the live station-route actors, or bypass the shared-rig and complete-
 assembly gates.
 
-Vanguard production-art implementation is postponed as of 2026-07-24. The
-approved 2D character and carbine references remain the intended direction, but
-the current generated 3D character, weapon fit, rig, animations, and complete
-assembly are not approved for live use. Keep the existing Vanguard greybox
-while party selection, recruitment, conversation, movement, and kit-path
-functionality are implemented and playtested. This postponement does not remove
-Vanguard from the POC or redefine the kit; it only moves production-art
-completion and live replacement to a later Phase 3 pass after the rest of the
-slice is proven.
+Vanguard production art is active. The previous rigged character and animation
+experiments were removed. The retained neutral-pose Tripo Smart Low-Poly v2
+Quad mesh is comparison material only; a conforming unrigged T-pose source and
+Quad-10k retopology are required before human Mixamo marker approval and
+Blender weight repair. Keep the existing Vanguard greybox in the live game
+until the new character, carbine assembly, animation, and exact Godot import
+receive direct human approval.
 
 - Add protagonist-kit selection. The presentation weapons are already selected
   as Vanguard carbine, Operator pistol, and Protector shotgun; define their
   stable gameplay attacks and the three active abilities before producing
   ability-specific art.
 - Integrate and approve each human as one fixed runtime outfit on the shared
-  skeleton, using any accepted offline source work. Vanguard is the explicit
-  temporary exception above. Before its later runtime publication, complete
+  skeleton, using any accepted offline source work. Before Vanguard runtime
+  publication, complete
   source revision or reselection, segmentation, remeshing, fitting, shared-rig,
-  character-plus-carbine grip and holster assembly, animation review, tactical
-  Godot captures, and final human approval. Do not add runtime armor slots.
+  character-plus-carbine grip and holster assembly, animation review, direct
+  tactical Godot inspection, and final human approval. Do not add runtime armor
+  slots.
 - Add the recruitable companion, portraits, individual and group selection, simple formation movement, and party observations.
 - Add the two authored conversations and one observable choice consequence.
 - Verify dialogue state validation, recruitment, pause behavior, and both kit paths.
@@ -109,8 +84,8 @@ Exit: the player starts alone, recruits the companion through conversation, and 
 ## Phase 4 — active-pause combat slice
 
 - Add basic attacks, one active ability per character, cooldowns, health, damage, healing-item use, and readable pending actions.
-- Add the approved body-ram drone and integrated-gun sentry as at most two
-  hostile machine behaviors, with target acquisition, telegraphs, victory,
+- Add the approved humanoid Security Enforcer and integrated-gun sentry as at
+  most two hostile behaviors, with target acquisition, telegraphs, victory,
   defeat, and restart.
 - Tune action replacement, basic-attack repetition, target visibility, and pause rhythm through repeated play.
 - Add core, CLI, Godot headless, and graphical combat checks.

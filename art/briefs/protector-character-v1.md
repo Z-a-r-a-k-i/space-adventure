@@ -49,7 +49,7 @@ organization and are not gameplay inventory slots.
   shotgun mount.
 - He must remain visibly taller, broader, and heavier than Vanguard and
   Operator without becoming a mech, exoskeleton, or Space Marine analogue.
-- Use the shared neutral A-pose, meters, Z-up Blender authoring,
+- Use the shared neutral T-pose, meters, Z-up Blender authoring,
   ground-center origin, unit scale, and no shear after offline reconstruction.
 - The exact normalized standing height remains provisional until all three
   crew bodies are compared together. Do not redesign the shared skeleton to
@@ -81,8 +81,8 @@ organization and are not gameplay inventory slots.
 - Validate primary-hand fit, support-hand reach, shoulder placement, muzzle
   direction, recoil clearance, back-mount clearance, and draw/holster path.
 - Reuse the exact shared action-name contract from
-  `art/rigs/crew-humanoid-v1.md`. Shared donor animation is retargeted through
-  Blender; provider rigs and clips are never production authority.
+  `art/rigs/crew-humanoid-v1.md`. Use the human-approved Mixamo rig baseline
+  and Mixamo library clips, with Blender correction and cleanup.
 - Weapon-specific draw, aim, recoil, recovery, and holster correction waits
   until the complete static Protector/shotgun assembly passes review.
 - Combat clips are in-place. Ability-specific clips are prohibited.

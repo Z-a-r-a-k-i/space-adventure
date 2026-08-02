@@ -155,205 +155,70 @@ topology, fit, rig, weights, attachments, and export. Whole-outfit variants are
 the preferred future extension. Individual equipment slots require a separate
 product and architecture decision.
 
-## ADR 0016 — Subscription credits prioritize complete asset quality
+## ADR 0016 — current 3D character production pipeline
 
-Status: accepted for offline POC art production.
+Status: accepted by the project owner on 2026-08-02.
 
-Offline source production is authorized independently from gameplay-phase
-activation when an approved roster asset has an approved visual reference, an
-accepted production-ready art brief, clear ownership, and resolved licensing
-and privacy prerequisites. This lane may generate and refine candidates,
-complete parts and topology, texture, test provider rigs and animation donors,
-finish the editable Blender source, publish review GLBs to staging, and inspect
-them in the isolated Godot asset gallery. It does not authorize replacement of
-live greybox content, gameplay wiring, ability-specific work, final
-attack-timing synchronization, or other integration owned by a later roadmap
-phase.
+Offline art production requires an approved roster asset, reference, brief,
+human approver, licensing/privacy state, and dedicated art worktree. It does not
+authorize live gameplay replacement, ability work, or attack-timing decisions.
 
-Offline work uses a dedicated art branch/worktree with explicit asset-ID and
-path ownership, worktree-local Godot state, and a distinct MCP port. Staged
-GLBs and the isolated review project remain under ignored `artifacts/` paths.
-The art worker does not edit `game/project.godot`, live gameplay scenes,
-shared content schemas, or imported-asset registries without a separately
-assigned integration-owner task.
+Humanoids are generated unrigged in T-pose, retopologized in Tripo with Smart
+Low-Poly v2, Quad, and a 10,000 target, then uploaded to Mixamo. A human must
+approve all Auto-Rigger markers. Mixamo provides the rig baseline and existing
+animation library; Blender owns weight repair, sockets, animation cleanup, and
+GLB export. Tripo Auto Rig and AI-generated humanoid motion are not production
+defaults.
 
-“Accepted” is a recorded approval, not an agent inference. The brief must name
-its status as `accepted for offline source production`, approval date,
-approver, authorized asset ID and operations, any blocked gameplay fields,
-production owner, and dedicated worktree. The project owner or an art owner
-explicitly delegated in a versioned task or decision may approve it. Authoring
-or being assigned a brief does not grant approval authority, and a production
-agent may not self-approve unless that delegation is explicit.
+Successful provider ingestion or rigging does not waive the unrigged T-pose
+source contract. Any grandfathered non-T-pose source, Tripo Auto Rig use, or
+AI-generated humanoid motion requires a named project-owner-approved exception
+recorded in this decision and in `POC-ASSET-ROSTER.md` before it can advance.
+No such exception is currently approved.
 
-The Tripo Studio subscription is a prepaid production resource, not a scarce
-per-request API budget. There is no general hard attempt cap and the agent does
-not stop merely because the first viable candidate exists. It should select a
-promising source early, then spend credits productively on the operations and
-targeted alternatives that improve the finished asset: useful segmentation,
-part completion, topology branches, texture repair, rig diagnostics, and
-animation donors. Multiple candidates are created only when they answer a
-named quality problem; candidate count is not a goal.
+Skeletal animation is limited to humanoids. Non-humanoids must be simple
+floating or stationary rigid machines with only a few authored pivots.
 
-Every provider operation records its purpose, settings, task or version ID,
-result, and keep/reject decision. A displayed operation cost may be captured
-opportunistically when it is already visible, but cost is not an acceptance
-criterion. Repeating an unchanged failed operation or preserving unreviewed
-variants is not productive use. Work stops when the asset passes its applicable
-reviews, the provider cannot improve the named defect, or Blender is the better
-next tool—not simply to conserve unused monthly credits.
-
-Amendment accepted 2026-07-24: production work does not track remaining account
-balance or reconcile historical credit totals. Existing historical observations
-may remain as provenance, but contradictory totals are removed or marked
-unknown rather than investigated. The bounded provider bake-off retains its
-separate fixed attempt caps and cost scorecard.
-
-Credits consumed never waive the asset brief, attack-presentation contract,
-provenance, Blender ownership, Godot review, or human approval requirements.
-The bounded provider bake-off retains its scientific attempt and cleanup caps;
-any later quality-oriented work is recorded as production work and excluded
-from the bake-off scorecard. No production-lane work may begin for any of the
-three bake-off asset IDs until the whole experiment's scorecards, baselines,
-and result are finalized and frozen.
-
-## ADR 0017 — Tripo raw exports use an ignored workstation cache
-
-Status: accepted by the project owner on 2026-07-24.
-
-Untouched Tripo exports are retained at
-`art/generated/<asset-id>/<run-id>/raw/` on the dedicated art workstation, but
-that directory is ignored by Git. Raw Tripo payloads are production inputs,
-not game-runtime dependencies, and do not belong in the repository or its LFS
-history by default. This decision does not set storage policy for another
-provider.
-
-Each run commits a `raw-export.manifest.json` containing the provider,
-top-level repository run ID, and provider task ID plus one entry for every
-cached payload: expected cache-relative path, original filename, format and
-export settings, byte size,
-`local_presence_checked_utc`, and `local_presence_status` (`present` or
-`missing`). The manifest also records plan/privacy/licensing state and may
-record a displayed operation cost when it was captured opportunistically. It
-does not require an account balance or reconciled historical total. Prompts,
-approved inputs, settings, selection decisions, processing records, editable
-Blender sources, and publishable outputs remain versioned under the normal
-pipeline rules.
-
-Raw-dependent Blender tooling must refuse a missing cache file and flag an
-unexpected byte size for manual review. It must not read an entire raw payload
-solely to calculate or verify a content hash. Normal clones, CI, game builds,
-and runtime publication do not fetch from Tripo and do not require the raw
-cache. The existing art workstation is the authoritative local cache while art
-production remains on that machine.
-
-Tripo task IDs and Studio history are best-effort recovery aids, not a durable
-archive. Tripo's terms disclaim an obligation to store outputs and allow
-storage limits or deletion. Off-machine archival is deferred; when the owner
-adds private online storage, the manifest records a non-secret archive locator
-and verified restore date. Until then, the accepted risk is that simultaneous
-loss of the workstation cache and provider copy makes the untouched raw export
-unrecoverable, while retained Blender sources and game assets remain usable.
-
-Do not delete a locally cached raw export merely because its manifest is
-committed. Eviction requires either a verified off-machine copy or a separate
-owner decision. Never commit provider session URLs, cookies, tokens, account
-identifiers, or temporary download links.
-
-## ADR 0018 — large 3D binaries use reference-based provenance
-
-Status: accepted by the project owner on 2026-07-24.
-
-The art pipeline no longer requires SHA-256 or another separately computed
-content hash for raw provider exports, donor exports, `.blend` sources, GLB,
-FBX, OBJ, provider archives, or other large 3D binary files. Repeatedly reading
-those files consumed workstation time and CPU without improving the current
-single-workstation recovery model.
-
-Ignored provider payloads are referenced by stable asset ID, run ID, provider
-task or job ID, original filename, expected cache-relative path, export format
-and settings, and byte size. Presence and size are availability checks, not
-content identity or integrity proof: same-size corruption or substitution can
-pass silently. A missing file remains a blocker, and an unexpected size
-requires manual confirmation against the provider task or trusted local copy.
-When integrity-sensitive recovery is needed or corruption is suspected,
-restore the exact task export or another trusted local/private-archive copy,
-then perform the normal structural import and validation checks. Do not hash
-the large file merely to compare it.
-
-The repository `run_id` is the canonical `asset_revision` for every
-provider-backed review. The provider `task_id` is recorded separately for
-generation and recovery. Review directories and findings use the `run_id`, so
-they join directly to the top-level `run_id` in `raw-export.manifest.json`;
-tracked derivatives additionally record their repository path and introducing
-Git commit.
-
-Tracked binary sources and published outputs rely on normal Git/LFS revision
-identity and repository history. The art pipeline does not add a second
-file-content hash. Their production metadata records the repository-relative
-path and introducing Git commit so a derived artifact is identifiable
-independently of its provider task. Small prompt, settings, manifest, script,
-reference-image, and review-evidence files may continue to use hashes where
-they are cheap and already part of a deterministic contract.
-
-New or updated `raw-export.manifest.json` files use schema version 2 and omit
-binary `sha256` fields. Existing schema-version-1 hashes and hash-keyed review
-directories remain valid historical records, but agents must not recompute
-those hashes during inventory, migration, hydration, or routine validation.
-
-## ADR 0019 — asset review screenshots are local and disposable
-
-Status: accepted by the project owner on 2026-07-25.
-
-Generated concept art, approved reference sheets, and exact image inputs used
-to create an asset are durable production sources and remain versioned.
-Screenshots of Tripo Studio, Blender, Godot, build output, gallery views,
-turntables, contact sheets, and sampled animation frames are not production
-sources and are not committed as routine evidence.
-
-Asset appearance and animation are reviewed directly in the owning tool.
-Temporary frozen captures are permitted only for a named diagnostic need and
-belong under the ignored `artifacts/` tree. Agents open the minimum necessary
-capture once and do not create a repository gallery or image-hash ledger.
-
-Durable review evidence is compact text or JSON: provider task/version and
-settings, structural metrics, named defects, keep/reject/revise decisions,
-approval identity, and the tool/version used. A `visual-review.md` may cache a
-live review conclusion but must not enumerate screenshots. This keeps the
-repository focused on sources and outputs, reduces LFS and clone noise, and
-avoids repeated high-resolution image ingestion while preserving auditable
-decisions.
+Untouched provider exports remain in the ignored run-local cache. A tracked
+manifest records provider/version, path, settings, byte size, and presence.
+Large 3D binaries are not content-hashed. Temporary screenshots and review
+renders remain ignored; one representative image per checkpoint is enough when
+a frozen handoff is useful. Rejected models, scripts, and animation attempts are
+removed from the active baseline instead of retained as workflow instructions.
 
 ## ADR 0021 — Ship combat is a separate bounded post-POC slice
 
 Status: accepted by the project owner on 2026-07-29.
 
-ADR 0020 is intentionally not reused here because its number is reserved by
-the active Vanguard production-art decision awaiting synchronization with this
-branch.
-
-The first ship-combat experiment is Phase 7, after completion of the authored
-station POC and its production-hardening gate. It does not extend the current
-POC: that scenario still ends at the visibly opened evacuation airlock and
-completion summary.
-
-The Phase 7 slice uses the same pure C# gameplay boundary, typed commands,
-explicit fixed tick, atomic validation, structured events and snapshots, and
-tactical-pause semantics as ground play. It contains exactly two controllable
-party members aboard one escape cutter, one deterministic hostile ship,
-weapons, engines, shields, a fixed reactor budget, one weapon per ship, and one
-authored battle. Crew can move among authored rooms to operate or repair
-systems. Enemy crew are not simulated.
+Phase 7 may test one authored ship battle only after the station POC and its
+production-hardening gate. It reuses the pure C# core, typed commands, fixed
+tick, atomic validation, observations, and tactical pause. The bounded slice
+contains two controllable party members aboard one escape cutter, one hostile
+ship, weapons, engines, shields, a fixed reactor budget, one weapon per ship,
+and authored room movement or repair. Enemy crew are not simulated.
 
 The approved composition reference is
-`art/concepts/station-escape-ship-combat-v1/ship-combat-separated-clean-direction-v4.png`.
-It presents the player ship on the left and enemy ship on the right in separate
-strict-overhead views, both pointing upward, with a central divider and no
-movement or trajectory lines. This is an abstract tactical presentation, not a
-claim that the ships are physically side by side.
+`art/concepts/station-escape-ship-combat-v1/ship-combat-separated-clean-direction-v4.png`:
+strict overhead, player ship left, enemy ship right, bows upward, central
+divider, and no trajectory lines. It authorizes visual direction only. Final
+rooms, 3D assets, UI, balance, and integration wait for a deterministic
+greybox. Free flight, procedural encounters, progression, upgrades, oxygen,
+fire, breaches, missiles, drones, boarding, enemy crews, and multiplayer remain
+deferred. See `docs/SHIP-COMBAT-POC.md`.
 
-The concept image authorizes only the visual direction. Final room topology,
-3D models, UI, numeric balance, and live integration wait for a deterministic
-greybox. Sector travel, free-flight physics, procedural encounters,
-progression, upgrades, oxygen, fire, breaches, missiles, drones, boarding,
-enemy-crew simulation, and multiplayer remain deferred. The complete boundary
-and exit gate are defined in `SHIP-COMBAT-POC.md`.
+## ADR 0022 — A humanoid Security Enforcer replaces the ram drone
+
+Status: accepted by the project owner on 2026-08-02 for Phase 4 presentation
+and asset planning; visual reference approved the same day.
+
+The mobile close-range hostile is a non-sapient humanoid Security Enforcer with
+a reinforced-forearm body attack. It uses the shared T-pose, Tripo Quad-10k,
+human-approved Mixamo, and Blender pipeline. It carries no weapon and publishes
+one reviewed contact socket. The ranged hostile remains a stationary rigid gun
+sentry with aim and recoil pivots.
+
+This pair preserves mobile melee pressure versus stationary ranged pressure
+without adding custom non-humanoid locomotion or skeletal-machine animation.
+Gameplay still owns attack range, timing, target validity, movement, contact,
+damage, and interruption. The approved Enforcer sheet still requires separate
+production-brief acceptance before 3D generation begins.

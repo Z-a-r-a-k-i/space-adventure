@@ -70,8 +70,9 @@ The critical path always demonstrates recruitment and combat. A dialogue choice 
 ## Combat acceptance
 
 - Hostiles perceive, acquire targets, move into range, attack, and can be defeated.
-- The two approved hostile presentation archetypes are a compact body-source
-  ram drone and a taller sentry with an integrated firearm. Their exact
+- The two approved hostile presentation archetypes are a mobile humanoid
+  Security Enforcer with a reinforced-forearm body attack and a taller sentry
+  with an integrated firearm. Their exact
   gameplay identities, ranges, timings, and tuning are defined during the
   combat phase rather than inferred from their models.
 - Every party member and hostile combatant archetype has at least one visually
@@ -115,8 +116,8 @@ The critical path always demonstrates recruitment and combat. A dialogue choice 
   fixed Protector companion, and one station survivor. A playthrough still
   controls exactly the selected protagonist plus Protector.
 - Two meaningful NPC interactions.
-- One hostile machine group using the body-ram drone and integrated-gun sentry
-  presentations, with at most those two enemy behaviors.
+- One hostile security group using the humanoid Security Enforcer and
+  integrated-gun sentry presentations, with at most those two enemy behaviors.
 - One fixed weapon and basic attack per party character, one fixed basic attack
   per hostile combatant archetype, one active ability per party character, and
   one healing-item type.
