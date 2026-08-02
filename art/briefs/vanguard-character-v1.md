@@ -1,168 +1,86 @@
-# Asset brief — Vanguard character v1
+# Vanguard character v1
 
-Status: accepted for offline source production; final visual approval and
-gameplay attack binding pending
+Status: visual direction approved; the retained neutral-pose derivative is not
+authorized for production rigging, and a conforming T-pose source is pending.
 
-## Identity and role
+## Identity
 
 | Field | Value |
 |---|---|
 | Asset ID | `character.crew.vanguard.v1` |
-| Category | Humanoid / selectable protagonist presentation |
-| Owning phase | Phase 3 art, advanced provisionally by ADR 0016 |
-| Fixed weapon | `weapon.crew.vanguard_carbine.v1` as a separate asset |
-| Attack source | `handheld` |
-| Gameplay attack reference | Pending Phase 3/4 gameplay definition; do not invent |
-| Approved reference | `art/reference-sheets/frontier-station-v1/poc-models/vanguard-character-turnaround-v1.png` |
-| Reference SHA-256 | `66858FFDA50CB37A113D6A3EEB66165FB57DE02D60372A7B1551008BD349D0DB` |
-| Rig profile | `rig.crew.humanoid.v1` in `art/rigs/crew-humanoid-v1.md` |
-| Key-pose reference | `art/reference-sheets/frontier-station-v1/poc-animation/vanguard-weapon-handling-key-poses-v1.png` |
-| Key-pose reference SHA-256 | `F618192F0F52AEC1F1AEBA4AA2658DEB7EBD1F18D97B695D870E89DB459A2C22` |
+| Role | Selectable humanoid protagonist |
+| Height | 1.82 m target, ±2% |
+| Outfit | One fixed complete outfit |
+| Weapon | Separate `weapon.crew.vanguard_carbine.v1` |
+| Reference | `art/reference-sheets/frontier-station-v1/poc-models/vanguard-character-turnaround-v1.png` |
+| Rig profile | `art/rigs/crew-humanoid-v1.md` |
 
-## Acceptance record
+Preserve the sturdy athletic silhouette, approved face and short dark hair,
+trimmed beard, navy technical undersuit, warm-gray armor, chunky boots and
+gloves, restrained cyan accents, belt, pouches, and empty carry hardware. Do
+not fuse a weapon, shield, cape, scenery, or gameplay object into the mesh.
 
-- Approval date: 2026-07-24.
-- Approver: project owner.
-- Authorized operations: use the existing bounded Tripo candidates; preserve
-  them in the ignored workstation cache; complete Blender reconstruction,
-  normalization, rigging, weighting, sockets, animation-interface proof, GLB
-  staging, and isolated Godot gallery validation.
-- Production owner: Codex on the dedicated art machine.
-- Branch/worktree:
-  `codex/phase3-vanguard-production-20260724` at
-  `C:\Developpement\space-adventure-art-production`.
-- Writable paths: this brief; the matching `art/generated/`, `art/source/`,
-  `art/rigs/`, `tools/blender/`, ignored `artifacts/`, and isolated Godot
-  gallery paths needed for this asset and its separate carbine.
-- Provider/privacy resolution: signed-in Tripo Studio Max plan, Sharing Only,
-  no API or API key. Existing candidates are sufficient; no new credit spend
-  is authorized or required for this pass.
-- Phase-blocked fields: gameplay attack ID, damage, range, timing, command and
-  event mapping, abilities, ability-specific clips, VFX, and audio. Production
-  must not invent them.
+## Production authorization
 
-Vanguard is one fixed complete outfit. Named undersuit, torso armor, left and
-right shoulders, forearms, gloves, leg armor, boots, belt, pouches, and carry
-hardware are editable-source seams, not gameplay equipment slots.
+The project owner approved offline source production on 2026-07-24 and resumed
+active Vanguard work on 2026-07-28. Work stays on the dedicated art branch and
+may prepare sources, rigs, animations, and isolated reviews. The live greybox
+remains until the complete character-plus-carbine result is approved.
 
-## Bounds, pose, and coordinates
+Gameplay attacks, timing, damage, abilities, VFX, audio, and live scene wiring
+remain phase-blocked.
 
-| Property | Requirement |
-|---|---|
-| Standing height | 1.82 m target, ±2% after normalization |
-| Shoulder width | approximately 0.52 m before A-pose arm spread |
-| Published up / front | `+Y` / `-Z` |
-| Pivot | ground-plane center between feet |
-| Neutral pose | symmetrical A-pose matching the shared rig profile |
-| Ground contact | boot soles at `Y = 0` |
-| Transform | unit scale, no shear, applied rotation |
+## Retained source
 
-The silhouette is sturdy and athletic, clearly lighter than Protector and
-broader than Operator. Preserve the approved face, short dark textured
-undercut, trimmed beard, navy technical undersuit, broad warm-gray chest and
-limb armor, chunky boots and gloves, restrained cyan accents, and practical
-wear. The firearm must not be generated with the body.
+The retained static derivative is recorded under
+`art/generated/character.crew.vanguard.v1/prod-tripo-v31bq-20260723-01/`.
+It is unrigged Tripo Smart Low-Poly v2 retopology using Quad and a 10,000 target.
+The actual output is 13,280 faces: 11,343 quads and 1,937 triangles.
 
-## Source-part and material policy
+This source predates the shared T-pose contract. Successful Mixamo ingestion
+does not waive that contract, so the source is retained only for comparison
+and may not advance to the production Auto-Rigger gate. Regenerate the
+Vanguard as an unrigged T-pose model before rigging. The only alternative is a
+named, project-owner-approved grandfathered exception recorded in both ADR
+0016 and `docs/POC-ASSET-ROSTER.md`; no such exception is currently approved.
 
-- Continuous deforming undersuit/body surface through shoulders, elbows, hips,
-  and knees; no independent watertight limb chunks at joints.
-- Rigid armor and major accessories remain named objects where practical.
-- Hidden undersuit polygons may be omitted beneath rigid armor to prevent
-  clipping.
-- Stable material IDs:
-  `mat.vanguard.surface.pbr` for the cleaned combined visual-shell texture
-  regions (warm-gray armor, dark mechanism, cyan accent, skin, and hair), and
-  `mat.vanguard.undersuit.navy` for the continuous deforming underlayer.
-- Maximum two 2048×2048 texture sets; de-lit PBR color with no baked scene
-  lighting, bloom, or cast shadow.
-- Collision belongs to the Godot gameplay wrapper. The presentation GLB does
-  not publish generated collision or gameplay hit volumes.
+No earlier Vanguard rig, animation proof, Blender character source, or
+published character GLB is active.
 
-## Budgets
+## Mesh and runtime limits
 
-| Budget | Target | Hard limit |
-|---|---:|---:|
-| Triangles | 18,000–28,000 | 35,000 |
-| Runtime skinned mesh objects | 4–12 | 18 |
-| Material slots | 4–6 | 8 |
-| Unique texture sets | 1–2 | 2 |
-| Published bones | shared profile | 64 |
-| Skin influences | 4 | 4 |
+- continuous deforming surface through shoulders, elbows, hips, and knees;
+- rigid armor may remain separate named objects;
+- maximum 35,000 runtime triangles, eight materials, two 2048 texture sets,
+  64 published bones, and four skin influences per vertex;
+- origin at ground center, unit scale, no shear, and grounded boot soles; and
+- collision and gameplay volumes remain in Godot, not the presentation GLB.
 
-## Attachments and animation interfaces
+## Rig and animation sequence
 
-- `socket.weapon.hand_primary`, parented to the right hand.
-- `socket.weapon.holster_primary`, fitted after normalized assembly review.
-  The character sheet suggests thigh/hip hardware while the key-pose sheet
-  shows a rear-right/back carry rail. Test both without changing gameplay and
-  record the selected transform as provisional pending owner visual review.
-- Required complete-assembly validation: stock/shoulder clearance, primary
-  hand, support hand, muzzle line, holster clearance, and draw path.
-- Required presentation coverage follows `rig.crew.humanoid.v1`: holstered
-  idle/locomotion, draw and transfer, armed idle/locomotion, raise/aim,
-  fire/recoil, recovery, holster transfer, dialogue poses, terminal
-  interaction, healing use, hit reaction, and down.
-- Combat clips are in-place. Ability-specific clips are prohibited.
-- Final durations and authoritative attack-phase mapping remain pending.
+1. Generate, retopologize, and approve a conforming unrigged T-pose source,
+   then upload its FBX-and-textures ZIP to Mixamo.
+2. A human confirms every chin, wrist, elbow, knee, and groin/hip marker before
+   Auto-Rigger submission.
+3. Review the rig preview, then download the neutral FBX Binary with skin.
+4. In Blender, repair weights at the chin, neck, shoulders, wrists, hips,
+   knees, ankles, gloves, and armor transitions.
+5. Select existing Mixamo library clips and download them without skin for the
+   accepted skeleton, preferring in-place variants.
+6. Blender owns clip cleanup, root handling, looping, contacts, weapon
+   constraints, sockets, names, and final GLB export.
 
-The required exported presentation names are:
+Required presentation coverage is holstered idle and locomotion, draw, armed
+idle and locomotion, raise/aim, fire/recoil, recovery, holster, dialogue idle,
+speaking and listening, terminal interaction, healing use, hit reaction, and
+down. Use the contract names in `art/rigs/crew-humanoid-v1.md`.
 
-```text
-anim.humanoid.idle_holstered
-anim.humanoid.locomotion_holstered
-anim.humanoid.draw
-anim.humanoid.idle_armed
-anim.humanoid.locomotion_armed
-anim.humanoid.raise_aim
-anim.humanoid.fire_recoil
-anim.humanoid.recovery
-anim.humanoid.holster
-anim.humanoid.dialogue_idle
-anim.humanoid.dialogue_speak
-anim.humanoid.dialogue_listen
-anim.humanoid.interact_terminal
-anim.humanoid.use_healing
-anim.humanoid.hit_reaction
-anim.humanoid.down
-```
+## Assembly and approval
 
-Existing one-frame actions are interface landmarks only, not a completed
-animation library. Vanguard must prove at least cleaned idle and locomotion
-retargeting plus reviewed draw, transfer, ready/aim, recoil, recovery, and
-holster poses before the shared library is accepted for another human.
+Publish `socket.weapon.hand_primary` and `socket.weapon.holster_primary`.
+Validate primary hand, support hand, stock and shoulder clearance, muzzle line,
+holster clearance, and draw path with the separate carbine.
 
-The key-pose sheet is concept direction for carried, draw, ready/aim, attack,
-recovery, and holster readability. It is not timing, animation, attack, VFX, or
-audio authority.
-
-## Provider plan and prompt
-
-Use signed-in Tripo Studio Build & Refine, image-to-3D multi-view with front,
-strict side, back, and three-quarter lossless crops. Generate in Parts may be
-enabled for the fixed armor outfit. Start with one candidate; a second is
-allowed only for a named defect such as fused limbs, missing back armor,
-unrepairable face identity, or unusable part boundaries.
-
-Prompt:
-
-```text
-One isolated unarmed stylized low-poly adult male Vanguard in a clean neutral
-A-pose. Preserve the approved turnaround identity: sturdy athletic build,
-short dark textured undercut, trimmed beard, dark navy padded technical
-undersuit, broad warm-gray retro-industrial chest, shoulder, forearm, knee and
-shin armor, chunky reinforced boots and gloves, sparse cyan equipment accents,
-practical belt and pouches, and empty thigh/hip carry hardware. Same character
-and outfit from every supplied view. Keep major rigid armor parts separable
-from one continuous deforming undersuit/body base. No firearm, weapon, shield,
-helmet, cape, text, logo, scenery, pedestal, extra accessories, duplicate body,
-action pose, baked lighting, or floating parts.
-```
-
-## Review and stop conditions
-
-Review the static candidate at 7.5 m, 14.5 m, and 20 m and the exact carbine
-assembly at 14.5 m and 20 m. Reject identity drift, fused joints, blocked
-articulation, weapon geometry, Protector-like bulk, dominant cyan, unusable
-topology, unclear licensing/privacy, or a candidate that cannot fit the shared
-rig without redesign. Selection remains provisional pending owner review.
+Approval requires direct Blender deformation and animation review followed by
+the exact GLB in Godot at 14.5 m and 20 m. One representative screenshot per
+checkpoint is enough when a frozen handoff image is useful.

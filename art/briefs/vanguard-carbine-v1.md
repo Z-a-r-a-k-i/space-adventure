@@ -27,8 +27,11 @@ gameplay attack binding pending
   gallery validation.
 - Production owner: Codex on the dedicated art machine.
 - Branch/worktree:
-  `codex/phase3-vanguard-production-20260724` at
+  `codex/vanguard-walk-animation-20260728` at
   `C:\Developpement\space-adventure-art-production`.
+- Production resumed by project-owner direction on 2026-07-28. Carbine
+  assembly work remains active alongside character animation; live
+  replacement approval remains pending.
 - Writable paths: this brief; the matching `art/generated/`, `art/source/`,
   `tools/blender/`, ignored `artifacts/`, and isolated Godot gallery paths
   required by the separate Vanguard/carbine assembly.

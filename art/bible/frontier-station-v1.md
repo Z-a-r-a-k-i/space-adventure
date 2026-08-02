@@ -1,9 +1,9 @@
 # Frontier station visual bible
 
-Status: provisional POC visual baseline  
-Revision: 2026-07-23  
-Scope: `station-route-v1`, the bounded three-asset generator bake-off, and
-approved full-POC roster planning
+Status: approved POC visual baseline
+
+Revision: 2026-08-02
+Scope: `station-route-v1` and the approved POC roster
 
 ## Purpose and authority
 
@@ -41,12 +41,11 @@ not like unrelated generated objects placed in the same room.
   and [Protector turnaround](../reference-sheets/frontier-station-v1/poc-models/protector-character-turnaround-v1.png)
   freeze their identities, proportions, fixed outfits, palettes, and broad
   silhouettes. The Protector has no shield.
-- [Approved station survivor](../reference-sheets/frontier-station-v1/poc-models/station-survivor-turnaround-v1.png),
-  [security ram drone](../reference-sheets/frontier-station-v1/poc-models/security-ram-drone-turnaround-v1.png),
-  and [security gun sentry](../reference-sheets/frontier-station-v1/poc-models/security-gun-sentry-turnaround-v1.png)
-  freeze the remaining character and hostile-machine visual directions. The
-  machine pose studies define articulation intent, not authoritative attacks
-  or finished animation.
+- [Approved station survivor](../reference-sheets/frontier-station-v1/poc-models/station-survivor-turnaround-v1.png)
+  freezes the NPC identity. The
+  [approved Security Enforcer](../reference-sheets/frontier-station-v1/poc-models/security-enforcer-turnaround-v1.png)
+  freezes the humanoid close-range hostile direction. The rigid gun-sentry
+  reference remains pending.
 - [Approved wall utility](../reference-sheets/frontier-station-v1/poc-models/station-wall-utility-turnaround-v1.png)
   and [field aid](../reference-sheets/frontier-station-v1/poc-models/field-aid-turnaround-v1.png)
   freeze their prop directions. The field aid uses selected alternative 2 from
@@ -62,10 +61,9 @@ not like unrelated generated objects placed in the same room.
   targeting, range, timing, collision, damage, dialogue availability, or
   outcomes.
 - [POC animation key-pose directions](../reference-sheets/frontier-station-v1/poc-animation/README.md)
-  define retained weapon-transfer, basic-attack, locomotion, recovery, and
-  shutdown silhouettes for the three party profiles and two machine
-  archetypes. They do not approve a rig, clip timing, root motion, socket
-  transform, hit shape, projectile, damage, or ability.
+  retain silhouette direction for the three humanoid party profiles. They do
+  not approve a rig, clip timing, root motion, socket transform, hit shape,
+  projectile, damage, or ability.
 
 These images establish visual direction, not exact geometry or gameplay
 contracts. The approved roster now assigns Vanguard's carbine, Operator's
@@ -123,12 +121,9 @@ The current route establishes the initial dimensional language:
 | Wall-cutaway transition | 0.15 seconds |
 
 Structural floors, walls, doors, posts, and cutaway pieces are dimensionally
-authored in Blender. Do not use diffusion-generated meshes as structural
-modules. Before the Phase 2 exit, provider-comparison evidence is limited to
-the three bounded bake-off IDs. Separately, Tripo may provide candidates for
-an approved roster asset under ADR 0016 once its visual reference and
-production-ready art brief are accepted. This offline lane does not authorize
-live gameplay integration before the owning phase.
+authored in Blender. Do not use generated meshes as structural modules. Tripo
+may provide decorative candidates only under the current art pipeline; this
+does not authorize live gameplay integration before the owning phase.
 
 The production evacuation airlock visibly opens before completion presentation.
 Its frame, moving leaves, clearance, pivot, and collision interfaces are
@@ -179,21 +174,20 @@ split upper and lower presentation, as described in `docs/ARCHITECTURE.md`.
 - Firearms use broad, retro-industrial masses and restrained high-tech accents;
   thin barrels and tiny attachments must not carry role readability.
 
-### Security machines
+### Hostile security profiles
 
-- Compact, angular armored masses with clearly separated locomotion elements.
-- One unmistakable red or red-orange sensor/threat focus.
-- Stable-looking feet or supports; avoid fragile needle limbs.
-- Silhouette and telegraph direction must remain clear from above.
-- Each complete machine exposes a readable attack direction and articulation
-  for an integrated weapon, whether published separately as a rigid child or
-  built into the assembly, or an unmistakable reinforced body-contact surface.
-  A red sensor by itself does not explain how the machine attacks.
-- Body attackers need enough compression, lean, or recoil range for wind-up and
-  recovery; integrated weapons need visible muzzle and aiming clearance.
-- The roster selects a compact body-ram presentation and a taller
-  integrated-firearm presentation. Production dimensions, stable gameplay IDs,
-  attack ranges, timings, and tuning remain unaccepted until Phase 4.
+- The Security Enforcer is a human-proportioned, Mixamo-compatible, non-sapient
+  android with a sealed head, continuous undersuit, fixed armor, and reinforced
+  forearm body attack.
+- The gun sentry is a stationary rigid assembly with no skeletal deformation.
+- Compact angular armor and one unmistakable red or red-orange threat focus.
+- Silhouette, attack direction, and telegraph remain clear from above.
+- The Enforcer exposes one reinforced forearm contact surface and uses only the
+  humanoid idle, locomotion, strike, recovery, hit, and down coverage required
+  by its brief.
+- The sentry exposes one aim pivot, recoil axis, and muzzle.
+- The sentry has no legs, walk cycle, skeletal deformation, or complex
+  mechanical rig.
 
 Faction names, logos, serial text, and final lore markings remain provisional.
 Do not bake them into meshes or textures during this spike.
@@ -241,34 +235,18 @@ pair it with silhouette, placement, iconography, or animation.
   Heavy grime, corrosion, gore, and catastrophic damage are outside this
   visual spike.
 
-## Generated-asset policy for this revision
+## Generated-asset policy
 
-- Use clean isolated or multi-view references. Do not generate a complete room
-  or a complete encounter as one mesh.
-- Tripo and Meshy are evaluation providers, not dependencies or sources of
-  truth.
-- Generated candidates may supply a base mesh or texture draft. Blender 5.2
-  LTS remains the editable source for accepted work.
-- For humanoids, use part-aware generation or segmentation when it produces a
-  cleaner editable undersuit-and-armor source. Complete segmentation, part
-  completion, retopology or remeshing, cleanup, and fitting before the shared
-  rig; these operations invalidate provider skeletons and weights.
-- Normalize scale, pivot, axes, parts, topology, UVs, material IDs, and naming
-  before review.
-- Never publish directly from a provider or provider plugin into Godot.
-- For Tripo, preserve the raw candidate unchanged in the ignored run-local
-  workstation cache. Commit its expected path, size, provider task/run
-  reference, prompt, small input-file hashes, provider model/version, settings,
-  job ID or seed when available, and licensing record. Do not compute a
-  content hash for the raw or another large 3D binary; tracked binary sources
-  and outputs use normal Git/LFS revision identity. Another provider requires
-  its own recorded storage policy.
-- Use subscription credits to improve selected assets through named,
-  reviewable operations rather than stopping at the first viable result or
-  generating unreviewed variants. The bounded bake-off retains its separate
-  hard caps.
-- A candidate may lose to a manually authored Blender version. “None” is a
-  valid result of the bake-off.
+- Follow `docs/ART-PIPELINE.md`; providers are inputs, not production
+  authority.
+- Generate isolated assets, never a complete room or encounter as one mesh.
+- Humanoids, including the Security Enforcer, use the approved T-pose, Tripo
+  Quad retopology, Mixamo, and Blender sequence. The gun sentry remains a simple
+  rigid assembly.
+- Normalize scale, pivot, axes, topology, UVs, materials, and naming in Blender
+  before Godot review.
+- Preserve untouched provider exports in the ignored workstation cache and
+  version only concise provenance and structural metrics.
 
 ## Approval bar
 

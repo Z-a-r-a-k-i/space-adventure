@@ -44,21 +44,12 @@ another generation.
 
 Exact prompts are versioned under `prompts/`.
 
-## Tenth concept: reuse approved attack-language sheets
+## Enemy attack language
 
-The requested sequence ends with enemy attack language. That question already
-has more production-useful coverage in the retained POC animation key-pose
-directions:
-
-| Existing sheet | Coverage | SHA-256 |
-|---|---|---|
-| [`security-ram-drone-key-poses-v1.png`](../../reference-sheets/frontier-station-v1/poc-animation/security-ram-drone-key-poses-v1.png) | Idle, locomotion, turn, alert, brace, contact, rebound, and shutdown | `a330a9b6c1f2bd349861f1201bf805872071c0ae88f35d5b9f6ae9b354c88147` |
-| [`security-gun-sentry-key-poses-v1.png`](../../reference-sheets/frontier-station-v1/poc-animation/security-gun-sentry-key-poses-v1.png) | Idle, locomotion, turn, track, aim, recoil, recovery, and shutdown | `e10275551167fab0943d41826f8a36d74d2409ccca400bdfc988f49c85a33bfc` |
-
-Those sheets remain silhouette and articulation references only. They do not
-define timing, attack shapes, damage, projectiles, root motion, animation
-clips, or gameplay authority. Reuse avoids a redundant generation and preserves
-the already accepted machine language.
+The previous articulated-machine sheets were removed. The current Phase 4 pair
+is a humanoid Security Enforcer with a body strike and a stationary rigid gun
+sentry. The machine in `04-parley-vs-machine-v1.png` is composition-only, not
+an active design or animation reference.
 
 ## Existing input registry
 
@@ -69,7 +60,6 @@ the already accepted machine language.
 | `../../reference-sheets/frontier-station-v1/poc-models/station-survivor-turnaround-v1.png` | Non-party conversation participant anchor | `3b54a69c21a563fd9685737d44ac5e55330e8ca1a0e06186655ee96f780ad169` |
 | `../../reference-sheets/frontier-station-v1/poc-models/evacuation-airlock-reference-v1.png` | Fixed station exit and destination-light anchor | `27dca5bb57d4087188feb3423efad4b5288623c8301a06d64f4f92754baabd3b` |
 | `../../reference-sheets/frontier-station-v1/poc-models/station-structure-kit-reference-v1.png` | Authored modular station scale and construction anchor | `f518b123fc6b2f67dda71cb846cad76aa334617c72bfec5e52f4fd817e4e3738` |
-| `../../reference-sheets/frontier-station-v1/poc-models/security-ram-drone-turnaround-v1.png` | Non-sapient machine-threat design anchor | `f90dbc7c7ec58509077da1af1e50e1ef22789e4c10faf6bdfde1bdab2a2663cf` |
 | `../frontier-station-v1/station-route-key-art.png` | Station atmosphere, tactical camera, route, and material anchor | `a540d65afb6144030c1177478a0f2b4653146f76ef4eb9a4daf65fbc7e7294b1` |
 | `../frontier-station-v1/tactical-pause-combat.png` | Armed-readiness composition and hostile-color anchor | `e891f3d4c738aa6074d71a5b889b42dc2ffb96b585551e77d6dd4b31b99badfc` |
 | `../alien-species-v1/sapient-alien-species-v1.png` | Sapient anatomy, practical gear, and parley-readability anchor | `aba24fda69a33439bf676a60d471aa13a48876c516bb95414f3416aa7a026c19` |

@@ -47,7 +47,7 @@ organization and are not gameplay inventory slots.
   compact pouches, fingerless technical gloves, sparse cyan accents, and empty
   right hip/thigh holster.
 - She must remain visibly slimmer and lighter than Vanguard and Protector.
-- Use the shared neutral A-pose, meters, Z-up Blender authoring, ground-center
+- Use the shared neutral T-pose, meters, Z-up Blender authoring, ground-center
   origin, unit scale, and no shear.
 - The exact normalized standing height remains provisional until the three
   crew bodies are compared together. Do not change skeleton names, hierarchy,
@@ -81,8 +81,8 @@ organization and are not gameplay inventory slots.
   one-handed aim silhouette. The left hand must remain clear of the pistol;
   do not invent a support grip.
 - Reuse the exact shared action-name contract from
-  `art/rigs/crew-humanoid-v1.md`. Shared donor animation is retargeted through
-  Blender; provider rigs and clips are never production authority.
+  `art/rigs/crew-humanoid-v1.md`. Use the human-approved Mixamo rig baseline
+  and Mixamo library clips, with Blender correction and cleanup.
 - Weapon-specific draw, aim, recoil, recovery, and holster correction waits
   until the complete static Operator/pistol assembly passes review.
 - Combat clips are in-place. Ability-specific clips are prohibited.

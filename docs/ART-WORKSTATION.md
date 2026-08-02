@@ -2,7 +2,7 @@
 
 Status: approved machine-bootstrap checklist
 
-Revision: 2026-07-23
+Revision: 2026-08-02
 
 ## Purpose
 
@@ -46,10 +46,11 @@ for this C# project.
 |---|---|---|
 | [Blender](https://www.blender.org/download/) | `5.2` LTS line | Editable source, cleanup, retopology, UVs, shared rigs, animation, markers, controlled rendering, and GLB export |
 | Codex desktop | Current | Agent session and tool coordination |
-| [Chrome](https://www.google.com/chrome/) plus Codex Chrome control | Current | Signed-in Tripo Studio operation and browser evidence |
+| [Chrome](https://www.google.com/chrome/) plus Codex Chrome control | Current | Signed-in Tripo Studio and Mixamo operation |
 | [Tripo Studio](https://www.tripo3d.ai/) account | Live browser service | Candidate generation; no API installation or repository secret is required |
+| [Mixamo](https://www.mixamo.com/) account | Live browser service | Human-reviewed humanoid Auto-Rigger and stock animation library |
 | [`uv`](https://docs.astral.sh/uv/getting-started/installation/) | Current stable | Provides the Blender MCP Python environment; a separate global Python installation is unnecessary |
-| Official Blender MCP | Package `1.0.0`; known-good commit `03004fd0216bfe5e0a3d9ac9b47d5efadc3d78c4` | Interactive Blender inspection and control |
+| Official Blender MCP | Package `1.0.0`; known-good commit `98b0e49d98321d321c7e631389200f513f765d59` | Interactive Blender inspection and control |
 | Existing `godot-ai-plugin` | Known-good commit below | Godot AI Control, graphical inspection, input, runtime state, and viewport capture |
 | [Node.js](https://nodejs.org/en/download/) | `22` or newer | Runs the Godot MCP server |
 | pnpm | `10.30.0` | Reproducible Godot MCP source build |
@@ -58,8 +59,8 @@ Known-good Godot plugin checkout:
 
 ```text
 repository: git@github.com:Z-a-r-a-k-i/godot-ai-plugin.git
-branch: feat/godot-4-7-1-multi-editor-routing
-commit: c26e4fb6582213324ef367760ba4414176ee472a
+branch: main
+commit: 9831906dc859cb694fe5e46d4652445650f5ea0b
 ```
 
 The official Blender MCP source is:
@@ -147,11 +148,11 @@ publishing generated candidates.
   cannot reach.
 - An IDE or text editor.
 - OpenDesign for reference-sheet preparation.
-- Meshy only when a defined bake-off requests a comparison candidate.
+- A signed-in Mixamo browser session for humanoid auto-rigging and stock clips.
 
 Docker, Visual Studio, standalone Python, Cheat Engine, Ghidra, Substance
-Painter, Photoshop, Mixamo, and Tripo API credits are not required by the
-current pipeline.
+Painter, Photoshop, and Tripo API credits are not required by the current
+pipeline.
 
 ## Verification checklist
 
@@ -182,8 +183,8 @@ known-good revisions:
 $GodotAiRepository = "D:\Tools\godot-ai-plugin"
 $BlenderMcpRepository = "D:\Tools\blender_mcp"
 
-$ExpectedGodotAiCommit = "c26e4fb6582213324ef367760ba4414176ee472a"
-$ExpectedBlenderMcpCommit = "03004fd0216bfe5e0a3d9ac9b47d5efadc3d78c4"
+$ExpectedGodotAiCommit = "9831906dc859cb694fe5e46d4652445650f5ea0b"
+$ExpectedBlenderMcpCommit = "98b0e49d98321d321c7e631389200f513f765d59"
 
 if ((git -C $GodotAiRepository rev-parse HEAD).Trim() -ne
     $ExpectedGodotAiCommit) {

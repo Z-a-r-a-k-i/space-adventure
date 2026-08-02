@@ -16,7 +16,7 @@ built-in tool
 This pack shows the same two-character active-pause combat language in three
 locations:
 
-- the authored frontier station against its ram drone and gun sentry;
+- the authored frontier station against two now-superseded hostile silhouettes;
 - a later jungle-planet encounter against non-sapient fauna; and
 - a later city-planet encounter against non-sapient security machines.
 
@@ -33,7 +33,7 @@ committed.
 
 | File | Direction | Dimensions | SHA-256 |
 |---|---|---:|---|
-| `station-combat-gameplay-v1.png` | Two crew in tactical pause against one ram drone and one gun sentry | 1672 × 941 | `c64a79f724d038b40d020a66ae3236371aeb110c8b840205941b9ac8ba74c2d9` |
+| `station-combat-gameplay-v1.png` | Two crew in tactical pause; enemy silhouettes superseded by the Security Enforcer and redesigned sentry | 1672 × 941 | `c64a79f724d038b40d020a66ae3236371aeb110c8b840205941b9ac8ba74c2d9` |
 | `jungle-combat-gameplay-v1.png` | Two crew facing one non-sapient crown predator beside a reclaimed research refuge | 1672 × 941 | `42075889eadd74fdbbecbe57a2318d2287034b130c751d6fe2464a0c5ac1a4d6` |
 | `city-combat-gameplay-v1.png` | Two crew facing an agile drone and patrol automaton on a rain-dark transit platform | 1672 × 941 | `1f9ee9cfba93ba77fdbc53b5610c5c83a43fe3e4f25c62858cb518ce0cae984d` |
 
@@ -63,8 +63,6 @@ identity is still deferred.
 |---|---|---|
 | `../frontier-station-v1/tactical-pause-combat.png` | Station camera, encounter, material, and initial combat-language anchor | `e891f3d4c738aa6074d71a5b889b42dc2ffb96b585551e77d6dd4b31b99badfc` |
 | `../frontier-station-v1/poc-crew-lineup.png` | Vanguard and Protector proportions, equipment, and material anchor | `2f2363d10defd95c4ee8bfe4a89decb168698f491415632b05cba24ec9544dd5` |
-| `../../reference-sheets/frontier-station-v1/poc-models/security-ram-drone-turnaround-v1.png` | Ram-drone design anchor | `f90dbc7c7ec58509077da1af1e50e1ef22789e4c10faf6bdfde1bdab2a2663cf` |
-| `../../reference-sheets/frontier-station-v1/poc-models/security-gun-sentry-turnaround-v1.png` | Gun-sentry and city-machine construction anchor | `89872e6b84578fd213f9dc10b17d8905c88ca6621592e55f5c575f7a96f8d101` |
 | `../planet-vibes-v1/jungle-planet-vibe-v1.png` | Jungle atmosphere, route, refuge, and palette anchor | `5645190f72ecbf3d00e8c321c2d249d685352c100364544328e69a0cc1cbbc7f` |
 | `../alien-species-v1/alien-fauna-species-v1.png` | Non-sapient jungle-fauna anatomy and silhouette anchor | `9d8bdbe14a735aa89d5ab33bb4f4f2436ea2340752a15cee69cbd557b8bda53e` |
 | `../planet-vibes-v1/city-planet-vibe-v1.png` | City atmosphere, vertical depth, transit, and palette anchor | `255d854deae4104dac299ef5cca601b07c7022580f64f7d93719f03aba96d0a8` |
@@ -101,3 +99,8 @@ not define abilities, icon meanings, health values, weapon balance, attack
 timing, target geometry, jungle or city encounters, production UI, or runtime
 implementation. The station POC and its existing gameplay authority remain
 unchanged.
+
+The enemy silhouettes in these mockups are superseded. Retain only their
+camera, HUD, composition, and telegraph readability. Current enemy direction is
+the humanoid Security Enforcer plus a stationary rigid gun sentry under
+`docs/POC-ASSET-ROSTER.md`.

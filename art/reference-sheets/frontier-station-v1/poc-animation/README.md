@@ -1,27 +1,16 @@
-# POC animation key-pose directions
+# Humanoid animation key poses
 
-Status: retained under owner-delegated continuation
+The retained sheets communicate weapon-handling silhouettes only:
 
-Generated: 2026-07-23
+| Sheet | Coverage |
+|---|---|
+| `vanguard-weapon-handling-key-poses-v1.png` | Holster, draw, ready, aim, recoil, recovery |
+| `operator-weapon-handling-key-poses-v1.png` | Thigh draw and one-hand pistol presentation |
+| `protector-weapon-handling-key-poses-v1.png` | Back draw and two-hand shotgun presentation |
 
-These sheets close the accepted concept gate for basic weapon and machine
-attack presentation without defining animation timing or gameplay behavior:
+They do not define timing, skeletons, weights, root motion, attacks, or
+gameplay. Mixamo supplies stock motion; Blender owns final constraints, curves,
+contacts, markers, and export.
 
-| Sheet | Coverage | Lifecycle |
-|---|---|---|
-| [Vanguard weapon handling](vanguard-weapon-handling-key-poses-v1.png) | Holstered, draw transfer, armed idle, aim, recoil, recovery, and holster transfer | Rigging and animation direction |
-| [Operator weapon handling](operator-weapon-handling-key-poses-v1.png) | Right-thigh draw, one-hand pistol presentation, recoil, recovery, and holster transfer | Rigging and animation direction |
-| [Protector weapon handling](protector-weapon-handling-key-poses-v1.png) | Back-mount draw, two-hand shotgun support, recoil, pump recovery, and holster transfer | Rigging and animation direction |
-| [Security ram drone](security-ram-drone-key-poses-v1.png) | Idle, locomotion, turn, alert, brace, contact, rebound, and shutdown | Machine-rig and animation direction |
-| [Security gun sentry](security-gun-sentry-key-poses-v1.png) | Idle, locomotion, turn, track, aim, recoil, recovery, and shutdown | Machine-rig and animation direction |
-
-Exact prompts, source roles, hashes, and the Operator grip correction are in
-`animation-direction-batch-06.provenance.md`.
-
-These images are silhouette and articulation references. They are not accepted
-animation frames, skeletons, weights, socket transforms, attack shapes, root
-motion, timing, damage, projectiles, or gameplay authority. Blender owns final
-rigging and clips; Godot presents observed gameplay state.
-
-The three ability-specific clips remain blocked until the corresponding
-gameplay abilities, target shapes, sources, and timings are accepted.
+Machine key-pose directions are intentionally absent until the simple rigid
+floating/stationary enemy designs are approved.

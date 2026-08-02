@@ -36,24 +36,11 @@ The intended verification layers are:
 4. A graphical playtest for input, navigation, camera, UI, animation, and readability.
 5. Direct graphical inspection in the owning tool for every visual change.
 
-For AI-assisted art, optimize visual generation and inspection rather than the
-user's chosen Codex model, reasoning effort, fast mode, or agent concurrency.
-Follow the visual-efficiency policy in `docs/ART-PIPELINE.md`: generate one
-useful concept or reference sheet by default and preserve approved artwork
-that will actually feed asset production. Review 3D candidates, meshes,
-materials, rigs, and animation directly in Tripo Studio, Blender, or Godot.
-Do not create or commit Studio screenshots, viewport screenshots, render
-turnarounds, contact sheets, animation-frame dumps, or gallery captures as
-routine asset evidence. Any temporary diagnostic capture belongs under the
-ignored `artifacts/` tree and is opened through model vision only for a named
-problem that cannot be judged efficiently in the live tool.
-
-Version textual decisions, defects, provider task or version IDs, settings,
-and structural validation metrics. A `visual-review.md` may summarize a live
-review decision, but it is not a screenshot inventory or image-hash ledger.
-Do not ask multiple agents to repeat the same live review unless the asset
-changed, a named unanswered question remains, or the project owner explicitly
-requests an independent review.
+For AI-assisted art, follow `docs/ART-PIPELINE.md`. Review 3D work directly in
+Tripo, Blender, or Godot. Use at most one representative screenshot per
+checkpoint when a frozen handoff image is useful; additional captures require a
+named defect. Keep captures ignored under `artifacts/` and version only concise
+decisions, provider IDs/settings, and structural metrics.
 
 `scripts/dev.ps1` is the canonical command surface. Use its `help` command to see implemented subcommands, and never report a command as passing unless it was actually run.
 
@@ -67,40 +54,30 @@ The local `godot-ai-plugin` is an optional external development addon. It may in
 
 Blender and its MCP are used only for an active art task. Do not start Blender for gameplay, documentation, or ordinary C# work.
 
-Before an active Tripo or asset-production task, read
-`docs/ART-PIPELINE.md`, `docs/TRIPO-PRODUCTION-HANDOFF.md`,
-`docs/POC-ASSET-ROSTER.md`, `docs/ATTACK-PRESENTATION.md`, the frontier-station
-visual bible, the active asset brief, and the approved reference-sheet
-provenance. Tripo Studio uses the signed-in browser subscription workflow; do
-not introduce an API key or provider-to-Godot publication path. Preserve raw
-outputs unchanged in the ignored run-local workstation cache, commit their
-provider/task references, paths, sizes, and provenance, and do not content-hash
-raw or other large 3D binary cache files. Tracked binary sources and outputs
-use their normal Git/LFS revision identity without a second pipeline hash.
-Complete mesh reconstruction before rigging, and treat generated rigs and
-animations as Blender-retargeted donor inputs rather than production
-authority. Tripo is a best-effort recovery source, not the project's durable
-archive.
+Before asset production, read `docs/ART-PIPELINE.md`,
+`docs/TRIPO-PRODUCTION-HANDOFF.md`, `docs/POC-ASSET-ROSTER.md`,
+`docs/ATTACK-PRESENTATION.md`, the visual bible, active brief, and approved
+reference provenance. Work only on approved assets in the dedicated art
+worktree; live replacement and gameplay integration remain roadmap-scoped.
 
-Offline source production is authorized independently of gameplay-phase
-activation only for an approved roster asset with an approved reference,
-accepted production-ready art brief, assigned ownership, and resolved
-licensing and privacy prerequisites. Brief acceptance must record the project
-owner or explicitly delegated art approver; authorship or assignment is not
-self-approval. Use a dedicated art branch/worktree, owned asset IDs and paths,
-isolated Godot user data and MCP port, and never touch the active gameplay
-worktree, live scenes, `project.godot`, or shared registries during offline
-review. Select a promising source early and use subscription credits
-productively on completion, topology, textures, rig diagnostics, and animation
-donors; do not stop merely at the first viable candidate or generate variants
-without a named purpose. Record the provider operation, task or version ID,
-result, and keep/reject decision. A displayed operation cost may be captured
-opportunistically, but do not track account balances, reconcile historical
-credit totals, or use cost as an acceptance criterion. Live greybox
-replacement, gameplay wiring, ability-specific work, and final attack-timing
-integration remain roadmap-phase scoped.
-The bounded provider bake-off keeps its separate hard caps and scorecard and
-must be frozen before production work begins for any of its three asset IDs.
+Humanoids use this sequence: unrigged T-pose generation, Tripo Smart Low-Poly
+v2 Quad retopology with a 10,000 target, human-approved Mixamo marker placement,
+Mixamo rig download with skin, Blender weight repair, then Mixamo library clips
+without skin. Skeletal animation is limited to humanoids; non-humanoids must be
+simple floating or stationary rigid assemblies.
+
+Static props and environment assemblies do not use the humanoid sequence. Give
+them brief-specific topology and material budgets, normalize them in Blender,
+and review the exact static GLB in Godot. Preserve a validated inanimate source
+and output until it is rejected or superseded; changes to character rigging or
+animation are not a reason to regenerate it. Structural kits and collision-
+critical modules are authored dimensionally in Blender. Simple machine motion
+uses only a few rigid pivots or gameplay-driven transforms, never Mixamo or
+skinning.
+
+Use signed-in Tripo Studio without an API key or direct Godot bridge. Preserve
+untouched exports in the ignored run-local cache and commit provider/version,
+path, size, and provenance only. Do not content-hash large 3D binaries.
 
 ## Path portability
 

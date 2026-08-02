@@ -24,8 +24,8 @@ There are no unresolved questions blocking the documented POC or bootstrap. New 
   but no individual armor slots or equipment system are implied.
 - Party firearms are holstered during exploration and visibly drawn for
   combat.
-- The hostile presentation pair is a compact body-ram security drone and a
-  taller integrated-gun security sentry.
+- The hostile presentation pair is a mobile humanoid Security Enforcer with a
+  reinforced-forearm body attack and a taller integrated-gun security sentry.
 - The evacuation airlock visibly opens before completion presentation.
 - Exact active abilities remain intentionally deferred to Phase 3; their
   props, clips, icons, and effects are not invented during asset planning. The

@@ -17,8 +17,8 @@ Approved: 2026-07-23 by the project owner
 - Generator: built-in Codex image-generation tool
 - Provider model, seed, and job identifier: not exposed by the built-in tool
 
-This is a proposed visual anchor for the bounded generator-bake-off brief, not
-an accepted mesh or permission to alter the live station wall.
+This is the approved visual anchor for the deferred Phase 5 brief, not an
+accepted mesh or permission to alter the live station wall.
 
 ## Input image roles
 
