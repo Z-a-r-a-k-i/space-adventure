@@ -140,7 +140,9 @@ approved POC art scope. Its offline sources may be produced ahead of their
 gameplay phases under ADR 0016, while finalization and integration remain
 phase-scoped. Automated bulk generation, uncontrolled variants, reusable
 content libraries, and assets beyond that inventory remain production-scale
-work and are outside the POC.
+work and are outside the POC. The escape-cutter experiment in
+`SHIP-COMBAT-POC.md` is a separately gated Phase 7 slice and does not move ship
+simulation, vehicles, or boarding into this POC.
 
 ## Exit gate
 

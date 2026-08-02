@@ -139,13 +139,45 @@ Exit: five consecutive full manual playthroughs complete without a blocker; both
 
 Exit: another agent can add a small authored encounter and one reviewed asset using only the repository workflow.
 
+## Phase 7 — escape-cutter ship-combat proof of concept
+
+Status: direction approved on 2026-07-29; implementation is gated until the
+Phase 6 exit passes unless the project owner explicitly reprioritizes it in a
+later decision.
+
+- Keep the station POC ending at its evacuation-airlock completion summary.
+- Begin a separate authored scenario with a short launch-bay transition,
+  entering the cutter, and one fixed hostile encounter.
+- Reuse the pure C# gameplay core, typed command boundary, explicit fixed tick,
+  structured observations, and active-pause semantics.
+- Add exactly two player crew, one player cutter, one deterministic hostile
+  ship, weapons, engines, shields, a fixed reactor budget, crew room movement,
+  system targeting, damage, repair, victory, defeat, and restart.
+- Present two separate strict-overhead ship views with the player ship on the
+  left, the enemy ship on the right, both pointing upward, a central divider,
+  and no movement or trajectory lines.
+- Prove the complete deterministic greybox before authorizing final ship
+  models, production UI, or integration with the station scenario.
+
+The complete content budget, rules, non-goals, and verification layers are
+defined in `SHIP-COMBAT-POC.md`.
+
+Exit: pure-core tests, the deterministic CLI encounter, Godot headless smoke,
+direct graphical inspection, and an owner-operated physical-input playthrough
+all pass; pausing to reassign crew, power, and target is readable and
+tactically useful.
+
 ## Separately gated post-POC experiments
 
 1. Deeper tactics, more abilities, progression, equipment, and a larger party.
 2. A larger static adventure with saving and authored quest structure.
 3. A procedural-run prototype and only then possible metaprogression.
 4. Controlled dialogue generation, beginning with authored/scripted and recorded providers plus an optional local Codex CLI experiment.
-5. Ship command and vehicle combat, with boarding as one possible resolution.
-6. Scaled AI-assisted environment, character, animation, and content production.
+5. Deeper ship and vehicle command beyond Phase 7, with boarding as one
+   possible later resolution.
+6. Scaled AI-assisted environment, character, animation, and content
+   production.
 
-If two-character active-pause combat is not clear and enjoyable in greybox, improve or reconsider it before adding progression, procedural generation, vehicles, ships, or live model dialogue.
+If two-character active-pause ground combat is not clear and enjoyable in
+greybox, improve or reconsider it before Phase 7 or before adding progression,
+procedural generation, vehicles, deeper ship systems, or live model dialogue.

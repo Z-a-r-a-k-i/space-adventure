@@ -36,7 +36,18 @@ There are no unresolved questions blocking the documented POC or bootstrap. New 
 - Player and model text remain untrusted: neither can establish facts, grant authority, or directly apply gameplay effects.
 - Each character has a current action plus at most one replaceable pending primary action; there is no arbitrary queue.
 - Eligible sapient NPCs expose conversation, but dialogue does not guarantee persuasion or remain available through every combat state.
-- Vehicle and ship boarding is a later combat-system feature, not part of the initial loop.
+- The first ship-combat experiment is the separately gated Phase 7
+  escape-cutter slice in `SHIP-COMBAT-POC.md`; it does not expand the current
+  station POC.
+- Phase 7 begins with exactly two player crew, one cutter, one deterministic
+  hostile ship, weapons, engines, shields, a fixed reactor budget, and one
+  fixed battle.
+- Its combat presentation uses separate strict-overhead player-left and
+  enemy-right views, both ships pointing upward, with a central divider and no
+  movement or trajectory lines.
+- Hostile-ship and generalized vehicle boarding remain later combat-system
+  features and are not part of the initial loop or Phase 7. The authored
+  transition into the escape cutter is not a boarding system.
 - Authored dialogue remains the POC critical path.
 - An optional Codex CLI provider may use the developer's ChatGPT sign-in for private automated experiments; it remains replaceable and outside authoritative state.
 - Dialogue profiles select model, reasoning effort, and Fast mode independently, with Sol/medium/Fast-off as the initial quality baseline.
@@ -45,3 +56,17 @@ There are no unresolved questions blocking the documented POC or bootstrap. New 
   attack source before model and animation approval; all three share the same
   authoritative gameplay boundary.
 - Both structured automation and real graphical playtests are required.
+
+## Phase 7 questions deferred until greybox
+
+These questions do not block the current station POC or the first
+deterministic ship-combat implementation:
+
+- the final authored room topology and integer tuning;
+- whether the ship encounter eventually follows the station completion in the
+  same executable flow or remains a separately launched scenario;
+- whether a later slice should simulate enemy crew;
+- whether a later slice should add oxygen, fire, breaches, missiles, drones,
+  or boarding; and
+- how much of the escape cutter persists into a larger campaign or run
+  structure.
