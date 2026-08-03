@@ -16,7 +16,7 @@ Names, factions, final lore, and visual tone remain provisional until the contro
 
 ## Player journey
 
-1. Choose one of two fixed protagonist kits.
+1. Begin directly as Vanguard with the fixed Vanguard kit.
 2. Begin alone and learn movement, camera, interaction, and inspection.
 3. Speak with a survivor who establishes the destination and immediate obstacle.
 4. Find and recruit one fixed companion through dialogue.
@@ -44,12 +44,13 @@ The critical path always demonstrates recruitment and combat. A dialogue choice 
 
 ## Character and inventory acceptance
 
-- The player chooses between two simple protagonist kits before entering the level.
-- Vanguard and Operator are distinct selectable protagonist presentations.
-  The selected protagonist and the fixed Protector companion are the only two
-  controllable characters in a playthrough; the station survivor is a fourth,
-  noncontrollable human presentation.
-- Each possible protagonist has one fixed weapon, a repeatable basic attack, and one distinctive active ability.
+- The current station route exposes Vanguard as its only protagonist kit.
+  Operator remains deferred until an approved model and animation set exists.
+  Vanguard and the fixed Protector companion are the only two controllable
+  characters in the current playthrough; the station survivor is
+  noncontrollable.
+- The active protagonist has one fixed weapon, a repeatable basic attack, and
+  one distinctive active ability.
 - The fixed companion supplies a complementary weapon and active ability.
 - The approved presentation loadouts are a separate two-handed carbine for
   Vanguard, a separate compact pistol for Operator, and a separate two-handed
@@ -114,9 +115,10 @@ The critical path always demonstrates recruitment and combat. A dialogue choice 
 - One authored station level with a start, service section, encounter space,
   and destination. The route uses reviewed static structure, terminal, and
   airlock models over independent authored collision and navigation.
-- Four distinct human presentations: Vanguard and Operator alternatives, one
-  fixed Protector companion, and one station survivor. A playthrough still
-  controls exactly the selected protagonist plus Protector.
+- Three active human presentations: Vanguard, one fixed Protector companion,
+  and one station survivor. Operator remains on the roster but is not exposed
+  until its approved 3D presentation is ready. A playthrough controls exactly
+  Vanguard plus Protector.
 - Two meaningful NPC interactions.
 - One hostile security group using the humanoid Security Enforcer and
   integrated-gun sentry presentations, with at most those two enemy behaviors.
@@ -151,6 +153,7 @@ simulation, vehicles, or boarding into this POC.
 
 - Five consecutive full manual playthroughs complete without a blocker.
 - The core unit suite, deterministic scenario suite, Godot headless smoke suite, pause suite, and critical-path scenario pass.
-- Both protagonist kits have completed at least one manual playthrough.
+- Vanguard has completed at least one full manual playthrough with its
+  production model and baseline animations.
 - The player can understand selection, pending actions, combat threats, item use, dialogue choices, victory, defeat, and completion from the game itself.
 - A fresh agent can restore, build, run, inspect, and reproduce the scenario using only the repository documentation.

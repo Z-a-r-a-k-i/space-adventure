@@ -1,0 +1,16 @@
+Use case: identity-preserve
+Asset type: final front-view T-pose reference for Tripo image-to-3D
+Image 1 is the original approved Vanguard and is the sole authority for identity, face, eyes, proportions, costume design, materials, and all visual details. Image 2 is a rejected draft whose only useful information is the horizontal T-pose and wide canvas; do not copy its face, redesigns, proportions, or hand defects.
+
+Create a corrected T-pose by preserving Image 1's character exactly while applying only Image 2's arm position. The result must look like the exact Image 1 character physically raised both arms, not like a regenerated or redesigned Vanguard.
+
+Pose: strict front orthographic view; shoulders level; arms completely horizontal at shoulder height; elbows straight; palms down; each hand has exactly five correctly connected, natural fingers, clearly separated enough for 3D reconstruction; legs straight; feet flat and shoulder width.
+
+Identity lock from Image 1: duplicate the face and eyes faithfully, including exact eye size/alignment, brow shape, nose, beard contours, hairstyle, expression and head proportions. Preserve Image 1's collar, chest plate shapes, cyan chest light, straps, forearm armor language, belt buckle and pouch count/placement, thigh holsters, orange piping, knee pads, ankle plates, boots, body width and leg length. No reinterpretation, beautification, resculpting, style shift, or extra details.
+
+3D reconstruction requirements: full body and fingertips visible with margin on neutral pale-gray background; clean empty gap under both arms; anatomically readable armpits and shoulders; no fused bridge between arms and torso; symmetric limb lengths; soft minimal contact shadow only.
+
+Avoid all defects visible in Image 2: do not use its changed face, simplified belt, altered chest plate, enlarged head, reduced boot detail, three-finger/merged-finger hands, or changed proportions. No text, weapon, props, watermark, additional views, dramatic lighting, or crop.
+
+Generated with the built-in Codex image-generation tool on 2026-08-03.
+Approved by the project owner on 2026-08-03.

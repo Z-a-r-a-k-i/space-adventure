@@ -16,6 +16,9 @@ artifacts/
 # neighboring provenance and raw-export manifest, not the cached payload.
 art/generated/*/*tripo*/raw/
 
+# Untouched provider files copied under res:// for local Godot baseline checks.
+game/Assets/LocalBaseline/
+
 # Asset-production screenshots and renders are disposable local review aids.
 # Approved concept/reference art and exact provider input crops remain tracked.
 art/generated/**/evidence/

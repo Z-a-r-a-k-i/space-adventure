@@ -13,10 +13,12 @@ There are no unresolved questions blocking the documented POC or bootstrap. New 
 - Basic attacks repeat after an explicit target order; active abilities remain explicit.
 - Combat automatically pauses when it starts; all later pausing is manual in the POC.
 - Free camera yaw with constrained pitch and zoom, plus orientation reset.
-- Vanguard and Operator protagonist kits with a Protector-style fixed companion.
-- Vanguard, Operator, Protector, and the station survivor are four distinct
-  human presentations on one normalized humanoid skeleton; a playthrough still
-  controls only the selected protagonist plus Protector.
+- Vanguard is the only active protagonist kit and uses a Protector-style fixed
+  companion. Operator is paused until its approved model and animation set is
+  ready; reactivation requires an explicit project-owner decision.
+- Vanguard, Protector, and the station survivor are the active human
+  presentations on one normalized humanoid skeleton; a playthrough controls
+  Vanguard plus Protector.
 - Vanguard uses a separate two-handed carbine, Operator a separate compact
   pistol, and Protector a separate two-handed shotgun.
 - Each POC human has one fixed complete outfit. Editable Blender sources retain

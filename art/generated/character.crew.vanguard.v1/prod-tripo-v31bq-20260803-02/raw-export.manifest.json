@@ -1,0 +1,81 @@
+{
+  "schema_version": 2,
+  "asset_id": "character.crew.vanguard.v1",
+  "run_id": "prod-tripo-v31bq-20260803-02",
+  "asset_revision": "prod-tripo-v31bq-20260803-02",
+  "lane": "production",
+  "provider": {
+    "name": "Tripo Studio",
+    "product": "signed-in web application",
+    "source_task_id": "d3851b9b-abed-4d47-a7e9-972d560fcd0c",
+    "privacy": "Sharing Only",
+    "terms_url": "https://www.tripo3d.ai/terms"
+  },
+  "exports": [
+    {
+      "filename": "vanguard-tpose-quad10k-4k.zip",
+      "format": "ZIP containing FBX and textures",
+      "settings": "Smart Low-Poly v2; Quad; target 10000; Mixamo FBX preset; 4K PBR textures",
+      "cache_relative_path": "raw/vanguard-tpose-quad10k-4k.zip",
+      "bytes": 77221987,
+      "selection_state": "accepted material master and Mixamo upload package",
+      "local_presence_checked_utc": "2026-08-03",
+      "local_presence_status": "present"
+    },
+    {
+      "filename": "vanguard-tpose-quad10k.fbx",
+      "format": "FBX Binary",
+      "settings": "geometry-only FBX extracted for Mixamo upload",
+      "cache_relative_path": "raw/mixamo/vanguard-tpose-quad10k.fbx",
+      "bytes": 39143520,
+      "selection_state": "accepted Mixamo upload geometry",
+      "local_presence_checked_utc": "2026-08-03",
+      "local_presence_status": "present"
+    }
+  ],
+  "downstream_operations": [
+    {
+      "provider": "Mixamo",
+      "character_name": "VANGUARD-TPOSE-QUAD10K",
+      "skeleton": "Standard Skeleton (65); symmetry on",
+      "marker_review": "chin, wrists, elbows, knees, and groin visually verified",
+      "exports": [
+        {
+          "filename": "vanguard-unarmed-idle-with-skin.fbx",
+          "format": "FBX Binary",
+          "settings": "Unarmed Idle; with skin; 30 fps; 58 frames; no keyframe reduction",
+          "cache_relative_path": "raw/mixamo/vanguard-unarmed-idle-with-skin.fbx",
+          "bytes": 39613984,
+          "selection_state": "accepted production rig and idle baseline",
+          "local_presence_checked_utc": "2026-08-03",
+          "local_presence_status": "present"
+        },
+        {
+          "filename": "vanguard-standard-walk-in-place-with-skin.fbx",
+          "format": "FBX Binary",
+          "settings": "Standard Walk; In Place on; with skin; 30 fps; 36 frames; Overdrive 50; Character Arm-Space 50; Mirror off; no keyframe reduction",
+          "cache_relative_path": "raw/mixamo/vanguard-standard-walk-in-place-with-skin.fbx",
+          "bytes": 39568832,
+          "selection_state": "accepted exploration-walk donor",
+          "local_presence_checked_utc": "2026-08-03",
+          "local_presence_status": "present"
+        },
+        {
+          "filename": "vanguard-unarmed-idle-no-skin.fbx",
+          "format": "FBX Binary",
+          "settings": "Unarmed Idle; without skin; 30 fps; no keyframe reduction",
+          "cache_relative_path": "raw/mixamo/vanguard-unarmed-idle-no-skin.fbx",
+          "bytes": 263104,
+          "selection_state": "rejected because the generic no-skin rest skeleton did not preserve the accepted character rest pose",
+          "local_presence_checked_utc": "2026-08-03",
+          "local_presence_status": "present"
+        }
+      ]
+    }
+  ],
+  "storage": {
+    "class": "ignored-local-workstation-cache",
+    "game_build_dependency": false,
+    "provider_recovery": "best-effort"
+  }
+}

@@ -1,11 +1,11 @@
 {
   "schema_version": 2,
-  "content_revision": "station-route-v2",
+  "content_revision": "station-route-v4",
   "scenario_id": "scenario.station_route",
   "protagonist": {
     "id": "actor.protagonist",
     "display_name": "Unassigned protagonist",
-    "movement_speed_meters_per_second": 4.0
+    "movement_speed_meters_per_second": 2.0
   },
   "companion": {
     "id": "actor.companion.protector",
@@ -29,16 +29,6 @@
       "active_ability_id": "ability.crew.vanguard.suppressive_fire",
       "active_ability_name": "Suppressive Fire",
       "active_ability_target_kind": "position"
-    },
-    {
-      "id": "kit.protagonist.operator",
-      "display_name": "Operator",
-      "role": "Precision disruption",
-      "weapon_name": "Arc Pistol",
-      "basic_attack_id": "attack.crew.operator.pistol",
-      "active_ability_id": "ability.crew.operator.disruptor_shot",
-      "active_ability_name": "Disruptor Shot",
-      "active_ability_target_kind": "entity"
     }
   ],
   "briefing_objective": {

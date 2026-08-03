@@ -9,6 +9,7 @@ namespace SpaceAdventure.Game;
 
 public partial class GameHost : Node3D
 {
+    private const string VanguardKitId = "kit.protagonist.vanguard";
     private const uint FloorCollisionLayer = 1;
     private const uint InteractionCollisionLayer = 2;
     private const int MaximumNavigationInitializationFrames = 120;
@@ -58,14 +59,13 @@ public partial class GameHost : Node3D
     private Node3D? _airlockNorthLeaf;
     private Node3D? _airlockSouthLeaf;
     private Node3D? _airlockCenterLock;
+    private VanguardPresentation _vanguardPresentation = null!;
     private MeshInstance3D _destinationMarker = null!;
     private Label _objectiveLabel = null!;
     private Label _pauseLabel = null!;
     private Label _actionLabel = null!;
     private Label _feedbackLabel = null!;
     private VBoxContainer _partyList = null!;
-    private CenterContainer _kitOverlay = null!;
-    private VBoxContainer _kitChoices = null!;
     private CenterContainer _dialogueOverlay = null!;
     private Label _dialogueSpeaker = null!;
     private Label _dialogueLine = null!;
@@ -95,6 +95,8 @@ public partial class GameHost : Node3D
         _camera.InputEnabled = !_visualCaptureRequested;
         _airlockLight = GetNode<OmniLight3D>("AirlockLight");
         _protagonistView = GetNode<Node3D>("Actors/Protagonist");
+        _vanguardPresentation = GetNode<VanguardPresentation>(
+            "Actors/Protagonist/VanguardPresentation");
         foreach (var actorView in GetNode<Node3D>("Actors").GetChildren().OfType<Node3D>())
         {
             _actorViews.Add(GetStableId(actorView), actorView);
@@ -224,14 +226,25 @@ public partial class GameHost : Node3D
             layout,
             new GodotSpatialPathfinder(navigationMap));
 
-        PopulateKitChoices(_definition);
+        var vanguardKit = _definition.ProtagonistKits.SingleOrDefault(kit =>
+            string.Equals(kit.Id.Value, VanguardKitId, StringComparison.Ordinal))
+            ?? throw new InvalidDataException(
+                $"The station route must define the default Vanguard kit '{VanguardKitId}'.");
+        var kitAcknowledgement = _session.Execute(new ChooseProtagonistKitCommand(
+            new CommandId("godot.route.default-vanguard"),
+            vanguardKit.Id));
+        if (!kitAcknowledgement.Accepted)
+        {
+            throw new InvalidOperationException(
+                $"Default Vanguard activation was rejected: {kitAcknowledgement.RejectionCode}.");
+        }
 
         _automationBridge = new AutomationBridge { Name = "AutomationBridge" };
         _automationBridge.Initialize(_session, ProjectStableIdToScreen);
         AddChild(_automationBridge);
 
         RenderObservation(_session.Observe());
-        SetFeedback("Choose a protagonist kit to begin.", new Color("8fe6ff"));
+        SetFeedback("Vanguard deployed. The station route is active.", new Color("8fe6ff"));
         ProcessDevelopmentArguments();
     }
 
@@ -402,38 +415,6 @@ public partial class GameHost : Node3D
         _partyList.AddThemeConstantOverride("separation", 6);
         partyContent.AddChild(_partyList);
 
-        _kitOverlay = new CenterContainer
-        {
-            Name = "KitOverlay",
-            AnchorRight = 1,
-            AnchorBottom = 1,
-            MouseFilter = Control.MouseFilterEnum.Stop,
-            Visible = false,
-            ZIndex = 20,
-        };
-        canvas.AddChild(_kitOverlay);
-        var kitPanel = new PanelContainer { CustomMinimumSize = new Vector2(720, 0) };
-        _kitOverlay.AddChild(kitPanel);
-        var kitContent = new VBoxContainer();
-        kitContent.AddThemeConstantOverride("separation", 14);
-        kitPanel.AddChild(kitContent);
-        var kitTitle = new Label
-        {
-            Text = "CHOOSE YOUR PROTAGONIST KIT",
-            HorizontalAlignment = HorizontalAlignment.Center,
-        };
-        kitTitle.AddThemeFontSizeOverride("font_size", 27);
-        kitContent.AddChild(kitTitle);
-        var kitDescription = new Label
-        {
-            Text = "This choice defines your weapon and tactical ability for the station route.",
-            HorizontalAlignment = HorizontalAlignment.Center,
-        };
-        kitContent.AddChild(kitDescription);
-        _kitChoices = new VBoxContainer();
-        _kitChoices.AddThemeConstantOverride("separation", 10);
-        kitContent.AddChild(_kitChoices);
-
         _dialogueOverlay = new CenterContainer
         {
             Name = "DialogueOverlay",
@@ -482,25 +463,6 @@ public partial class GameHost : Node3D
         };
         completion.AddThemeFontSizeOverride("font_size", 28);
         completionPanel.AddChild(completion);
-    }
-
-    private void PopulateKitChoices(StationRouteDefinition definition)
-    {
-        foreach (var kit in definition.ProtagonistKits)
-        {
-            var kitId = kit.Id;
-            var button = new Button
-            {
-                Text = $"{kit.DisplayName.ToUpperInvariant()} — {kit.Role}\n"
-                    + $"{kit.WeaponName}  •  {kit.ActiveAbilityName} ({kit.ActiveAbilityTargetKind})",
-                CustomMinimumSize = new Vector2(650, 72),
-                FocusMode = Control.FocusModeEnum.None,
-            };
-            button.Pressed += () => Dispatch(new ChooseProtagonistKitCommand(
-                NextHumanCommandId("choose-kit"),
-                kitId));
-            _kitChoices.AddChild(button);
-        }
     }
 
     private void RefreshPartyUi(StationRouteObservation route)
@@ -576,7 +538,6 @@ public partial class GameHost : Node3D
             return;
         }
 
-        _kitOverlay.Visible = route.Phase == ScenarioPhase.AwaitingProtagonistSelection;
         RefreshPartyUi(route);
         foreach (var actorView in _actorViews)
         {
@@ -591,6 +552,8 @@ public partial class GameHost : Node3D
                 }
             }
         }
+
+        SynchronizeProtagonistPresentation(observation, route);
 
         var selectedActors = route.Party
             .Where(actor => _selectedActorIds.Contains(actor.Id))
@@ -765,6 +728,33 @@ public partial class GameHost : Node3D
 
         _completionOverlay.Visible = route.Phase == ScenarioPhase.Completed;
         SetAirlockOpen(route.Phase == ScenarioPhase.Completed);
+    }
+
+    private void SynchronizeProtagonistPresentation(
+        GameObservation observation,
+        StationRouteObservation route)
+    {
+        var useVanguard = string.Equals(
+            route.SelectedProtagonistKit?.Id.Value,
+            VanguardKitId,
+            StringComparison.Ordinal);
+        foreach (var geometry in _protagonistView.GetChildren().OfType<GeometryInstance3D>())
+        {
+            if (!string.Equals(geometry.Name, "SelectionBeacon", StringComparison.Ordinal))
+            {
+                geometry.Visible = !useVanguard;
+            }
+        }
+
+        var action = route.Protagonist.CurrentAction;
+        var direction = action is null
+            ? Vector3.Zero
+            : ToGodot(action.Destination) - ToGodot(route.Protagonist.Position);
+        _vanguardPresentation.Synchronize(
+            useVanguard,
+            action is not null,
+            observation.Paused,
+            direction);
     }
 
     private void SetAirlockOpen(bool open)
@@ -1120,18 +1110,6 @@ public partial class GameHost : Node3D
                 ?? throw new InvalidOperationException("The route definition is unavailable for capture.");
             var route = session.Observe().StationRoute
                 ?? throw new InvalidOperationException("The station-route observation is unavailable for capture.");
-
-            var kitAcknowledgement = session.Execute(new ChooseProtagonistKitCommand(
-                new CommandId("visual.capture.wall-cutaway.choose-kit"),
-                definition.ProtagonistKits[0].Id));
-            if (!kitAcknowledgement.Accepted)
-            {
-                throw new InvalidOperationException(
-                    $"Capture kit selection was rejected: {kitAcknowledgement.RejectionCode}.");
-            }
-            SetFeedback(
-                "Protagonist kit locked. The station route is active.",
-                new Color("8fe6ff"));
 
             var pauseCommand = new SetPauseCommand(
                 new CommandId("visual.capture.wall-cutaway.pause"),
@@ -1673,6 +1651,8 @@ public partial class GameHost : Node3D
     private void RunStationRouteSmoke()
     {
         var definition = _definition!;
+        var automationBridge = _automationBridge
+            ?? throw new InvalidOperationException("The automation bridge is unavailable.");
         var actorId = definition.Protagonist.Id.Value;
         var survivor = definition.Interactions.Single(
             interaction => interaction.Effect == StationInteractionEffect.BeginSurvivorDialogue);
@@ -1683,21 +1663,14 @@ public partial class GameHost : Node3D
         var airlock = definition.Interactions.Single(
             interaction => interaction.Effect == StationInteractionEffect.CompleteScenario);
 
-        var kit = _automationBridge!.SubmitCommandJson(JsonSerializer.Serialize(new
-        {
-            schema_version = 2,
-            command_id = "godot.route.choose-kit",
-            type = "choose_protagonist_kit",
-            payload = new { kit_id = definition.ProtagonistKits[0].Id.Value },
-        }));
-        var pause = _automationBridge.SetPaused(true);
+        var pause = automationBridge.SetPaused(true);
         var survivorOrder = SubmitInteraction("godot.route.survivor", actorId, survivor.Id.Value);
         var survivorSequence = _session!.Observe().LatestEventSequence;
-        var dialogueWait = _automationBridge.AdvanceUntilEventJson(
+        var dialogueWait = automationBridge.AdvanceUntilEventJson(
             survivorSequence,
             "dialogue_started",
             maximumTicks: 600);
-        var response = _automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
+        var response = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
             schema_version = 2,
             command_id = "godot.route.response",
@@ -1713,18 +1686,18 @@ public partial class GameHost : Node3D
 
         var terminalOrder = SubmitInteraction("godot.route.terminal", actorId, terminal.Id.Value);
         var terminalSequence = _session.Observe().LatestEventSequence;
-        var terminalWait = _automationBridge.AdvanceUntilEventJson(
+        var terminalWait = automationBridge.AdvanceUntilEventJson(
             terminalSequence,
             "interaction_completed",
             maximumTicks: 600);
 
         var protectorOrder = SubmitInteraction("godot.route.protector", actorId, protector.Id.Value);
         var protectorSequence = _session.Observe().LatestEventSequence;
-        var protectorDialogueWait = _automationBridge.AdvanceUntilEventJson(
+        var protectorDialogueWait = automationBridge.AdvanceUntilEventJson(
             protectorSequence,
             "dialogue_started",
             maximumTicks: 600);
-        var recruit = _automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
+        var recruit = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
             schema_version = 2,
             command_id = "godot.route.recruit",
@@ -1739,14 +1712,13 @@ public partial class GameHost : Node3D
 
         var airlockOrder = SubmitInteraction("godot.route.airlock", actorId, airlock.Id.Value);
         var airlockSequence = _session.Observe().LatestEventSequence;
-        var completionWait = _automationBridge.AdvanceUntilEventJson(
+        var completionWait = automationBridge.AdvanceUntilEventJson(
             airlockSequence,
             "scenario_completed",
             maximumTicks: 600);
 
         var final = _session.Observe().StationRoute!;
-        var passed = IsAccepted(kit)
-            && IsAccepted(pause)
+        var passed = IsAccepted(pause)
             && IsAccepted(survivorOrder)
             && IsReached(dialogueWait)
             && IsAccepted(response)

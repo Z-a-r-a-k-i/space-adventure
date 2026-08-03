@@ -1,10 +1,12 @@
-[gd_scene load_steps=57 format=3]
+[gd_scene load_steps=59 format=3]
 
 [ext_resource type="Script" path="res://scripts/GameHost.cs" id="1_host"]
 [ext_resource type="Script" path="res://scripts/TacticalCameraController.cs" id="2_camera"]
 [ext_resource type="PackedScene" path="res://Assets/Published/kit.station.structure.v1.glb" id="3_structure"]
 [ext_resource type="PackedScene" path="res://Assets/Published/assembly.station.evacuation_airlock.v1.glb" id="4_airlock"]
 [ext_resource type="PackedScene" path="res://Assets/Published/prop.station.service_terminal.v1.glb" id="5_terminal"]
+[ext_resource type="PackedScene" path="res://Assets/Published/character.crew.vanguard.v1.glb" id="6_vanguard"]
+[ext_resource type="Script" path="res://scripts/VanguardPresentation.cs" id="7_vanguard_presentation"]
 
 [sub_resource type="Environment" id="Environment_station"]
 background_mode = 1
@@ -381,6 +383,12 @@ metadata/stable_id = "interaction.evacuation_airlock"
 [node name="Protagonist" type="Node3D" parent="Actors"]
 position = Vector3(0, 0, 5.5)
 metadata/stable_id = "actor.protagonist"
+
+[node name="VanguardPresentation" type="Node3D" parent="Actors/Protagonist"]
+visible = false
+script = ExtResource("7_vanguard_presentation")
+
+[node name="Model" parent="Actors/Protagonist/VanguardPresentation" instance=ExtResource("6_vanguard")]
 
 [node name="SuitTorso" type="MeshInstance3D" parent="Actors/Protagonist"]
 position = Vector3(0, 1.31, 0)

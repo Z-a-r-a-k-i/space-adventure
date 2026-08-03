@@ -62,25 +62,54 @@ does not turn the asset into a skinned character.
 
 ## Humanoid pipeline
 
-1. Generate a static, unrigged humanoid in T-pose. An A-pose requires a named
-   exception and human approval.
-2. Preserve the untouched source in the ignored run-local cache.
-3. In Tripo Retopology choose Smart Low-Poly v2, Quad, target 10,000, and retain
+1. Start from exactly one approved front-view seed of one isolated, unarmed
+   humanoid in a strict T-pose. Keep the image provider's production image
+   count at one. An A-pose requires a named exception.
+2. Use Tripo's direct single-image HD workflow by default. Select v3.1 Best
+   Quality, Ultra Mesh Quality, Triangle topology with a 2,000,000-face target,
+   4K PBR textures, AI Complete off, Generate in Parts off, and 8K Texture off.
+   Generate Multi-Views is not a routine prerequisite: use it only for a named
+   coverage defect after the direct workflow has failed.
+3. Generate one static, unrigged source, inspect face and eye coherence before
+   spending on later operations, and preserve the untouched source in the
+   ignored run-local cache.
+4. In Tripo Retopology choose Smart Low-Poly v2, Quad, target 10,000, and retain
    original UVs when usable. Record requested and actual counts.
-4. Inspect face, shoulders, elbows, wrists, hips, knees, ankles, hands, feet,
+5. Inspect face, shoulders, elbows, wrists, hips, knees, ankles, hands, feet,
    armor boundaries, normals, holes, and disconnected parts.
-5. Export a static GLB for structural inspection and an FBX-with-textures ZIP
-   for Mixamo.
-6. In Mixamo, pause before Auto-Rigger submission. A human must verify the
-   chin, wrist, elbow, knee, and groin/hip markers against the character.
-7. Review the rig preview and download the accepted neutral FBX Binary with
-   skin.
-8. Correct joint placement and weights in Blender, especially chin, neck,
-   shoulders, wrists, hips, knees, ankles, gloves, and armor transitions.
-9. Use existing Mixamo library clips as the default motion source. Download
-   clips without skin for the accepted skeleton and prefer in-place variants.
-10. In Blender, trim, loop, rename, remove unwanted root motion, repair foot and
-    hand contacts, add weapon constraints and event markers, then export GLB.
+6. Export the Tripo Mixamo FBX preset with the current 4K textures. Preserve
+   that ZIP as the material master and upload its geometry-only FBX to Mixamo;
+   textures do not affect marker placement or skinning.
+7. In Mixamo, orient the character front-facing, enable symmetry, select
+   Standard Skeleton (65), and place chin, wrist, elbow, knee, and groin/hip
+   markers on the visible anatomical joint centers. Obtain human approval of
+   the complete placement before Auto-Rigger submission.
+8. Review the Auto-Rigger motion preview for deformation, obtain human
+   approval, confirm the new character, and download the neutral FBX Binary
+   with skin.
+9. Download one representative locomotion clip with skin and import that FBX
+   untouched into a local ignored Godot baseline. The clip must remain grounded
+   and visibly alternate both feet through a sustained gameplay move before
+   Blender is permitted to process the rig or animation.
+10. Correct joint placement and weights in Blender, especially chin, neck,
+    shoulders, wrists, hips, knees, ankles, gloves, and armor transitions.
+11. Use existing Mixamo library clips as the default motion source and
+    download production donors without skin after Blender weight repair. Use
+    30 fps, no keyframe reduction, and prefer in-place variants. `Standard
+    Walk` with In Place on, Overdrive 50, and Character Arm-Space 50 is the
+    default exploration walk. If a no-skin donor changes the accepted rest
+    skeleton or armature-object transform, document a character-specific
+    exception and use the matching with-skin donor instead.
+12. In Blender, preserve the Mixamo armature object's imported rotation and
+    scale. Never apply transforms directly to an animated armature: if a
+    normalized production skeleton is required, retarget and bake evaluated
+    world-space poses onto a separate rig. Trim, loop, repair contacts, add
+    constraints and event markers, then export GLB.
+13. Reimport the GLB and validate the complete cycle in evaluated world space.
+    For the current exploration walk, horizontal hip range must stay at or below
+    0.15 m, the loop endpoint delta at or below 0.01 m, vertical hip range at or
+    below 0.15 m, and each foot must lift at least 0.04 m. Repeat the same
+    sustained Godot movement used for the untouched baseline.
 
 No Tripo Auto Rig or AI-generated motion is used for production humanoids when
 the Mixamo workflow can provide the required baseline.
@@ -104,8 +133,11 @@ humanoids also check skeleton hierarchy, weights, unweighted vertices,
 influence limits, animation names and durations, loop behavior, contacts, and
 root motion.
 
-Technical validity does not establish visual quality. Human approval is
+Technical validity does not establish visual quality. Direct visual review is
 required for prominent characters, rigs, animation, weapons, and environments.
+Humanoid marker placement and the Auto-Rigger preview require human approval;
+project-owner or delegated-art approval also remains required wherever the
+roster, roadmap, brief, or live-replacement gate names it.
 
 ## Review evidence
 
