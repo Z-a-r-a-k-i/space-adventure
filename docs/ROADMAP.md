@@ -64,6 +64,15 @@ Blender weight repair. Keep the existing Vanguard greybox in the live game
 until the new character, carbine assembly, animation, and exact Godot import
 receive direct human approval.
 
+On 2026-08-02 the owner also advanced the static station structure, service
+terminal, and evacuation airlock into Phase 3. Their deterministic Blender
+sources and GLBs now replace only presentation geometry in the live route;
+Godot keeps navigation, collision, lighting, interaction identity, and route
+state. A complete graphical playthrough verified kit selection, the survivor
+choice consequence, terminal inspection, Protector recruitment, two-member
+formation movement, rigid airlock opening, and completion. Final owner visual
+approval of the three environment candidates remains open.
+
 - Add protagonist-kit selection. The presentation weapons are already selected
   as Vanguard carbine, Operator pistol, and Protector shotgun; define their
   stable gameplay attacks and the three active abilities before producing
@@ -75,9 +84,16 @@ receive direct human approval.
   character-plus-carbine grip and holster assembly, animation review, direct
   tactical Godot inspection, and final human approval. Do not add runtime armor
   slots.
-- Add the recruitable companion, portraits, individual and group selection, simple formation movement, and party observations.
+- Add the recruitable companion, portraits, individual and group selection,
+  simple formation movement, and party observations. Recruitment, party cards,
+  multi-selection, formation movement, and observations are implemented;
+  portraits remain presentation work.
 - Add the two authored conversations and one observable choice consequence.
-- Verify dialogue state validation, recruitment, pause behavior, and both kit paths.
+  The survivor route choice and Protector recruitment conversations are
+  implemented with route-specific terminal feedback.
+- Verify dialogue state validation, recruitment, pause behavior, and both kit
+  paths. Automated coverage passes; repeated manual play of both kits remains
+  open.
 
 Exit: the player starts alone, recruits the companion through conversation, and controls both characters through the traversal section.
 

@@ -27,9 +27,11 @@ There are no unresolved questions blocking the documented POC or bootstrap. New 
 - The hostile presentation pair is a mobile humanoid Security Enforcer with a
   reinforced-forearm body attack and a taller integrated-gun security sentry.
 - The evacuation airlock visibly opens before completion presentation.
-- Exact active abilities remain intentionally deferred to Phase 3; their
-  props, clips, icons, and effects are not invented during asset planning. The
-  concept-art shield is not assigned to an ability.
+- Phase 3 fixes Vanguard Suppressive Fire as a position-targeted ability,
+  Operator Disruptor Shot as an entity-targeted ability, and Protector Guard
+  Ally as an ally-targeted ability. Their final combat timing, clips, icons,
+  and effects remain deferred to Phase 4. The concept-art shield is not
+  assigned to an ability.
 - Exactly two controllable characters in the POC; early UI and architecture must not rule out four later.
 - Compact automatic group formation with no formation editor.
 - Free-text input is the protagonist's exact spoken utterance; the game does not rewrite it into different dialogue.
@@ -52,6 +54,9 @@ There are no unresolved questions blocking the documented POC or bootstrap. New 
 - An optional Codex CLI provider may use the developer's ChatGPT sign-in for private automated experiments; it remains replaceable and outside authoritative state.
 - Dialogue profiles select model, reasoning effort, and Fast mode independently, with Sol/medium/Fast-off as the initial quality baseline.
 - Low-poly presentation and a controlled, replaceable art pipeline.
+- The static station structure, service terminal, and evacuation airlock use
+  dimensionally authored Blender sources and entered the Phase 3 route without
+  changing authored Godot gameplay authority. The wall utility remains gated.
 - Every production combatant declares a handheld, integrated, or body-based
   attack source before model and animation approval; all three share the same
   authoritative gameplay boundary.

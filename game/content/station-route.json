@@ -1,19 +1,57 @@
 {
-  "schema_version": 1,
-  "content_revision": "station-route-v1",
+  "schema_version": 2,
+  "content_revision": "station-route-v2",
   "scenario_id": "scenario.station_route",
   "protagonist": {
     "id": "actor.protagonist",
-    "display_name": "Protagonist",
+    "display_name": "Unassigned protagonist",
     "movement_speed_meters_per_second": 4.0
   },
+  "companion": {
+    "id": "actor.companion.protector",
+    "display_name": "Protector",
+    "movement_speed_meters_per_second": 3.8,
+    "loadout": {
+      "weapon_name": "Breach Shotgun",
+      "basic_attack_id": "attack.crew.protector.shotgun",
+      "active_ability_id": "ability.crew.protector.guard_ally",
+      "active_ability_name": "Guard Ally",
+      "active_ability_target_kind": "ally"
+    }
+  },
+  "protagonist_kits": [
+    {
+      "id": "kit.protagonist.vanguard",
+      "display_name": "Vanguard",
+      "role": "Front-line pressure",
+      "weapon_name": "Service Carbine",
+      "basic_attack_id": "attack.crew.vanguard.carbine",
+      "active_ability_id": "ability.crew.vanguard.suppressive_fire",
+      "active_ability_name": "Suppressive Fire",
+      "active_ability_target_kind": "position"
+    },
+    {
+      "id": "kit.protagonist.operator",
+      "display_name": "Operator",
+      "role": "Precision disruption",
+      "weapon_name": "Arc Pistol",
+      "basic_attack_id": "attack.crew.operator.pistol",
+      "active_ability_id": "ability.crew.operator.disruptor_shot",
+      "active_ability_name": "Disruptor Shot",
+      "active_ability_target_kind": "entity"
+    }
+  ],
   "briefing_objective": {
-    "id": "objective.speak_to_survivor",
-    "text": "Speak with the survivor."
+    "id": "objective.choose_power_route",
+    "text": "Speak with the survivor and decide where to route the remaining power."
+  },
+  "recruitment_objective": {
+    "id": "objective.recruit_protector",
+    "text": "Recruit the Protector waiting beyond the service junction."
   },
   "destination_objective": {
     "id": "objective.reach_evacuation_airlock",
-    "text": "Reach the evacuation airlock."
+    "text": "Lead the party to the evacuation airlock."
   },
   "interactions": [
     {
@@ -21,14 +59,40 @@
       "kind": "npc",
       "prompt": "Speak with the survivor",
       "use_radius_meters": 1.5,
-      "effect": "begin_briefing_dialogue",
+      "effect": "begin_survivor_dialogue",
       "dialogue": {
         "speaker": "Survivor",
-        "line": "The station is failing. The evacuation airlock is still reachable through the service corridor.",
-        "response": {
-          "id": "response.survivor_acknowledged",
-          "text": "Understood. I will reach the airlock."
-        }
+        "line": "The reserve cell cannot hold both systems. We can power the service corridor, or keep the shelter seals stable.",
+        "responses": [
+          {
+            "id": "response.reroute_service_power",
+            "text": "Reroute power to the service corridor. We need a clear route.",
+            "effect": "reroute_service_power"
+          },
+          {
+            "id": "response.preserve_shelter_power",
+            "text": "Keep the shelter sealed. We will take the corridor as it is.",
+            "effect": "preserve_shelter_power"
+          }
+        ]
+      }
+    },
+    {
+      "id": "interaction.protector",
+      "kind": "npc",
+      "prompt": "Recruit the Protector",
+      "use_radius_meters": 1.5,
+      "effect": "begin_recruitment_dialogue",
+      "dialogue": {
+        "speaker": "Protector",
+        "line": "That airlock needs two people to cycle safely. I can cover your approach.",
+        "responses": [
+          {
+            "id": "response.recruit_protector",
+            "text": "Join me. We leave together.",
+            "effect": "recruit_protector"
+          }
+        ]
       }
     },
     {
@@ -37,15 +101,16 @@
       "prompt": "Inspect the service terminal",
       "use_radius_meters": 1.25,
       "effect": "record_observation",
-      "result_text": "The terminal reports intermittent power along the service corridor."
+      "result_text": "The terminal confirms full service-corridor power. Shelter seals are running on emergency reserve.",
+      "preserved_result_text": "The terminal confirms stable shelter seals. The service corridor remains on intermittent emergency lighting."
     },
     {
       "id": "interaction.evacuation_airlock",
       "kind": "destination",
-      "prompt": "Enter the evacuation airlock",
+      "prompt": "Cycle the evacuation airlock",
       "use_radius_meters": 1.5,
       "effect": "complete_scenario",
-      "result_text": "You reached the evacuation airlock."
+      "result_text": "The Protector secures the inner door and the evacuation airlock opens."
     }
   ]
 }

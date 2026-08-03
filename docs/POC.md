@@ -2,7 +2,7 @@
 
 ## Goal
 
-Build an 8–12 minute authored greybox demo that proves exploration, party control, active-pause combat, simple inventory use, and conversation. It is a small adventure from a start to a destination, not a roguelite run and not a systems showcase.
+Build an 8–12 minute authored compact demo that proves exploration, party control, active-pause combat, simple inventory use, and conversation. It is a small adventure from a start to a destination, not a roguelite run and not a systems showcase. Production environment geometry may replace greybox presentation early while authored collision, navigation, and gameplay wrappers remain authoritative.
 
 ## Working scenario: a disabled frontier station
 
@@ -111,7 +111,9 @@ The critical path always demonstrates recruitment and combat. A dialogue choice 
 
 ## Content budget
 
-- One authored greybox station level with a start, service section, encounter space, and destination.
+- One authored station level with a start, service section, encounter space,
+  and destination. The route uses reviewed static structure, terminal, and
+  airlock models over independent authored collision and navigation.
 - Four distinct human presentations: Vanguard and Operator alternatives, one
   fixed Protector companion, and one station survivor. A playthrough still
   controls exactly the selected protagonist plus Protector.

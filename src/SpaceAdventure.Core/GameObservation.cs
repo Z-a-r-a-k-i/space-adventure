@@ -8,6 +8,7 @@ public sealed record GameObservation(
 
 public enum ScenarioPhase
 {
+    AwaitingProtagonistSelection,
     InProgress,
     Completed,
 }
@@ -32,6 +33,37 @@ public enum InteractionState
     Completed,
 }
 
+public enum AbilityTargetKind
+{
+    Position,
+    Entity,
+    Ally,
+}
+
+public enum RoutePowerMode
+{
+    Unset,
+    ServiceRerouted,
+    ShelterPreserved,
+}
+
+public sealed record ProtagonistKitObservation(
+    ProtagonistKitId Id,
+    string DisplayName,
+    string Role,
+    string WeaponName,
+    AttackId BasicAttackId,
+    AbilityId ActiveAbilityId,
+    string ActiveAbilityName,
+    AbilityTargetKind ActiveAbilityTargetKind);
+
+public sealed record PartyMemberLoadoutObservation(
+    string WeaponName,
+    AttackId BasicAttackId,
+    AbilityId ActiveAbilityId,
+    string ActiveAbilityName,
+    AbilityTargetKind ActiveAbilityTargetKind);
+
 public sealed record PrimaryActionObservation(
     CommandId CommandId,
     PrimaryActionKind Kind,
@@ -41,6 +73,7 @@ public sealed record PrimaryActionObservation(
 public sealed record ActorObservation(
     EntityId Id,
     string DisplayName,
+    PartyMemberLoadoutObservation? Loadout,
     WorldPosition Position,
     PrimaryActionObservation? CurrentAction,
     PrimaryActionObservation? PendingAction);
@@ -60,9 +93,10 @@ public sealed record DialogueResponseObservation(DialogueResponseId Id, string T
 
 public sealed record DialogueObservation(
     EntityId InteractionId,
+    EntityId ActorId,
     string Speaker,
     string Line,
-    DialogueResponseObservation Response);
+    IReadOnlyList<DialogueResponseObservation> Responses);
 
 public sealed record ObjectiveObservation(
     ObjectiveId Id,
@@ -75,6 +109,10 @@ public sealed record StationRouteObservation(
     string ContentRevision,
     ScenarioPhase Phase,
     ActorObservation Protagonist,
+    IReadOnlyList<ActorObservation> Party,
+    IReadOnlyList<ProtagonistKitObservation> AvailableProtagonistKits,
+    ProtagonistKitObservation? SelectedProtagonistKit,
+    RoutePowerMode RoutePowerMode,
     ObjectiveObservation Objective,
     IReadOnlyList<InteractionObservation> Interactions,
     DialogueObservation? ActiveDialogue);
@@ -85,17 +123,24 @@ public enum GameplayEventType
     PauseChanged,
     CommandAccepted,
     CommandRejected,
+    ProtagonistKitSelected,
     PrimaryActionAssigned,
     MovementArrived,
     PrimaryActionFailed,
     DialogueStarted,
     DialogueResponseChosen,
+    RouteConsequenceSelected,
+    PartyMemberRecruited,
     InteractionCompleted,
     ObjectiveChanged,
     ScenarioCompleted,
 }
 
 public abstract record GameplayEventDetail;
+
+public sealed record ProtagonistKitSelectedEventDetail(
+    CommandId CommandId,
+    ProtagonistKitId KitId) : GameplayEventDetail;
 
 public sealed record PrimaryActionAssignedEventDetail(
     CommandId CommandId,
@@ -126,6 +171,14 @@ public sealed record DialogueResponseChosenEventDetail(
     EntityId ActorId,
     EntityId InteractionId,
     DialogueResponseId ResponseId) : GameplayEventDetail;
+
+public sealed record RouteConsequenceSelectedEventDetail(
+    CommandId CommandId,
+    RoutePowerMode RoutePowerMode) : GameplayEventDetail;
+
+public sealed record PartyMemberRecruitedEventDetail(
+    CommandId CommandId,
+    EntityId ActorId) : GameplayEventDetail;
 
 public sealed record InteractionCompletedEventDetail(
     CommandId CommandId,

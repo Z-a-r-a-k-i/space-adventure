@@ -115,12 +115,14 @@ static int RunStationRoute(JsonLinesOutput output)
     var session = GameSession.CreateStationRoute(
         definition,
         layout,
-        new StationRouteFixturePathfinder(definition.Protagonist.Id));
+        new StationRouteFixturePathfinder([definition.Protagonist.Id, definition.Companion.Id]));
     var events = new GameplayEventOutput(output);
     var assertions = new ScenarioAssertions(output);
 
     var survivor = definition.Interactions.Single(
-        interaction => interaction.Effect == StationInteractionEffect.BeginBriefingDialogue);
+        interaction => interaction.Effect == StationInteractionEffect.BeginSurvivorDialogue);
+    var protector = definition.Interactions.Single(
+        interaction => interaction.Effect == StationInteractionEffect.BeginRecruitmentDialogue);
     var terminal = definition.Interactions.Single(
         interaction => interaction.Effect == StationInteractionEffect.RecordObservation);
     var airlock = definition.Interactions.Single(
@@ -129,7 +131,7 @@ static int RunStationRoute(JsonLinesOutput output)
     output.Emit(new
     {
         kind = "run_metadata",
-        schema_version = 1,
+        schema_version = 2,
         scenario_id = StationRouteScenarioId,
         content_scenario_id = definition.ScenarioId.Value,
         content_revision = definition.ContentRevision,
@@ -139,18 +141,34 @@ static int RunStationRoute(JsonLinesOutput output)
         runtime = Environment.Version.ToString(),
         tick_rate = GameSession.TicksPerSecond,
         maximum_ticks_per_leg = MaximumTicksPerLeg,
-        pathfinder = "deterministic_station_route_fixture_v1",
+        pathfinder = "deterministic_station_route_fixture_v2",
     });
     events.Flush(session);
 
     var initial = RequireStationObservation(session.Observe());
     assertions.Check(
-        "initial_objective_is_briefing",
-        initial.Objective.Id == definition.BriefingObjective.Id
-            && initial.Objective.Status == ObjectiveStatus.Active);
+        "initial_state_requires_protagonist_kit",
+        initial.Phase == ScenarioPhase.AwaitingProtagonistSelection
+            && initial.SelectedProtagonistKit is null
+            && initial.Party.Count == 1);
     assertions.Check(
         "airlock_is_gated_before_briefing",
         FindInteraction(initial, airlock.Id).State == InteractionState.Unavailable);
+
+    var kit = definition.ProtagonistKits.Single(candidate =>
+        candidate.Id == new ProtagonistKitId("kit.protagonist.vanguard"));
+    var kitCommand = session.Execute(new ChooseProtagonistKitCommand(
+        new CommandId("station-route.choose-vanguard"),
+        kit.Id));
+    EmitCommandResult(output, "choose_protagonist_kit", kitCommand);
+    events.Flush(session);
+    var afterKitSelection = RequireStationObservation(session.Observe());
+    assertions.Check(
+        "vanguard_kit_is_selected",
+        kitCommand.Accepted
+            && afterKitSelection.SelectedProtagonistKit?.Id == kit.Id
+            && afterKitSelection.Protagonist.Loadout?.BasicAttackId == kit.BasicAttackId
+            && afterKitSelection.Protagonist.Loadout?.ActiveAbilityId == kit.ActiveAbilityId);
 
     var survivorCommand = session.Execute(new InteractCommand(
         new CommandId("station-route.interact-survivor"),
@@ -170,7 +188,8 @@ static int RunStationRoute(JsonLinesOutput output)
         survivorCommand.Accepted && survivorAdvance.ConditionReached);
 
     var dialogue = RequireStationObservation(session.Observe()).ActiveDialogue;
-    var responseId = survivor.Dialogue!.Response.Id;
+    var responseId = survivor.Dialogue!.Responses.Single(response =>
+        response.Effect == StationDialogueResponseEffect.RerouteServicePower).Id;
     var responseCommand = session.Execute(new ChooseDialogueResponseCommand(
         new CommandId("station-route.answer-survivor"),
         definition.Protagonist.Id,
@@ -182,13 +201,16 @@ static int RunStationRoute(JsonLinesOutput output)
     var afterResponse = RequireStationObservation(session.Observe());
     assertions.Check(
         "authored_response_matches_active_dialogue",
-        dialogue?.Response.Id == responseId && responseCommand.Accepted);
+        dialogue?.Responses.Any(response => response.Id == responseId) == true
+            && responseCommand.Accepted);
     assertions.Check(
-        "briefing_advances_destination_objective",
+        "power_choice_advances_recruitment_objective",
         afterResponse.ActiveDialogue is null
-            && afterResponse.Objective.Id == definition.DestinationObjective.Id
+            && afterResponse.RoutePowerMode == RoutePowerMode.ServiceRerouted
+            && afterResponse.Objective.Id == definition.RecruitmentObjective.Id
             && FindInteraction(afterResponse, survivor.Id).State == InteractionState.Completed
-            && FindInteraction(afterResponse, airlock.Id).State == InteractionState.Available);
+            && FindInteraction(afterResponse, protector.Id).State == InteractionState.Available
+            && FindInteraction(afterResponse, airlock.Id).State == InteractionState.Unavailable);
 
     var terminalCommand = session.Execute(new InteractCommand(
         new CommandId("station-route.inspect-terminal"),
@@ -210,6 +232,67 @@ static int RunStationRoute(JsonLinesOutput output)
             && terminalAdvance.ConditionReached
             && FindInteraction(afterTerminal, terminal.Id).ResultText == terminal.ResultText
             && afterTerminal.Phase == ScenarioPhase.InProgress);
+
+    var protectorCommand = session.Execute(new InteractCommand(
+        new CommandId("station-route.interact-protector"),
+        definition.Protagonist.Id,
+        protector.Id));
+    EmitCommandResult(output, "interact", protectorCommand);
+    events.Flush(session);
+    var protectorAdvance = AdvanceUntil(
+        session,
+        observation => observation.ActiveDialogue?.InteractionId == protector.Id,
+        MaximumTicksPerLeg);
+    EmitAdvanceResult(output, "approach_protector", MaximumTicksPerLeg, protectorAdvance);
+    events.Flush(session);
+
+    var recruitResponseId = protector.Dialogue!.Responses.Single().Id;
+    var recruitCommand = session.Execute(new ChooseDialogueResponseCommand(
+        new CommandId("station-route.recruit-protector"),
+        definition.Protagonist.Id,
+        protector.Id,
+        recruitResponseId));
+    EmitCommandResult(output, "choose_dialogue_response", recruitCommand);
+    events.Flush(session);
+    var afterRecruitment = RequireStationObservation(session.Observe());
+    assertions.Check(
+        "protector_joins_and_unlocks_airlock",
+        protectorCommand.Accepted
+            && protectorAdvance.ConditionReached
+            && recruitCommand.Accepted
+            && afterRecruitment.Party.Any(actor => actor.Id == definition.Companion.Id)
+            && afterRecruitment.Objective.Id == definition.DestinationObjective.Id
+            && FindInteraction(afterRecruitment, airlock.Id).State == InteractionState.Available);
+
+    var partyMoveCommand = session.Execute(new MovePartyCommand(
+        new CommandId("station-route.move-party"),
+        [definition.Companion.Id, definition.Protagonist.Id],
+        new WorldPosition(7, 0, 0)));
+    EmitCommandResult(output, "move_party", partyMoveCommand);
+    events.Flush(session);
+    var partyAdvance = AdvanceUntil(
+        session,
+        observation => observation.Party.All(actor =>
+            actor.CurrentAction is null && actor.PendingAction is null),
+        MaximumTicksPerLeg);
+    EmitAdvanceResult(output, "move_party", MaximumTicksPerLeg, partyAdvance);
+    events.Flush(session);
+    var formedParty = RequireStationObservation(session.Observe()).Party;
+    var formedProtagonist = formedParty.Single(actor => actor.Id == definition.Protagonist.Id);
+    var formedCompanion = formedParty.Single(actor => actor.Id == definition.Companion.Id);
+    assertions.Check(
+        "party_moves_in_stable_formation",
+        partyMoveCommand.Accepted
+            && partyAdvance.ConditionReached
+            && formedParty.Count == 2
+            && formedProtagonist.Position == new WorldPosition(
+                6.826074728690739,
+                0,
+                -0.5217758139277826)
+            && formedCompanion.Position == new WorldPosition(
+                7.173925271309261,
+                0,
+                0.5217758139277826));
 
     var airlockCommand = session.Execute(new InteractCommand(
         new CommandId("station-route.enter-airlock"),
@@ -241,7 +324,7 @@ static int RunStationRoute(JsonLinesOutput output)
         session.EventsSince(0).All(gameEvent => gameEvent.Type != GameplayEventType.CommandRejected));
     assertions.Check(
         "critical_path_remains_within_total_tick_budget",
-        session.Tick <= MaximumTicksPerLeg * 3L);
+        session.Tick <= MaximumTicksPerLeg * 6L);
 
     stopwatch.Stop();
     output.Emit(new
@@ -404,6 +487,12 @@ internal sealed class GameplayEventOutput(JsonLinesOutput output)
         return detail switch
         {
             null => null,
+            ProtagonistKitSelectedEventDetail selected => new
+            {
+                detail_type = "protagonist_kit_selected",
+                command_id = selected.CommandId.Value,
+                kit_id = selected.KitId.Value,
+            },
             PrimaryActionAssignedEventDetail assigned => new
             {
                 detail_type = "primary_action_assigned",
@@ -443,6 +532,18 @@ internal sealed class GameplayEventOutput(JsonLinesOutput output)
                 actor_id = chosen.ActorId.Value,
                 interaction_id = chosen.InteractionId.Value,
                 response_id = chosen.ResponseId.Value,
+            },
+            RouteConsequenceSelectedEventDetail consequence => new
+            {
+                detail_type = "route_consequence_selected",
+                command_id = consequence.CommandId.Value,
+                route_power_mode = JsonLinesOutput.ToJsonName(consequence.RoutePowerMode),
+            },
+            PartyMemberRecruitedEventDetail recruited => new
+            {
+                detail_type = "party_member_recruited",
+                command_id = recruited.CommandId.Value,
+                actor_id = recruited.ActorId.Value,
             },
             InteractionCompletedEventDetail completed => new
             {
@@ -532,6 +633,20 @@ internal static class ObservationProjection
             content_revision = observation.ContentRevision,
             phase = JsonLinesOutput.ToJsonName(observation.Phase),
             protagonist = ProjectActor(observation.Protagonist),
+            party = observation.Party.Select(ProjectActor).ToArray(),
+            available_protagonist_kits = observation.AvailableProtagonistKits.Select(kit => new
+            {
+                id = kit.Id.Value,
+                kit.DisplayName,
+                kit.Role,
+                kit.WeaponName,
+                basic_attack_id = kit.BasicAttackId.Value,
+                active_ability_id = kit.ActiveAbilityId.Value,
+                kit.ActiveAbilityName,
+                active_ability_target_kind = JsonLinesOutput.ToJsonName(kit.ActiveAbilityTargetKind),
+            }).ToArray(),
+            selected_protagonist_kit_id = observation.SelectedProtagonistKit?.Id.Value,
+            route_power_mode = JsonLinesOutput.ToJsonName(observation.RoutePowerMode),
             objective = ProjectObjective(observation.Objective),
             interactions = observation.Interactions.Select(ProjectInteraction).ToArray(),
             active_dialogue = observation.ActiveDialogue is null
@@ -546,6 +661,17 @@ internal static class ObservationProjection
         {
             id = observation.Id.Value,
             display_name = observation.DisplayName,
+            loadout = observation.Loadout is null
+                ? null
+                : new
+                {
+                    observation.Loadout.WeaponName,
+                    basic_attack_id = observation.Loadout.BasicAttackId.Value,
+                    active_ability_id = observation.Loadout.ActiveAbilityId.Value,
+                    observation.Loadout.ActiveAbilityName,
+                    active_ability_target_kind = JsonLinesOutput.ToJsonName(
+                        observation.Loadout.ActiveAbilityTargetKind),
+                },
             position = ProjectPosition(observation.Position),
             current_action = ProjectAction(observation.CurrentAction),
             pending_action = ProjectAction(observation.PendingAction),
@@ -596,13 +722,14 @@ internal static class ObservationProjection
         return new
         {
             interaction_id = observation.InteractionId.Value,
+            actor_id = observation.ActorId.Value,
             speaker = observation.Speaker,
             line = observation.Line,
-            response = new
+            responses = observation.Responses.Select(response => new
             {
-                id = observation.Response.Id.Value,
-                text = observation.Response.Text,
-            },
+                id = response.Id.Value,
+                response.Text,
+            }).ToArray(),
         };
     }
 }
@@ -613,6 +740,7 @@ internal static class StationRouteFixture
         InteractionPlacements = new Dictionary<string, (WorldPosition, WorldPosition)>(StringComparer.Ordinal)
         {
             ["interaction.survivor"] = (new(1, 0, 1), new(0, 0, 1)),
+            ["interaction.protector"] = (new(5.5, 0, 0), new(4.5, 0, 0)),
             ["interaction.service_terminal"] = (new(5.5, 0, 1.7), new(5.5, 0, 1)),
             ["interaction.evacuation_airlock"] = (new(9, 0, 0), new(8, 0, 0)),
         };
@@ -634,21 +762,25 @@ internal static class StationRouteFixture
                 placement.Position,
                 placement.Approach);
         });
-        return new StationRouteLayout(new WorldPosition(0, 0, 5.5), placements);
+        return new StationRouteLayout(
+            new WorldPosition(0, 0, 5.5),
+            [new StationActorPlacement(definition.Companion.Id, new WorldPosition(5.5, 0, 0))],
+            placements);
     }
 }
 
-internal sealed class StationRouteFixturePathfinder(EntityId protagonistId) : ISpatialPathfinder
+internal sealed class StationRouteFixturePathfinder(IEnumerable<EntityId> actorIds) : ISpatialPathfinder
 {
     private const double CoordinateTolerance = 0.0001;
     private static readonly WorldPosition Junction = new(1.5, 0, 1);
+    private readonly HashSet<EntityId> _actorIds = actorIds.ToHashSet();
 
     public SpatialPathResult FindPath(
         EntityId actorId,
         WorldPosition origin,
         WorldPosition destination)
     {
-        if (actorId != protagonistId
+        if (!_actorIds.Contains(actorId)
             || !origin.IsFinite
             || !destination.IsFinite
             || !IsGroundLevel(origin)

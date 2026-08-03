@@ -20,10 +20,34 @@ public interface IGameCommand
 
 public sealed record SetPauseCommand(CommandId CommandId, bool Paused) : IGameCommand;
 
+public sealed record ChooseProtagonistKitCommand(
+    CommandId CommandId,
+    ProtagonistKitId KitId) : IGameCommand;
+
 public sealed record MoveActorCommand(
     CommandId CommandId,
     EntityId ActorId,
     WorldPosition Destination) : IGameCommand;
+
+public sealed record MovePartyCommand : IGameCommand
+{
+    public MovePartyCommand(
+        CommandId commandId,
+        IEnumerable<EntityId> actorIds,
+        WorldPosition destination)
+    {
+        ArgumentNullException.ThrowIfNull(actorIds);
+        CommandId = commandId;
+        ActorIds = actorIds.ToArray();
+        Destination = destination;
+    }
+
+    public CommandId CommandId { get; }
+
+    public IReadOnlyList<EntityId> ActorIds { get; }
+
+    public WorldPosition Destination { get; }
+}
 
 public sealed record InteractCommand(
     CommandId CommandId,
@@ -40,8 +64,13 @@ public enum CommandRejectionCode
 {
     UnknownCommand,
     ScenarioCompleted,
+    ProtagonistKitRequired,
+    UnknownProtagonistKit,
+    ProtagonistKitAlreadySelected,
     UnknownActor,
     ActorNotControllable,
+    EmptyPartySelection,
+    DuplicateActor,
     InvalidDestination,
     DestinationUnreachable,
     UnknownInteraction,

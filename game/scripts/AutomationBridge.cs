@@ -72,7 +72,7 @@ public partial class AutomationBridge : Node
             var root = document.RootElement;
 
             if (!root.TryGetProperty("schema_version", out var schemaVersion)
-                || schemaVersion.GetInt32() != 1)
+                || schemaVersion.GetInt32() != 2)
             {
                 return Error("unsupported_schema_version");
             }
@@ -90,9 +90,19 @@ public partial class AutomationBridge : Node
                 "set_pause" => new SetPauseCommand(
                     commandId,
                     payload.GetProperty("paused").GetBoolean()),
+                "choose_protagonist_kit" => new ChooseProtagonistKitCommand(
+                    commandId,
+                    new ProtagonistKitId(RequiredString(payload, "kit_id"))),
                 "move_actor" => new MoveActorCommand(
                     commandId,
                     new EntityId(RequiredString(payload, "actor_id")),
+                    ReadPosition(payload.GetProperty("destination"))),
+                "move_party" => new MovePartyCommand(
+                    commandId,
+                    payload.GetProperty("actor_ids")
+                        .EnumerateArray()
+                        .Select(actorId => new EntityId(actorId.GetString()
+                            ?? throw new JsonException("'actor_ids' cannot contain null."))),
                     ReadPosition(payload.GetProperty("destination"))),
                 "interact" => new InteractCommand(
                     commandId,
@@ -399,14 +409,21 @@ public partial class AutomationBridge : Node
             route.ContentSchemaVersion,
             route.ContentRevision,
             Phase = ToExternalName(route.Phase),
-            Protagonist = new
+            Protagonist = ProjectActor(route.Protagonist),
+            Party = route.Party.Select(ProjectActor),
+            AvailableProtagonistKits = route.AvailableProtagonistKits.Select(kit => new
             {
-                Id = route.Protagonist.Id.Value,
-                route.Protagonist.DisplayName,
-                Position = ProjectPosition(route.Protagonist.Position),
-                CurrentAction = ProjectAction(route.Protagonist.CurrentAction),
-                PendingAction = ProjectAction(route.Protagonist.PendingAction),
-            },
+                Id = kit.Id.Value,
+                kit.DisplayName,
+                kit.Role,
+                kit.WeaponName,
+                BasicAttackId = kit.BasicAttackId.Value,
+                ActiveAbilityId = kit.ActiveAbilityId.Value,
+                kit.ActiveAbilityName,
+                ActiveAbilityTargetKind = ToExternalName(kit.ActiveAbilityTargetKind),
+            }),
+            SelectedProtagonistKitId = route.SelectedProtagonistKit?.Id.Value,
+            RoutePowerMode = ToExternalName(route.RoutePowerMode),
             Objective = new
             {
                 Id = route.Objective.Id.Value,
@@ -430,14 +447,37 @@ public partial class AutomationBridge : Node
                 : new
                 {
                     InteractionId = route.ActiveDialogue.InteractionId.Value,
+                    ActorId = route.ActiveDialogue.ActorId.Value,
                     route.ActiveDialogue.Speaker,
                     route.ActiveDialogue.Line,
-                    Response = new
+                    Responses = route.ActiveDialogue.Responses.Select(response => new
                     {
-                        Id = route.ActiveDialogue.Response.Id.Value,
-                        route.ActiveDialogue.Response.Text,
-                    },
+                        Id = response.Id.Value,
+                        response.Text,
+                    }),
                 },
+        };
+    }
+
+    private static object ProjectActor(ActorObservation actor)
+    {
+        return new
+        {
+            Id = actor.Id.Value,
+            actor.DisplayName,
+            Loadout = actor.Loadout is null
+                ? null
+                : new
+                {
+                    actor.Loadout.WeaponName,
+                    BasicAttackId = actor.Loadout.BasicAttackId.Value,
+                    ActiveAbilityId = actor.Loadout.ActiveAbilityId.Value,
+                    actor.Loadout.ActiveAbilityName,
+                    ActiveAbilityTargetKind = ToExternalName(actor.Loadout.ActiveAbilityTargetKind),
+                },
+            Position = ProjectPosition(actor.Position),
+            CurrentAction = ProjectAction(actor.CurrentAction),
+            PendingAction = ProjectAction(actor.PendingAction),
         };
     }
 
@@ -474,6 +514,11 @@ public partial class AutomationBridge : Node
     {
         return detail switch
         {
+            ProtagonistKitSelectedEventDetail value => new
+            {
+                CommandId = value.CommandId.Value,
+                KitId = value.KitId.Value,
+            },
             PrimaryActionAssignedEventDetail value => new
             {
                 CommandId = value.CommandId.Value,
@@ -508,6 +553,16 @@ public partial class AutomationBridge : Node
                 ActorId = value.ActorId.Value,
                 InteractionId = value.InteractionId.Value,
                 ResponseId = value.ResponseId.Value,
+            },
+            RouteConsequenceSelectedEventDetail value => new
+            {
+                CommandId = value.CommandId.Value,
+                RoutePowerMode = ToExternalName(value.RoutePowerMode),
+            },
+            PartyMemberRecruitedEventDetail value => new
+            {
+                CommandId = value.CommandId.Value,
+                ActorId = value.ActorId.Value,
             },
             InteractionCompletedEventDetail value => new
             {
