@@ -162,10 +162,13 @@ static int RunStationRoute(JsonLinesOutput output)
         kit.Id));
     EmitCommandResult(output, "choose_protagonist_kit", kitCommand);
     events.Flush(session);
+    var afterKitSelection = RequireStationObservation(session.Observe());
     assertions.Check(
         "vanguard_kit_is_selected",
         kitCommand.Accepted
-            && RequireStationObservation(session.Observe()).SelectedProtagonistKit?.Id == kit.Id);
+            && afterKitSelection.SelectedProtagonistKit?.Id == kit.Id
+            && afterKitSelection.Protagonist.Loadout?.BasicAttackId == kit.BasicAttackId
+            && afterKitSelection.Protagonist.Loadout?.ActiveAbilityId == kit.ActiveAbilityId);
 
     var survivorCommand = session.Execute(new InteractCommand(
         new CommandId("station-route.interact-survivor"),
@@ -269,15 +272,27 @@ static int RunStationRoute(JsonLinesOutput output)
     events.Flush(session);
     var partyAdvance = AdvanceUntil(
         session,
-        observation => observation.Party.All(actor => actor.CurrentAction is null),
+        observation => observation.Party.All(actor =>
+            actor.CurrentAction is null && actor.PendingAction is null),
         MaximumTicksPerLeg);
     EmitAdvanceResult(output, "move_party", MaximumTicksPerLeg, partyAdvance);
     events.Flush(session);
+    var formedParty = RequireStationObservation(session.Observe()).Party;
+    var formedProtagonist = formedParty.Single(actor => actor.Id == definition.Protagonist.Id);
+    var formedCompanion = formedParty.Single(actor => actor.Id == definition.Companion.Id);
     assertions.Check(
         "party_moves_in_stable_formation",
         partyMoveCommand.Accepted
             && partyAdvance.ConditionReached
-            && RequireStationObservation(session.Observe()).Party.Count == 2);
+            && formedParty.Count == 2
+            && formedProtagonist.Position == new WorldPosition(
+                6.826074728690739,
+                0,
+                -0.5217758139277826)
+            && formedCompanion.Position == new WorldPosition(
+                7.173925271309261,
+                0,
+                0.5217758139277826));
 
     var airlockCommand = session.Execute(new InteractCommand(
         new CommandId("station-route.enter-airlock"),

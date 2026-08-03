@@ -164,6 +164,7 @@ public static class StationRouteContent
         }
 
         var kits = ParseKits(dto.ProtagonistKits);
+        ValidatePartyLoadoutIdentifiers(kits, companion.Loadout!);
         var briefingObjective = ParseObjective(dto.BriefingObjective, "briefing_objective");
         var recruitmentObjective = ParseObjective(dto.RecruitmentObjective, "recruitment_objective");
         var destinationObjective = ParseObjective(dto.DestinationObjective, "destination_objective");
@@ -224,6 +225,18 @@ public static class StationRouteContent
         }
 
         return kits;
+    }
+
+    private static void ValidatePartyLoadoutIdentifiers(
+        IReadOnlyCollection<ProtagonistKitDefinition> kits,
+        PartyMemberLoadoutDefinition companionLoadout)
+    {
+        if (kits.Any(kit => kit.BasicAttackId == companionLoadout.BasicAttackId)
+            || kits.Any(kit => kit.ActiveAbilityId == companionLoadout.ActiveAbilityId))
+        {
+            throw new InvalidDataException(
+                "Attack and ability IDs must be unique across protagonist kits and the companion loadout.");
+        }
     }
 
     private static AbilityTargetKind ParseAbilityTargetKind(string? value)
@@ -328,17 +341,17 @@ public static class StationRouteContent
                 throw new InvalidDataException($"Interaction '{id}' dialogue requires responses.");
             }
 
-            var responses = interaction.Dialogue.Responses.Select(response =>
+            var responses = interaction.Dialogue.Responses.Select((response, responseIndex) =>
             {
                 var value = response!;
                 return new StationDialogueResponseDefinition(
                     new DialogueResponseId(RequireText(
                         value.Id,
-                        $"interactions[{id}].dialogue.responses[].id",
+                        $"interactions[{id}].dialogue.responses[{responseIndex}].id",
                         MaximumIdLength)),
                     RequireText(
                         value.Text,
-                        $"interactions[{id}].dialogue.responses[].text",
+                        $"interactions[{id}].dialogue.responses[{responseIndex}].text",
                         MaximumTextLength),
                     ParseDialogueResponseEffect(value.Effect, id));
             }).ToArray();

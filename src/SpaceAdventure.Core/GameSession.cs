@@ -249,7 +249,7 @@ public sealed class GameSession
             return Reject(command.CommandId, CommandRejectionCode.ProtagonistKitRequired);
         }
 
-        if (station.ActiveDialogueInteractionId is not null)
+        if (station.ActiveDialogue is not null)
         {
             return Reject(command.CommandId, CommandRejectionCode.DialogueActive);
         }
@@ -286,7 +286,8 @@ public sealed class GameSession
         var actions = new List<(ActorRuntime Actor, PrimaryActionRuntime Action)>(actors.Count);
         for (var index = 0; index < actors.Count; index++)
         {
-            if (!TryCreateMoveAction(command.CommandId, actors[index], destinations[index], out var action))
+            if (!TryCreateMoveAction(command.CommandId, actors[index], destinations[index], out var action)
+                && !TryCreateMoveAction(command.CommandId, actors[index], command.Destination, out action))
             {
                 return Reject(command.CommandId, CommandRejectionCode.DestinationUnreachable);
             }
@@ -368,18 +369,18 @@ public sealed class GameSession
             return Reject(command.CommandId, actorRejection.Value);
         }
 
-        if (station.ActiveDialogueInteractionId is not EntityId activeInteractionId)
+        if (station.ActiveDialogue is not { } activeDialogue)
         {
             return Reject(command.CommandId, CommandRejectionCode.NoActiveDialogue);
         }
 
-        if (activeInteractionId != command.InteractionId
-            || station.ActiveDialogueActorId != command.ActorId)
+        if (activeDialogue.InteractionId != command.InteractionId
+            || activeDialogue.ActorId != command.ActorId)
         {
             return Reject(command.CommandId, CommandRejectionCode.DialogueMismatch);
         }
 
-        var interaction = station.Interactions[activeInteractionId];
+        var interaction = station.Interactions[activeDialogue.InteractionId];
         var dialogue = interaction.Definition.Dialogue!;
         var response = dialogue.Responses.SingleOrDefault(candidate => candidate.Id == command.ResponseId);
         if (response is null)
@@ -387,8 +388,7 @@ public sealed class GameSession
             return Reject(command.CommandId, CommandRejectionCode.UnknownDialogueResponse);
         }
 
-        station.ActiveDialogueInteractionId = null;
-        station.ActiveDialogueActorId = null;
+        station.ActiveDialogue = null;
         interaction.Completed = true;
         Record(
             GameplayEventType.DialogueResponseChosen,
@@ -461,7 +461,7 @@ public sealed class GameSession
             return false;
         }
 
-        if (station.ActiveDialogueInteractionId is not null)
+        if (station.ActiveDialogue is not null)
         {
             actor = null!;
             rejection = CommandRejectionCode.DialogueActive;
@@ -694,8 +694,9 @@ public sealed class GameSession
         {
             case StationInteractionEffect.BeginSurvivorDialogue:
             case StationInteractionEffect.BeginRecruitmentDialogue:
-                station.ActiveDialogueInteractionId = interaction.Definition.Id;
-                station.ActiveDialogueActorId = actor.Id;
+                station.ActiveDialogue = new ActiveDialogueRuntime(
+                    interaction.Definition.Id,
+                    actor.Id);
                 Record(
                     GameplayEventType.DialogueStarted,
                     action.CommandId,
@@ -828,7 +829,8 @@ public sealed class GameSession
             StationInteractionEffect.BeginRecruitmentDialogue =>
                 !interaction.Completed
                 && station.CurrentObjective.Id == station.Definition.RecruitmentObjective.Id,
-            StationInteractionEffect.RecordObservation => station.RoutePowerMode != RoutePowerMode.Unset,
+            StationInteractionEffect.RecordObservation =>
+                !interaction.Completed && station.RoutePowerMode != RoutePowerMode.Unset,
             StationInteractionEffect.CompleteScenario =>
                 !interaction.Completed
                 && station.CurrentObjective.Id == station.Definition.DestinationObjective.Id
@@ -901,12 +903,12 @@ public sealed class GameSession
             .ToArray();
 
         DialogueObservation? activeDialogue = null;
-        if (station.ActiveDialogueInteractionId is EntityId dialogueInteractionId)
+        if (station.ActiveDialogue is { } activeDialogueRuntime)
         {
-            var dialogue = station.Interactions[dialogueInteractionId].Definition.Dialogue!;
+            var dialogue = station.Interactions[activeDialogueRuntime.InteractionId].Definition.Dialogue!;
             activeDialogue = new DialogueObservation(
-                dialogueInteractionId,
-                station.ActiveDialogueActorId!.Value,
+                activeDialogueRuntime.InteractionId,
+                activeDialogueRuntime.ActorId,
                 dialogue.Speaker,
                 dialogue.Line,
                 dialogue.Responses
@@ -979,7 +981,7 @@ public sealed class GameSession
         StationRouteRuntime station,
         InteractionRuntime interaction)
     {
-        if (station.ActiveDialogueInteractionId == interaction.Definition.Id)
+        if (station.ActiveDialogue?.InteractionId == interaction.Definition.Id)
         {
             return InteractionState.DialogueActive;
         }
@@ -1081,6 +1083,8 @@ public sealed class GameSession
         }
     }
 
+    private sealed record ActiveDialogueRuntime(EntityId InteractionId, EntityId ActorId);
+
     private sealed class StationRouteRuntime
     {
         public StationRouteRuntime(StationRouteDefinition definition, StationRouteLayout layout)
@@ -1119,9 +1123,7 @@ public sealed class GameSession
 
         public RoutePowerMode RoutePowerMode { get; set; }
 
-        public EntityId? ActiveDialogueInteractionId { get; set; }
-
-        public EntityId? ActiveDialogueActorId { get; set; }
+        public ActiveDialogueRuntime? ActiveDialogue { get; set; }
     }
 
     private sealed class ActorRuntime(

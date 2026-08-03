@@ -234,11 +234,12 @@ They do not use Tripo retopology, Mixamo, skinning, or the humanoid animation
 pipeline.
 
 Godot remains authoritative for navigation, collision, lighting, stable
-interaction IDs, route state, and door timing. The imported structure exposes
-independent named walls for camera cutaway; the airlock exposes two named rigid
-leaves driven from observed completion state. Existing greybox presentation is
-hidden rather than used as a second visible layer, while its gameplay wrappers
-remain intact.
+interaction IDs, and door presentation timing. The pure C# core remains
+authoritative for route state, progression, completion, and gameplay rules.
+The imported structure exposes independent named walls for camera cutaway; the
+airlock exposes two named rigid leaves driven from observed completion state.
+Existing greybox presentation is hidden rather than used as a second visible
+layer, while its gameplay wrappers remain intact.
 
 This reprioritization does not advance combat, inventory, character
 replacement, wall-utility integration, or other Phase 5 polish. The integrated

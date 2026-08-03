@@ -1,6 +1,8 @@
 # POC asset roster
 
-Status: approved target inventory; live integration remains roadmap-scoped
+Status: approved target inventory; Phase 3 station candidates are integrated
+and awaiting final owner visual approval, while remaining integration is
+roadmap-scoped
 
 ## Presentation rules
 

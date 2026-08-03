@@ -61,6 +61,35 @@ public sealed class StationRouteSessionTests
         Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(unmapped));
     }
 
+    [Theory]
+    [InlineData("attack.crew.protector.shotgun", "attack.crew.vanguard.carbine")]
+    [InlineData("ability.crew.protector.guard_ally", "ability.crew.vanguard.suppressive_fire")]
+    public void ContentParserRejectsCompanionLoadoutIdentifiersUsedByAProtagonistKit(
+        string companionIdentifier,
+        string protagonistIdentifier)
+    {
+        var invalid = LoadContentJson().Replace(
+            companionIdentifier,
+            protagonistIdentifier,
+            StringComparison.Ordinal);
+
+        Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(invalid));
+    }
+
+    [Fact]
+    public void ContentParserReportsTheInvalidDialogueResponseIndex()
+    {
+        var invalid = LoadContentJson().Replace(
+            "\"id\": \"response.reroute_service_power\"",
+            "\"id\": \"\"",
+            StringComparison.Ordinal);
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => StationRouteContent.ParseJson(invalid));
+
+        Assert.Contains("responses[0].id", exception.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void FactoryRequiresEveryInteractionAndTheCompanionPlacement()
     {
@@ -226,6 +255,16 @@ public sealed class StationRouteSessionTests
             session.EventsSince(0),
             gameEvent => gameEvent.Detail is RouteConsequenceSelectedEventDetail detail
                 && detail.RoutePowerMode == expectedPowerMode);
+        var repeated = session.Execute(new InteractCommand(
+            new CommandId("terminal.inspect-again"),
+            ProtagonistId,
+            TerminalId));
+        Assert.False(repeated.Accepted);
+        Assert.Equal(CommandRejectionCode.InteractionUnavailable, repeated.RejectionCode);
+        Assert.Single(
+            session.EventsSince(0),
+            gameEvent => gameEvent.Detail is InteractionCompletedEventDetail detail
+                && detail.InteractionId == TerminalId);
     }
 
     [Fact]
@@ -287,6 +326,46 @@ public sealed class StationRouteSessionTests
         Assert.InRange(party[0].Position.DistanceTo(party[1].Position), 1.0999, 1.1001);
         Assert.InRange((party[0].Position.X + party[1].Position.X) / 2.0, 7.9999, 8.0001);
         Assert.InRange((party[0].Position.Z + party[1].Position.Z) / 2.0, 1.9999, 2.0001);
+    }
+
+    [Fact]
+    public void PartyMoveRejectsEmptyAndDuplicateActorLists()
+    {
+        var session = CreateSession();
+        _ = SelectVanguard(session);
+
+        var empty = session.Execute(new MovePartyCommand(
+            new CommandId("party.empty"),
+            [],
+            new WorldPosition(2, 0, 0)));
+        var duplicate = session.Execute(new MovePartyCommand(
+            new CommandId("party.duplicate"),
+            [ProtagonistId, ProtagonistId],
+            new WorldPosition(2, 0, 0)));
+
+        Assert.False(empty.Accepted);
+        Assert.Equal(CommandRejectionCode.EmptyPartySelection, empty.RejectionCode);
+        Assert.False(duplicate.Accepted);
+        Assert.Equal(CommandRejectionCode.DuplicateActor, duplicate.RejectionCode);
+        Assert.Null(ObserveStation(session).Protagonist.CurrentAction);
+    }
+
+    [Fact]
+    public void PartyMoveFallsBackToRawDestinationWhenAFormationSlotIsBlocked()
+    {
+        var destination = new WorldPosition(8, 0, 2);
+        var session = CreateSession(new FormationFallbackPathfinder(destination));
+        RecruitProtector(session);
+
+        var acknowledgement = session.Execute(new MovePartyCommand(
+            new CommandId("party.fallback"),
+            [ProtagonistId, ProtectorActorId],
+            destination));
+
+        Assert.True(acknowledgement.Accepted);
+        var party = ObserveStation(session).Party;
+        Assert.NotEqual(destination, Assert.Single(party, actor => actor.Id == ProtagonistId).CurrentAction!.Destination);
+        Assert.Equal(destination, Assert.Single(party, actor => actor.Id == ProtectorActorId).CurrentAction!.Destination);
     }
 
     [Fact]
@@ -473,6 +552,17 @@ public sealed class StationRouteSessionTests
         {
             _ = origin;
             return RejectProtector && actorId == ProtectorActorId
+                ? SpatialPathResult.Unreachable
+                : SpatialPathResult.Reachable([destination]);
+        }
+    }
+
+    private sealed class FormationFallbackPathfinder(WorldPosition rawDestination) : ISpatialPathfinder
+    {
+        public SpatialPathResult FindPath(EntityId actorId, WorldPosition origin, WorldPosition destination)
+        {
+            _ = origin;
+            return actorId == ProtectorActorId && destination != rawDestination
                 ? SpatialPathResult.Unreachable
                 : SpatialPathResult.Reachable([destination]);
         }

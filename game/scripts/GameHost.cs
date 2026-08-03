@@ -53,6 +53,11 @@ public partial class GameHost : Node3D
     private TacticalCameraController _camera = null!;
     private OmniLight3D _airlockLight = null!;
     private Node3D _protagonistView = null!;
+    private Node3D? _airlockLeftDoor;
+    private Node3D? _airlockRightDoor;
+    private Node3D? _airlockNorthLeaf;
+    private Node3D? _airlockSouthLeaf;
+    private Node3D? _airlockCenterLock;
     private MeshInstance3D _destinationMarker = null!;
     private Label _objectiveLabel = null!;
     private Label _pauseLabel = null!;
@@ -68,11 +73,13 @@ public partial class GameHost : Node3D
     private CenterContainer _completionOverlay = null!;
     private string[] _developmentArguments = [];
     private string? _visibleDialogueInteractionId;
+    private string? _visibleDialogueResponseSignature;
     private string? _hoveredInteractionId;
     private long _humanCommandSequence;
     private int _navigationInitializationFrames;
     private double _autoQuitSeconds;
     private bool _visualCaptureRequested;
+    private bool? _airlockOpenState;
 
     public override void _EnterTree()
     {
@@ -93,6 +100,7 @@ public partial class GameHost : Node3D
             _actorViews.Add(GetStableId(actorView), actorView);
         }
         CacheInteractionViews();
+        CacheAirlockPresentationNodes();
         CreateDestinationMarker();
         CreateHud();
         SetFeedback("Synchronizing station navigation…", new Color("9eb6ce"));
@@ -693,13 +701,7 @@ public partial class GameHost : Node3D
             }
 
             var unavailableTransparency = interaction.State == InteractionState.Unavailable ? 0.58f : 0.0f;
-            foreach (var geometry in view.GetChildren().OfType<GeometryInstance3D>())
-            {
-                if (geometry is not Label3D)
-                {
-                    geometry.Transparency = unavailableTransparency;
-                }
-            }
+            SetInteractionTransparency(view, unavailableTransparency);
 
             if (interaction.Kind == StationInteractionKind.Destination)
             {
@@ -720,13 +722,21 @@ public partial class GameHost : Node3D
             _dialogueOverlay.Visible = true;
             _dialogueSpeaker.Text = dialogue.Speaker.ToUpperInvariant();
             _dialogueLine.Text = dialogue.Line;
+            var responseSignature = string.Join(
+                '\u001f',
+                dialogue.Responses.Select(response => response.Id.Value));
             if (!string.Equals(
                     _visibleDialogueInteractionId,
                     dialogue.InteractionId.Value,
+                    StringComparison.Ordinal)
+                || !string.Equals(
+                    _visibleDialogueResponseSignature,
+                    responseSignature,
                     StringComparison.Ordinal))
             {
                 foreach (var child in _dialogueResponses.GetChildren())
                 {
+                    _dialogueResponses.RemoveChild(child);
                     child.QueueFree();
                 }
 
@@ -744,11 +754,13 @@ public partial class GameHost : Node3D
                 }
             }
             _visibleDialogueInteractionId = dialogue.InteractionId.Value;
+            _visibleDialogueResponseSignature = responseSignature;
         }
         else
         {
             _dialogueOverlay.Visible = false;
             _visibleDialogueInteractionId = null;
+            _visibleDialogueResponseSignature = null;
         }
 
         _completionOverlay.Visible = route.Phase == ScenarioPhase.Completed;
@@ -757,32 +769,72 @@ public partial class GameHost : Node3D
 
     private void SetAirlockOpen(bool open)
     {
+        if (_airlockOpenState == open)
+        {
+            return;
+        }
+        _airlockOpenState = open;
+
+        if (_airlockLeftDoor is not null)
+        {
+            _airlockLeftDoor.Position = new Vector3(open ? -1.08f : -0.62f, 1.30f, 0.0f);
+        }
+        if (_airlockRightDoor is not null)
+        {
+            _airlockRightDoor.Position = new Vector3(open ? 1.08f : 0.62f, 1.30f, 0.0f);
+        }
+
+        if (_airlockNorthLeaf is not null)
+        {
+            _airlockNorthLeaf.Position = new Vector3(1, 1.2f, open ? 1.45f : 0.59f);
+        }
+        if (_airlockSouthLeaf is not null)
+        {
+            _airlockSouthLeaf.Position = new Vector3(1, 1.2f, open ? -1.45f : -0.59f);
+        }
+        if (_airlockCenterLock is not null)
+        {
+            _airlockCenterLock.Visible = !open;
+        }
+    }
+
+    private void CacheAirlockPresentationNodes()
+    {
         if (!_interactionViews.TryGetValue("interaction.evacuation_airlock", out var airlock))
         {
+            GD.PushError("The evacuation-airlock interaction view is missing.");
             return;
         }
 
         var productionAsset = airlock.GetNodeOrNull<Node3D>("ProductionAsset");
-        if (productionAsset?.FindChild("Door_Left", recursive: true, owned: false) is Node3D leftDoor)
+        _airlockLeftDoor = productionAsset?.FindChild(
+            "Door_Left",
+            recursive: true,
+            owned: false) as Node3D;
+        _airlockRightDoor = productionAsset?.FindChild(
+            "Door_Right",
+            recursive: true,
+            owned: false) as Node3D;
+        if (_airlockLeftDoor is null || _airlockRightDoor is null)
         {
-            leftDoor.Position = new Vector3(open ? -1.08f : -0.62f, 1.30f, 0.0f);
-        }
-        if (productionAsset?.FindChild("Door_Right", recursive: true, owned: false) is Node3D rightDoor)
-        {
-            rightDoor.Position = new Vector3(open ? 1.08f : 0.62f, 1.30f, 0.0f);
+            GD.PushError("The production airlock is missing Door_Left or Door_Right.");
         }
 
-        if (airlock.GetNodeOrNull<Node3D>("DoorNorthLeaf") is Node3D northLeaf)
+        _airlockNorthLeaf = airlock.GetNodeOrNull<Node3D>("DoorNorthLeaf");
+        _airlockSouthLeaf = airlock.GetNodeOrNull<Node3D>("DoorSouthLeaf");
+        _airlockCenterLock = airlock.GetNodeOrNull<Node3D>("CenterLock");
+    }
+
+    private static void SetInteractionTransparency(Node3D view, float transparency)
+    {
+        foreach (var child in view.GetChildren().OfType<Node3D>())
         {
-            northLeaf.Position = new Vector3(1, 1.2f, open ? 1.45f : 0.59f);
-        }
-        if (airlock.GetNodeOrNull<Node3D>("DoorSouthLeaf") is Node3D southLeaf)
-        {
-            southLeaf.Position = new Vector3(1, 1.2f, open ? -1.45f : -0.59f);
-        }
-        if (airlock.GetNodeOrNull<Node3D>("CenterLock") is Node3D centerLock)
-        {
-            centerLock.Visible = !open;
+            if (child is GeometryInstance3D geometry and not Label3D)
+            {
+                geometry.Transparency = transparency;
+            }
+
+            SetInteractionTransparency(child, transparency);
         }
     }
 
@@ -791,6 +843,7 @@ public partial class GameHost : Node3D
         var structure = GetNodeOrNull<Node3D>("Environment/ProductionStructure");
         if (structure is null)
         {
+            GD.PushError("The production station structure node is missing; camera cutaway is disabled.");
             return;
         }
 
@@ -840,7 +893,6 @@ public partial class GameHost : Node3D
         var selectedActors = route.Party
             .Where(actor => _selectedActorIds.Contains(actor.Id))
             .ToArray();
-        var leadActor = selectedActors.FirstOrDefault() ?? route.Protagonist;
         if (interactionHit.Count > 0
             && interactionHit["collider"].AsGodotObject() is Node collider
             && collider.HasMeta("stable_id"))
@@ -848,7 +900,7 @@ public partial class GameHost : Node3D
             var stableId = collider.GetMeta("stable_id").AsString();
             Dispatch(new InteractCommand(
                 NextHumanCommandId("interact"),
-                leadActor.Id,
+                route.Protagonist.Id,
                 new EntityId(stableId)));
             return;
         }
@@ -1557,7 +1609,7 @@ public partial class GameHost : Node3D
     {
         var failure = JsonSerializer.Serialize(new
         {
-            schema_version = 2,
+            schema_version = 1,
             capture_id = WallCutawayCaptureId,
             passed = false,
             error,

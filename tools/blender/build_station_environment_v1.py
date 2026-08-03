@@ -261,8 +261,8 @@ def build_airlock() -> tuple[str, list[str]]:
     control = join(
         "Control_Panel",
         [
-            add_box("control.body", (1.78, 1.35, 0), (0.26, 0.55, 0.20), dark, bevel=0.035),
-            add_box("control.screen", (1.78, 1.47, -0.12), (0.13, 0.15, 0.025), green, bevel=0.012),
+            add_box("control.body", (1.47, 1.35, 0), (0.26, 0.55, 0.20), dark, bevel=0.035),
+            add_box("control.screen", (1.47, 1.47, -0.12), (0.13, 0.15, 0.025), green, bevel=0.012),
         ],
     )
     objects = [frame, left, right, status, control]
