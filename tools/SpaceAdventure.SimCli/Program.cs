@@ -112,26 +112,32 @@ static int RunStationRoute(JsonLinesOutput output)
         "station-route.json");
     var definition = StationRouteContent.ParseJson(File.ReadAllText(contentPath));
     var layout = StationRouteFixture.CreateLayout(definition);
+    var pathfinder = new StationRouteFixturePathfinder(
+        [definition.Protagonist.Id, definition.Companion.Id]);
     var session = GameSession.CreateStationRoute(
         definition,
         layout,
-        new StationRouteFixturePathfinder([definition.Protagonist.Id, definition.Companion.Id]));
+        pathfinder);
     var events = new GameplayEventOutput(output);
     var assertions = new ScenarioAssertions(output);
 
     var survivor = definition.Interactions.Single(
         interaction => interaction.Effect == StationInteractionEffect.BeginSurvivorDialogue);
-    var protector = definition.Interactions.Single(
-        interaction => interaction.Effect == StationInteractionEffect.BeginRecruitmentDialogue);
+    var entryDoor = definition.Interactions.Single(
+        interaction => interaction.Effect == StationInteractionEffect.OpenEntryServiceDoor);
+    var soloExit = definition.Interactions.Single(
+        interaction => interaction.Effect == StationInteractionEffect.OpenSoloExitServiceDoor);
     var terminal = definition.Interactions.Single(
         interaction => interaction.Effect == StationInteractionEffect.RecordObservation);
+    var protector = definition.Interactions.Single(
+        interaction => interaction.Effect == StationInteractionEffect.BeginRecruitmentDialogue);
     var airlock = definition.Interactions.Single(
         interaction => interaction.Effect == StationInteractionEffect.CompleteScenario);
 
     output.Emit(new
     {
         kind = "run_metadata",
-        schema_version = 2,
+        schema_version = 3,
         scenario_id = StationRouteScenarioId,
         content_scenario_id = definition.ScenarioId.Value,
         content_revision = definition.ContentRevision,
@@ -141,7 +147,7 @@ static int RunStationRoute(JsonLinesOutput output)
         runtime = Environment.Version.ToString(),
         tick_rate = GameSession.TicksPerSecond,
         maximum_ticks_per_leg = MaximumTicksPerLeg,
-        pathfinder = "deterministic_station_route_fixture_v2",
+        pathfinder = "deterministic_station_route_fixture_v4",
     });
     events.Flush(session);
 
@@ -152,8 +158,11 @@ static int RunStationRoute(JsonLinesOutput output)
             && initial.SelectedProtagonistKit is null
             && initial.Party.Count == 1);
     assertions.Check(
-        "airlock_is_gated_before_briefing",
-        FindInteraction(initial, airlock.Id).State == InteractionState.Unavailable);
+        "all_route_gates_are_locked_before_briefing",
+        FindInteraction(initial, entryDoor.Id).State == InteractionState.Unavailable
+            && FindInteraction(initial, soloExit.Id).State == InteractionState.Unavailable
+            && FindInteraction(initial, protector.Id).State == InteractionState.Unavailable
+            && FindInteraction(initial, airlock.Id).State == InteractionState.Unavailable);
 
     var kit = definition.ProtagonistKits.Single(candidate =>
         candidate.Id == new ProtagonistKitId("kit.protagonist.vanguard"));
@@ -169,6 +178,20 @@ static int RunStationRoute(JsonLinesOutput output)
             && afterKitSelection.SelectedProtagonistKit?.Id == kit.Id
             && afterKitSelection.Protagonist.Loadout?.BasicAttackId == kit.BasicAttackId
             && afterKitSelection.Protagonist.Loadout?.ActiveAbilityId == kit.ActiveAbilityId);
+
+    var positionBeforeLockedMove = afterKitSelection.Protagonist.Position;
+    var lockedEntryMove = session.Execute(new MoveActorCommand(
+        new CommandId("station-route.verify-entry-navigation-lock"),
+        definition.Protagonist.Id,
+        new WorldPosition(-10, 0, 0)));
+    EmitCommandResult(output, "move_actor", lockedEntryMove);
+    events.Flush(session);
+    assertions.Check(
+        "entry_navigation_is_locked_before_survivor_choice",
+        !lockedEntryMove.Accepted
+            && lockedEntryMove.RejectionCode == CommandRejectionCode.DestinationUnreachable
+            && RequireStationObservation(session.Observe()).Protagonist.Position
+                == positionBeforeLockedMove);
 
     var survivorCommand = session.Execute(new InteractCommand(
         new CommandId("station-route.interact-survivor"),
@@ -197,6 +220,7 @@ static int RunStationRoute(JsonLinesOutput output)
         responseId));
     EmitCommandResult(output, "choose_dialogue_response", responseCommand);
     events.Flush(session);
+    pathfinder.EntryDoorUnlocked = true;
 
     var afterResponse = RequireStationObservation(session.Observe());
     assertions.Check(
@@ -204,12 +228,14 @@ static int RunStationRoute(JsonLinesOutput output)
         dialogue?.Responses.Any(response => response.Id == responseId) == true
             && responseCommand.Accepted);
     assertions.Check(
-        "power_choice_advances_recruitment_objective",
+        "power_choice_advances_entry_door_objective",
         afterResponse.ActiveDialogue is null
             && afterResponse.RoutePowerMode == RoutePowerMode.ServiceRerouted
-            && afterResponse.Objective.Id == definition.RecruitmentObjective.Id
+            && afterResponse.Objective.Id == definition.EntryDoorObjective.Id
             && FindInteraction(afterResponse, survivor.Id).State == InteractionState.Completed
-            && FindInteraction(afterResponse, protector.Id).State == InteractionState.Available
+            && FindInteraction(afterResponse, entryDoor.Id).State == InteractionState.Available
+            && FindInteraction(afterResponse, soloExit.Id).State == InteractionState.Unavailable
+            && FindInteraction(afterResponse, protector.Id).State == InteractionState.Unavailable
             && FindInteraction(afterResponse, airlock.Id).State == InteractionState.Unavailable);
 
     var terminalCommand = session.Execute(new InteractCommand(
@@ -233,98 +259,78 @@ static int RunStationRoute(JsonLinesOutput output)
             && FindInteraction(afterTerminal, terminal.Id).ResultText == terminal.ResultText
             && afterTerminal.Phase == ScenarioPhase.InProgress);
 
-    var protectorCommand = session.Execute(new InteractCommand(
-        new CommandId("station-route.interact-protector"),
+    var arenaDestination = new WorldPosition(-10, 0, 0);
+    var arenaSequence = session.Observe().LatestEventSequence;
+    var arenaMoveCommand = session.Execute(new MoveActorCommand(
+        new CommandId("station-route.enter-solo-arena"),
         definition.Protagonist.Id,
-        protector.Id));
-    EmitCommandResult(output, "interact", protectorCommand);
+        arenaDestination));
+    EmitCommandResult(output, "move_actor", arenaMoveCommand);
     events.Flush(session);
-    var protectorAdvance = AdvanceUntil(
+    var arenaAdvance = AdvanceUntil(
         session,
-        observation => observation.ActiveDialogue?.InteractionId == protector.Id,
+        observation => observation.Protagonist.Position == arenaDestination
+            && observation.Protagonist.CurrentAction is null,
         MaximumTicksPerLeg);
-    EmitAdvanceResult(output, "approach_protector", MaximumTicksPerLeg, protectorAdvance);
+    EmitAdvanceResult(output, "enter_solo_arena", MaximumTicksPerLeg, arenaAdvance);
     events.Flush(session);
-
-    var recruitResponseId = protector.Dialogue!.Responses.Single().Id;
-    var recruitCommand = session.Execute(new ChooseDialogueResponseCommand(
-        new CommandId("station-route.recruit-protector"),
-        definition.Protagonist.Id,
-        protector.Id,
-        recruitResponseId));
-    EmitCommandResult(output, "choose_dialogue_response", recruitCommand);
-    events.Flush(session);
-    var afterRecruitment = RequireStationObservation(session.Observe());
+    var afterArena = RequireStationObservation(session.Observe());
+    var arenaEvents = session.EventsSince(arenaSequence);
+    var entryDoorOpened = arenaEvents.FirstOrDefault(gameEvent =>
+        gameEvent.Detail is InteractionCompletedEventDetail detail
+            && detail.InteractionId == entryDoor.Id);
+    var arenaArrived = arenaEvents.FirstOrDefault(gameEvent =>
+        gameEvent.Type == GameplayEventType.MovementArrived);
     assertions.Check(
-        "protector_joins_and_unlocks_airlock",
-        protectorCommand.Accepted
-            && protectorAdvance.ConditionReached
-            && recruitCommand.Accepted
-            && afterRecruitment.Party.Any(actor => actor.Id == definition.Companion.Id)
-            && afterRecruitment.Objective.Id == definition.DestinationObjective.Id
-            && FindInteraction(afterRecruitment, airlock.Id).State == InteractionState.Available);
+        "unlocked_entry_door_auto_opens_before_arena_arrival",
+        arenaMoveCommand.Accepted
+            && arenaAdvance.ConditionReached
+            && entryDoorOpened is not null
+            && arenaArrived is not null
+            && entryDoorOpened.Sequence < arenaArrived.Sequence
+            && FindInteraction(afterArena, entryDoor.Id).State == InteractionState.Completed
+            && afterArena.Objective.Id == definition.CombatThresholdObjective.Id
+            && afterArena.Protagonist.Position == arenaDestination
+            && afterArena.Party.Count == 1);
 
-    var partyMoveCommand = session.Execute(new MovePartyCommand(
-        new CommandId("station-route.move-party"),
-        [definition.Companion.Id, definition.Protagonist.Id],
-        new WorldPosition(7, 0, 0)));
-    EmitCommandResult(output, "move_party", partyMoveCommand);
-    events.Flush(session);
-    var partyAdvance = AdvanceUntil(
-        session,
-        observation => observation.Party.All(actor =>
-            actor.CurrentAction is null && actor.PendingAction is null),
-        MaximumTicksPerLeg);
-    EmitAdvanceResult(output, "move_party", MaximumTicksPerLeg, partyAdvance);
-    events.Flush(session);
-    var formedParty = RequireStationObservation(session.Observe()).Party;
-    var formedProtagonist = formedParty.Single(actor => actor.Id == definition.Protagonist.Id);
-    var formedCompanion = formedParty.Single(actor => actor.Id == definition.Companion.Id);
-    assertions.Check(
-        "party_moves_in_stable_formation",
-        partyMoveCommand.Accepted
-            && partyAdvance.ConditionReached
-            && formedParty.Count == 2
-            && formedProtagonist.Position == new WorldPosition(
-                6.826074728690739,
-                0,
-                -0.5217758139277826)
-            && formedCompanion.Position == new WorldPosition(
-                7.173925271309261,
-                0,
-                0.5217758139277826));
-
-    var airlockCommand = session.Execute(new InteractCommand(
-        new CommandId("station-route.enter-airlock"),
+    var exitCommand = session.Execute(new InteractCommand(
+        new CommandId("station-route.verify-solo-exit-lock"),
         definition.Protagonist.Id,
-        airlock.Id));
-    EmitCommandResult(output, "interact", airlockCommand);
+        soloExit.Id));
+    EmitCommandResult(output, "interact", exitCommand);
     events.Flush(session);
 
-    var airlockAdvance = AdvanceUntil(
-        session,
-        observation => observation.Phase == ScenarioPhase.Completed,
-        MaximumTicksPerLeg);
-    EmitAdvanceResult(output, "approach_airlock", MaximumTicksPerLeg, airlockAdvance);
+    var positionBeforeBypassAttempt = RequireStationObservation(session.Observe()).Protagonist.Position;
+    var bypassCommand = session.Execute(new MoveActorCommand(
+        new CommandId("station-route.verify-solo-exit-navigation-lock"),
+        definition.Protagonist.Id,
+        new WorldPosition(-1.5, 0, 0)));
+    EmitCommandResult(output, "move_actor", bypassCommand);
     events.Flush(session);
 
     var finalObservation = RequireStationObservation(session.Observe());
     assertions.Check(
-        "airlock_completes_scenario_within_budget",
-        airlockCommand.Accepted
-            && airlockAdvance.ConditionReached
-            && finalObservation.Phase == ScenarioPhase.Completed
-            && finalObservation.Objective.Status == ObjectiveStatus.Completed
-            && FindInteraction(finalObservation, airlock.Id).State == InteractionState.Completed);
+        "solo_exit_is_authoritatively_locked",
+        !exitCommand.Accepted
+            && exitCommand.RejectionCode == CommandRejectionCode.InteractionUnavailable
+            && FindInteraction(finalObservation, soloExit.Id).State == InteractionState.Unavailable);
     assertions.Check(
-        "critical_path_emits_completion_event",
-        session.EventsSince(0).Any(gameEvent => gameEvent.Type == GameplayEventType.ScenarioCompleted));
+        "solo_exit_navigation_cannot_be_bypassed",
+        !bypassCommand.Accepted
+            && bypassCommand.RejectionCode == CommandRejectionCode.DestinationUnreachable
+            && finalObservation.Protagonist.Position == positionBeforeBypassAttempt);
     assertions.Check(
-        "critical_path_has_no_command_rejections",
-        session.EventsSince(0).All(gameEvent => gameEvent.Type != GameplayEventType.CommandRejected));
+        "future_route_remains_unavailable",
+        FindInteraction(finalObservation, protector.Id).State == InteractionState.Unavailable
+            && FindInteraction(finalObservation, airlock.Id).State == InteractionState.Unavailable);
+    assertions.Check(
+        "scenario_stops_successfully_at_combat_threshold",
+        finalObservation.Phase == ScenarioPhase.InProgress
+            && finalObservation.Objective.Id == definition.CombatThresholdObjective.Id
+            && !session.EventsSince(0).Any(gameEvent => gameEvent.Type == GameplayEventType.ScenarioCompleted));
     assertions.Check(
         "critical_path_remains_within_total_tick_budget",
-        session.Tick <= MaximumTicksPerLeg * 6L);
+        session.Tick <= MaximumTicksPerLeg * 5L);
 
     stopwatch.Stop();
     output.Emit(new
@@ -740,10 +746,12 @@ internal static class StationRouteFixture
     private static readonly Dictionary<string, (WorldPosition Position, WorldPosition Approach)>
         InteractionPlacements = new Dictionary<string, (WorldPosition, WorldPosition)>(StringComparer.Ordinal)
         {
-            ["interaction.survivor"] = (new(1, 0, 1), new(0, 0, 1)),
-            ["interaction.protector"] = (new(5.5, 0, 0), new(4.5, 0, 0)),
-            ["interaction.service_terminal"] = (new(5.5, 0, 1.7), new(5.5, 0, 1)),
-            ["interaction.evacuation_airlock"] = (new(9, 0, 0), new(8, 0, 0)),
+            ["interaction.survivor"] = (new(-8.5, 0, 6.5), new(-9.3, 0, 6.5)),
+            ["interaction.service_door.entry"] = (new(-10, 0, 4), new(-10, 0, 4.85)),
+            ["interaction.service_door.solo_exit"] = (new(-5, 0, 0), new(-5.85, 0, 0)),
+            ["interaction.protector"] = (new(-1.5, 0, 0), new(-2.35, 0, 0)),
+            ["interaction.service_terminal"] = (new(-11.5, 0, 6.5), new(-10.65, 0, 6.5)),
+            ["interaction.evacuation_airlock"] = (new(12, 0, 8), new(11.15, 0, 8)),
         };
 
     public static StationRouteLayout CreateLayout(StationRouteDefinition definition)
@@ -764,8 +772,8 @@ internal static class StationRouteFixture
                 placement.Approach);
         });
         return new StationRouteLayout(
-            new WorldPosition(0, 0, 5.5),
-            [new StationActorPlacement(definition.Companion.Id, new WorldPosition(5.5, 0, 0))],
+            new WorldPosition(-10, 0, 8.5),
+            [new StationActorPlacement(definition.Companion.Id, new WorldPosition(-1.5, 0, 0))],
             placements);
     }
 }
@@ -773,8 +781,10 @@ internal static class StationRouteFixture
 internal sealed class StationRouteFixturePathfinder(IEnumerable<EntityId> actorIds) : ISpatialPathfinder
 {
     private const double CoordinateTolerance = 0.0001;
-    private static readonly WorldPosition Junction = new(1.5, 0, 1);
+    private static readonly WorldPosition EntryDoor = new(-10, 0, 4);
     private readonly HashSet<EntityId> _actorIds = actorIds.ToHashSet();
+
+    public bool EntryDoorUnlocked { get; set; }
 
     public SpatialPathResult FindPath(
         EntityId actorId,
@@ -797,12 +807,20 @@ internal sealed class StationRouteFixturePathfinder(IEnumerable<EntityId> actorI
             return SpatialPathResult.Unreachable;
         }
 
-        if ((originRegion & destinationRegion) != 0)
+        if (originRegion == destinationRegion)
         {
             return SpatialPathResult.Reachable([destination]);
         }
 
-        return SpatialPathResult.Reachable([Junction, destination]);
+        if ((originRegion == FixtureRegion.StartRoom && destinationRegion == FixtureRegion.SoloArena)
+            || (originRegion == FixtureRegion.SoloArena && destinationRegion == FixtureRegion.StartRoom))
+        {
+            return EntryDoorUnlocked
+                ? SpatialPathResult.Reachable([EntryDoor, destination])
+                : SpatialPathResult.Unreachable;
+        }
+
+        return SpatialPathResult.Unreachable;
     }
 
     private static bool IsGroundLevel(WorldPosition position)
@@ -812,25 +830,31 @@ internal sealed class StationRouteFixturePathfinder(IEnumerable<EntityId> actorI
 
     private static FixtureRegion GetRegion(WorldPosition position)
     {
-        var region = FixtureRegion.None;
-        if (position.X >= -2 && position.X <= 2 && position.Z >= -2 && position.Z <= 7)
+        // Evaluation order intentionally gives shared boundaries to the earlier
+        // room: StartRoom before SoloArena, then SoloArena before FutureRoute.
+        if (position.X >= -13 && position.X <= -7 && position.Z >= 4 && position.Z <= 10)
         {
-            region |= FixtureRegion.VerticalCorridor;
+            return FixtureRegion.StartRoom;
         }
 
-        if (position.X >= 2 && position.X <= 9 && position.Z >= -2 && position.Z <= 2)
+        if (position.X >= -15 && position.X <= -5 && position.Z >= -4 && position.Z <= 4)
         {
-            region |= FixtureRegion.EastCorridor;
+            return FixtureRegion.SoloArena;
         }
 
-        return region;
+        if (position.X >= -5.7 && position.X <= 12 && position.Z >= -3 && position.Z <= 13)
+        {
+            return FixtureRegion.FutureRoute;
+        }
+
+        return FixtureRegion.None;
     }
 
-    [Flags]
     private enum FixtureRegion
     {
         None = 0,
-        VerticalCorridor = 1,
-        EastCorridor = 2,
+        StartRoom = 1,
+        SoloArena = 2,
+        FutureRoute = 3,
     }
 }

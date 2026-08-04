@@ -290,3 +290,30 @@ models, rigs, idle, and locomotion may be prepared during Phase 3, but draw,
 attack, contact, recoil, recovery, and holster animation is selected and
 finalized alongside the authoritative Phase 4 rules and timing. Animation
 callbacks and physical presentation remain non-authoritative under ADR 0014.
+
+## ADR 0025 — Station route v2 ends at an authoritative service-door gate
+
+Status: accepted by the project owner on 2026-08-04 for PR 14.
+
+The station uses a five-area serpentine 1 m-grid layout published as
+`kit.station.structure.v2`. Two instances of the rigid
+`assembly.station.service_door.v1` assembly bound the solo-combat arena. The
+entry door becomes available after either survivor response and completes
+atomically when Vanguard approaches it on an accepted movement path, before
+the current objective advances to the first-combat threshold. Its Godot
+navigation link derives from the available-or-completed authoritative state;
+its collision blocker and leaf presentation derive from completion. The far
+door remains observable but unavailable until Phase 4 supplies combat victory;
+Protector recruitment and the final airlock therefore remain unavailable and
+unreachable. Direct interaction remains valid for an available door, but is
+not required to cross it.
+
+Service-door leaf motion is a 0.25-second presentation synchronized from
+observations. Animation callbacks never mutate gameplay. Navigation is split
+at each doorway, and no development bypass preserves the superseded full-route
+completion. The CLI and Godot station-route scenarios now pass by entering the
+solo arena, verifying the far lock, and stopping with the scenario still in
+progress. Static structure metadata supplies stable wall-occluder IDs; Godot
+discovers them recursively from the imported GLB instead of maintaining a wall
+name map. This decision adds two explicit door effects, not a generic quest or
+gate framework.

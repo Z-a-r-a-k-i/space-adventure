@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "content_revision": "station-route-v4",
+  "schema_version": 3,
+  "content_revision": "station-route-v5",
   "scenario_id": "scenario.station_route",
   "protagonist": {
     "id": "actor.protagonist",
@@ -35,6 +35,14 @@
     "id": "objective.choose_power_route",
     "text": "Speak with the survivor and decide where to route the remaining power."
   },
+  "entry_door_objective": {
+    "id": "objective.open_entry_service_door",
+    "text": "Open the service door into the security arena."
+  },
+  "combat_threshold_objective": {
+    "id": "objective.reach_first_combat",
+    "text": "Enter the security arena and assess the locked far door."
+  },
   "recruitment_objective": {
     "id": "objective.recruit_protector",
     "text": "Recruit the Protector waiting beyond the service junction."
@@ -66,6 +74,22 @@
           }
         ]
       }
+    },
+    {
+      "id": "interaction.service_door.entry",
+      "kind": "environment",
+      "prompt": "Open the entry service door",
+      "use_radius_meters": 1.25,
+      "effect": "open_entry_service_door",
+      "result_text": "The entry service door unlocks and slides open."
+    },
+    {
+      "id": "interaction.service_door.solo_exit",
+      "kind": "environment",
+      "prompt": "Open the arena exit service door",
+      "use_radius_meters": 1.25,
+      "effect": "open_solo_exit_service_door",
+      "result_text": "The arena exit unlocks after the security threat is cleared."
     },
     {
       "id": "interaction.protector",

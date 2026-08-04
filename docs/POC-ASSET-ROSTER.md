@@ -1,8 +1,9 @@
 # POC asset roster
 
-Status: approved active inventory. Vanguard and the initial station candidates
-are integrated; the service door, full-route presentation, active NPC bases,
-and hostile bases are the remaining Phase 3 gate before combat gameplay.
+Status: approved active inventory. Vanguard, the production five-area station
+route, both service-door instances, terminal, and final airlock are integrated.
+The active NPC and hostile bases are the remaining Phase 3 art gate before
+combat gameplay.
 
 ## Presentation rules
 
@@ -35,7 +36,7 @@ and hostile bases are the remaining Phase 3 gate before combat gameplay.
 | Service terminal | `prop.station.service_terminal.v1` | Readable optional-interaction hero prop | 3 |
 | Wall utility | `prop.station.wall_utility.v1` | Repeatable noninteractive wall dressing | 5 |
 | Field aid | `item.healing.field_aid.v1` | Hand-scale item only if visibly handled | 4 |
-| Station kit | `kit.station.structure.v1` | Exact-grid floors, cutaway walls, junctions, route strips, and lights | 3 |
+| Station kit | `kit.station.structure.v2` | Five-area exact-grid floors, metadata-tagged cutaway walls, junction posts, and cyan route strips | 3 |
 | Evacuation airlock | `assembly.station.evacuation_airlock.v1` | Frame, opening leaves, status panel, and readable open state | 3 |
 | Service door | `assembly.station.service_door.v1` | Ordinary rigid room-boundary door derived dimensionally from the station kit | 3 |
 
@@ -92,11 +93,13 @@ approval. A door leaf, terminal screen, or status light may be a gameplay-driven
 rigid node without requiring a skeleton.
 
 The project owner advanced the station structure, service terminal, and
-evacuation airlock to Phase 3 on 2026-08-02. Their deterministic Blender
-sources and exact GLBs are integrated into the live route over the retained
-Godot collision, navigation, light, and interaction wrappers. All three pass
-technical and live graphical review; final owner visual approval remains
-pending. Their compact records are under `art/source/<asset-id>/production.md`.
+evacuation airlock to Phase 3 on 2026-08-02, then approved the five-area route
+and reusable service-door plan on 2026-08-04. The v2 structure, two instances
+of the service door, unchanged terminal, and unchanged airlock are integrated
+over invisible Godot collision, navigation, light, and interaction wrappers.
+Both new assets pass their Blender gates, fresh GLB reimport, Godot import,
+headless route traversal, and contextual graphical inspection. Their compact
+records are under `art/source/<asset-id>/production.md`.
 
 The retained wall-utility candidate passed its brief-specific Blender and
 isolated Godot technical checks. Its compact record and exact reviewed output
@@ -135,19 +138,15 @@ sequence remains coupled to the Phase 4 weapon-handling and combat gate.
 
 ## Integration order
 
-1. Obtain final owner visual approval for the integrated station structure,
-   service terminal, and final evacuation-airlock candidates.
-2. Author and integrate the ordinary service door at the first-room boundary;
-   reserve the airlock for the final destination.
-3. Extend reviewed station presentation across the full authored route,
-   retaining only invisible primitive gameplay wrappers.
-4. Reuse the accepted humanoid contract for the survivor, Protector, and
+1. Obtain final owner visual approval for the integrated v2 station route and
+   both service-door instances; keep the terminal and final airlock unchanged.
+2. Reuse the accepted humanoid contract for the survivor, Protector, and
    Security Enforcer. Produce the sentry as a simple rigid machine. All visible
    NPC and combatant bases must be non-greybox before Phase 4 starts.
-5. Finish the separate Vanguard carbine and Protector shotgun attachment fits.
-6. Define the solo tutorial and main party-combat rules, then select and clean
+3. Finish the separate Vanguard carbine and Protector shotgun attachment fits.
+4. Define the solo tutorial and main party-combat rules, then select and clean
    weapon-handling and fight animations against those authoritative timings.
-7. Keep Operator and its pistol deferred unless a later owner decision
+5. Keep Operator and its pistol deferred unless a later owner decision
    reactivates them. Reuse the retained wall utility only after owner review.
 
 ## Post-POC visual anchors

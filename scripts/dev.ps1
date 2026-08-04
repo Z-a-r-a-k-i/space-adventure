@@ -523,7 +523,7 @@ Options:
                 throw "Visual capture manifest did not report passed=true."
             }
 
-            $expectedOccluderId = "presentation.wall.branch_north"
+            $expectedOccluderId = "presentation.wall.start.west"
             $cutaway = $manifest["cutaway"]
             if ($cutaway -isnot [System.Collections.IDictionary]) {
                 throw "Visual capture manifest cutaway property must be an object."
@@ -570,9 +570,9 @@ Options:
 
             $lifecyclePhases = @($lifecycle["phases"])
             $expectedLifecyclePhases = @(
-                [pscustomobject]@{ PhaseId = "initial_cut"; YawRadians = 0.68; DesiredIds = @($expectedOccluderId) },
-                [pscustomobject]@{ PhaseId = "clear_view_restore"; YawRadians = [Math]::PI; DesiredIds = @() },
-                [pscustomobject]@{ PhaseId = "recut"; YawRadians = 0.68; DesiredIds = @($expectedOccluderId) }
+                [pscustomobject]@{ PhaseId = "initial_cut"; YawRadians = -[Math]::PI / 2.0; DesiredIds = @($expectedOccluderId) },
+                [pscustomobject]@{ PhaseId = "clear_view_restore"; YawRadians = [Math]::PI / 2.0; DesiredIds = @() },
+                [pscustomobject]@{ PhaseId = "recut"; YawRadians = -[Math]::PI / 2.0; DesiredIds = @($expectedOccluderId) }
             )
             if ($lifecyclePhases.Count -ne $expectedLifecyclePhases.Count) {
                 throw "Visual capture lifecycle must contain exactly three phases."

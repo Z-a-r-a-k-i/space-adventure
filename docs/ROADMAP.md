@@ -65,14 +65,16 @@ in the live station route. Blender validation and a fresh GLB
 reimport confirm a grounded 1.82 m character at the gameplay origin; direct
 Godot inspection confirms visible idle and locomotion playback.
 
-On 2026-08-02 the owner also advanced the static station structure, service
-terminal, and evacuation airlock into Phase 3. Their deterministic Blender
-sources and GLBs replace presentation geometry while Godot keeps navigation,
-collision, lighting, interaction identity, and route state. The previously
-merged Protector-before-combat flow is now superseded. The evacuation-airlock
-assembly is reserved for the final destination; an ordinary rigid service door
-must separate the start room from the first-combat room. Final owner visual
-approval of the environment candidates remains open.
+On 2026-08-04 the station presentation advanced to route revision
+`station-route-v5`. `kit.station.structure.v2` now covers the complete five-area
+serpentine route, and two instances of `assembly.station.service_door.v1`
+bound the solo-combat arena. Deterministic Blender sources and GLBs replace
+presentation geometry while Godot keeps navigation, collision, lighting,
+interaction identity, and route state. The entry link opens only after the
+survivor choice; moving through it automatically completes and opens the entry
+door before Vanguard reaches it. The far link remains locked.
+The evacuation-airlock assembly remains unchanged at the final destination.
+Automated route verification intentionally stops at the first-combat threshold.
 
 - Keep Vanguard as the only protagonist. Produce Protector as the fixed recruit
   encountered after the solo tutorial fight; do not restore a character-choice
@@ -90,10 +92,10 @@ approval of the environment candidates remains open.
   the solo tutorial fight. Portraits remain presentation work.
 - Preserve the survivor route choice, observable consequence, and Protector
   recruitment exchange, gating that exchange in the post-fight room.
-- Extend the production station kit through the start, first-combat,
-  recruitment, main-encounter, and destination rooms, replace the first-room
-  airlock with a service door, and remove visible greybox presentation while
-  retaining hidden authoritative Godot wrappers.
+- Retain the integrated production station kit and service doors across the
+  start, first-combat, recruitment, main-encounter, and destination rooms.
+  Keep all primitive collision, navigation, lighting, and interaction wrappers
+  invisible and keep the final airlock publication unchanged.
 - Verify dialogue state validation, door progression, pause behavior, and the
   Vanguard path to the first-combat threshold. Repeated full manual play
   remains open.

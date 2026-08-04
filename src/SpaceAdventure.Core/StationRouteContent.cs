@@ -16,6 +16,8 @@ public enum StationInteractionEffect
     BeginSurvivorDialogue,
     BeginRecruitmentDialogue,
     RecordObservation,
+    OpenEntryServiceDoor,
+    OpenSoloExitServiceDoor,
     CompleteScenario,
 }
 
@@ -81,6 +83,8 @@ public sealed class StationRouteDefinition
         StationActorDefinition companion,
         IEnumerable<ProtagonistKitDefinition> protagonistKits,
         StationObjectiveDefinition briefingObjective,
+        StationObjectiveDefinition entryDoorObjective,
+        StationObjectiveDefinition combatThresholdObjective,
         StationObjectiveDefinition recruitmentObjective,
         StationObjectiveDefinition destinationObjective,
         IEnumerable<StationInteractionDefinition> interactions)
@@ -93,6 +97,8 @@ public sealed class StationRouteDefinition
         ProtagonistKits = new ReadOnlyCollection<ProtagonistKitDefinition>(
             protagonistKits.ToArray());
         BriefingObjective = briefingObjective;
+        EntryDoorObjective = entryDoorObjective;
+        CombatThresholdObjective = combatThresholdObjective;
         RecruitmentObjective = recruitmentObjective;
         DestinationObjective = destinationObjective;
         Interactions = new ReadOnlyCollection<StationInteractionDefinition>(
@@ -113,6 +119,10 @@ public sealed class StationRouteDefinition
 
     public StationObjectiveDefinition BriefingObjective { get; }
 
+    public StationObjectiveDefinition EntryDoorObjective { get; }
+
+    public StationObjectiveDefinition CombatThresholdObjective { get; }
+
     public StationObjectiveDefinition RecruitmentObjective { get; }
 
     public StationObjectiveDefinition DestinationObjective { get; }
@@ -122,7 +132,7 @@ public sealed class StationRouteDefinition
 
 public static class StationRouteContent
 {
-    public const int SupportedSchemaVersion = 2;
+    public const int SupportedSchemaVersion = 3;
 
     private const int MaximumIdLength = 128;
     private const int MaximumTextLength = 4096;
@@ -145,7 +155,7 @@ public static class StationRouteContent
         }
         catch (JsonException exception)
         {
-            throw new InvalidDataException("Station route content is not valid schema-v2 JSON.", exception);
+            throw new InvalidDataException("Station route content is not valid schema-v3 JSON.", exception);
         }
 
         if (dto.SchemaVersion != SupportedSchemaVersion)
@@ -166,11 +176,22 @@ public static class StationRouteContent
         var kits = ParseKits(dto.ProtagonistKits);
         ValidatePartyLoadoutIdentifiers(kits, companion.Loadout!);
         var briefingObjective = ParseObjective(dto.BriefingObjective, "briefing_objective");
+        var entryDoorObjective = ParseObjective(dto.EntryDoorObjective, "entry_door_objective");
+        var combatThresholdObjective = ParseObjective(
+            dto.CombatThresholdObjective,
+            "combat_threshold_objective");
         var recruitmentObjective = ParseObjective(dto.RecruitmentObjective, "recruitment_objective");
         var destinationObjective = ParseObjective(dto.DestinationObjective, "destination_objective");
-        if (new[] { briefingObjective.Id, recruitmentObjective.Id, destinationObjective.Id }
+        if (new[]
+            {
+                briefingObjective.Id,
+                entryDoorObjective.Id,
+                combatThresholdObjective.Id,
+                recruitmentObjective.Id,
+                destinationObjective.Id,
+            }
             .Distinct()
-            .Count() != 3)
+            .Count() != 5)
         {
             throw new InvalidDataException("Station route objective IDs must be distinct.");
         }
@@ -191,6 +212,8 @@ public static class StationRouteContent
             companion,
             kits,
             briefingObjective,
+            entryDoorObjective,
+            combatThresholdObjective,
             recruitmentObjective,
             destinationObjective,
             interactions);
@@ -405,6 +428,8 @@ public static class StationRouteContent
             "begin_survivor_dialogue" => StationInteractionEffect.BeginSurvivorDialogue,
             "begin_recruitment_dialogue" => StationInteractionEffect.BeginRecruitmentDialogue,
             "record_observation" => StationInteractionEffect.RecordObservation,
+            "open_entry_service_door" => StationInteractionEffect.OpenEntryServiceDoor,
+            "open_solo_exit_service_door" => StationInteractionEffect.OpenSoloExitServiceDoor,
             "complete_scenario" => StationInteractionEffect.CompleteScenario,
             _ => throw new InvalidDataException($"Interaction '{id}' has unknown effect '{value}'."),
         };
@@ -485,6 +510,19 @@ public static class StationRouteContent
             return;
         }
 
+        if (effect is StationInteractionEffect.OpenEntryServiceDoor
+            or StationInteractionEffect.OpenSoloExitServiceDoor)
+        {
+            if (kind != StationInteractionKind.Environment
+                || preservedResultText is not null)
+            {
+                throw new InvalidDataException(
+                    $"Service-door interaction '{id}' must be an environment interaction with one result text.");
+            }
+
+            return;
+        }
+
         if (effect != StationInteractionEffect.CompleteScenario
             || kind != StationInteractionKind.Destination
             || preservedResultText is not null)
@@ -510,6 +548,8 @@ public static class StationRouteContent
         RequireExactlyOne(interactions, StationInteractionEffect.BeginSurvivorDialogue);
         RequireExactlyOne(interactions, StationInteractionEffect.BeginRecruitmentDialogue);
         RequireExactlyOne(interactions, StationInteractionEffect.RecordObservation);
+        RequireExactlyOne(interactions, StationInteractionEffect.OpenEntryServiceDoor);
+        RequireExactlyOne(interactions, StationInteractionEffect.OpenSoloExitServiceDoor);
         RequireExactlyOne(interactions, StationInteractionEffect.CompleteScenario);
 
         var responseIds = interactions
@@ -572,6 +612,12 @@ public static class StationRouteContent
 
         [JsonPropertyName("briefing_objective")]
         public ObjectiveDto? BriefingObjective { get; init; }
+
+        [JsonPropertyName("entry_door_objective")]
+        public ObjectiveDto? EntryDoorObjective { get; init; }
+
+        [JsonPropertyName("combat_threshold_objective")]
+        public ObjectiveDto? CombatThresholdObjective { get; init; }
 
         [JsonPropertyName("recruitment_objective")]
         public ObjectiveDto? RecruitmentObjective { get; init; }

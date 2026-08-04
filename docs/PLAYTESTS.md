@@ -38,3 +38,26 @@ The full POC later requires five consecutive blocker-free manual playthroughs
 covering Vanguard's solo tutorial, Protector recruitment, and the two-character
 encounter. Those runs belong in this same file once the corresponding systems
 exist.
+
+## Phase 3 route-v2 acceptance protocol
+
+Launch `station-route-v5` at 1920×1080 and verify:
+
+1. Either survivor response unlocks navigation through the amber entry service
+   door while it remains visibly closed.
+2. Right-clicking a destination in the solo arena routes Vanguard through the
+   door. On approach it automatically slides both leaves over 0.25 seconds,
+   changes the status strip to cyan, and removes collision without clipping.
+3. Vanguard can enter the solo arena but cannot interact with or navigate
+   through the amber far service door.
+4. Camera inspection covers the start room, solo arena, Protector room, main
+   arena, final-airlock approach, and unchanged evacuation airlock, including
+   the currently inaccessible rooms.
+5. The opening camera is centered on Vanguard. WASD/arrow panning follows the
+   current camera orientation after yaw changes. The route remains readable at
+   the default 14.5 m camera distance and the 20 m maximum; wall cutaway and
+   restoration continue to behave normally.
+
+| Date | Operator | Build/content | Result | Evidence and notes |
+| --- | --- | --- | --- | --- |
+| 2026-08-04 | Agent | Uncommitted PR 14 working tree; `station-route-v5` | Technical graphical checkpoint passed; owner feel check pending | The exact structure and door GLBs passed Blender review and fresh reimport. Godot import, the real-navigation headless flow, authoritative door/link/blocker synchronization, the locked navigation-island bypass check, and the deterministic start-room cutaway passed. The retained contextual capture was inspected at 14.5 m; a temporary overwritten capture was inspected at 20 m. Safe Windows window rebinding failed before live input could be injected, so door smoothness, clipping feel, physical clicking, and a free-camera sweep of every inaccessible room remain explicit owner checks rather than inferred passes. |
