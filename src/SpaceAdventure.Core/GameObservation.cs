@@ -68,6 +68,7 @@ public sealed record PrimaryActionObservation(
     CommandId CommandId,
     PrimaryActionKind Kind,
     WorldPosition Destination,
+    bool HasRemainingMovement,
     EntityId? InteractionTargetId);
 
 public sealed record ActorObservation(

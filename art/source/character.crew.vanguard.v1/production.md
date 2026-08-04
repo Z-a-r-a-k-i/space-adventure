@@ -42,6 +42,10 @@ weapon sockets, and publishes:
 - `anim.humanoid.locomotion_holstered` from the in-place `Standard Walk`; and
 - `anim.humanoid.walk_holstered` from the same in-place walk donor.
 
+Blender 5.2's native FBX importer is used. Because Mixamo leaves the metallic
+texture embedded but unconnected, the build restores that channel from the
+approved 4K Tripo ZIP material master and packs it into the Blender source.
+
 The build preserves Mixamo's imported armature-object rotation and scale.
 Applying those transforms directly corrupted animation-space translation in
 the rejected build, so any future normalization must retarget and bake

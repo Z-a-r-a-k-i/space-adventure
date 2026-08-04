@@ -752,7 +752,7 @@ public partial class GameHost : Node3D
             : ToGodot(action.Destination) - ToGodot(route.Protagonist.Position);
         _vanguardPresentation.Synchronize(
             useVanguard,
-            action is not null,
+            action?.HasRemainingMovement == true,
             observation.Paused,
             direction);
     }

@@ -14,6 +14,8 @@ from __future__ import annotations
 import json
 import math
 import pathlib
+import tempfile
+import zipfile
 
 import bpy
 
@@ -29,6 +31,7 @@ RUN_ROOT = (
 MIXAMO_CACHE = RUN_ROOT / "raw" / "mixamo"
 RIGGED_SOURCE = MIXAMO_CACHE / "vanguard-unarmed-idle-with-skin.fbx"
 WALK_SOURCE = MIXAMO_CACHE / "vanguard-standard-walk-in-place-with-skin.fbx"
+TRIPO_TEXTURE_SOURCE = RUN_ROOT / "raw" / "vanguard-tpose-quad10k-4k.zip"
 BLEND_OUTPUT = (
     REPOSITORY_ROOT
     / "art"
@@ -45,6 +48,8 @@ GLB_OUTPUT = (
 )
 
 TARGET_HEIGHT_METERS = 1.82
+MINIMUM_HEIGHT_METERS = 1.7836
+MAXIMUM_HEIGHT_METERS = 1.8564
 EXPECTED_BONES = (
     "mixamorig:Hips",
     "mixamorig:Spine",
@@ -73,7 +78,7 @@ def import_fbx(
 ) -> tuple[list[bpy.types.Object], list[bpy.types.Action]]:
     existing_objects = set(bpy.data.objects)
     existing_actions = set(bpy.data.actions)
-    bpy.ops.import_scene.fbx(
+    bpy.ops.wm.fbx_import(
         filepath=str(path),
         use_anim=True,
         global_scale=global_scale,
@@ -199,6 +204,30 @@ def add_socket(
     return socket
 
 
+def load_packed_texture_from_zip(
+    archive_path: pathlib.Path,
+    semantic: str,
+) -> bpy.types.Image:
+    with zipfile.ZipFile(archive_path) as archive:
+        candidates = [
+            name
+            for name in archive.namelist()
+            if semantic.lower() in pathlib.PurePosixPath(name).name.lower()
+        ]
+        if len(candidates) != 1:
+            raise RuntimeError(
+                f"Expected one {semantic} texture in {archive_path}, found {len(candidates)}"
+            )
+        member = candidates[0]
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            texture_path = pathlib.Path(temporary_directory) / pathlib.PurePosixPath(member).name
+            texture_path.write_bytes(archive.read(member))
+            image = bpy.data.images.load(str(texture_path), check_existing=False)
+            image.name = texture_path.name
+            image.pack()
+            return image
+
+
 def repair_mixamo_materials() -> None:
     def image_semantics(image: bpy.types.Image) -> str:
         return f"{image.name} {image.filepath}".lower()
@@ -230,6 +259,10 @@ def repair_mixamo_materials() -> None:
             for image in bpy.data.images
             if image.size[0] > 0 and "metallic" in image_semantics(image)
         ]
+        if not metallic_images:
+            metallic_images = [
+                load_packed_texture_from_zip(TRIPO_TEXTURE_SOURCE, "metallic")
+            ]
         if len(metallic_images) != 1:
             raise RuntimeError(
                 f"Expected one packed metallic image, found {len(metallic_images)}"
@@ -369,7 +402,7 @@ def validate_exported_glb(path: pathlib.Path) -> dict[str, object]:
             "Published Vanguard GLB is displaced from its gameplay origin: "
             f"center=({center[0]:.5f}, {center[1]:.5f})"
         )
-    if not 1.72 <= height <= 1.86:
+    if not MINIMUM_HEIGHT_METERS <= height <= MAXIMUM_HEIGHT_METERS:
         raise RuntimeError(
             f"Published Vanguard GLB reimported at invalid height {height:.5f} m"
         )
@@ -477,7 +510,7 @@ def validate_in_place(
 
 
 def main() -> None:
-    for path in (RIGGED_SOURCE, WALK_SOURCE):
+    for path in (RIGGED_SOURCE, WALK_SOURCE, TRIPO_TEXTURE_SOURCE):
         require_file(path)
     BLEND_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     GLB_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
@@ -554,7 +587,7 @@ def main() -> None:
         ),
     ]
 
-    if not 1.72 <= standing_maximum - ground_minimum <= 1.86:
+    if not MINIMUM_HEIGHT_METERS <= standing_maximum - ground_minimum <= MAXIMUM_HEIGHT_METERS:
         raise RuntimeError(
             "Vanguard evaluated height is outside the accepted animated envelope: "
             f"{standing_maximum - ground_minimum:.4f} m"

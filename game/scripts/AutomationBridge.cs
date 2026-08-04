@@ -490,6 +490,7 @@ public partial class AutomationBridge : Node
                 CommandId = action.CommandId.Value,
                 Kind = ToExternalName(action.Kind),
                 Destination = ProjectPosition(action.Destination),
+                action.HasRemainingMovement,
                 InteractionTargetId = action.InteractionTargetId?.Value,
             };
     }
