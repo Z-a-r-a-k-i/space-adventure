@@ -204,6 +204,13 @@ public partial class TacticalCameraController : Camera3D
         }
     }
 
+    internal (Vector3 Forward, Vector3 Right) GetPanBasis()
+    {
+        var cameraOutward = new Vector3(Mathf.Sin(_yaw), 0.0f, Mathf.Cos(_yaw));
+        var forward = -cameraOutward;
+        return (forward, new Vector3(-forward.Z, 0.0f, forward.X));
+    }
+
     public CameraOcclusionObservation ObserveOcclusion()
     {
         RefreshDesiredOcclusion();
@@ -232,9 +239,7 @@ public partial class TacticalCameraController : Camera3D
 
     private void ProcessCameraInput(float seconds)
     {
-        var cameraOutward = new Vector3(Mathf.Sin(_yaw), 0.0f, Mathf.Cos(_yaw));
-        var forward = -cameraOutward;
-        var right = new Vector3(forward.Z, 0.0f, -forward.X);
+        var (forward, right) = GetPanBasis();
         var movement = Vector3.Zero;
 
         if (Input.IsPhysicalKeyPressed(Key.W) || Input.IsPhysicalKeyPressed(Key.Up))

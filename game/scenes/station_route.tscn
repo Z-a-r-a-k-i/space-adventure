@@ -1,229 +1,87 @@
-[gd_scene load_steps=59 format=3]
+[gd_scene load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://scripts/GameHost.cs" id="1_host"]
 [ext_resource type="Script" path="res://scripts/TacticalCameraController.cs" id="2_camera"]
-[ext_resource type="PackedScene" path="res://Assets/Published/kit.station.structure.v1.glb" id="3_structure"]
+[ext_resource type="PackedScene" path="res://Assets/Published/kit.station.structure.v2.glb" id="3_structure"]
 [ext_resource type="PackedScene" path="res://Assets/Published/assembly.station.evacuation_airlock.v1.glb" id="4_airlock"]
 [ext_resource type="PackedScene" path="res://Assets/Published/prop.station.service_terminal.v1.glb" id="5_terminal"]
 [ext_resource type="PackedScene" path="res://Assets/Published/character.crew.vanguard.v1.glb" id="6_vanguard"]
 [ext_resource type="Script" path="res://scripts/VanguardPresentation.cs" id="7_vanguard_presentation"]
+[ext_resource type="PackedScene" path="res://Assets/Published/assembly.station.service_door.v1.glb" id="8_service_door"]
 
 [sub_resource type="Environment" id="Environment_station"]
 background_mode = 1
-background_color = Color(0.018, 0.028, 0.045, 1)
+background_color = Color(0.012, 0.018, 0.028, 1)
 ambient_light_source = 3
-ambient_light_color = Color(0.36, 0.48, 0.62, 1)
-ambient_light_energy = 0.52
-
-[sub_resource type="StandardMaterial3D" id="Material_floor"]
-albedo_color = Color(0.065, 0.105, 0.15, 1)
-metallic = 0.35
-roughness = 0.68
-
-[sub_resource type="StandardMaterial3D" id="Material_wall"]
-albedo_color = Color(0.12, 0.17, 0.23, 1)
-metallic = 0.28
-roughness = 0.74
-
-[sub_resource type="StandardMaterial3D" id="Material_trim"]
-albedo_color = Color(0.06, 0.52, 0.68, 1)
-metallic = 0.15
-roughness = 0.42
-emission_enabled = true
-emission = Color(0.025, 0.32, 0.5, 1)
-emission_energy_multiplier = 1.8
-
-[sub_resource type="StandardMaterial3D" id="Material_protagonist"]
-albedo_color = Color(0.08, 0.66, 0.88, 1)
-roughness = 0.5
-emission_enabled = true
-emission = Color(0.02, 0.28, 0.42, 1)
-emission_energy_multiplier = 1.25
-
-[sub_resource type="StandardMaterial3D" id="Material_survivor"]
-albedo_color = Color(0.96, 0.56, 0.16, 1)
-roughness = 0.58
-emission_enabled = true
-emission = Color(0.46, 0.16, 0.025, 1)
-emission_energy_multiplier = 1.1
-
-[sub_resource type="StandardMaterial3D" id="Material_protector"]
-albedo_color = Color(0.2, 0.82, 0.62, 1)
-roughness = 0.52
-emission_enabled = true
-emission = Color(0.025, 0.34, 0.2, 1)
-emission_energy_multiplier = 1.15
-
-[sub_resource type="StandardMaterial3D" id="Material_terminal"]
-albedo_color = Color(0.52, 0.24, 0.88, 1)
-metallic = 0.2
-roughness = 0.45
-emission_enabled = true
-emission = Color(0.23, 0.07, 0.48, 1)
-emission_energy_multiplier = 1.4
-
-[sub_resource type="StandardMaterial3D" id="Material_airlock"]
-albedo_color = Color(0.16, 0.78, 0.43, 1)
-metallic = 0.2
-roughness = 0.4
-emission_enabled = true
-emission = Color(0.025, 0.42, 0.17, 1)
-emission_energy_multiplier = 1.7
-
-[sub_resource type="StandardMaterial3D" id="Material_vanguard_suit"]
-albedo_color = Color(0.045, 0.07, 0.095, 1)
-metallic = 0.12
-roughness = 0.74
-
-[sub_resource type="StandardMaterial3D" id="Material_vanguard_armor"]
-albedo_color = Color(0.36, 0.43, 0.48, 1)
-metallic = 0.42
-roughness = 0.46
-
-[sub_resource type="StandardMaterial3D" id="Material_survivor_suit"]
-albedo_color = Color(0.11, 0.105, 0.1, 1)
-metallic = 0.08
-roughness = 0.82
-
-[sub_resource type="StandardMaterial3D" id="Material_utility_dark"]
-albedo_color = Color(0.035, 0.045, 0.06, 1)
-metallic = 0.48
-roughness = 0.44
+ambient_light_color = Color(0.16, 0.24, 0.34, 1)
+ambient_light_energy = 0.72
+tonemap_mode = 2
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_route"]
-vertices = PackedVector3Array(-2, 0, -2, -2, 0, 2, -2, 0, 7, 2, 0, 7, 2, 0, 2, 9, 0, 2, 9, 0, -2, 2, 0, -2)
-polygons = [PackedInt32Array(7, 4, 1, 0), PackedInt32Array(4, 3, 2, 1), PackedInt32Array(6, 5, 4, 7)]
-agent_radius = 0.4
+vertices = PackedVector3Array(-12.7, 0, 4.3, -12.7, 0, 9.7, -7.3, 0, 9.7, -7.3, 0, 4.3, -14.7, 0, -3.7, -14.7, 0, 3.7, -5.3, 0, 3.7, -5.3, 0, -3.7, -4.7, 0, -2.7, -4.7, 0, 3.3, 1.7, 0, 3.3, 1.7, 0, -2.7, -5.7, 0, 3.3, -5.7, 0, 12.7, 5.7, 0, 12.7, 5.7, 0, 3.3, 5.7, 0, 5.3, 5.7, 0, 10.7, 11.7, 0, 10.7, 11.7, 0, 5.3)
+polygons = [PackedInt32Array(3, 2, 1, 0), PackedInt32Array(7, 6, 5, 4), PackedInt32Array(11, 10, 9, 8), PackedInt32Array(15, 14, 13, 12), PackedInt32Array(19, 18, 17, 16)]
+agent_radius = 0.35
 
-[sub_resource type="BoxMesh" id="BoxMesh_floor_vertical"]
-material = SubResource("Material_floor")
-size = Vector3(4, 0.2, 9)
+[sub_resource type="BoxMesh" id="BoxMesh_floor_start"]
+size = Vector3(6, 0.2, 6)
+[sub_resource type="BoxShape3D" id="BoxShape_floor_start"]
+size = Vector3(6, 0.2, 6)
+[sub_resource type="BoxMesh" id="BoxMesh_floor_solo"]
+size = Vector3(10, 0.2, 8)
+[sub_resource type="BoxShape3D" id="BoxShape_floor_solo"]
+size = Vector3(10, 0.2, 8)
+[sub_resource type="BoxMesh" id="BoxMesh_floor_protector"]
+size = Vector3(7, 0.2, 6)
+[sub_resource type="BoxShape3D" id="BoxShape_floor_protector"]
+size = Vector3(7, 0.2, 6)
+[sub_resource type="BoxMesh" id="BoxMesh_floor_main"]
+size = Vector3(12, 0.2, 10)
+[sub_resource type="BoxShape3D" id="BoxShape_floor_main"]
+size = Vector3(12, 0.2, 10)
+[sub_resource type="BoxMesh" id="BoxMesh_floor_final"]
+size = Vector3(6, 0.2, 6)
+[sub_resource type="BoxShape3D" id="BoxShape_floor_final"]
+size = Vector3(6, 0.2, 6)
 
-[sub_resource type="BoxShape3D" id="BoxShape_floor_vertical"]
-size = Vector3(4, 0.2, 9)
-
-[sub_resource type="BoxMesh" id="BoxMesh_floor_east"]
-material = SubResource("Material_floor")
-size = Vector3(7, 0.2, 4)
-
-[sub_resource type="BoxShape3D" id="BoxShape_floor_east"]
-size = Vector3(7, 0.2, 4)
-
-[sub_resource type="BoxMesh" id="BoxMesh_wall_west"]
-material = SubResource("Material_wall")
-size = Vector3(0.3, 2.6, 9.3)
-
-[sub_resource type="BoxMesh" id="BoxMesh_wall_north"]
-material = SubResource("Material_wall")
-size = Vector3(4.3, 2.6, 0.3)
-
-[sub_resource type="BoxMesh" id="BoxMesh_wall_inner"]
-material = SubResource("Material_wall")
-size = Vector3(0.3, 2.6, 5.15)
-
-[sub_resource type="BoxMesh" id="BoxMesh_wall_south"]
-material = SubResource("Material_wall")
-size = Vector3(11.3, 2.6, 0.3)
-
-[sub_resource type="BoxMesh" id="BoxMesh_wall_branch"]
-material = SubResource("Material_wall")
-size = Vector3(7.15, 2.6, 0.3)
-
-[sub_resource type="BoxMesh" id="BoxMesh_wall_junction_post"]
-material = SubResource("Material_wall")
-size = Vector3(0.38, 2.8, 0.38)
-
-[sub_resource type="BoxMesh" id="BoxMesh_airlock_post"]
-material = SubResource("Material_wall")
-size = Vector3(0.3, 2.6, 1.1)
-
-[sub_resource type="BoxMesh" id="BoxMesh_airlock_header"]
-material = SubResource("Material_wall")
-size = Vector3(0.3, 0.45, 2.7)
-
-[sub_resource type="BoxMesh" id="BoxMesh_strip_vertical"]
-material = SubResource("Material_trim")
-size = Vector3(0.12, 0.035, 7.3)
-
-[sub_resource type="BoxMesh" id="BoxMesh_strip_east"]
-material = SubResource("Material_trim")
-size = Vector3(6.3, 0.035, 0.12)
-
-[sub_resource type="SphereMesh" id="SphereMesh_head"]
-radius = 0.21
-height = 0.38
-radial_segments = 8
-rings = 4
-
-[sub_resource type="BoxMesh" id="BoxMesh_humanoid_torso"]
-size = Vector3(0.58, 0.58, 0.3)
-
-[sub_resource type="BoxMesh" id="BoxMesh_humanoid_pelvis"]
-size = Vector3(0.43, 0.22, 0.28)
-
-[sub_resource type="BoxMesh" id="BoxMesh_humanoid_upper_arm"]
-size = Vector3(0.16, 0.36, 0.17)
-
-[sub_resource type="BoxMesh" id="BoxMesh_humanoid_forearm"]
-size = Vector3(0.14, 0.34, 0.15)
-
-[sub_resource type="BoxMesh" id="BoxMesh_humanoid_thigh"]
-size = Vector3(0.2, 0.43, 0.22)
-
-[sub_resource type="BoxMesh" id="BoxMesh_humanoid_shin"]
-size = Vector3(0.17, 0.41, 0.19)
-
-[sub_resource type="BoxMesh" id="BoxMesh_humanoid_foot"]
-size = Vector3(0.2, 0.12, 0.36)
-
-[sub_resource type="BoxMesh" id="BoxMesh_vanguard_chest"]
-size = Vector3(0.64, 0.38, 0.35)
-
-[sub_resource type="BoxMesh" id="BoxMesh_vanguard_shoulder"]
-size = Vector3(0.24, 0.16, 0.26)
-
-[sub_resource type="BoxMesh" id="BoxMesh_vanguard_visor"]
-size = Vector3(0.3, 0.11, 0.035)
-
-[sub_resource type="BoxMesh" id="BoxMesh_survivor_vest"]
-size = Vector3(0.61, 0.34, 0.33)
-
+[sub_resource type="StandardMaterial3D" id="Material_survivor"]
+albedo_color = Color(0.78, 0.35, 0.10, 1)
+metallic = 0.15
+roughness = 0.72
+[sub_resource type="StandardMaterial3D" id="Material_protector"]
+albedo_color = Color(0.20, 0.50, 0.45, 1)
+metallic = 0.32
+roughness = 0.58
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_survivor"]
+radius = 0.32
+height = 1.75
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_protector"]
+radius = 0.42
+height = 2.05
 [sub_resource type="CapsuleShape3D" id="CapsuleShape_survivor"]
-radius = 0.75
-height = 2.8
-
-[sub_resource type="BoxMesh" id="BoxMesh_terminal_base"]
-size = Vector3(0.78, 0.16, 0.66)
-
-[sub_resource type="BoxMesh" id="BoxMesh_terminal_pedestal"]
-size = Vector3(0.5, 0.78, 0.4)
-
-[sub_resource type="BoxMesh" id="BoxMesh_terminal_console"]
-size = Vector3(0.84, 0.5, 0.5)
-
-[sub_resource type="BoxMesh" id="BoxMesh_terminal_screen"]
-size = Vector3(0.64, 0.3, 0.035)
-
+radius = 0.35
+height = 1.8
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_protector"]
+radius = 0.45
+height = 2.1
 [sub_resource type="BoxShape3D" id="BoxShape_terminal"]
-size = Vector3(1.8, 2.2, 1.4)
-
-[sub_resource type="BoxMesh" id="BoxMesh_airlock_leaf"]
-size = Vector3(0.22, 2.32, 1.13)
-
-[sub_resource type="BoxMesh" id="BoxMesh_airlock_status"]
-size = Vector3(0.04, 1.72, 0.065)
-
-[sub_resource type="BoxMesh" id="BoxMesh_airlock_lock"]
-size = Vector3(0.08, 0.28, 0.28)
-
+size = Vector3(0.9, 1.6, 0.7)
+[sub_resource type="BoxShape3D" id="BoxShape_door_interaction"]
+size = Vector3(2.7, 2.35, 0.45)
+[sub_resource type="BoxShape3D" id="BoxShape_door_blocker"]
+size = Vector3(2.5, 2.35, 0.3)
 [sub_resource type="BoxShape3D" id="BoxShape_airlock"]
-size = Vector3(1.8, 3.2, 3)
-
-[sub_resource type="TorusMesh" id="CylinderMesh_beacon"]
+size = Vector3(2.9, 2.7, 0.5)
+[sub_resource type="TorusMesh" id="TorusMesh_beacon"]
 inner_radius = 0.31
 outer_radius = 0.38
 rings = 8
 ring_segments = 24
+[sub_resource type="StandardMaterial3D" id="Material_beacon"]
+transparency = 1
+albedo_color = Color(0.08, 0.70, 0.95, 0.72)
+emission_enabled = true
+emission = Color(0.04, 0.45, 0.72, 1)
+emission_energy_multiplier = 2.2
 
 [node name="StationRoute" type="Node3D"]
 script = ExtResource("1_host")
@@ -238,27 +96,65 @@ light_color = Color(0.78, 0.88, 1, 1)
 light_energy = 1.15
 shadow_enabled = true
 
-[node name="BerthLight" type="OmniLight3D" parent="."]
-position = Vector3(0, 3.2, 4.6)
+[node name="StartRoomLight" type="OmniLight3D" parent="."]
+position = Vector3(-10, 3.2, 7)
 light_color = Color(0.25, 0.72, 1, 1)
 light_energy = 3.0
 omni_range = 7.0
 shadow_enabled = true
 
-[node name="JunctionLight" type="OmniLight3D" parent="."]
-position = Vector3(2.4, 3.0, 0.4)
-light_color = Color(0.38, 0.66, 1, 1)
-light_energy = 2.7
-omni_range = 7.5
+[node name="SoloArenaLight" type="OmniLight3D" parent="."]
+position = Vector3(-10, 3.4, 0)
+light_color = Color(1, 0.56, 0.22, 1)
+light_energy = 2.4
+omni_range = 8.0
+shadow_enabled = true
+
+[node name="ProtectorRoomLight" type="OmniLight3D" parent="."]
+position = Vector3(-1.5, 3.2, 0)
+light_color = Color(0.30, 0.72, 1, 1)
+light_energy = 2.6
+omni_range = 7.0
+
+[node name="MainArenaLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 3.6, 8)
+light_color = Color(0.22, 0.62, 1, 1)
+light_energy = 3.2
+omni_range = 10.0
+shadow_enabled = true
 
 [node name="AirlockLight" type="OmniLight3D" parent="."]
-position = Vector3(7.5, 2.8, 0)
+position = Vector3(9, 3.0, 8)
 light_color = Color(0.26, 1, 0.55, 1)
-light_energy = 2.5
-omni_range = 5.5
+light_energy = 0.65
+omni_range = 7.0
 
 [node name="NavigationRegion" type="NavigationRegion3D" parent="."]
 navigation_mesh = SubResource("NavigationMesh_route")
+
+[node name="NavigationLinks" type="Node3D" parent="."]
+
+[node name="EntryServiceDoor" type="NavigationLink3D" parent="NavigationLinks"]
+enabled = false
+bidirectional = true
+start_position = Vector3(-10, 0, 4.3)
+end_position = Vector3(-10, 0, 3.7)
+
+[node name="SoloExitServiceDoor" type="NavigationLink3D" parent="NavigationLinks"]
+enabled = false
+bidirectional = true
+start_position = Vector3(-5.3, 0, 0)
+end_position = Vector3(-4.7, 0, 0)
+
+[node name="ProtectorToMainArena" type="NavigationLink3D" parent="NavigationLinks"]
+bidirectional = true
+start_position = Vector3(0, 0, 2.8)
+end_position = Vector3(0, 0, 3.8)
+
+[node name="MainArenaToFinalApproach" type="NavigationLink3D" parent="NavigationLinks"]
+bidirectional = true
+start_position = Vector3(5.2, 0, 8)
+end_position = Vector3(6.2, 0, 8)
 
 [node name="Environment" type="Node3D" parent="."]
 
@@ -266,406 +162,124 @@ navigation_mesh = SubResource("NavigationMesh_route")
 
 [node name="Floors" type="Node3D" parent="Environment"]
 
-[node name="VerticalCorridor" type="StaticBody3D" parent="Environment/Floors"]
-position = Vector3(0, -0.1, 2.5)
+[node name="StartRoom" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(-10, -0.1, 7)
 collision_layer = 1
 collision_mask = 0
-
-[node name="Mesh" type="MeshInstance3D" parent="Environment/Floors/VerticalCorridor"]
+[node name="Mesh" type="MeshInstance3D" parent="Environment/Floors/StartRoom"]
 visible = false
-mesh = SubResource("BoxMesh_floor_vertical")
+mesh = SubResource("BoxMesh_floor_start")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/StartRoom"]
+shape = SubResource("BoxShape_floor_start")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/VerticalCorridor"]
-shape = SubResource("BoxShape_floor_vertical")
-
-[node name="EastBranch" type="StaticBody3D" parent="Environment/Floors"]
-position = Vector3(5.5, -0.1, 0)
+[node name="SoloCombatArena" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(-10, -0.1, 0)
 collision_layer = 1
 collision_mask = 0
-
-[node name="Mesh" type="MeshInstance3D" parent="Environment/Floors/EastBranch"]
+[node name="Mesh" type="MeshInstance3D" parent="Environment/Floors/SoloCombatArena"]
 visible = false
-mesh = SubResource("BoxMesh_floor_east")
+mesh = SubResource("BoxMesh_floor_solo")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/SoloCombatArena"]
+shape = SubResource("BoxShape_floor_solo")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/EastBranch"]
-shape = SubResource("BoxShape_floor_east")
-
-[node name="RouteStripVertical" type="MeshInstance3D" parent="Environment/Floors"]
-position = Vector3(0, 0.02, 3.05)
+[node name="ProtectorRoom" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(-1.5, -0.1, 0)
+collision_layer = 1
+collision_mask = 0
+[node name="Mesh" type="MeshInstance3D" parent="Environment/Floors/ProtectorRoom"]
 visible = false
-mesh = SubResource("BoxMesh_strip_vertical")
+mesh = SubResource("BoxMesh_floor_protector")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/ProtectorRoom"]
+shape = SubResource("BoxShape_floor_protector")
 
-[node name="RouteStripEast" type="MeshInstance3D" parent="Environment/Floors"]
-position = Vector3(5.15, 0.02, 0)
+[node name="MainPartyArena" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(0, -0.1, 8)
+collision_layer = 1
+collision_mask = 0
+[node name="Mesh" type="MeshInstance3D" parent="Environment/Floors/MainPartyArena"]
 visible = false
-mesh = SubResource("BoxMesh_strip_east")
+mesh = SubResource("BoxMesh_floor_main")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/MainPartyArena"]
+shape = SubResource("BoxShape_floor_main")
 
-[node name="Walls" type="Node3D" parent="Environment"]
-
-[node name="WestWall" type="MeshInstance3D" parent="Environment/Walls"]
-position = Vector3(-2.15, 1.3, 2.5)
+[node name="FinalAirlockApproach" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(9, -0.1, 8)
+collision_layer = 1
+collision_mask = 0
+[node name="Mesh" type="MeshInstance3D" parent="Environment/Floors/FinalAirlockApproach"]
 visible = false
-mesh = SubResource("BoxMesh_wall_west")
-metadata/occluder_id = "presentation.wall.west"
-
-[node name="NorthWall" type="MeshInstance3D" parent="Environment/Walls"]
-position = Vector3(0, 1.3, 7.15)
-visible = false
-mesh = SubResource("BoxMesh_wall_north")
-metadata/occluder_id = "presentation.wall.north"
-
-[node name="InnerEastWall" type="MeshInstance3D" parent="Environment/Walls"]
-position = Vector3(2.15, 1.3, 4.575)
-visible = false
-mesh = SubResource("BoxMesh_wall_inner")
-metadata/occluder_id = "presentation.wall.inner_east"
-
-[node name="SouthWall" type="MeshInstance3D" parent="Environment/Walls"]
-position = Vector3(3.5, 1.3, -2.15)
-visible = false
-mesh = SubResource("BoxMesh_wall_south")
-metadata/occluder_id = "presentation.wall.south"
-
-[node name="BranchNorthWall" type="MeshInstance3D" parent="Environment/Walls"]
-position = Vector3(5.575, 1.3, 2.15)
-visible = false
-mesh = SubResource("BoxMesh_wall_branch")
-metadata/occluder_id = "presentation.wall.branch_north"
-
-[node name="BranchJunctionPost" type="MeshInstance3D" parent="Environment/Walls"]
-position = Vector3(2.15, 1.4, 2.15)
-visible = false
-mesh = SubResource("BoxMesh_wall_junction_post")
-
-[node name="AirlockNorthPost" type="MeshInstance3D" parent="Environment/Walls"]
-position = Vector3(9.15, 1.3, 1.6)
-visible = false
-mesh = SubResource("BoxMesh_airlock_post")
-
-[node name="AirlockSouthPost" type="MeshInstance3D" parent="Environment/Walls"]
-position = Vector3(9.15, 1.3, -1.6)
-visible = false
-mesh = SubResource("BoxMesh_airlock_post")
-
-[node name="AirlockHeader" type="MeshInstance3D" parent="Environment/Walls"]
-position = Vector3(9.15, 2.375, 0)
-visible = false
-mesh = SubResource("BoxMesh_airlock_header")
+mesh = SubResource("BoxMesh_floor_final")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/FinalAirlockApproach"]
+shape = SubResource("BoxShape_floor_final")
 
 [node name="Markers" type="Node3D" parent="."]
-
 [node name="ProtagonistStart" type="Marker3D" parent="Markers"]
-position = Vector3(0, 0, 5.5)
+position = Vector3(-10, 0, 8.5)
 metadata/stable_id = "actor.protagonist"
-
 [node name="SurvivorApproach" type="Marker3D" parent="Markers"]
-position = Vector3(0, 0, 1)
+position = Vector3(-9.3, 0, 6.5)
 metadata/stable_id = "interaction.survivor"
-
+[node name="EntryDoorApproach" type="Marker3D" parent="Markers"]
+position = Vector3(-10, 0, 4.85)
+metadata/stable_id = "interaction.service_door.entry"
+[node name="SoloExitDoorApproach" type="Marker3D" parent="Markers"]
+position = Vector3(-5.85, 0, 0)
+metadata/stable_id = "interaction.service_door.solo_exit"
 [node name="ProtectorApproach" type="Marker3D" parent="Markers"]
-position = Vector3(3.8, 0, 0)
+position = Vector3(-2.35, 0, 0)
 metadata/stable_id = "interaction.protector"
-
 [node name="ProtectorActorPlacement" type="Marker3D" parent="Markers"]
-position = Vector3(4.8, 0, 0)
+position = Vector3(-1.5, 0, 0)
 metadata/stable_id = "actor.companion.protector"
-
 [node name="TerminalApproach" type="Marker3D" parent="Markers"]
-position = Vector3(5.5, 0, 1)
+position = Vector3(-10.65, 0, 6.5)
 metadata/stable_id = "interaction.service_terminal"
-
 [node name="AirlockApproach" type="Marker3D" parent="Markers"]
-position = Vector3(8, 0, 0)
+position = Vector3(11.15, 0, 8)
 metadata/stable_id = "interaction.evacuation_airlock"
 
 [node name="Actors" type="Node3D" parent="."]
-
 [node name="Protagonist" type="Node3D" parent="Actors"]
-position = Vector3(0, 0, 5.5)
+position = Vector3(-10, 0, 8.5)
 metadata/stable_id = "actor.protagonist"
-
 [node name="VanguardPresentation" type="Node3D" parent="Actors/Protagonist"]
 visible = false
 script = ExtResource("7_vanguard_presentation")
-
 [node name="Model" parent="Actors/Protagonist/VanguardPresentation" instance=ExtResource("6_vanguard")]
-
-[node name="SuitTorso" type="MeshInstance3D" parent="Actors/Protagonist"]
-position = Vector3(0, 1.31, 0)
-mesh = SubResource("BoxMesh_humanoid_torso")
-material_override = SubResource("Material_vanguard_suit")
-
-[node name="ChestArmor" type="MeshInstance3D" parent="Actors/Protagonist"]
-position = Vector3(0, 1.39, -0.025)
-mesh = SubResource("BoxMesh_vanguard_chest")
-material_override = SubResource("Material_vanguard_armor")
-
-[node name="Pelvis" type="MeshInstance3D" parent="Actors/Protagonist"]
-position = Vector3(0, 0.99, 0)
-mesh = SubResource("BoxMesh_humanoid_pelvis")
-material_override = SubResource("Material_vanguard_suit")
-
-[node name="Helmet" type="MeshInstance3D" parent="Actors/Protagonist"]
-position = Vector3(0, 1.82, 0)
-mesh = SubResource("SphereMesh_head")
-material_override = SubResource("Material_vanguard_armor")
-
-[node name="Visor" type="MeshInstance3D" parent="Actors/Protagonist"]
-position = Vector3(0, 1.83, -0.197)
-mesh = SubResource("BoxMesh_vanguard_visor")
-material_override = SubResource("Material_protagonist")
-
-[node name="LeftShoulder" type="MeshInstance3D" parent="Actors/Protagonist"]
-position = Vector3(-0.4, 1.55, 0)
-mesh = SubResource("BoxMesh_vanguard_shoulder")
-material_override = SubResource("Material_vanguard_armor")
-
-[node name="RightShoulder" type="MeshInstance3D" parent="Actors/Protagonist"]
-position = Vector3(0.4, 1.55, 0)
-mesh = SubResource("BoxMesh_vanguard_shoulder")
-material_override = SubResource("Material_vanguard_armor")
-
-[node name="LeftUpperArm" type="MeshInstance3D" parent="Actors/Protagonist"]
-position = Vector3(-0.4, 1.34, 0)
-rotation_degrees = Vector3(0, 0, -4)
-mesh = SubResource("BoxMesh_humanoid_upper_arm")
-material_override = SubResource("Material_vanguard_suit")
-
-[node name="RightUpperArm" type="MeshInstance3D" parent="Actors/Protagonist"]
-position = Vector3(0.4, 1.34, 0)
-rotation_degrees = Vector3(0, 0, 4)
-mesh = SubResource("BoxMesh_humanoid_upper_arm")
-material_override = SubResource("Material_vanguard_suit")
-
-[node name="LeftForearm" type="MeshInstance3D" parent="Actors/Protagonist"]
-position = Vector3(-0.42, 0.99, 0)
-rotation_degrees = Vector3(0, 0, 3)
-mesh = SubResource("BoxMesh_humanoid_forearm")
-material_override = SubResource("Material_vanguard_armor")
-
-[node name="RightForearm" type="MeshInstance3D" parent="Actors/Protagonist"]
-position = Vector3(0.42, 0.99, 0)
-rotation_degrees = Vector3(0, 0, -3)
-mesh = SubResource("BoxMesh_humanoid_forearm")
-material_override = SubResource("Material_vanguard_armor")
-
-[node name="LeftThigh" type="MeshInstance3D" parent="Actors/Protagonist"]
-position = Vector3(-0.13, 0.74, 0)
-mesh = SubResource("BoxMesh_humanoid_thigh")
-material_override = SubResource("Material_vanguard_suit")
-
-[node name="RightThigh" type="MeshInstance3D" parent="Actors/Protagonist"]
-position = Vector3(0.13, 0.74, 0)
-mesh = SubResource("BoxMesh_humanoid_thigh")
-material_override = SubResource("Material_vanguard_suit")
-
-[node name="LeftShin" type="MeshInstance3D" parent="Actors/Protagonist"]
-position = Vector3(-0.13, 0.32, 0)
-mesh = SubResource("BoxMesh_humanoid_shin")
-material_override = SubResource("Material_vanguard_armor")
-
-[node name="RightShin" type="MeshInstance3D" parent="Actors/Protagonist"]
-position = Vector3(0.13, 0.32, 0)
-mesh = SubResource("BoxMesh_humanoid_shin")
-material_override = SubResource("Material_vanguard_armor")
-
-[node name="LeftFoot" type="MeshInstance3D" parent="Actors/Protagonist"]
-position = Vector3(-0.13, 0.07, -0.07)
-mesh = SubResource("BoxMesh_humanoid_foot")
-material_override = SubResource("Material_vanguard_suit")
-
-[node name="RightFoot" type="MeshInstance3D" parent="Actors/Protagonist"]
-position = Vector3(0.13, 0.07, -0.07)
-mesh = SubResource("BoxMesh_humanoid_foot")
-material_override = SubResource("Material_vanguard_suit")
-
 [node name="SelectionBeacon" type="MeshInstance3D" parent="Actors/Protagonist"]
 position = Vector3(0, 0.045, 0)
-mesh = SubResource("CylinderMesh_beacon")
-material_override = SubResource("Material_protagonist")
+mesh = SubResource("TorusMesh_beacon")
+material_override = SubResource("Material_beacon")
 
 [node name="Protector" type="Node3D" parent="Actors"]
-position = Vector3(4.8, 0, 0)
+position = Vector3(-1.5, 0, 0)
 visible = false
 metadata/stable_id = "actor.companion.protector"
-
-[node name="SuitTorso" type="MeshInstance3D" parent="Actors/Protector"]
-position = Vector3(0, 1.31, 0)
-mesh = SubResource("BoxMesh_humanoid_torso")
-material_override = SubResource("Material_vanguard_suit")
-
-[node name="ChestArmor" type="MeshInstance3D" parent="Actors/Protector"]
-position = Vector3(0, 1.39, -0.025)
-mesh = SubResource("BoxMesh_vanguard_chest")
+[node name="Body" type="MeshInstance3D" parent="Actors/Protector"]
+position = Vector3(0, 1.05, 0)
+mesh = SubResource("CapsuleMesh_protector")
 material_override = SubResource("Material_protector")
-
-[node name="Pelvis" type="MeshInstance3D" parent="Actors/Protector"]
-position = Vector3(0, 0.99, 0)
-mesh = SubResource("BoxMesh_humanoid_pelvis")
-material_override = SubResource("Material_vanguard_suit")
-
-[node name="Helmet" type="MeshInstance3D" parent="Actors/Protector"]
-position = Vector3(0, 1.82, 0)
-mesh = SubResource("SphereMesh_head")
-material_override = SubResource("Material_protector")
-
-[node name="Visor" type="MeshInstance3D" parent="Actors/Protector"]
-position = Vector3(0, 1.83, -0.197)
-mesh = SubResource("BoxMesh_vanguard_visor")
-material_override = SubResource("Material_airlock")
-
-[node name="LeftUpperArm" type="MeshInstance3D" parent="Actors/Protector"]
-position = Vector3(-0.4, 1.34, 0)
-mesh = SubResource("BoxMesh_humanoid_upper_arm")
-material_override = SubResource("Material_vanguard_suit")
-
-[node name="RightUpperArm" type="MeshInstance3D" parent="Actors/Protector"]
-position = Vector3(0.4, 1.34, 0)
-mesh = SubResource("BoxMesh_humanoid_upper_arm")
-material_override = SubResource("Material_vanguard_suit")
-
-[node name="LeftForearm" type="MeshInstance3D" parent="Actors/Protector"]
-position = Vector3(-0.4, 1.0, 0)
-mesh = SubResource("BoxMesh_humanoid_forearm")
-material_override = SubResource("Material_protector")
-
-[node name="RightForearm" type="MeshInstance3D" parent="Actors/Protector"]
-position = Vector3(0.4, 1.0, 0)
-mesh = SubResource("BoxMesh_humanoid_forearm")
-material_override = SubResource("Material_protector")
-
-[node name="LeftThigh" type="MeshInstance3D" parent="Actors/Protector"]
-position = Vector3(-0.13, 0.74, 0)
-mesh = SubResource("BoxMesh_humanoid_thigh")
-material_override = SubResource("Material_vanguard_suit")
-
-[node name="RightThigh" type="MeshInstance3D" parent="Actors/Protector"]
-position = Vector3(0.13, 0.74, 0)
-mesh = SubResource("BoxMesh_humanoid_thigh")
-material_override = SubResource("Material_vanguard_suit")
-
-[node name="LeftShin" type="MeshInstance3D" parent="Actors/Protector"]
-position = Vector3(-0.13, 0.32, 0)
-mesh = SubResource("BoxMesh_humanoid_shin")
-material_override = SubResource("Material_protector")
-
-[node name="RightShin" type="MeshInstance3D" parent="Actors/Protector"]
-position = Vector3(0.13, 0.32, 0)
-mesh = SubResource("BoxMesh_humanoid_shin")
-material_override = SubResource("Material_protector")
-
-[node name="LeftFoot" type="MeshInstance3D" parent="Actors/Protector"]
-position = Vector3(-0.13, 0.07, -0.07)
-mesh = SubResource("BoxMesh_humanoid_foot")
-material_override = SubResource("Material_vanguard_suit")
-
-[node name="RightFoot" type="MeshInstance3D" parent="Actors/Protector"]
-position = Vector3(0.13, 0.07, -0.07)
-mesh = SubResource("BoxMesh_humanoid_foot")
-material_override = SubResource("Material_vanguard_suit")
-
 [node name="SelectionBeacon" type="MeshInstance3D" parent="Actors/Protector"]
 position = Vector3(0, 0.045, 0)
-mesh = SubResource("CylinderMesh_beacon")
-material_override = SubResource("Material_protector")
+mesh = SubResource("TorusMesh_beacon")
+material_override = SubResource("Material_beacon")
 
 [node name="Interactions" type="Node3D" parent="."]
 
 [node name="Survivor" type="StaticBody3D" parent="Interactions"]
-position = Vector3(0, 0, 1)
+position = Vector3(-8.5, 0, 6.5)
 collision_layer = 2
 collision_mask = 0
 metadata/stable_id = "interaction.survivor"
-
-[node name="SuitTorso" type="MeshInstance3D" parent="Interactions/Survivor"]
-position = Vector3(1, 1.31, 0)
-rotation_degrees = Vector3(0, 0, -2)
-mesh = SubResource("BoxMesh_humanoid_torso")
-material_override = SubResource("Material_survivor_suit")
-
-[node name="SafetyVest" type="MeshInstance3D" parent="Interactions/Survivor"]
-position = Vector3(1, 1.4, -0.02)
-rotation_degrees = Vector3(0, 0, -2)
-mesh = SubResource("BoxMesh_survivor_vest")
+[node name="Body" type="MeshInstance3D" parent="Interactions/Survivor"]
+position = Vector3(0, 0.9, 0)
+mesh = SubResource("CapsuleMesh_survivor")
 material_override = SubResource("Material_survivor")
-
-[node name="Pelvis" type="MeshInstance3D" parent="Interactions/Survivor"]
-position = Vector3(0.99, 0.99, 0)
-mesh = SubResource("BoxMesh_humanoid_pelvis")
-material_override = SubResource("Material_survivor_suit")
-
-[node name="Helmet" type="MeshInstance3D" parent="Interactions/Survivor"]
-position = Vector3(0.98, 1.82, 0)
-mesh = SubResource("SphereMesh_head")
-material_override = SubResource("Material_utility_dark")
-
-[node name="HelmetVisor" type="MeshInstance3D" parent="Interactions/Survivor"]
-position = Vector3(0.98, 1.83, -0.197)
-mesh = SubResource("BoxMesh_vanguard_visor")
-material_override = SubResource("Material_survivor")
-
-[node name="LeftUpperArm" type="MeshInstance3D" parent="Interactions/Survivor"]
-position = Vector3(0.62, 1.34, 0)
-rotation_degrees = Vector3(0, 0, -7)
-mesh = SubResource("BoxMesh_humanoid_upper_arm")
-material_override = SubResource("Material_survivor_suit")
-
-[node name="RightUpperArm" type="MeshInstance3D" parent="Interactions/Survivor"]
-position = Vector3(1.38, 1.36, 0)
-rotation_degrees = Vector3(0, 0, -9)
-mesh = SubResource("BoxMesh_humanoid_upper_arm")
-material_override = SubResource("Material_survivor_suit")
-
-[node name="LeftForearm" type="MeshInstance3D" parent="Interactions/Survivor"]
-position = Vector3(0.59, 0.99, 0)
-rotation_degrees = Vector3(0, 0, 5)
-mesh = SubResource("BoxMesh_humanoid_forearm")
-material_override = SubResource("Material_survivor_suit")
-
-[node name="RightForearm" type="MeshInstance3D" parent="Interactions/Survivor"]
-position = Vector3(1.44, 1.04, 0)
-rotation_degrees = Vector3(0, 0, -11)
-mesh = SubResource("BoxMesh_humanoid_forearm")
-material_override = SubResource("Material_survivor_suit")
-
-[node name="LeftThigh" type="MeshInstance3D" parent="Interactions/Survivor"]
-position = Vector3(0.86, 0.74, 0)
-rotation_degrees = Vector3(0, 0, 2)
-mesh = SubResource("BoxMesh_humanoid_thigh")
-material_override = SubResource("Material_survivor_suit")
-
-[node name="RightThigh" type="MeshInstance3D" parent="Interactions/Survivor"]
-position = Vector3(1.13, 0.74, 0)
-rotation_degrees = Vector3(0, 0, 2)
-mesh = SubResource("BoxMesh_humanoid_thigh")
-material_override = SubResource("Material_survivor_suit")
-
-[node name="LeftShin" type="MeshInstance3D" parent="Interactions/Survivor"]
-position = Vector3(0.85, 0.32, 0)
-mesh = SubResource("BoxMesh_humanoid_shin")
-material_override = SubResource("Material_survivor_suit")
-
-[node name="RightShin" type="MeshInstance3D" parent="Interactions/Survivor"]
-position = Vector3(1.12, 0.32, 0)
-mesh = SubResource("BoxMesh_humanoid_shin")
-material_override = SubResource("Material_survivor_suit")
-
-[node name="LeftFoot" type="MeshInstance3D" parent="Interactions/Survivor"]
-position = Vector3(0.85, 0.07, -0.07)
-mesh = SubResource("BoxMesh_humanoid_foot")
-material_override = SubResource("Material_utility_dark")
-
-[node name="RightFoot" type="MeshInstance3D" parent="Interactions/Survivor"]
-position = Vector3(1.12, 0.07, -0.07)
-mesh = SubResource("BoxMesh_humanoid_foot")
-material_override = SubResource("Material_utility_dark")
-
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Survivor"]
-position = Vector3(1, 1.25, 0)
+position = Vector3(0, 0.9, 0)
 shape = SubResource("CapsuleShape_survivor")
-
 [node name="Label" type="Label3D" parent="Interactions/Survivor"]
-position = Vector3(1, 2.25, 0)
+position = Vector3(0, 2.15, 0)
 text = "SURVIVOR"
 font_size = 36
 outline_size = 8
@@ -673,73 +287,69 @@ modulate = Color(1, 0.72, 0.32, 1)
 billboard = 1
 no_depth_test = true
 
+[node name="EntryServiceDoor" type="StaticBody3D" parent="Interactions"]
+position = Vector3(-10, 0, 4)
+collision_layer = 2
+collision_mask = 0
+metadata/stable_id = "interaction.service_door.entry"
+[node name="ProductionAsset" parent="Interactions/EntryServiceDoor" instance=ExtResource("8_service_door")]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/EntryServiceDoor"]
+position = Vector3(0, 1.18, 0)
+shape = SubResource("BoxShape_door_interaction")
+[node name="DoorBlocker" type="StaticBody3D" parent="Interactions/EntryServiceDoor"]
+collision_layer = 4
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/EntryServiceDoor/DoorBlocker"]
+position = Vector3(0, 1.18, 0)
+shape = SubResource("BoxShape_door_blocker")
+[node name="Label" type="Label3D" parent="Interactions/EntryServiceDoor"]
+position = Vector3(0, 2.95, 0)
+text = "ENTRY SERVICE DOOR"
+font_size = 34
+outline_size = 8
+modulate = Color(1, 0.65, 0.25, 1)
+billboard = 1
+no_depth_test = true
+
+[node name="SoloExitServiceDoor" type="StaticBody3D" parent="Interactions"]
+position = Vector3(-5, 0, 0)
+rotation_degrees = Vector3(0, 90, 0)
+collision_layer = 2
+collision_mask = 0
+metadata/stable_id = "interaction.service_door.solo_exit"
+[node name="ProductionAsset" parent="Interactions/SoloExitServiceDoor" instance=ExtResource("8_service_door")]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/SoloExitServiceDoor"]
+position = Vector3(0, 1.18, 0)
+shape = SubResource("BoxShape_door_interaction")
+[node name="DoorBlocker" type="StaticBody3D" parent="Interactions/SoloExitServiceDoor"]
+collision_layer = 4
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/SoloExitServiceDoor/DoorBlocker"]
+position = Vector3(0, 1.18, 0)
+shape = SubResource("BoxShape_door_blocker")
+[node name="Label" type="Label3D" parent="Interactions/SoloExitServiceDoor"]
+position = Vector3(0, 2.95, 0)
+text = "ARENA EXIT"
+font_size = 34
+outline_size = 8
+modulate = Color(1, 0.55, 0.18, 1)
+billboard = 1
+no_depth_test = true
+
 [node name="Protector" type="StaticBody3D" parent="Interactions"]
-position = Vector3(4.8, 0, 0)
+position = Vector3(-1.5, 0, 0)
 collision_layer = 2
 collision_mask = 0
 metadata/stable_id = "interaction.protector"
-
-[node name="SuitTorso" type="MeshInstance3D" parent="Interactions/Protector"]
-position = Vector3(0, 1.31, 0)
-mesh = SubResource("BoxMesh_humanoid_torso")
-material_override = SubResource("Material_vanguard_suit")
-
-[node name="ChestArmor" type="MeshInstance3D" parent="Interactions/Protector"]
-position = Vector3(0, 1.39, -0.025)
-mesh = SubResource("BoxMesh_vanguard_chest")
+[node name="Body" type="MeshInstance3D" parent="Interactions/Protector"]
+position = Vector3(0, 1.05, 0)
+mesh = SubResource("CapsuleMesh_protector")
 material_override = SubResource("Material_protector")
-
-[node name="Pelvis" type="MeshInstance3D" parent="Interactions/Protector"]
-position = Vector3(0, 0.99, 0)
-mesh = SubResource("BoxMesh_humanoid_pelvis")
-material_override = SubResource("Material_vanguard_suit")
-
-[node name="Helmet" type="MeshInstance3D" parent="Interactions/Protector"]
-position = Vector3(0, 1.82, 0)
-mesh = SubResource("SphereMesh_head")
-material_override = SubResource("Material_protector")
-
-[node name="Visor" type="MeshInstance3D" parent="Interactions/Protector"]
-position = Vector3(0, 1.83, -0.197)
-mesh = SubResource("BoxMesh_vanguard_visor")
-material_override = SubResource("Material_airlock")
-
-[node name="LeftUpperArm" type="MeshInstance3D" parent="Interactions/Protector"]
-position = Vector3(-0.4, 1.34, 0)
-mesh = SubResource("BoxMesh_humanoid_upper_arm")
-material_override = SubResource("Material_vanguard_suit")
-
-[node name="RightUpperArm" type="MeshInstance3D" parent="Interactions/Protector"]
-position = Vector3(0.4, 1.34, 0)
-mesh = SubResource("BoxMesh_humanoid_upper_arm")
-material_override = SubResource("Material_vanguard_suit")
-
-[node name="LeftThigh" type="MeshInstance3D" parent="Interactions/Protector"]
-position = Vector3(-0.13, 0.74, 0)
-mesh = SubResource("BoxMesh_humanoid_thigh")
-material_override = SubResource("Material_vanguard_suit")
-
-[node name="RightThigh" type="MeshInstance3D" parent="Interactions/Protector"]
-position = Vector3(0.13, 0.74, 0)
-mesh = SubResource("BoxMesh_humanoid_thigh")
-material_override = SubResource("Material_vanguard_suit")
-
-[node name="LeftShin" type="MeshInstance3D" parent="Interactions/Protector"]
-position = Vector3(-0.13, 0.32, 0)
-mesh = SubResource("BoxMesh_humanoid_shin")
-material_override = SubResource("Material_protector")
-
-[node name="RightShin" type="MeshInstance3D" parent="Interactions/Protector"]
-position = Vector3(0.13, 0.32, 0)
-mesh = SubResource("BoxMesh_humanoid_shin")
-material_override = SubResource("Material_protector")
-
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Protector"]
-position = Vector3(0, 1.25, 0)
-shape = SubResource("CapsuleShape_survivor")
-
+position = Vector3(0, 1.05, 0)
+shape = SubResource("CapsuleShape_protector")
 [node name="Label" type="Label3D" parent="Interactions/Protector"]
-position = Vector3(0, 2.25, 0)
+position = Vector3(0, 2.45, 0)
 text = "PROTECTOR"
 font_size = 36
 outline_size = 8
@@ -748,46 +358,17 @@ billboard = 1
 no_depth_test = true
 
 [node name="ServiceTerminal" type="StaticBody3D" parent="Interactions"]
-position = Vector3(5.5, 0, 1)
+position = Vector3(-11.5, 0, 6.5)
+rotation_degrees = Vector3(0, -90, 0)
 collision_layer = 2
 collision_mask = 0
 metadata/stable_id = "interaction.service_terminal"
-
 [node name="ProductionAsset" parent="Interactions/ServiceTerminal" instance=ExtResource("5_terminal")]
-position = Vector3(0, 0, 0.7)
-
-[node name="Base" type="MeshInstance3D" parent="Interactions/ServiceTerminal"]
-position = Vector3(0, 0.08, 0.7)
-visible = false
-mesh = SubResource("BoxMesh_terminal_base")
-material_override = SubResource("Material_utility_dark")
-
-[node name="Pedestal" type="MeshInstance3D" parent="Interactions/ServiceTerminal"]
-position = Vector3(0, 0.52, 0.7)
-visible = false
-mesh = SubResource("BoxMesh_terminal_pedestal")
-material_override = SubResource("Material_wall")
-
-[node name="Console" type="MeshInstance3D" parent="Interactions/ServiceTerminal"]
-position = Vector3(0, 1.08, 0.7)
-rotation_degrees = Vector3(-12, 0, 0)
-visible = false
-mesh = SubResource("BoxMesh_terminal_console")
-material_override = SubResource("Material_utility_dark")
-
-[node name="Screen" type="MeshInstance3D" parent="Interactions/ServiceTerminal"]
-position = Vector3(0, 1.13, 0.435)
-rotation_degrees = Vector3(-12, 0, 0)
-visible = false
-mesh = SubResource("BoxMesh_terminal_screen")
-material_override = SubResource("Material_terminal")
-
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/ServiceTerminal"]
-position = Vector3(0, 1.05, 0.7)
+position = Vector3(0, 0.8, 0)
 shape = SubResource("BoxShape_terminal")
-
 [node name="Label" type="Label3D" parent="Interactions/ServiceTerminal"]
-position = Vector3(0, 1.95, 0.7)
+position = Vector3(0, 1.95, 0)
 text = "SERVICE TERMINAL"
 font_size = 34
 outline_size = 8
@@ -796,56 +377,17 @@ billboard = 1
 no_depth_test = true
 
 [node name="EvacuationAirlock" type="StaticBody3D" parent="Interactions"]
-position = Vector3(8, 0, 0)
+position = Vector3(12, 0, 8)
+rotation_degrees = Vector3(0, 90, 0)
 collision_layer = 2
 collision_mask = 0
 metadata/stable_id = "interaction.evacuation_airlock"
-
 [node name="ProductionAsset" parent="Interactions/EvacuationAirlock" instance=ExtResource("4_airlock")]
-position = Vector3(1.15, 0, 0)
-rotation_degrees = Vector3(0, 90, 0)
-
-[node name="DoorNorthLeaf" type="MeshInstance3D" parent="Interactions/EvacuationAirlock"]
-position = Vector3(1, 1.2, 0.59)
-visible = false
-mesh = SubResource("BoxMesh_airlock_leaf")
-material_override = SubResource("Material_vanguard_armor")
-
-[node name="DoorSouthLeaf" type="MeshInstance3D" parent="Interactions/EvacuationAirlock"]
-position = Vector3(1, 1.2, -0.59)
-visible = false
-mesh = SubResource("BoxMesh_airlock_leaf")
-material_override = SubResource("Material_vanguard_armor")
-
-[node name="NorthStatusStrip" type="MeshInstance3D" parent="Interactions/EvacuationAirlock"]
-position = Vector3(0.875, 1.2, 0.14)
-visible = false
-mesh = SubResource("BoxMesh_airlock_status")
-material_override = SubResource("Material_airlock")
-
-[node name="SouthStatusStrip" type="MeshInstance3D" parent="Interactions/EvacuationAirlock"]
-position = Vector3(0.875, 1.2, -0.14)
-visible = false
-mesh = SubResource("BoxMesh_airlock_status")
-material_override = SubResource("Material_airlock")
-
-[node name="CenterLock" type="MeshInstance3D" parent="Interactions/EvacuationAirlock"]
-position = Vector3(0.84, 1.18, 0)
-visible = false
-mesh = SubResource("BoxMesh_airlock_lock")
-material_override = SubResource("Material_utility_dark")
-
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/EvacuationAirlock"]
-position = Vector3(1, 1.5, 0)
+position = Vector3(0, 1.35, 0)
 shape = SubResource("BoxShape_airlock")
-
-[node name="ApproachBeacon" type="MeshInstance3D" parent="Interactions/EvacuationAirlock"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("CylinderMesh_beacon")
-material_override = SubResource("Material_airlock")
-
 [node name="Label" type="Label3D" parent="Interactions/EvacuationAirlock"]
-position = Vector3(0.85, 2.85, 0)
+position = Vector3(0, 2.95, 0)
 text = "EVACUATION AIRLOCK"
 font_size = 36
 outline_size = 8
@@ -856,6 +398,6 @@ no_depth_test = true
 [node name="TacticalCamera" type="Camera3D" parent="."]
 fov = 48.0
 near = 0.15
-far = 100.0
+far = 120.0
 current = true
 script = ExtResource("2_camera")

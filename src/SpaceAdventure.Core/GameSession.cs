@@ -404,12 +404,12 @@ public sealed class GameSession
         {
             case StationDialogueResponseEffect.RerouteServicePower:
                 ApplyRouteConsequence(station, command.CommandId, RoutePowerMode.ServiceRerouted);
-                ChangeObjective(station, command.CommandId, station.Definition.RecruitmentObjective);
+                ChangeObjective(station, command.CommandId, station.Definition.EntryDoorObjective);
                 break;
 
             case StationDialogueResponseEffect.PreserveShelterPower:
                 ApplyRouteConsequence(station, command.CommandId, RoutePowerMode.ShelterPreserved);
-                ChangeObjective(station, command.CommandId, station.Definition.RecruitmentObjective);
+                ChangeObjective(station, command.CommandId, station.Definition.EntryDoorObjective);
                 break;
 
             case StationDialogueResponseEffect.RecruitProtector:
@@ -652,6 +652,8 @@ public sealed class GameSession
             remainingDistance = 0;
         }
 
+        TryAutoOpenServiceDoors(station, actor, action);
+
         if (action.WaypointIndex < action.Waypoints.Count)
         {
             return;
@@ -711,6 +713,13 @@ public sealed class GameSession
                 RecordInteractionCompleted(action.CommandId, actor.Id, interaction);
                 break;
 
+            case StationInteractionEffect.OpenEntryServiceDoor:
+            case StationInteractionEffect.OpenSoloExitServiceDoor:
+                // The solo-exit branch is staged for Phase 4; availability keeps it and
+                // the following recruitment progression unreachable in this slice.
+                CompleteServiceDoorInteraction(station, actor, interaction, action.CommandId);
+                break;
+
             case StationInteractionEffect.CompleteScenario:
                 CompleteScenario(station, action.CommandId, actor.Id, interaction);
                 break;
@@ -719,6 +728,48 @@ public sealed class GameSession
                 throw new InvalidOperationException(
                     $"Unsupported station interaction effect '{interaction.Definition.Effect}'.");
         }
+    }
+
+    private void TryAutoOpenServiceDoors(
+        StationRouteRuntime station,
+        ActorRuntime actor,
+        PrimaryActionRuntime action)
+    {
+        foreach (var interaction in station.ServiceDoorInteractions)
+        {
+            if (action.Kind == PrimaryActionKind.Interact
+                && action.InteractionTargetId == interaction.Definition.Id)
+            {
+                continue;
+            }
+
+            if (IsInteractionAvailable(station, interaction)
+                && IsWithinUseRadius(actor.Position, interaction))
+            {
+                CompleteServiceDoorInteraction(station, actor, interaction, action.CommandId);
+            }
+        }
+    }
+
+    private void CompleteServiceDoorInteraction(
+        StationRouteRuntime station,
+        ActorRuntime actor,
+        InteractionRuntime interaction,
+        CommandId commandId)
+    {
+        interaction.Completed = true;
+        RecordInteractionCompleted(commandId, actor.Id, interaction);
+
+        var nextObjective = interaction.Definition.Effect switch
+        {
+            StationInteractionEffect.OpenEntryServiceDoor =>
+                station.Definition.CombatThresholdObjective,
+            StationInteractionEffect.OpenSoloExitServiceDoor =>
+                station.Definition.RecruitmentObjective,
+            _ => throw new InvalidOperationException(
+                $"Interaction '{interaction.Definition.Id}' is not a service door."),
+        };
+        ChangeObjective(station, commandId, nextObjective);
     }
 
     private void ApplyRouteConsequence(
@@ -831,6 +882,10 @@ public sealed class GameSession
                 && station.CurrentObjective.Id == station.Definition.RecruitmentObjective.Id,
             StationInteractionEffect.RecordObservation =>
                 !interaction.Completed && station.RoutePowerMode != RoutePowerMode.Unset,
+            StationInteractionEffect.OpenEntryServiceDoor =>
+                !interaction.Completed
+                && station.CurrentObjective.Id == station.Definition.EntryDoorObjective.Id,
+            StationInteractionEffect.OpenSoloExitServiceDoor => false,
             StationInteractionEffect.CompleteScenario =>
                 !interaction.Completed
                 && station.CurrentObjective.Id == station.Definition.DestinationObjective.Id
@@ -1104,6 +1159,14 @@ public sealed class GameSession
                     _ = layout.TryGetInteraction(interaction.Id, out var placement);
                     return new InteractionRuntime(interaction, placement);
                 });
+            ServiceDoorInteractions = Interactions.Values
+                .Where(interaction => interaction.Definition.Effect is
+                    StationInteractionEffect.OpenEntryServiceDoor
+                    or StationInteractionEffect.OpenSoloExitServiceDoor)
+                .OrderBy(
+                    interaction => interaction.Definition.Id.Value,
+                    StringComparer.Ordinal)
+                .ToArray();
         }
 
         public StationRouteDefinition Definition { get; }
@@ -1115,6 +1178,8 @@ public sealed class GameSession
         public StationActorPlacement CompanionPlacement { get; }
 
         public Dictionary<EntityId, InteractionRuntime> Interactions { get; }
+
+        public IReadOnlyList<InteractionRuntime> ServiceDoorInteractions { get; }
 
         public StationObjectiveDefinition CurrentObjective { get; set; }
 

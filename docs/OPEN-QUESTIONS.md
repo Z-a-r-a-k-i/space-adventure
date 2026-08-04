@@ -30,6 +30,11 @@ There are no unresolved questions blocking the documented POC or bootstrap. New 
 - The evacuation airlock visibly opens before completion presentation.
 - The first-room boundary is an ordinary service door. The evacuation-airlock
   assembly is reserved for the final destination.
+- The production station route uses five authored areas. The survivor choice
+  unlocks the entry service door and its navigation link. Approaching it on an
+  accepted path completes the authoritative door interaction and opens its
+  leaves automatically. The far service door, Protector, and final airlock
+  remain unavailable until the solo-combat victory is implemented.
 - Vanguard Suppressive Fire is a position-targeted ability and Protector Guard
   Ally is an ally-targeted ability. Their final combat timing, clips, icons,
   and effects are defined in Phase 4. Operator Disruptor Shot is deferred with

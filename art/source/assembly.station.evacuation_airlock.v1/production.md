@@ -4,7 +4,7 @@ Status: technically validated and integrated; final owner visual approval pendin
 
 - Authoring tool: Blender 5.2.0 LTS
 - Method: deterministic dimensional construction from the approved reference
-- Script: `tools/blender/build_station_environment_v1.py`
+- Rebuild target: `tools/blender/build_station_environment_v2.py --asset airlock`
 - Editable source: `art/source/assembly.station.evacuation_airlock.v1/airlock-v1.blend` (110,095 bytes)
 - Runtime publication: `game/Assets/Published/assembly.station.evacuation_airlock.v1.glb` (101,956 bytes)
 - Geometry: 5 mesh objects, 1,404 triangles

@@ -17,18 +17,20 @@ public partial class GameHost : Node3D
     private const int MaximumVisualCaptureSettleFrames = 600;
     private const int VisualCaptureWidth = 1280;
     private const int VisualCaptureHeight = 720;
-    private const float WallCutawayCaptureYawRadians = 0.68f;
+    private const float ServiceDoorAnimationSeconds = 0.25f;
+    private const float ServiceDoorLeafTravelMeters = 0.94f;
+    private const float WallCutawayCaptureYawRadians = -1.5707964f;
     private const float WallCutawayCapturePitchRadians = 0.90f;
     private const float WallCutawayCaptureDistanceMeters = 14.5f;
-    private const float WallCutawayClearViewYawRadians = 3.1415927f;
+    private const float WallCutawayClearViewYawRadians = 1.5707964f;
     private const string WallCutawayCaptureArgument = "--visual-capture=wall-cutaway";
     private const string WallCutawayCaptureId = "wall-cutaway";
-    private const string WallCutawayExpectedOccluderId = "presentation.wall.branch_north";
+    private const string WallCutawayExpectedOccluderId = "presentation.wall.start.west";
     private const string WallCutawayMoveCommandId = "visual.capture.wall-cutaway.move";
     private const string WallCutawayImageRelativePath = "artifacts/visual/captures/wall-cutaway.png";
     private const string WallCutawayManifestRelativePath = "artifacts/visual/captures/wall-cutaway.json";
 
-    private static readonly Vector3 WallCutawayCaptureFocus = new(2.7f, 0.0f, 2.3f);
+    private static readonly Vector3 WallCutawayCaptureFocus = new(-10.0f, 0.0f, 7.0f);
 
     private static readonly JsonSerializerOptions CaptureManifestJsonOptions = new()
     {
@@ -44,6 +46,11 @@ public partial class GameHost : Node3D
     private readonly Dictionary<string, Node3D> _interactionViews = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Node3D> _actorViews = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Color> _interactionLabelColors = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, ServiceDoorPresentation> _serviceDoors = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, StationInteractionDefinition> _interactionDefinitions =
+        new(StringComparer.Ordinal);
+    private readonly Dictionary<StationInteractionEffect, StationInteractionDefinition>
+        _interactionDefinitionsByEffect = [];
     private readonly HashSet<string> _reportedCompletedInteractions = new(StringComparer.Ordinal);
     private readonly HashSet<EntityId> _selectedActorIds = [];
     private readonly Dictionary<string, Button> _partyButtons = new(StringComparer.Ordinal);
@@ -59,6 +66,8 @@ public partial class GameHost : Node3D
     private Node3D? _airlockNorthLeaf;
     private Node3D? _airlockSouthLeaf;
     private Node3D? _airlockCenterLock;
+    private StandardMaterial3D _serviceDoorLockedMaterial = null!;
+    private StandardMaterial3D _serviceDoorOpenMaterial = null!;
     private VanguardPresentation _vanguardPresentation = null!;
     private MeshInstance3D _destinationMarker = null!;
     private Label _objectiveLabel = null!;
@@ -80,10 +89,20 @@ public partial class GameHost : Node3D
     private double _autoQuitSeconds;
     private bool _visualCaptureRequested;
     private bool? _airlockOpenState;
+    private string? _environmentInitializationError;
 
     public override void _EnterTree()
     {
-        ConfigureProductionEnvironment();
+        try
+        {
+            ConfigureProductionEnvironment();
+        }
+        catch (Exception exception)
+        {
+            _environmentInitializationError =
+                $"Production environment initialization failed: {exception.Message}";
+            GD.PushError($"{_environmentInitializationError}\n{exception}");
+        }
     }
 
     public override void _Ready()
@@ -95,16 +114,32 @@ public partial class GameHost : Node3D
         _camera.InputEnabled = !_visualCaptureRequested;
         _airlockLight = GetNode<OmniLight3D>("AirlockLight");
         _protagonistView = GetNode<Node3D>("Actors/Protagonist");
+        _camera.FocusOn(_protagonistView.GlobalPosition);
         _vanguardPresentation = GetNode<VanguardPresentation>(
             "Actors/Protagonist/VanguardPresentation");
         foreach (var actorView in GetNode<Node3D>("Actors").GetChildren().OfType<Node3D>())
         {
             _actorViews.Add(GetStableId(actorView), actorView);
         }
-        CacheInteractionViews();
-        CacheAirlockPresentationNodes();
         CreateDestinationMarker();
         CreateHud();
+        try
+        {
+            CacheInteractionViews();
+            CacheServiceDoorPresentationNodes();
+            CacheAirlockPresentationNodes();
+        }
+        catch (Exception exception)
+        {
+            _environmentInitializationError ??=
+                $"Station presentation initialization failed: {exception.Message}";
+            GD.PushError($"{_environmentInitializationError}\n{exception}");
+        }
+        if (_environmentInitializationError is not null)
+        {
+            InitializationFailed(_environmentInitializationError);
+            return;
+        }
         SetFeedback("Synchronizing station navigation…", new Color("9eb6ce"));
     }
 
@@ -152,6 +187,7 @@ public partial class GameHost : Node3D
         var observation = _session.Observe();
         UpdateHoveredInteraction(observation);
         RenderObservation(observation);
+        AdvanceServiceDoorPresentation((float)delta);
 
         if (_autoQuitSeconds <= 0)
         {
@@ -220,6 +256,14 @@ public partial class GameHost : Node3D
         GD.Print($"SPACEADVENTURE_NAV_READY iteration={NavigationServer3D.MapGetIterationId(navigationMap)} regions={NavigationServer3D.MapGetRegions(navigationMap).Count} vertices={navigationRegion.NavigationMesh?.GetVertices().Length ?? 0} polygons={navigationRegion.NavigationMesh?.GetPolygonCount() ?? 0}");
         var contentJson = Godot.FileAccess.GetFileAsString("res://content/station-route.json");
         _definition = StationRouteContent.ParseJson(contentJson);
+        _interactionDefinitions.Clear();
+        _interactionDefinitionsByEffect.Clear();
+        foreach (var interaction in _definition.Interactions)
+        {
+            _interactionDefinitions.Add(interaction.Id.Value, interaction);
+            _interactionDefinitionsByEffect.Add(interaction.Effect, interaction);
+        }
+        ValidateServiceDoorContentBindings(_definition);
         var layout = CreateLayout(_definition);
         _session = GameSession.CreateStationRoute(
             _definition,
@@ -308,6 +352,90 @@ public partial class GameHost : Node3D
 
             _interactionLabelColors.Add(stableId, label.Modulate);
         }
+    }
+
+    private void CacheServiceDoorPresentationNodes()
+    {
+        _serviceDoorLockedMaterial = CreateServiceDoorStatusMaterial(new Color("f58f29"));
+        _serviceDoorOpenMaterial = CreateServiceDoorStatusMaterial(new Color("19bde8"));
+        CacheServiceDoorPresentation(
+            "interaction.service_door.entry",
+            "NavigationLinks/EntryServiceDoor");
+        CacheServiceDoorPresentation(
+            "interaction.service_door.solo_exit",
+            "NavigationLinks/SoloExitServiceDoor");
+    }
+
+    private void CacheServiceDoorPresentation(string interactionId, string navigationLinkPath)
+    {
+        if (!_interactionViews.TryGetValue(interactionId, out var view))
+        {
+            throw new InvalidDataException($"Service-door interaction view '{interactionId}' is missing.");
+        }
+
+        var productionAsset = view.GetNodeOrNull<Node3D>("ProductionAsset")
+            ?? throw new InvalidDataException(
+                $"Service-door interaction '{interactionId}' has no production asset.");
+        var left = productionAsset.FindChild("Door_Left", recursive: true, owned: false) as Node3D
+            ?? throw new InvalidDataException(
+                $"Service-door interaction '{interactionId}' is missing Door_Left.");
+        var right = productionAsset.FindChild("Door_Right", recursive: true, owned: false) as Node3D
+            ?? throw new InvalidDataException(
+                $"Service-door interaction '{interactionId}' is missing Door_Right.");
+        var status = productionAsset.FindChild("Status_Strip", recursive: true, owned: false)
+            as GeometryInstance3D
+            ?? throw new InvalidDataException(
+                $"Service-door interaction '{interactionId}' is missing Status_Strip.");
+        var blocker = view.GetNodeOrNull<CollisionShape3D>("DoorBlocker/CollisionShape3D")
+            ?? throw new InvalidDataException(
+                $"Service-door interaction '{interactionId}' is missing its collision blocker.");
+        var navigationLink = GetNodeOrNull<NavigationLink3D>(navigationLinkPath)
+            ?? throw new InvalidDataException(
+                $"Service-door interaction '{interactionId}' is missing navigation link '{navigationLinkPath}'.");
+
+        var presentation = new ServiceDoorPresentation(
+            left,
+            right,
+            status,
+            blocker,
+            navigationLink,
+            left.Position,
+            right.Position);
+        if (!_serviceDoors.TryAdd(interactionId, presentation))
+        {
+            throw new InvalidDataException($"Service-door presentation '{interactionId}' is duplicated.");
+        }
+    }
+
+    private void ValidateServiceDoorContentBindings(StationRouteDefinition definition)
+    {
+        var missingPresentationIds = definition.Interactions
+            .Where(interaction => interaction.Effect is
+                StationInteractionEffect.OpenEntryServiceDoor
+                or StationInteractionEffect.OpenSoloExitServiceDoor)
+            .Select(interaction => interaction.Id.Value)
+            .Where(interactionId => !_serviceDoors.ContainsKey(interactionId))
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        if (missingPresentationIds.Length > 0)
+        {
+            throw new InvalidDataException(
+                "Station route content has no cached service-door presentation for: "
+                + string.Join(", ", missingPresentationIds));
+        }
+    }
+
+    private static StandardMaterial3D CreateServiceDoorStatusMaterial(Color color)
+    {
+        return new StandardMaterial3D
+        {
+            AlbedoColor = color,
+            EmissionEnabled = true,
+            Emission = color,
+            EmissionEnergyMultiplier = 4.0f,
+            Metallic = 0.10f,
+            Roughness = 0.28f,
+        };
     }
 
     private void CreateDestinationMarker()
@@ -537,6 +665,8 @@ public partial class GameHost : Node3D
         {
             return;
         }
+        var definition = _definition
+            ?? throw new InvalidOperationException("The station route definition is unavailable.");
 
         RefreshPartyUi(route);
         foreach (var actorView in _actorViews)
@@ -606,10 +736,13 @@ public partial class GameHost : Node3D
                 continue;
             }
 
-            var isRecruitedProtector = _definition!.Interactions.Any(definitionInteraction =>
-                    definitionInteraction.Id == interaction.Id
-                    && definitionInteraction.Effect == StationInteractionEffect.BeginRecruitmentDialogue)
-                && route.Party.Any(actor => actor.Id == _definition.Companion.Id);
+            var interactionDefinition = _interactionDefinitions[interaction.Id.Value];
+            var isServiceDoor = interactionDefinition.Effect is
+                StationInteractionEffect.OpenEntryServiceDoor
+                or StationInteractionEffect.OpenSoloExitServiceDoor;
+            var isRecruitedProtector = interactionDefinition.Effect
+                    == StationInteractionEffect.BeginRecruitmentDialogue
+                && route.Party.Any(actor => actor.Id == definition.Companion.Id);
             view.Visible = !isRecruitedProtector;
             if (view is CollisionObject3D collisionObject)
             {
@@ -626,6 +759,8 @@ public partial class GameHost : Node3D
                 {
                     InteractionState.Unavailable => $"{interaction.Prompt.ToUpperInvariant()}  [LOCKED]",
                     InteractionState.DialogueActive => $"{interaction.Prompt.ToUpperInvariant()}  [TALKING]",
+                    InteractionState.Completed when isServiceDoor
+                        => $"{interaction.Prompt.ToUpperInvariant()}  [OPEN]",
                     InteractionState.Completed when interaction.Kind == StationInteractionKind.Environment
                         => $"{interaction.Prompt.ToUpperInvariant()}  [INSPECTED]",
                     InteractionState.Completed => $"{interaction.Prompt.ToUpperInvariant()}  [DONE]",
@@ -640,7 +775,10 @@ public partial class GameHost : Node3D
                     interaction.Id.Value,
                     objectiveTargetId,
                     StringComparison.Ordinal)
-                    && interaction.State is InteractionState.Available or InteractionState.DialogueActive;
+                    && (interaction.State is InteractionState.Available or InteractionState.DialogueActive
+                        || (route.Objective.Id == definition.CombatThresholdObjective.Id
+                            && interactionDefinition.Effect
+                                == StationInteractionEffect.OpenSoloExitServiceDoor));
                 if (isHovered && interaction.CanInteract)
                 {
                     labelText += "  [RIGHT-CLICK]";
@@ -663,8 +801,11 @@ public partial class GameHost : Node3D
                 label.OutlineSize = isHovered || isObjectiveTarget ? 12 : 8;
             }
 
-            var unavailableTransparency = interaction.State == InteractionState.Unavailable ? 0.58f : 0.0f;
-            SetInteractionTransparency(view, unavailableTransparency);
+            if (!isServiceDoor)
+            {
+                var unavailableTransparency = interaction.State == InteractionState.Unavailable ? 0.58f : 0.0f;
+                SetInteractionTransparency(view, unavailableTransparency);
+            }
 
             if (interaction.Kind == StationInteractionKind.Destination)
             {
@@ -676,7 +817,9 @@ public partial class GameHost : Node3D
                 && interaction.ResultText is not null
                 && _reportedCompletedInteractions.Add(interaction.Id.Value))
             {
-                SetFeedback(interaction.ResultText, new Color("d1b5ff"));
+                SetFeedback(
+                    interaction.ResultText,
+                    isServiceDoor ? new Color("8fe6ff") : new Color("d1b5ff"));
             }
         }
 
@@ -727,7 +870,56 @@ public partial class GameHost : Node3D
         }
 
         _completionOverlay.Visible = route.Phase == ScenarioPhase.Completed;
+        SynchronizeServiceDoorAuthority(route);
         SetAirlockOpen(route.Phase == ScenarioPhase.Completed);
+    }
+
+    private void SynchronizeServiceDoorAuthority(StationRouteObservation route)
+    {
+        foreach (var (interactionId, door) in _serviceDoors)
+        {
+            var interaction = route.Interactions.Single(candidate =>
+                string.Equals(candidate.Id.Value, interactionId, StringComparison.Ordinal));
+            var unlocked = interaction.State is InteractionState.Available
+                or InteractionState.Completed;
+            var open = interaction.State == InteractionState.Completed;
+            door.NavigationLink.Enabled = unlocked;
+            if (door.Blocker.Disabled != open)
+            {
+                door.Blocker.SetDeferred(CollisionShape3D.PropertyName.Disabled, open);
+            }
+            door.StatusStrip.MaterialOverride = open
+                ? _serviceDoorOpenMaterial
+                : _serviceDoorLockedMaterial;
+
+            if (door.TargetOpen is null)
+            {
+                door.TargetOpen = open;
+                door.Left.Position = open ? door.OpenLeftPosition : door.ClosedLeftPosition;
+                door.Right.Position = open ? door.OpenRightPosition : door.ClosedRightPosition;
+            }
+            else
+            {
+                door.TargetOpen = open;
+            }
+        }
+    }
+
+    private void AdvanceServiceDoorPresentation(float deltaSeconds)
+    {
+        var movement = ServiceDoorLeafTravelMeters
+            * Math.Max(0.0f, deltaSeconds)
+            / ServiceDoorAnimationSeconds;
+        foreach (var door in _serviceDoors.Values)
+        {
+            var open = door.TargetOpen == true;
+            door.Left.Position = door.Left.Position.MoveToward(
+                open ? door.OpenLeftPosition : door.ClosedLeftPosition,
+                movement);
+            door.Right.Position = door.Right.Position.MoveToward(
+                open ? door.OpenRightPosition : door.ClosedRightPosition,
+                movement);
+        }
     }
 
     private void SynchronizeProtagonistPresentation(
@@ -833,28 +1025,85 @@ public partial class GameHost : Node3D
         var structure = GetNodeOrNull<Node3D>("Environment/ProductionStructure");
         if (structure is null)
         {
-            GD.PushError("The production station structure node is missing; camera cutaway is disabled.");
-            return;
+            throw new InvalidDataException("The production station structure node is missing.");
         }
 
-        var occluders = new Dictionary<string, string>(StringComparer.Ordinal)
+        var occluderIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var importedNode in EnumerateDescendants(structure))
         {
-            ["Wall_West"] = "presentation.wall.west",
-            ["Wall_North"] = "presentation.wall.north",
-            ["Wall_InnerEast"] = "presentation.wall.inner_east",
-            ["Wall_South"] = "presentation.wall.south",
-            ["Wall_BranchNorth"] = "presentation.wall.branch_north",
-        };
-        foreach (var (nodeName, stableId) in occluders)
-        {
-            if (structure.FindChild(nodeName, recursive: true, owned: false) is not GeometryInstance3D wall)
+            var stableId = ReadImportedOccluderId(importedNode);
+            if (stableId is null)
             {
-                GD.PushError($"Production station structure is missing '{nodeName}'.");
                 continue;
             }
 
-            wall.AddToGroup("camera_occluder");
+            if (string.IsNullOrWhiteSpace(stableId)
+                || !stableId.StartsWith("presentation.wall.", StringComparison.Ordinal))
+            {
+                throw new InvalidDataException(
+                    $"Production wall '{importedNode.GetPath()}' has invalid occluder_id '{stableId}'.");
+            }
+            if (!occluderIds.Add(stableId))
+            {
+                throw new InvalidDataException(
+                    $"Production station structure duplicates occluder_id '{stableId}'.");
+            }
+
+            var geometryCandidates = importedNode is GeometryInstance3D geometry
+                ? new[] { geometry }
+                : EnumerateDescendants(importedNode).OfType<GeometryInstance3D>().ToArray();
+            if (geometryCandidates.Length != 1)
+            {
+                throw new InvalidDataException(
+                    $"Production wall '{importedNode.GetPath()}' has "
+                    + $"{geometryCandidates.Length} geometry candidates; expected exactly one.");
+            }
+
+            var wall = geometryCandidates[0];
             wall.SetMeta("occluder_id", stableId);
+            wall.AddToGroup("camera_occluder");
+        }
+
+        if (occluderIds.Count == 0)
+        {
+            throw new InvalidDataException(
+                "Production station structure contains no recursively discoverable wall occluders.");
+        }
+    }
+
+    private static string? ReadImportedOccluderId(Node node)
+    {
+        if (node.HasMeta("occluder_id"))
+        {
+            return node.GetMeta("occluder_id").AsString();
+        }
+
+        if (!node.HasMeta("extras"))
+        {
+            return null;
+        }
+
+        var extras = node.GetMeta("extras");
+        if (extras.VariantType != Variant.Type.Dictionary)
+        {
+            return null;
+        }
+
+        var dictionary = extras.AsGodotDictionary();
+        return dictionary.TryGetValue("occluder_id", out var occluderId)
+            ? occluderId.AsString()
+            : null;
+    }
+
+    private static IEnumerable<Node> EnumerateDescendants(Node root)
+    {
+        foreach (var child in root.GetChildren())
+        {
+            yield return child;
+            foreach (var descendant in EnumerateDescendants(child))
+            {
+                yield return descendant;
+            }
         }
     }
 
@@ -996,17 +1245,21 @@ public partial class GameHost : Node3D
 
     private string GetInteractionPrompt(EntityId targetId)
     {
-        return _definition!.Interactions.Single(interaction => interaction.Id == targetId).Prompt;
+        return _interactionDefinitions[targetId.Value].Prompt;
     }
 
     private string? GetObjectiveTargetId(ObjectiveId objectiveId)
     {
         var targetEffect = objectiveId == _definition!.BriefingObjective.Id
             ? StationInteractionEffect.BeginSurvivorDialogue
-            : objectiveId == _definition.RecruitmentObjective.Id
-                ? StationInteractionEffect.BeginRecruitmentDialogue
-                : StationInteractionEffect.CompleteScenario;
-        return _definition.Interactions.Single(interaction => interaction.Effect == targetEffect).Id.Value;
+            : objectiveId == _definition.EntryDoorObjective.Id
+                ? StationInteractionEffect.OpenEntryServiceDoor
+                : objectiveId == _definition.CombatThresholdObjective.Id
+                    ? StationInteractionEffect.OpenSoloExitServiceDoor
+                    : objectiveId == _definition.RecruitmentObjective.Id
+                        ? StationInteractionEffect.BeginRecruitmentDialogue
+                        : StationInteractionEffect.CompleteScenario;
+        return _interactionDefinitionsByEffect[targetEffect].Id.Value;
     }
 
     private CommandId NextHumanCommandId(string commandType)
@@ -1073,7 +1326,7 @@ public partial class GameHost : Node3D
             }
             if (string.Equals(argument, "--station-route-smoke", StringComparison.Ordinal))
             {
-                RunStationRouteSmoke();
+                _ = RunStationRouteSmokeWithFailureHandlingAsync();
                 return;
             }
 
@@ -1612,6 +1865,38 @@ public partial class GameHost : Node3D
         CameraOcclusionObservation Before,
         CameraOcclusionObservation After);
 
+    private sealed class ServiceDoorPresentation(
+        Node3D left,
+        Node3D right,
+        GeometryInstance3D statusStrip,
+        CollisionShape3D blocker,
+        NavigationLink3D navigationLink,
+        Vector3 closedLeftPosition,
+        Vector3 closedRightPosition)
+    {
+        public Node3D Left { get; } = left;
+
+        public Node3D Right { get; } = right;
+
+        public GeometryInstance3D StatusStrip { get; } = statusStrip;
+
+        public CollisionShape3D Blocker { get; } = blocker;
+
+        public NavigationLink3D NavigationLink { get; } = navigationLink;
+
+        public Vector3 ClosedLeftPosition { get; } = closedLeftPosition;
+
+        public Vector3 ClosedRightPosition { get; } = closedRightPosition;
+
+        public Vector3 OpenLeftPosition { get; } =
+            closedLeftPosition + (Vector3.Left * ServiceDoorLeafTravelMeters);
+
+        public Vector3 OpenRightPosition { get; } =
+            closedRightPosition + (Vector3.Right * ServiceDoorLeafTravelMeters);
+
+        public bool? TargetOpen { get; set; }
+    }
+
     private void RunBootstrapSmoke()
     {
         var result = _automationBridge!.SubmitCommandJson(JsonSerializer.Serialize(new
@@ -1638,17 +1923,33 @@ public partial class GameHost : Node3D
             },
         }));
 
+        var initialYaw = _camera.YawRadians;
+        _camera.YawRadians = 0.0f;
+        var northFacingPan = _camera.GetPanBasis();
+        _camera.YawRadians = Mathf.Pi / 2.0f;
+        var westFacingPan = _camera.GetPanBasis();
+        _camera.YawRadians = initialYaw;
+        var cameraPanIsYawRelative = northFacingPan.Forward.IsEqualApprox(Vector3.Forward)
+            && northFacingPan.Right.IsEqualApprox(Vector3.Right)
+            && westFacingPan.Forward.IsEqualApprox(Vector3.Left)
+            && westFacingPan.Right.IsEqualApprox(Vector3.Forward);
+
         var passed = IsAccepted(result)
             && !IsAccepted(invalidResult)
             && !IsAccepted(oversizedStep)
             && !IsAccepted(oversizedMove)
+            && cameraPanIsYawRelative
+            && _camera.FocusPoint.IsEqualApprox(new Vector3(
+                _protagonistView.GlobalPosition.X,
+                0.0f,
+                _protagonistView.GlobalPosition.Z))
             && _session!.Observe() is { Paused: true, Tick: 0 };
         GD.Print(
-            $"SPACEADVENTURE_SMOKE valid={result} invalid={invalidResult} oversized_step={oversizedStep} oversized_move={oversizedMove}");
+            $"SPACEADVENTURE_SMOKE valid={result} invalid={invalidResult} oversized_step={oversizedStep} oversized_move={oversizedMove} camera_pan_yaw_relative={cameraPanIsYawRelative}");
         GetTree().Quit(passed ? 0 : 1);
     }
 
-    private void RunStationRouteSmoke()
+    private async Task RunStationRouteSmokeAsync()
     {
         var definition = _definition!;
         var automationBridge = _automationBridge
@@ -1656,12 +1957,20 @@ public partial class GameHost : Node3D
         var actorId = definition.Protagonist.Id.Value;
         var survivor = definition.Interactions.Single(
             interaction => interaction.Effect == StationInteractionEffect.BeginSurvivorDialogue);
-        var protector = definition.Interactions.Single(
-            interaction => interaction.Effect == StationInteractionEffect.BeginRecruitmentDialogue);
+        var entryDoor = definition.Interactions.Single(
+            interaction => interaction.Effect == StationInteractionEffect.OpenEntryServiceDoor);
+        var soloExit = definition.Interactions.Single(
+            interaction => interaction.Effect == StationInteractionEffect.OpenSoloExitServiceDoor);
         var terminal = definition.Interactions.Single(
             interaction => interaction.Effect == StationInteractionEffect.RecordObservation);
+        var protector = definition.Interactions.Single(
+            interaction => interaction.Effect == StationInteractionEffect.BeginRecruitmentDialogue);
         var airlock = definition.Interactions.Single(
             interaction => interaction.Effect == StationInteractionEffect.CompleteScenario);
+        var futureRoutePath = new GodotSpatialPathfinder(GetWorld3D().NavigationMap).FindPath(
+            definition.Protagonist.Id,
+            new WorldPosition(-1.5, 0.0, 0.0),
+            new WorldPosition(11.0, 0.0, 8.0));
 
         var pause = automationBridge.SetPaused(true);
         var survivorOrder = SubmitInteraction("godot.route.survivor", actorId, survivor.Id.Value);
@@ -1683,6 +1992,19 @@ public partial class GameHost : Node3D
                     response.Effect == StationDialogueResponseEffect.RerouteServicePower).Id.Value,
             },
         }));
+        RenderObservation(_session.Observe());
+        await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        var entryDoorPresentation = _serviceDoors[entryDoor.Id.Value];
+        var soloExitPresentation = _serviceDoors[soloExit.Id.Value];
+        var doorNavigationUnlocked = entryDoorPresentation.NavigationLink.Enabled
+            && !entryDoorPresentation.Blocker.Disabled
+            && entryDoorPresentation.Left.Position.IsEqualApprox(
+                entryDoorPresentation.ClosedLeftPosition)
+            && entryDoorPresentation.Right.Position.IsEqualApprox(
+                entryDoorPresentation.ClosedRightPosition)
+            && entryDoorPresentation.StatusStrip.MaterialOverride == _serviceDoorLockedMaterial
+            && !soloExitPresentation.NavigationLink.Enabled;
 
         var terminalOrder = SubmitInteraction("godot.route.terminal", actorId, terminal.Id.Value);
         var terminalSequence = _session.Observe().LatestEventSequence;
@@ -1691,47 +2013,91 @@ public partial class GameHost : Node3D
             "interaction_completed",
             maximumTicks: 600);
 
-        var protectorOrder = SubmitInteraction("godot.route.protector", actorId, protector.Id.Value);
-        var protectorSequence = _session.Observe().LatestEventSequence;
-        var protectorDialogueWait = automationBridge.AdvanceUntilEventJson(
-            protectorSequence,
-            "dialogue_started",
-            maximumTicks: 600);
-        var recruit = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
+        var arenaSequence = _session.Observe().LatestEventSequence;
+        var arenaMove = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
             schema_version = 2,
-            command_id = "godot.route.recruit",
-            type = "choose_dialogue_response",
+            command_id = "godot.route.enter-solo-arena",
+            type = "move_actor",
             payload = new
             {
                 actor_id = actorId,
-                interaction_id = protector.Id.Value,
-                response_id = protector.Dialogue!.Responses.Single().Id.Value,
+                destination = new { x = -10.0, y = 0.0, z = 0.0 },
             },
         }));
-
-        var airlockOrder = SubmitInteraction("godot.route.airlock", actorId, airlock.Id.Value);
-        var airlockSequence = _session.Observe().LatestEventSequence;
-        var completionWait = automationBridge.AdvanceUntilEventJson(
-            airlockSequence,
-            "scenario_completed",
+        var arenaWait = automationBridge.AdvanceUntilEventJson(
+            arenaSequence,
+            "movement_arrived",
             maximumTicks: 600);
+        var arenaEvents = _session.EventsSince(arenaSequence);
+        var entryDoorOpened = arenaEvents.SingleOrDefault(gameEvent =>
+            gameEvent.Detail is InteractionCompletedEventDetail detail
+                && detail.InteractionId == entryDoor.Id);
+        var arenaArrived = arenaEvents.SingleOrDefault(gameEvent =>
+            gameEvent.Type == GameplayEventType.MovementArrived);
+        RenderObservation(_session.Observe());
+        AdvanceServiceDoorPresentation(ServiceDoorAnimationSeconds);
+        await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        var doorPresentationSynchronized = entryDoorPresentation.NavigationLink.Enabled
+            && entryDoorPresentation.Blocker.Disabled
+            && entryDoorPresentation.Left.Position.IsEqualApprox(
+                entryDoorPresentation.OpenLeftPosition)
+            && entryDoorPresentation.Right.Position.IsEqualApprox(
+                entryDoorPresentation.OpenRightPosition)
+            && entryDoorPresentation.StatusStrip.MaterialOverride == _serviceDoorOpenMaterial
+            && !soloExitPresentation.NavigationLink.Enabled
+            && !soloExitPresentation.Blocker.Disabled
+            && soloExitPresentation.Left.Position.IsEqualApprox(
+                soloExitPresentation.ClosedLeftPosition)
+            && soloExitPresentation.Right.Position.IsEqualApprox(
+                soloExitPresentation.ClosedRightPosition)
+            && soloExitPresentation.StatusStrip.MaterialOverride == _serviceDoorLockedMaterial;
+        var exitLock = SubmitInteraction("godot.route.solo-exit-lock", actorId, soloExit.Id.Value);
+        var navigationBypass = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
+        {
+            schema_version = 2,
+            command_id = "godot.route.solo-exit-navigation-lock",
+            type = "move_actor",
+            payload = new
+            {
+                actor_id = actorId,
+                destination = new { x = -1.5, y = 0.0, z = 0.0 },
+            },
+        }));
 
         var final = _session.Observe().StationRoute!;
         var passed = IsAccepted(pause)
             && IsAccepted(survivorOrder)
             && IsReached(dialogueWait)
             && IsAccepted(response)
+            && doorNavigationUnlocked
             && IsAccepted(terminalOrder)
             && IsReached(terminalWait)
-            && IsAccepted(protectorOrder)
-            && IsReached(protectorDialogueWait)
-            && IsAccepted(recruit)
-            && IsAccepted(airlockOrder)
-            && IsReached(completionWait)
-            && final.Phase == ScenarioPhase.Completed
+            && IsAccepted(arenaMove)
+            && IsReached(arenaWait)
+            && entryDoorOpened is not null
+            && arenaArrived is not null
+            && entryDoorOpened.Sequence < arenaArrived.Sequence
+            && doorPresentationSynchronized
+            && IsRejectedWithCode(exitLock, "interaction_unavailable")
+            && IsRejectedWithCode(navigationBypass, "destination_unreachable")
+            && futureRoutePath.IsReachable
+            && final.Phase == ScenarioPhase.InProgress
+            && final.Objective.Id == definition.CombatThresholdObjective.Id
+            && final.Party.Count == 1
+            && final.Interactions.Single(interaction => interaction.Id == entryDoor.Id).State
+                == InteractionState.Completed
+            && final.Interactions.Single(interaction => interaction.Id == soloExit.Id).State
+                == InteractionState.Unavailable
+            && final.Interactions.Single(interaction => interaction.Id == protector.Id).State
+                == InteractionState.Unavailable
+            && final.Interactions.Single(interaction => interaction.Id == airlock.Id).State
+                == InteractionState.Unavailable
             && final.Interactions.Single(interaction => interaction.Id == terminal.Id).State
-                == InteractionState.Completed;
+                == InteractionState.Completed
+            && !_session.EventsSince(0).Any(gameEvent =>
+                gameEvent.Type == GameplayEventType.ScenarioCompleted);
 
         var summary = JsonSerializer.Serialize(new
         {
@@ -1739,6 +2105,16 @@ public partial class GameHost : Node3D
             tick = _session.Observe().Tick,
             phase = final.Phase.ToString(),
             objective = final.Objective.Id.Value,
+            entry_door_open = final.Interactions.Single(
+                interaction => interaction.Id == entryDoor.Id).State == InteractionState.Completed,
+            entry_door_navigation_unlocked_before_open = doorNavigationUnlocked,
+            entry_door_auto_opened_before_arrival = entryDoorOpened is not null
+                && arenaArrived is not null
+                && entryDoorOpened.Sequence < arenaArrived.Sequence,
+            entry_door_presentation_synchronized = doorPresentationSynchronized,
+            solo_exit_locked = final.Interactions.Single(
+                interaction => interaction.Id == soloExit.Id).State == InteractionState.Unavailable,
+            future_route_navigation_connected = futureRoutePath.IsReachable,
             terminal_inspected = final.Interactions.Single(
                 interaction => interaction.Id == terminal.Id).State == InteractionState.Completed,
         });
@@ -1749,15 +2125,31 @@ public partial class GameHost : Node3D
             GD.Print($"SPACEADVENTURE_ROUTE_DIAGNOSTIC survivor={survivorOrder}");
             GD.Print($"SPACEADVENTURE_ROUTE_DIAGNOSTIC dialogue_wait={dialogueWait}");
             GD.Print($"SPACEADVENTURE_ROUTE_DIAGNOSTIC response={response}");
+            GD.Print($"SPACEADVENTURE_ROUTE_DIAGNOSTIC door_navigation_unlocked={doorNavigationUnlocked}");
             GD.Print($"SPACEADVENTURE_ROUTE_DIAGNOSTIC terminal={terminalOrder}");
             GD.Print($"SPACEADVENTURE_ROUTE_DIAGNOSTIC terminal_wait={terminalWait}");
-            GD.Print($"SPACEADVENTURE_ROUTE_DIAGNOSTIC protector={protectorOrder}");
-            GD.Print($"SPACEADVENTURE_ROUTE_DIAGNOSTIC protector_dialogue_wait={protectorDialogueWait}");
-            GD.Print($"SPACEADVENTURE_ROUTE_DIAGNOSTIC recruit={recruit}");
-            GD.Print($"SPACEADVENTURE_ROUTE_DIAGNOSTIC airlock={airlockOrder}");
-            GD.Print($"SPACEADVENTURE_ROUTE_DIAGNOSTIC completion_wait={completionWait}");
+            GD.Print($"SPACEADVENTURE_ROUTE_DIAGNOSTIC arena_move={arenaMove}");
+            GD.Print($"SPACEADVENTURE_ROUTE_DIAGNOSTIC arena_wait={arenaWait}");
+            GD.Print($"SPACEADVENTURE_ROUTE_DIAGNOSTIC entry_door_opened={entryDoorOpened}");
+            GD.Print($"SPACEADVENTURE_ROUTE_DIAGNOSTIC door_presentation={doorPresentationSynchronized}");
+            GD.Print($"SPACEADVENTURE_ROUTE_DIAGNOSTIC exit_lock={exitLock}");
+            GD.Print($"SPACEADVENTURE_ROUTE_DIAGNOSTIC navigation_bypass={navigationBypass}");
+            GD.Print($"SPACEADVENTURE_ROUTE_DIAGNOSTIC future_route_path={futureRoutePath.IsReachable}");
         }
         GetTree().Quit(passed ? 0 : 1);
+    }
+
+    private async Task RunStationRouteSmokeWithFailureHandlingAsync()
+    {
+        try
+        {
+            await RunStationRouteSmokeAsync();
+        }
+        catch (Exception exception)
+        {
+            GD.PushError($"Station-route smoke failed: {exception}");
+            GetTree().Quit(1);
+        }
     }
 
     private string SubmitInteraction(string commandId, string actorId, string targetId)
@@ -1782,6 +2174,14 @@ public partial class GameHost : Node3D
         using var document = JsonDocument.Parse(result);
         return document.RootElement.GetProperty("accepted").GetBoolean()
             && document.RootElement.GetProperty("reached").GetBoolean();
+    }
+
+    private static bool IsRejectedWithCode(string result, string rejectionCode)
+    {
+        using var document = JsonDocument.Parse(result);
+        return !document.RootElement.GetProperty("accepted").GetBoolean()
+            && document.RootElement.TryGetProperty("rejection_code", out var code)
+            && string.Equals(code.GetString(), rejectionCode, StringComparison.Ordinal);
     }
 
     private void InitializationFailed(string message)

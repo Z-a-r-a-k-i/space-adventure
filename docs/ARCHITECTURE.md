@@ -51,7 +51,7 @@ Pure C# targeting `net8.0`. It owns:
 
 The core does not know about nodes, scenes, input events, cameras, meshes, animations, audio, editor plugins, MCP, file dialogs, or viewport capture.
 
-The implemented station-route slice makes this boundary concrete. `GameSession` owns the protagonist position, current and pending primary actions, interaction state, active authored dialogue, objective, and completion. `StationRouteDefinition` contains validated content while `StationRouteLayout` supplies stable spatial placements. `ISpatialPathfinder` is the only engine-facing spatial contract; it accepts pure `WorldPosition` values and returns an immutable path result.
+The implemented station-route slice makes this boundary concrete. `GameSession` owns the protagonist position, current and pending primary actions, interaction state, active authored dialogue, objective, and completion. The schema-v3 route explicitly orders survivor choice, entry-service-door opening, and the locked first-combat threshold; the later solo exit, Protector, and airlock remain unavailable until combat work advances them. `StationRouteDefinition` contains validated content while `StationRouteLayout` supplies stable spatial placements. `ISpatialPathfinder` is the only engine-facing spatial contract; it accepts pure `WorldPosition` values and returns an immutable path result.
 
 ### `game/SpaceAdventure.Game`
 
@@ -67,7 +67,7 @@ The Godot 4.7.1 .NET project references the core and owns:
 
 Godot nodes are replaceable views and adapters. They may cache presentation state, but they do not become an alternate source of gameplay truth.
 
-For the station route, `station_route.tscn` owns the authored L-shaped floor, collision, embedded navigation mesh, lights, camera, spawn marker, approach markers, interaction views, and tagged wall-cutaway presentation. `GameHost` validates gameplay `stable_id` metadata against `station-route.json`, translates ray hits and dialogue UI input into typed commands, and renders core observations. `GodotSpatialPathfinder` performs bounded, validated `NavigationServer3D` path queries. It never moves the protagonist node as gameplay authority; the node is positioned from the latest core observation.
+For the station route, `station_route.tscn` owns the five-area serpentine layout, invisible floor collision and navigation wrappers, lights, camera, spawn and approach markers, interaction views, and production GLB instances. Navigation is split at both service doors. The entry `NavigationLink3D` enables when the authoritative interaction becomes available, so pathfinding can route through the still-closed unlocked door. Core movement completes that interaction on approach; the blocker and animated leaves then synchronize from completed state. The solo-exit link stays disabled, while always-on links preserve continuity between the inaccessible Protector, main-arena, and final-approach islands without bypassing that gate. `GameHost` validates gameplay `stable_id` metadata against `station-route.json`, translates ray hits and dialogue UI input into typed commands, and renders core observations. `GodotSpatialPathfinder` performs bounded, validated `NavigationServer3D` path queries. It never moves the protagonist node as gameplay authority; the node is positioned from the latest core observation.
 
 ### `tools/SpaceAdventure.SimCli`
 
@@ -75,7 +75,7 @@ A console application references the core and runs rule-level scenarios without 
 
 ### `tests/SpaceAdventure.Core.Tests`
 
-Fast tests construct small fixtures directly and do not load Godot. They cover the Phase 1 pause clock and bounded event retention plus Phase 2 content validation, layout-ID validation, fixed-tick movement, pause and pending-order replacement, unreachable-order atomicity, authored dialogue response, optional terminal behavior, objective gating, and completion with or without the optional terminal. Combat, inventory, recruitment, and generated-dialogue rules remain future test work.
+Fast tests construct small fixtures directly and do not load Godot. They cover the pause clock and bounded event retention plus schema-v3 content validation, exact door-effect counts, layout-ID validation, fixed-tick movement, pause and pending-order replacement, unreachable-order atomicity, both authored survivor choices and terminal consequences, atomic entry-door progression, and the unavailable solo exit, Protector, and airlock. Combat, inventory, recruitment, and generated-dialogue rules remain future test work.
 
 ## Game session and fixed time
 
@@ -97,7 +97,7 @@ The core stores accepted waypoints and advances position at the authored movemen
 
 Wall cutaway is presentation state, not gameplay state. The Phase 2 controller discovers explicitly tagged static wall meshes, caches their full transforms and world-space axis-aligned bounding boxes, and tests an expanded camera-to-protagonist segment against those cached bounds with entry/release hysteresis. A blocking mesh remains opaque while its local Y scale and position animate toward a bottom-anchored 0.45 m stub over 0.15 seconds; it restores when it no longer blocks the view. This does not mutate core position, navigation, collision, interaction state, or command results.
 
-The cached-AABB approach is deliberately a greybox POC. It is deterministic, cheap, and inspectable for the current static axis-aligned boxes, but it over-approximates non-box silhouettes and becomes invalid for rotated, animated, deforming, concave, streamed, or multi-floor production environments. Scaling the same mesh also compresses any future trim, texture, window, or doorway detail and provides a whole-panel collapse rather than a local view hole. Production levels should move to separately authored upper/base presentation, occlusion volumes and room/floor visibility metadata, with a dithered or otherwise sorting-safe visual transition, while retaining stable occluder IDs and structured observation.
+The cached-AABB approach is deliberately narrow. It is deterministic, cheap, and inspectable for the current static axis-aligned wall panels, but it over-approximates non-box silhouettes and becomes invalid for rotated, animated, deforming, concave, streamed, or multi-floor environments. Production walls are discovered recursively from each imported GLB node's `extras.occluder_id` metadata; there is no scene-code wall-name map. Scaling a complete wall still compresses trim and provides a whole-panel collapse rather than a local view hole. Production levels should move to separately authored upper/base presentation, occlusion volumes and room/floor visibility metadata, with a dithered or otherwise sorting-safe visual transition, while retaining stable occluder IDs and structured observation.
 
 ## Command contract
 
@@ -163,7 +163,7 @@ Use observations and events to answer what happened. Use screenshots and live pl
 
 ## Content boundary
 
-The POC uses small versioned text definitions for gameplay data and Godot scenes for spatial layout and presentation references. The implemented `game/content/station-route.json` defines the schema/revision, protagonist speed, objectives, interaction kinds/radii/effects, survivor line and fixed response, and terminal/airlock result text. `station_route.tscn` owns positions, approach markers, collision, and navigation. Both are validated into core records and joined by stable IDs before the scenario starts.
+The POC uses small versioned text definitions for gameplay data and Godot scenes for spatial layout and presentation references. The implemented `game/content/station-route.json` defines the schema/revision, protagonist speed, objectives, interaction kinds/radii/effects, survivor line and two fixed responses, and terminal/airlock result text. `station_route.tscn` owns positions, approach markers, collision, and navigation. Both are validated into core records and joined by stable IDs before the scenario starts.
 
 Do not add a database, spreadsheet import service, generic graph editor, or mod framework for the POC. If direct text authoring becomes the dominant bottleneck, add an authoring adapter while preserving the validated core contracts.
 
@@ -171,7 +171,7 @@ Do not add a database, spreadsheet import service, generic graph editor, or mod 
 
 A dialogue provider receives a bounded request containing only relevant world facts, conversation state, allowed intents, and permitted moves. It returns a structured proposal. Deterministic validators check identity, revisions, knowledge, references, size limits, intents, and state-transition preconditions. Accepted effects become ordinary gameplay commands or authored state transitions.
 
-The POC uses the scripted provider. Phase 2 implements only one authored survivor line and one authored response, selected through `ChooseDialogueResponseCommand`; choosing it advances the objective and unlocks the airlock. This is intentionally not a branching dialogue framework. An optional local development provider may later invoke the official Codex CLI with ChatGPT sign-in; manual-inbox and recorded providers support inspection and deterministic replay. These are experiment tools, not dependencies of the playable scenario. Model, reasoning effort, and Fast mode are independent per-request profile settings and never enter authoritative or saved gameplay state. See `DIALOGUE-AI.md`.
+The POC uses the scripted provider. The current route implements one authored survivor line and two authored responses, selected through `ChooseDialogueResponseCommand`; either response atomically completes the survivor interaction, records the route-power choice, advances the objective, and makes the entry service door available. Moving through its unlocked navigation link completes and opens the door on approach, then advances to the locked first-combat threshold. These explicit effects are intentionally not a branching dialogue or generic gate framework. An optional local development provider may later invoke the official Codex CLI with ChatGPT sign-in; manual-inbox and recorded providers support inspection and deterministic replay. These are experiment tools, not dependencies of the playable scenario. Model, reasoning effort, and Fast mode are independent per-request profile settings and never enter authoritative or saved gameplay state. See `DIALOGUE-AI.md`.
 
 ## Automation boundary
 

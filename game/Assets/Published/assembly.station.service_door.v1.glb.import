@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://dbnk4tcvqne27"
-path="res://.godot/imported/kit.station.structure.v1.glb-9124bf2b9079224188838f0714ed6fbb.scn"
+uid="uid://dgr4yb30gd5lq"
+path="res://.godot/imported/assembly.station.service_door.v1.glb-b72058c0e95a296e365091a50c8cffdf.scn"
 
 [deps]
 
-source_file="res://Assets/Published/kit.station.structure.v1.glb"
-dest_files=["res://.godot/imported/kit.station.structure.v1.glb-9124bf2b9079224188838f0714ed6fbb.scn"]
+source_file="res://Assets/Published/assembly.station.service_door.v1.glb"
+dest_files=["res://.godot/imported/assembly.station.service_door.v1.glb-b72058c0e95a296e365091a50c8cffdf.scn"]
 
 [params]
 
