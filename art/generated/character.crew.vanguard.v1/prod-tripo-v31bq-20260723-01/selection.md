@@ -20,7 +20,7 @@ Blender. Its 13,280 faces comprise 11,343 quads and 1,937 triangles. These
 technical results remain useful, but the neutral-pose source does not pass the
 current production T-pose gate.
 
-No previous Vanguard rig, retarget, animation, derived proof, or published GLB
-remains part of the active baseline. The next production step is a conforming
-unrigged T-pose source and Quad-10k retopology, followed by the human Mixamo
-marker check and Blender weight correction.
+This source is superseded comparison material. The active conforming source is
+recorded under `prod-tripo-v31bq-20260803-02`: direct single-image 4K T-pose,
+Quad-10k retopology, human-approved Mixamo markers, Blender publication, and
+accepted Godot idle-and-walk playback.

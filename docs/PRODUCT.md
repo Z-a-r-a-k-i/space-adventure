@@ -64,7 +64,9 @@ The POC tests one short authored pass through this loop. A later roguelite struc
 ### Current POC
 
 - One authored 8–12 minute journey from a start to a destination.
-- Player begins alone, chooses one of two simple protagonist kits, and recruits one fixed companion.
+- Player begins alone as Vanguard and recruits one fixed companion. The
+  alternate Operator kit is paused until it has an approved model and
+  animation set.
 - Point-and-click 3D exploration with an elevated tactical camera.
 - Two-character active-pause combat against one hostile group.
 - Authored NPC interaction with one observable choice consequence.

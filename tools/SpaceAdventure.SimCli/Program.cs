@@ -687,6 +687,7 @@ internal static class ObservationProjection
                 command_id = observation.CommandId.Value,
                 kind = JsonLinesOutput.ToJsonName(observation.Kind),
                 destination = ProjectPosition(observation.Destination),
+                has_remaining_movement = observation.HasRemainingMovement,
                 interaction_target_id = observation.InteractionTargetId?.Value,
             };
     }

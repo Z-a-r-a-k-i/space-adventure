@@ -45,12 +45,15 @@ only supply decorative forms that survive cleanup.
 
 Every humanoid follows the same sequence:
 
-1. unrigged T-pose generation;
+1. one approved front-view T-pose seed and one direct single-image, unrigged
+   Tripo HD source using v3.1 Best Quality, Ultra, Triangle 2M, and 4K PBR;
 2. Tripo Smart Low-Poly v2, Quad, target 10,000;
-3. human-approved Mixamo marker placement;
-4. Mixamo neutral rig downloaded with skin;
+3. human-approved Mixamo markers with symmetry and Standard Skeleton (65);
+4. Mixamo neutral rig downloaded with skin after human approval of the motion
+   preview;
 5. Blender weight repair and sockets;
-6. Mixamo library animations downloaded without skin; and
+6. Mixamo library animations downloaded without skin, using `Standard Walk`
+   in-place as the default exploration walk; and
 7. Blender cleanup plus exact GLB review in Godot.
 
 Required party coverage:
@@ -108,23 +111,31 @@ not the rigid-machine path.
 
 ## Current Vanguard status
 
-The approved 2D references remain active. The previous rigged Vanguard and its
-generated/retargeted animations were removed. The retained neutral-pose Tripo
-Smart Low-Poly v2 Quad mesh is recorded under
-`art/generated/character.crew.vanguard.v1/prod-tripo-v31bq-20260723-01/`.
-It predates the T-pose contract and is comparison material, not an authorized
-production Mixamo input. Produce and retopologize a conforming unrigged T-pose
-source before the human Mixamo marker gate and Blender weight correction. No
-grandfathered exception is approved, and no character GLB is published until
-all reviews pass.
+The active run is
+`art/generated/character.crew.vanguard.v1/prod-tripo-v31bq-20260803-02/`:
+direct single-image 4K unrigged T-pose, Smart Low-Poly v2 Quad target 10k,
+geometry-only Mixamo upload, symmetry, Standard Skeleton (65), and
+human-approved markers and Auto-Rigger preview. Blender publishes the accepted
+`Unarmed Idle` and in-place `Standard Walk`, limits skinning to four
+influences, preserves the animated Mixamo armature transform, and publishes
+both weapon sockets. Vanguard's with-skin walk donor is a documented exception
+because the tested no-skin baseline export did not preserve the accepted rest
+pose.
+
+The untouched walk FBX and exact exported GLB both passed sustained direct
+Godot locomotion review: grounded motion, alternating feet, correct facing,
+stable arrival, and tactical-pause freezing. Vanguard now replaces the
+protagonist greybox and moves at 2.0 m/s. Operator is paused until its proper
+model and animation set are approved. The carbine, draw, aim, fire, recovery,
+and holster sequence remain at the next weapon-handling gate.
 
 ## Integration order
 
 1. Obtain final owner visual approval for the integrated station structure,
    service terminal, and evacuation airlock candidates.
-2. Finish and approve Vanguard plus carbine without replacing the character greybox.
-3. Prove one cleaned Mixamo locomotion clip and weapon-handling sequence in
-   Godot.
+2. Finish and approve the separate Vanguard carbine and its attachment fit.
+3. Extend the accepted Mixamo locomotion proof with a cleaned weapon-handling
+   sequence in Godot.
 4. Reuse the accepted humanoid contract for Operator, Protector, survivor, and
    Security Enforcer.
 5. Define gameplay attacks and abilities before final combat timing or VFX.

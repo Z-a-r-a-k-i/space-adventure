@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using SpaceAdventure.Core;
 using Xunit;
 
@@ -22,19 +23,19 @@ public sealed class StationRouteSessionTests
         var definition = LoadDefinition();
 
         Assert.Equal(2, definition.SchemaVersion);
-        Assert.Equal("station-route-v2", definition.ContentRevision);
+        Assert.Equal("station-route-v4", definition.ContentRevision);
         Assert.Equal(new ScenarioId("scenario.station_route"), definition.ScenarioId);
         Assert.Equal(ProtagonistId, definition.Protagonist.Id);
         Assert.Equal(ProtectorActorId, definition.Companion.Id);
         Assert.Equal(new AttackId("attack.crew.protector.shotgun"), definition.Companion.Loadout!.BasicAttackId);
         Assert.Equal(new AbilityId("ability.crew.protector.guard_ally"), definition.Companion.Loadout.ActiveAbilityId);
         Assert.Equal(AbilityTargetKind.Ally, definition.Companion.Loadout.ActiveAbilityTargetKind);
-        Assert.Equal(2, definition.ProtagonistKits.Count);
-        Assert.Contains(
-            definition.ProtagonistKits,
-            kit => kit.Id == VanguardKitId
-                && kit.BasicAttackId == new AttackId("attack.crew.vanguard.carbine")
-                && kit.ActiveAbilityId == new AbilityId("ability.crew.vanguard.suppressive_fire"));
+        var vanguard = Assert.Single(definition.ProtagonistKits);
+        Assert.Equal(VanguardKitId, vanguard.Id);
+        Assert.Equal(new AttackId("attack.crew.vanguard.carbine"), vanguard.BasicAttackId);
+        Assert.Equal(
+            new AbilityId("ability.crew.vanguard.suppressive_fire"),
+            vanguard.ActiveAbilityId);
         Assert.Equal(4, definition.Interactions.Count);
 
         var survivor = Assert.Single(
@@ -91,6 +92,46 @@ public sealed class StationRouteSessionTests
     }
 
     [Fact]
+    public void ContentParserAcceptsOneOrTwoKitsAndRejectsInvalidKitCounts()
+    {
+        var sourceJson = LoadContentJson();
+        var sourceRoot = JsonNode.Parse(sourceJson)!.AsObject();
+        var firstKit = sourceRoot["protagonist_kits"]!.AsArray()[0]!.DeepClone();
+        var secondKit = firstKit.DeepClone().AsObject();
+        secondKit["id"] = "kit.protagonist.test-secondary";
+        secondKit["basic_attack_id"] = "attack.crew.test-secondary";
+        secondKit["active_ability_id"] = "ability.crew.test-secondary";
+        var thirdKit = secondKit.DeepClone().AsObject();
+        thirdKit["id"] = "kit.protagonist.test-tertiary";
+        thirdKit["basic_attack_id"] = "attack.crew.test-tertiary";
+        thirdKit["active_ability_id"] = "ability.crew.test-tertiary";
+
+        string WithKits(params JsonNode?[] kitEntries)
+        {
+            var root = JsonNode.Parse(sourceJson)!.AsObject();
+            var kits = new JsonArray();
+            foreach (var entry in kitEntries)
+            {
+                kits.Add(entry?.DeepClone());
+            }
+            root["protagonist_kits"] = kits;
+            return root.ToJsonString();
+        }
+
+        Assert.Single(StationRouteContent.ParseJson(WithKits(firstKit)).ProtagonistKits);
+        Assert.Equal(
+            2,
+            StationRouteContent.ParseJson(WithKits(firstKit, secondKit)).ProtagonistKits.Count);
+        Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(WithKits()));
+        Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(
+            WithKits(firstKit, secondKit, thirdKit)));
+        Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(
+            WithKits(firstKit, firstKit)));
+        Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(
+            WithKits((JsonNode?)null)));
+    }
+
+    [Fact]
     public void FactoryRequiresEveryInteractionAndTheCompanionPlacement()
     {
         var definition = LoadDefinition();
@@ -114,7 +155,7 @@ public sealed class StationRouteSessionTests
     }
 
     [Fact]
-    public void ProtagonistKitIsRequiredAndCanOnlyBeSelectedOnce()
+    public void CoreRequiresExplicitKitSelectionAndAllowsItOnlyOnce()
     {
         var session = CreateSession();
         var initial = ObserveStation(session);
@@ -133,7 +174,7 @@ public sealed class StationRouteSessionTests
 
         var unknown = session.Execute(new ChooseProtagonistKitCommand(
             new CommandId("kit.unknown"),
-            new ProtagonistKitId("kit.protagonist.unknown")));
+            new ProtagonistKitId("kit.protagonist.operator")));
         Assert.False(unknown.Accepted);
         Assert.Equal(CommandRejectionCode.UnknownProtagonistKit, unknown.RejectionCode);
 
@@ -149,7 +190,7 @@ public sealed class StationRouteSessionTests
 
         var replacement = session.Execute(new ChooseProtagonistKitCommand(
             new CommandId("kit.replace"),
-            new ProtagonistKitId("kit.protagonist.operator")));
+            VanguardKitId));
         Assert.False(replacement.Accepted);
         Assert.Equal(CommandRejectionCode.ProtagonistKitAlreadySelected, replacement.RejectionCode);
     }
@@ -166,8 +207,9 @@ public sealed class StationRouteSessionTests
 
         Assert.True(acknowledgement.Accepted);
         Assert.Equal(new WorldPosition(0, 0, 0), ObserveStation(session).Protagonist.Position);
-        session.AdvanceTicks(29);
-        Assert.InRange(ObserveStation(session).Protagonist.Position.X, 3.86, 3.87);
+        Assert.True(ObserveStation(session).Protagonist.CurrentAction!.HasRemainingMovement);
+        session.AdvanceTicks(59);
+        Assert.InRange(ObserveStation(session).Protagonist.Position.X, 3.93, 3.94);
         session.AdvanceTicks(1);
 
         var arrived = ObserveStation(session);
@@ -176,6 +218,30 @@ public sealed class StationRouteSessionTests
         Assert.Single(
             session.EventsSince(0),
             gameEvent => gameEvent.Detail is MovementArrivedEventDetail { CommandId.Value: "move.direct" });
+    }
+
+    [Fact]
+    public void InteractionWithinUseRadiusDoesNotReportRemainingMovement()
+    {
+        var session = GameSession.CreateStationRoute(
+            LoadDefinition(),
+            new StationRouteLayout(
+                new WorldPosition(4, 0, 0),
+                CreateActorPlacements(),
+                CreateInteractionPlacements()),
+            new DirectPathfinder());
+        _ = SelectVanguard(session);
+
+        var acknowledgement = session.Execute(new InteractCommand(
+            new CommandId("survivor.interact-in-range"),
+            ProtagonistId,
+            SurvivorId));
+
+        Assert.True(acknowledgement.Accepted);
+        var action = Assert.IsType<PrimaryActionObservation>(
+            ObserveStation(session).Protagonist.CurrentAction);
+        Assert.False(action.HasRemainingMovement);
+        Assert.Equal(new WorldPosition(3, 0, 0), action.Destination);
     }
 
     [Fact]

@@ -198,9 +198,12 @@ public static class StationRouteContent
 
     private static ProtagonistKitDefinition[] ParseKits(List<KitDto?>? kitDtos)
     {
-        if (kitDtos is null || kitDtos.Count != 2 || kitDtos.Any(kit => kit is null))
+        if (kitDtos is null
+            || kitDtos.Count is < 1 or > 2
+            || kitDtos.Any(kit => kit is null))
         {
-            throw new InvalidDataException("Station route content requires exactly two protagonist kits.");
+            throw new InvalidDataException(
+                "Station route content requires one or two protagonist kits.");
         }
 
         var kits = kitDtos.Select(kit =>

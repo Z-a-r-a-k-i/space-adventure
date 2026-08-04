@@ -123,14 +123,13 @@ party.
 
 ## Provider plan and prompt
 
-Use signed-in Tripo Studio Build & Refine, HD Model, image-to-3D multi-view
-with front, strict left, and back lossless crops. Keep the approved front-right
-three-quarter crop for validation unless Studio exposes a truthful auxiliary
-perspective slot; never label it as a strict right elevation. Use
-`v3.1 – Best Quality`, Ultra, Generate in Parts with Balanced segmentation, and
-8K Texture disabled. Start with one candidate. A second is allowed only for a
-named defect such as duplicate face, changed identity, fused legs or hands,
-missing back construction, or unusable joint/part boundaries.
+Create or select exactly one strict front-view T-pose seed from the approved
+sheet, then follow the direct single-image settings in
+`docs/TRIPO-PRODUCTION-HANDOFF.md`: v3.1 Best Quality, Ultra, Triangle 2M, 4K
+PBR, AI Complete off, Generate in Parts off, and 8K Texture off. Start with one
+candidate. A second is allowed only for a named defect such as duplicate face,
+changed identity, fused legs or hands, missing back construction, or unusable
+joint boundaries.
 
 Prompt:
 

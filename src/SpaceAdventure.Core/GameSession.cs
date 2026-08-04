@@ -974,6 +974,7 @@ public sealed class GameSession
                 action.CommandId,
                 action.Kind,
                 action.Destination,
+                action.WaypointIndex < action.Waypoints.Count,
                 action.InteractionTargetId);
     }
 

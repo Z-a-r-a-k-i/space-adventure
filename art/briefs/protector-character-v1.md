@@ -89,15 +89,13 @@ organization and are not gameplay inventory slots.
 
 ## Provider plan
 
-Use the approved four-view sheet or truthfully mapped lossless crops. Preserve
-the complete unarmed identity and fixed outfit. Generate no shotgun, shield,
-energy barrier, environment, text, pedestal, duplicate body, action pose, or
-baked effect.
-
-Prefer one compatible multi-view attempt. Generate a second candidate only
-when the first has a named identity, articulation, topology, or construction
-failure that a bounded retry can plausibly correct. The maximum is two total
-Tripo candidates.
+Create or select exactly one strict front-view T-pose seed from the approved
+sheet and use the shared direct single-image Tripo settings in
+`docs/TRIPO-PRODUCTION-HANDOFF.md`. Preserve the complete unarmed identity and
+fixed outfit. Generate no shotgun, shield, energy barrier, environment, text,
+pedestal, duplicate body, action pose, or baked effect. Generate a second
+candidate only when the first has a named identity, articulation, topology, or
+construction failure that a bounded retry can plausibly correct.
 
 Record the exact prompt, model and settings, visible task ID and URL, credits,
 screenshots, filename, byte size, and local raw-export presence. The raw GLB is

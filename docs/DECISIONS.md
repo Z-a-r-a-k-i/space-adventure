@@ -157,24 +157,48 @@ product and architecture decision.
 
 ## ADR 0016 — current 3D character production pipeline
 
-Status: accepted by the project owner on 2026-08-02.
+Status: accepted by the project owner on 2026-08-02; production defaults
+amended after the conforming Vanguard T-pose pilot on 2026-08-03.
 
 Offline art production requires an approved roster asset, reference, brief,
 human approver, licensing/privacy state, and dedicated art worktree. It does not
 authorize live gameplay replacement, ability work, or attack-timing decisions.
 
-Humanoids are generated unrigged in T-pose, retopologized in Tripo with Smart
-Low-Poly v2, Quad, and a 10,000 target, then uploaded to Mixamo. A human must
-approve all Auto-Rigger markers. Mixamo provides the rig baseline and existing
-animation library; Blender owns weight repair, sockets, animation cleanup, and
-GLB export. Tripo Auto Rig and AI-generated humanoid motion are not production
-defaults.
+Humanoids use one approved front-view T-pose seed and Tripo's direct
+single-image HD workflow: v3.1 Best Quality, Ultra Mesh Quality, Triangle 2M,
+4K PBR, AI Complete off, Generate in Parts off, and 8K Texture off. Generate
+Multi-Views is reserved for a named coverage defect rather than required by
+default. The unrigged result is retopologized with Smart Low-Poly v2, Quad, and
+a 10,000 target before any rigging.
+
+Mixamo receives the geometry-only FBX while the 4K ZIP remains the material
+master. The assigned art operator uses a front orientation, symmetry, Standard
+Skeleton (65), and visually verified chin, wrist, elbow, knee, and groin/hip
+markers. A human approves the complete marker placement and Auto-Rigger
+preview. Mixamo provides the with-skin neutral rig baseline and existing
+animation library; production animation donors are downloaded without skin by
+default. `Standard Walk` with In Place on, Overdrive 50, Character Arm-Space
+50, 30 fps, and no keyframe reduction is the default exploration walk. An
+untouched with-skin locomotion FBX must first pass a sustained direct Godot
+baseline. Blender owns weight repair, sockets, animation cleanup, and GLB
+export. Animated Mixamo armature transforms are preserved; normalization
+requires retargeting and evaluated world-space baking onto a separate rig.
+Full-cycle world-space validation and comparison with the untouched Godot
+baseline are publication gates. A character-specific exception may retain a
+matching with-skin donor when the no-skin export changes the accepted rest pose
+or armature transform. Tripo Auto Rig and AI-generated humanoid motion are not
+production defaults.
 
 Successful provider ingestion or rigging does not waive the unrigged T-pose
 source contract. Any grandfathered non-T-pose source, Tripo Auto Rig use, or
 AI-generated humanoid motion requires a named project-owner-approved exception
 recorded in this decision and in `POC-ASSET-ROSTER.md` before it can advance.
-No such exception is currently approved.
+
+Vanguard uses a conforming T-pose source. Its with-skin `Standard Walk` donor
+is an approved character-specific export exception because the tested no-skin
+baseline export did not preserve the accepted rest pose. The untouched
+with-skin FBX and the final GLB both passed direct Godot locomotion review on
+2026-08-03.
 
 Skeletal animation is limited to humanoids. Non-humanoids must be simple
 floating or stationary rigid machines with only a few authored pivots.

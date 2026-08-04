@@ -96,10 +96,11 @@ filename, and byte size. Do not generate a replacement unless the existing
 candidate fails a named identity, topology, articulation, or construction
 check. The two-candidate maximum includes every existing attempt.
 
-If one bounded replacement is justified, use the approved four-view sheet or
-truthfully mapped lossless crops. Preserve the complete unarmed identity and
-fixed outfit. Generate no pistol, shield, environment, text, pedestal,
-duplicate body, action pose, or baked effect.
+If one bounded replacement is justified, create or select exactly one strict
+front-view T-pose seed from the approved sheet and use the shared direct
+single-image Tripo settings in `docs/TRIPO-PRODUCTION-HANDOFF.md`. Preserve the
+complete unarmed identity and fixed outfit. Generate no pistol, shield,
+environment, text, pedestal, duplicate body, action pose, or baked effect.
 
 ## Review and stop conditions
 

@@ -52,38 +52,36 @@ On 2026-07-24 the owner explicitly authorized production and provisional
 integration of the approved roster assets on the dedicated art branch. This
 scope change permits Blender-owned source work, provisional GLB publication,
 and isolated asset-gallery integration while retaining an immediate greybox
-fallback. It does not define attacks or abilities, approve final visuals,
-replace the live station-route actors, or bypass the shared-rig and complete-
-assembly gates.
+fallback. That original authorization did not define attacks or abilities,
+approve final visuals, replace live station-route actors, or bypass the shared-
+rig and complete-assembly gates; later owner instructions advanced Vanguard.
 
-Vanguard production art is active. The previous rigged character and animation
-experiments were removed. The retained neutral-pose Tripo Smart Low-Poly v2
-Quad mesh is comparison material only; a conforming unrigged T-pose source and
-Quad-10k retopology are required before human Mixamo marker approval and
-Blender weight repair. Keep the existing Vanguard greybox in the live game
-until the new character, carbine assembly, animation, and exact Godot import
-receive direct human approval.
+Vanguard production art is active. The conforming direct single-image 4K
+T-pose source, Smart Low-Poly v2 Quad-10k result, human-approved Mixamo rig,
+Unarmed Idle, and in-place Standard Walk now replace the protagonist greybox
+in the live station route. Blender validation and a fresh GLB
+reimport confirm a grounded 1.82 m character at the gameplay origin; direct
+Godot inspection confirms visible idle and locomotion playback.
 
 On 2026-08-02 the owner also advanced the static station structure, service
 terminal, and evacuation airlock into Phase 3. Their deterministic Blender
 sources and GLBs now replace only presentation geometry in the live route;
 Godot keeps navigation, collision, lighting, interaction identity, and route
-state. A complete graphical playthrough verified kit selection, the survivor
+state. A complete graphical playthrough verified direct Vanguard startup, the survivor
 choice consequence, terminal inspection, Protector recruitment, two-member
 formation movement, rigid airlock opening, and completion. Final owner visual
 approval of the three environment candidates remains open.
 
-- Add protagonist-kit selection. The presentation weapons are already selected
-  as Vanguard carbine, Operator pistol, and Protector shotgun; define their
-  stable gameplay attacks and the three active abilities before producing
+- Keep Vanguard as the direct default protagonist. Operator remains paused
+  until its approved model and animation set justify restoring a character
+  choice. The presentation weapons remain Vanguard carbine, Operator pistol,
+  and Protector shotgun; define active gameplay attacks before producing
   ability-specific art.
 - Integrate and approve each human as one fixed runtime outfit on the shared
-  skeleton, using any accepted offline source work. Before Vanguard runtime
-  publication, complete
-  source revision or reselection, segmentation, remeshing, fitting, shared-rig,
-  character-plus-carbine grip and holster assembly, animation review, direct
-  tactical Godot inspection, and final human approval. Do not add runtime armor
-  slots.
+  skeleton, using accepted offline source work. Vanguard's body, idle, and walk
+  are integrated; complete the separate character-plus-carbine grip, holster,
+  weapon-animation, direct tactical Godot inspection, and final human approval
+  before weapon presentation is activated. Do not add runtime armor slots.
 - Add the recruitable companion, portraits, individual and group selection,
   simple formation movement, and party observations. Recruitment, party cards,
   multi-selection, formation movement, and observations are implemented;
@@ -91,8 +89,8 @@ approval of the three environment candidates remains open.
 - Add the two authored conversations and one observable choice consequence.
   The survivor route choice and Protector recruitment conversations are
   implemented with route-specific terminal feedback.
-- Verify dialogue state validation, recruitment, pause behavior, and both kit
-  paths. Automated coverage passes; repeated manual play of both kits remains
+- Verify dialogue state validation, recruitment, pause behavior, and the
+  Vanguard path. Automated coverage passes; repeated full manual play remains
   open.
 
 Exit: the player starts alone, recruits the companion through conversation, and controls both characters through the traversal section.
@@ -114,10 +112,13 @@ Exit: active pause materially helps coordinate both characters; the encounter is
   encounter, choice consequence, visibly opening evacuation airlock, and
   completion summary into one 8–12 minute flow.
 - Add only the sound, effects, and UI polish needed for comprehension.
-- Test both protagonist kits and tune the critical path.
+- Test Vanguard throughout the critical path; revisit multi-kit coverage only
+  when Operator returns with approved art.
 - Record manual playtests and address blockers before adding breadth.
 
-Exit: five consecutive full manual playthroughs complete without a blocker; both protagonist kits have been played; and all documented automated suites pass.
+Exit: five consecutive full manual playthroughs complete without a blocker;
+Vanguard's production presentation has been exercised throughout; and all
+documented automated suites pass.
 
 ## Phase 6 — POC production hardening
 

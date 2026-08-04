@@ -44,9 +44,10 @@ subordinate to silhouette and attack motion.
 
 ## Rig and animation sequence
 
-Use the normal humanoid pipeline: unrigged T-pose, Quad-10k retopology,
-human-approved Mixamo markers, neutral FBX with skin, Blender weight repair,
-Mixamo clips without skin, Blender cleanup, and exact GLB review in Godot.
+Use the normal humanoid pipeline: direct single-image unrigged 4K T-pose,
+Quad-10k retopology, human-approved Mixamo markers with symmetry and
+Standard Skeleton (65), neutral FBX with skin, Blender weight repair, Mixamo
+clips without skin, Blender cleanup, and exact GLB review in Godot.
 
 Required coverage is idle, locomotion, close-combat stance, readable wind-up,
 one reinforced-forearm strike, contact pose, recovery, hit reaction, and down.
@@ -58,7 +59,7 @@ damage; combat clips remain in-place.
 
 1. Project-owner approval of the reference — completed 2026-08-02.
 2. Static T-pose source and Quad-10k topology review.
-3. Human Mixamo marker confirmation.
+3. Human approval of Mixamo marker placement and the Auto-Rigger preview.
 4. Blender deformation review at shoulders, elbows, wrists, hips, knees,
    ankles, and armor boundaries.
 5. Full-speed strike and recovery with a stable contact socket.
