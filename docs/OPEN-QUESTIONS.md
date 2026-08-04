@@ -13,14 +13,13 @@ There are no unresolved questions blocking the documented POC or bootstrap. New 
 - Basic attacks repeat after an explicit target order; active abilities remain explicit.
 - Combat automatically pauses when it starts; all later pausing is manual in the POC.
 - Free camera yaw with constrained pitch and zoom, plus orientation reset.
-- Vanguard is the only active protagonist kit and uses a Protector-style fixed
-  companion. Operator is paused until its approved model and animation set is
-  ready; reactivation requires an explicit project-owner decision.
+- Vanguard is the only protagonist kit. Protector is the fixed recruit after a
+  short solo tutorial fight; Operator is deferred.
 - Vanguard, Protector, and the station survivor are the active human
-  presentations on one normalized humanoid skeleton; a playthrough controls
-  Vanguard plus Protector.
-- Vanguard uses a separate two-handed carbine, Operator a separate compact
-  pistol, and Protector a separate two-handed shotgun.
+  presentations on one normalized humanoid skeleton. A playthrough controls
+  Vanguard alone until recruitment, then Vanguard plus Protector.
+- Vanguard uses a separate two-handed carbine and Protector a separate
+  two-handed shotgun. Operator and its separate compact pistol are deferred.
 - Each POC human has one fixed complete outfit. Editable Blender sources retain
   a fitted undersuit and major armor pieces for future whole-outfit variants,
   but no individual armor slots or equipment system are implied.
@@ -29,11 +28,12 @@ There are no unresolved questions blocking the documented POC or bootstrap. New 
 - The hostile presentation pair is a mobile humanoid Security Enforcer with a
   reinforced-forearm body attack and a taller integrated-gun security sentry.
 - The evacuation airlock visibly opens before completion presentation.
-- Phase 3 fixes Vanguard Suppressive Fire as a position-targeted ability,
-  Operator Disruptor Shot as an entity-targeted ability, and Protector Guard
-  Ally as an ally-targeted ability. Their final combat timing, clips, icons,
-  and effects remain deferred to Phase 4. The concept-art shield is not
-  assigned to an ability.
+- The first-room boundary is an ordinary service door. The evacuation-airlock
+  assembly is reserved for the final destination.
+- Vanguard Suppressive Fire is a position-targeted ability and Protector Guard
+  Ally is an ally-targeted ability. Their final combat timing, clips, icons,
+  and effects are defined in Phase 4. Operator Disruptor Shot is deferred with
+  Operator; the concept-art shield remains unassigned.
 - Exactly two controllable characters in the POC; early UI and architecture must not rule out four later.
 - Compact automatic group formation with no formation editor.
 - Free-text input is the protagonist's exact spoken utterance; the game does not rewrite it into different dialogue.
@@ -56,13 +56,19 @@ There are no unresolved questions blocking the documented POC or bootstrap. New 
 - An optional Codex CLI provider may use the developer's ChatGPT sign-in for private automated experiments; it remains replaceable and outside authoritative state.
 - Dialogue profiles select model, reasoning effort, and Fast mode independently, with Sol/medium/Fast-off as the initial quality baseline.
 - Low-poly presentation and a controlled, replaceable art pipeline.
-- The static station structure, service terminal, and evacuation airlock use
-  dimensionally authored Blender sources and entered the Phase 3 route without
+- The static station structure, service terminal, ordinary service door, and
+  evacuation airlock use dimensionally authored Blender sources without
   changing authored Godot gameplay authority. The wall utility remains gated.
 - Every production combatant declares a handheld, integrated, or body-based
   attack source before model and animation approval; all three share the same
   authoritative gameplay boundary.
 - Both structured automation and real graphical playtests are required.
+- Visible station environment, NPCs, and combatants across the active route use
+  reviewed production presentation before Phase 4 gameplay work starts.
+  Hidden collision, navigation, interaction, and lighting primitives remain
+  valid.
+- Fight animation is selected and finalized alongside Phase 4 authoritative
+  combat timing, not as a detached pre-combat animation batch.
 
 ## Phase 7 questions deferred until greybox
 

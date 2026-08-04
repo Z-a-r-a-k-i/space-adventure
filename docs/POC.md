@@ -2,15 +2,28 @@
 
 ## Goal
 
-Build an 8–12 minute authored compact demo that proves exploration, party control, active-pause combat, simple inventory use, and conversation. It is a small adventure from a start to a destination, not a roguelite run and not a systems showcase. Production environment geometry may replace greybox presentation early while authored collision, navigation, and gameplay wrappers remain authoritative.
+Build an 8–12 minute authored compact demo that proves exploration, party
+control, active-pause combat, simple inventory use, and conversation. It is a
+small adventure from a start to a destination, not a roguelite run and not a
+systems showcase. The player-facing route uses reviewed production
+presentation; authored primitive collision, navigation, interaction, and
+lighting wrappers remain valid when they are not visible.
 
 ## Working scenario: a disabled frontier station
 
 The setting is a provisional production constraint, not final lore.
 
-The player begins alone in a maintenance berth on a disabled frontier transfer station. A lockdown blocks the direct route to an evacuation airlock. The player learns what happened from a survivor, recruits one stranded specialist, crosses a short service section, uses information or access gained through conversation, defeats a group of malfunctioning security machines, and reaches the airlock.
+The player begins alone as Vanguard in a maintenance berth on a disabled
+frontier transfer station. A lockdown blocks the route to an evacuation
+airlock. The player learns what happened from a survivor, crosses an ordinary
+service door, survives a short solo security encounter, recruits the stranded
+Protector in the following room, coordinates with Protector through a second
+encounter, and reaches the final evacuation airlock.
 
-This setting keeps the first level compact, supports primitive modular art, introduces the wider spacefaring fantasy, provides plausible conversations, and gives us a non-sapient mandatory combat encounter without deciding whether every future hostile person can be negotiated with.
+This setting keeps the first level compact, supports modular low-poly
+production art, introduces the wider spacefaring fantasy, provides plausible
+conversations, and gives us non-sapient mandatory combat without deciding
+whether every future hostile person can be negotiated with.
 
 Names, factions, final lore, and visual tone remain provisional until the control loop works.
 
@@ -19,14 +32,20 @@ Names, factions, final lore, and visual tone remain provisional until the contro
 1. Begin directly as Vanguard with the fixed Vanguard kit.
 2. Begin alone and learn movement, camera, interaction, and inspection.
 3. Speak with a survivor who establishes the destination and immediate obstacle.
-4. Find and recruit one fixed companion through dialogue.
-5. Cross a short traversal area with one optional terminal, container, or environmental observation.
-6. Use one healing item or preserve it for the encounter.
-7. Resolve one tactical encounter using both characters.
-8. Reach the evacuation airlock, see it open, and receive an explicit
+4. Open an ordinary station service door and enter the next room.
+5. Resolve a short solo tutorial fight that teaches Vanguard movement,
+   targeting, basic attack, tactical pause, and healing.
+6. Recruit Protector through dialogue in the following room.
+7. Cross a short traversal area with one optional terminal, container, or
+   environmental observation.
+8. Resolve the main tactical encounter using Vanguard and Protector.
+9. Reach the evacuation airlock, see it open, and receive an explicit
    completion summary.
 
-The critical path always demonstrates recruitment and combat. A dialogue choice changes an observable detail such as route access, available information, starting position, support machinery, or the number and placement of enemies.
+The critical path always demonstrates a solo combat tutorial, recruitment, and
+two-character combat. A dialogue choice changes an observable detail such as
+route access, available information, starting position, support machinery, or
+the number and placement of enemies.
 
 ## Control acceptance
 
@@ -44,17 +63,15 @@ The critical path always demonstrates recruitment and combat. A dialogue choice 
 
 ## Character and inventory acceptance
 
-- The current station route exposes Vanguard as its only protagonist kit.
-  Operator remains deferred until an approved model and animation set exists.
-  Vanguard and the fixed Protector companion are the only two controllable
-  characters in the current playthrough; the station survivor is
-  noncontrollable.
+- Vanguard is the only protagonist kit. Protector is the fixed recruit and
+  becomes controllable only after the solo tutorial fight. Operator is
+  deferred; the station survivor is noncontrollable.
 - The active protagonist has one fixed weapon, a repeatable basic attack, and
   one distinctive active ability.
 - The fixed companion supplies a complementary weapon and active ability.
-- The approved presentation loadouts are a separate two-handed carbine for
-  Vanguard, a separate compact pistol for Operator, and a separate two-handed
-  shotgun for Protector.
+- The active presentation loadouts are a separate two-handed carbine for
+  Vanguard and a separate two-handed shotgun for Protector. Operator and its
+  compact pistol remain deferred assets.
 - A humanoid's fixed handheld weapon is a separate presentation asset with
   authored hand, holster, and attack markers. This supports visible draw and
   ready states without adding weapon switching, ammunition, reload, equipment
@@ -112,22 +129,24 @@ The critical path always demonstrates recruitment and combat. A dialogue choice 
 
 ## Content budget
 
-- One authored station level with a start, service section, encounter space,
-  and destination. The route uses reviewed static structure, terminal, and
-  airlock models over independent authored collision and navigation.
-- Three active human presentations: Vanguard, one fixed Protector companion,
-  and one station survivor. Operator remains on the roster but is not exposed
-  until its approved 3D presentation is ready. A playthrough controls exactly
-  Vanguard plus Protector.
+- One authored station level with a start room, ordinary service door, compact
+  solo-combat room, Protector recruitment room, main encounter space, and final
+  destination. The route uses reviewed production structure, doors, terminal,
+  NPCs, and combatants over independent authored collision and navigation.
+- Three active human presentations: Vanguard, fixed recruit Protector, and one
+  station survivor. A playthrough controls Vanguard alone until recruitment,
+  then exactly Vanguard plus Protector. Operator is deferred.
 - Two meaningful NPC interactions.
-- One hostile security group using the humanoid Security Enforcer and
-  integrated-gun sentry presentations, with at most those two enemy behaviors.
+- One small solo tutorial group and one main hostile security group using the
+  humanoid Security Enforcer and integrated-gun sentry presentations, with at
+  most those two enemy behaviors.
 - One fixed weapon and basic attack per party character, one fixed basic attack
   per hostile combatant archetype, one active ability per party character, and
   one healing-item type.
 - One visibly opening evacuation-airlock assembly.
 - One observable choice consequence.
-- Primitive or explicitly reviewed low-poly assets only.
+- Reviewed low-poly assets only for visible environment, NPC, and combatant
+  presentation; hidden spatial wrappers may remain primitives.
 - Minimal sound and effects only after interaction readability works.
 
 The complete planned 3D, rig, animation, 2D, and effects inventory is recorded
@@ -155,5 +174,7 @@ simulation, vehicles, or boarding into this POC.
 - The core unit suite, deterministic scenario suite, Godot headless smoke suite, pause suite, and critical-path scenario pass.
 - Vanguard has completed at least one full manual playthrough with its
   production model and baseline animations.
+- Protector has completed the post-recruitment portion of at least one full
+  manual playthrough with its production model and baseline animations.
 - The player can understand selection, pending actions, combat threats, item use, dialogue choices, victory, defeat, and completion from the game itself.
 - A fresh agent can restore, build, run, inspect, and reproduce the scenario using only the repository documentation.

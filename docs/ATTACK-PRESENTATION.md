@@ -23,8 +23,8 @@ deformation, or transforming rigs.
 | Profile | Source | Delivery |
 |---|---|---|
 | Vanguard | `handheld` | Separate two-handed carbine |
-| Operator | `handheld` | Separate pistol |
-| Protector | `handheld` | Separate two-handed shotgun |
+| Operator | `handheld` | Deferred separate pistol |
+| Protector | `handheld` | Separate two-handed shotgun; fixed POC recruit after the solo tutorial fight |
 | Security Enforcer | `body` | Humanoid security android with a reinforced-forearm strike |
 | Gun sentry | `integrated` | Fixed or floating chassis with aim pivot, muzzle, and recoil axis |
 
@@ -84,6 +84,11 @@ Before final animation, each combatant brief records:
 
 Ability-specific animation waits for an accepted gameplay ability, target
 shape, source, and timing.
+
+The active route may prepare character rigs, idle, locomotion, and weapon fits
+before combat, but fight clips are selected and finalized with the Phase 4
+solo-tutorial and party-combat timings. Operator does not receive production
+combat animation while its scope remains deferred.
 
 ## Approval gates
 

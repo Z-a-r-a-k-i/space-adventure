@@ -46,7 +46,9 @@ Exit passed: a human and an agent independently moved from the start, interacted
 
 ## Phase 3 — party and conversation slice
 
-Status: active. The Phase 2 human-playthrough gate passed on 2026-07-24.
+Status: active. The Phase 2 human-playthrough gate passed on 2026-07-24. The
+route is being resequenced before combat: Vanguard now reaches a solo tutorial
+fight before recruiting Protector; Operator is deferred.
 
 On 2026-07-24 the owner explicitly authorized production and provisional
 integration of the approved roster assets on the dedicated art branch. This
@@ -65,60 +67,76 @@ Godot inspection confirms visible idle and locomotion playback.
 
 On 2026-08-02 the owner also advanced the static station structure, service
 terminal, and evacuation airlock into Phase 3. Their deterministic Blender
-sources and GLBs now replace only presentation geometry in the live route;
-Godot keeps navigation, collision, lighting, interaction identity, and route
-state. A complete graphical playthrough verified direct Vanguard startup, the survivor
-choice consequence, terminal inspection, Protector recruitment, two-member
-formation movement, rigid airlock opening, and completion. Final owner visual
-approval of the three environment candidates remains open.
+sources and GLBs replace presentation geometry while Godot keeps navigation,
+collision, lighting, interaction identity, and route state. The previously
+merged Protector-before-combat flow is now superseded. The evacuation-airlock
+assembly is reserved for the final destination; an ordinary rigid service door
+must separate the start room from the first-combat room. Final owner visual
+approval of the environment candidates remains open.
 
-- Keep Vanguard as the direct default protagonist. Operator remains paused
-  until its approved model and animation set justify restoring a character
-  choice. The presentation weapons remain Vanguard carbine, Operator pistol,
-  and Protector shotgun; define active gameplay attacks before producing
-  ability-specific art.
-- Integrate and approve each human as one fixed runtime outfit on the shared
-  skeleton, using accepted offline source work. Vanguard's body, idle, and walk
-  are integrated; complete the separate character-plus-carbine grip, holster,
-  weapon-animation, direct tactical Godot inspection, and final human approval
-  before weapon presentation is activated. Do not add runtime armor slots.
-- Add the recruitable companion, portraits, individual and group selection,
-  simple formation movement, and party observations. Recruitment, party cards,
-  multi-selection, formation movement, and observations are implemented;
-  portraits remain presentation work.
-- Add the two authored conversations and one observable choice consequence.
-  The survivor route choice and Protector recruitment conversations are
-  implemented with route-specific terminal feedback.
-- Verify dialogue state validation, recruitment, pause behavior, and the
-  Vanguard path. Automated coverage passes; repeated full manual play remains
-  open.
+- Keep Vanguard as the only protagonist. Produce Protector as the fixed recruit
+  encountered after the solo tutorial fight; do not restore a character-choice
+  screen. Operator and its pistol are deferred. The active party weapons are
+  Vanguard's carbine and Protector's shotgun; define gameplay attacks before
+  producing ability-specific art.
+- Integrate and approve each active human as one fixed runtime outfit on the
+  shared skeleton. Vanguard's body, idle, and walk are integrated. Before
+  combat implementation, replace the survivor and Protector greyboxes and
+  prepare reviewed non-greybox base presentations for the first-combat
+  Security Enforcer and sentry. Complete weapon fit and combat animation with
+  the Phase 4 rules and timings. Do not add runtime armor slots.
+- Preserve the implemented party cards, individual and group selection,
+  formation movement, and observations, but move Protector recruitment after
+  the solo tutorial fight. Portraits remain presentation work.
+- Preserve the survivor route choice, observable consequence, and Protector
+  recruitment exchange, gating that exchange in the post-fight room.
+- Extend the production station kit through the start, first-combat,
+  recruitment, main-encounter, and destination rooms, replace the first-room
+  airlock with a service door, and remove visible greybox presentation while
+  retaining hidden authoritative Godot wrappers.
+- Verify dialogue state validation, door progression, pause behavior, and the
+  Vanguard path to the first-combat threshold. Repeated full manual play
+  remains open.
 
-Exit: the player starts alone, recruits the companion through conversation, and controls both characters through the traversal section.
+Exit: the complete authored route uses production-presented environment with no
+visible environment, NPC, or combatant greybox. The player starts as Vanguard,
+talks to the production survivor, crosses the ordinary service door, and
+reaches the production-presented first-combat room. Protector and both hostile
+archetypes have approved production bases ready for their Phase 4 scenes.
 
 ## Phase 4 — active-pause combat slice
 
-- Add basic attacks, one active ability per character, cooldowns, health, damage, healing-item use, and readable pending actions.
+- Add the short solo tutorial fight, then unlock the Protector recruitment
+  exchange and the later two-character encounter.
+- Add basic attacks, one active ability per active party character, cooldowns,
+  health, damage, healing-item use, and readable pending actions.
 - Add the approved humanoid Security Enforcer and integrated-gun sentry as at
   most two hostile behaviors, with target acquisition, telegraphs, victory,
   defeat, and restart.
-- Tune action replacement, basic-attack repetition, target visibility, and pause rhythm through repeated play.
+- Select, clean, and integrate draw, attack, contact, recoil, recovery, and
+  holster animations alongside the authoritative combat timings rather than
+  finalizing fight animation in advance.
+- Tune action replacement, basic-attack repetition, target visibility, and
+  pause rhythm first in the solo tutorial and then with Vanguard plus Protector.
 - Add core, CLI, Godot headless, and graphical combat checks.
 
-Exit: active pause materially helps coordinate both characters; the encounter is readable and enjoyable enough to merit iteration; victory and defeat work through human and automated control.
+Exit: the solo fight teaches the combat controls, Protector is recruited only
+after it, active pause materially helps coordinate both characters in the main
+encounter, and victory and defeat work through human and automated control.
 
 ## Phase 5 — authored POC completion
 
 - Join the tutorial, conversations, traversal, optional interaction, item use,
-  encounter, choice consequence, visibly opening evacuation airlock, and
+  encounters, choice consequence, visibly opening evacuation airlock, and
   completion summary into one 8–12 minute flow.
 - Add only the sound, effects, and UI polish needed for comprehension.
-- Test Vanguard throughout the critical path; revisit multi-kit coverage only
-  when Operator returns with approved art.
+- Test Vanguard throughout the critical path and Protector from recruitment
+  through the main encounter; there is no multi-kit protagonist choice.
 - Record manual playtests and address blockers before adding breadth.
 
 Exit: five consecutive full manual playthroughs complete without a blocker;
-Vanguard's production presentation has been exercised throughout; and all
-documented automated suites pass.
+Vanguard's production presentation has been exercised throughout, Protector's
+from recruitment onward, and all documented automated suites pass.
 
 ## Phase 6 — POC production hardening
 

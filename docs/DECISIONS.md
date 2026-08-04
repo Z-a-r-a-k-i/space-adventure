@@ -269,3 +269,24 @@ This reprioritization does not advance combat, inventory, character
 replacement, wall-utility integration, or other Phase 5 polish. The integrated
 candidates require a live graphical playthrough and final project-owner visual
 approval before their briefs may be marked fully accepted.
+
+## ADR 0024 — Solo combat precedes Protector recruitment
+
+Status: accepted by the project owner on 2026-08-04; supersedes the encounter
+ordering that recruited Protector before combat.
+
+Vanguard is the only protagonist. The compact station route now proceeds from
+the start room and survivor interaction through an ordinary service door to a
+short solo tutorial fight. Protector is recruited in the following room, after
+which Vanguard and Protector face the main two-character encounter. Operator
+and its pistol are deferred. The evacuation-airlock assembly is reserved for
+the final destination.
+
+Before Phase 4 gameplay implementation begins, all visible environment, NPC,
+and combatant presentation across the active station route must use reviewed
+production assets. Godot may retain invisible authored primitives for
+collision, navigation, interaction, lighting, and gameplay wrappers. Base
+models, rigs, idle, and locomotion may be prepared during Phase 3, but draw,
+attack, contact, recoil, recovery, and holster animation is selected and
+finalized alongside the authoritative Phase 4 rules and timing. Animation
+callbacks and physical presentation remain non-authoritative under ADR 0014.

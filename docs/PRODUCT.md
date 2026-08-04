@@ -64,18 +64,19 @@ The POC tests one short authored pass through this loop. A later roguelite struc
 ### Current POC
 
 - One authored 8–12 minute journey from a start to a destination.
-- Player begins alone as Vanguard and recruits one fixed companion. The
-  alternate Operator kit is paused until it has an approved model and
-  animation set.
+- Player begins alone as Vanguard, survives a short solo tutorial fight, and
+  then recruits Protector as the fixed companion. Operator is deferred.
 - Point-and-click 3D exploration with an elevated tactical camera.
-- Two-character active-pause combat against one hostile group.
+- One short solo tutorial fight followed by a two-character active-pause
+  encounter.
 - Authored NPC interaction with one observable choice consequence.
 - One fixed weapon per party character and one usable healing item; no
   generalized inventory system.
 - Each hostile combatant archetype has an authored basic attack presented
   through a handheld or integrated weapon, or a readable body attack.
 - Structured automation that can complete and inspect the real scenario.
-- Primitive and reviewed low-poly presentation only.
+- Reviewed low-poly presentation with no visible greybox environment, NPC, or
+  combatant in the active route.
 
 ### Post-POC candidates
 
@@ -96,7 +97,7 @@ The campaign-versus-roguelite balance, seamless vehicle movement, breadth of gen
 
 ## POC success signals
 
-- Coordinating two characters through active pause is enjoyable in greybox.
+- Coordinating two characters through active pause is enjoyable.
 - Selection, targets, pending orders, threats, cooldowns, and outcomes are understandable without external explanation.
 - Movement and camera operation do not fight the player.
 - Talking feels like a valid action even when it cannot bypass every conflict.
