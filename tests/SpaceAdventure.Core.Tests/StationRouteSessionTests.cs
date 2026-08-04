@@ -101,6 +101,10 @@ public sealed class StationRouteSessionTests
         secondKit["id"] = "kit.protagonist.test-secondary";
         secondKit["basic_attack_id"] = "attack.crew.test-secondary";
         secondKit["active_ability_id"] = "ability.crew.test-secondary";
+        var thirdKit = secondKit.DeepClone().AsObject();
+        thirdKit["id"] = "kit.protagonist.test-tertiary";
+        thirdKit["basic_attack_id"] = "attack.crew.test-tertiary";
+        thirdKit["active_ability_id"] = "ability.crew.test-tertiary";
 
         string WithKits(params JsonNode?[] kitEntries)
         {
@@ -120,7 +124,9 @@ public sealed class StationRouteSessionTests
             StationRouteContent.ParseJson(WithKits(firstKit, secondKit)).ProtagonistKits.Count);
         Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(WithKits()));
         Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(
-            WithKits(firstKit, secondKit, firstKit)));
+            WithKits(firstKit, secondKit, thirdKit)));
+        Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(
+            WithKits(firstKit, firstKit)));
         Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(
             WithKits((JsonNode?)null)));
     }
