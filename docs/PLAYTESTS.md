@@ -34,4 +34,7 @@ The noninteractive `capture -Name wall-cutaway` manifest provides repeatable age
 
 For a completed human record, replace the pending row with the date, `Human`, the Git commit when one exists (otherwise `uncommitted working tree`) and content revision, `Passed` or `Blocked`, and concise notes. A passing record must state that physical target clicking, pause/replacement, camera controls, wall cutaway/restoration, dialogue-button clicking, optional inspection, and completion were all exercised.
 
-The full POC later requires five consecutive blocker-free manual playthroughs and coverage of both protagonist kits. Those runs belong in this same file once the corresponding systems exist.
+The full POC later requires five consecutive blocker-free manual playthroughs
+covering Vanguard's solo tutorial, Protector recruitment, and the two-character
+encounter. Those runs belong in this same file once the corresponding systems
+exist.

@@ -14,7 +14,12 @@ The earlier GDScript foundation spike is superseded and absent from the active b
 6. Presentation reads gameplay state and events; it does not directly mutate authoritative state.
 7. Use stable game identifiers. Node paths, object instance IDs, and display names are not gameplay identifiers.
 8. Validate a command completely before mutation. Rejections are structured, observable, and never leave partial effects.
-9. Prefer authored greybox content until the POC exit gate. Runtime LLM calls, procedural worlds, vehicles, boarding, generalized inventory, multiplayer, and metagame systems are outside the current milestone.
+9. Use authored greybox for rule development and hidden spatial wrappers, but
+   follow any presentation gate explicitly advanced by the roadmap. The active
+   station route must not expose visible greybox environment, NPC, or combatant
+   presentation anywhere in the active route. Runtime LLM
+   calls, procedural worlds, vehicles, boarding, generalized inventory,
+   multiplayer, and metagame systems are outside the current milestone.
 10. Add dependencies only for a demonstrated current need and record consequential choices in `docs/DECISIONS.md`.
 11. Never commit or push unless the user explicitly requests it.
 
@@ -59,6 +64,18 @@ Before asset production, read `docs/ART-PIPELINE.md`,
 `docs/ATTACK-PRESENTATION.md`, the visual bible, active brief, and approved
 reference provenance. Work only on approved assets in the dedicated art
 worktree; live replacement and gameplay integration remain roadmap-scoped.
+
+The active station sequence is Vanguard start and survivor interaction,
+ordinary service door, solo tutorial combat, Protector recruitment, two-member
+combat, and final evacuation airlock. Protector is the fixed POC recruit;
+Operator and its pistol are deferred. Reserve the evacuation-airlock assembly
+for the final destination. Before Phase 4 gameplay implementation, use reviewed
+production presentation for every visible environment module, NPC, and
+combatant across the active station route; invisible Godot collision,
+navigation, interaction, and lighting wrappers may remain authored primitives.
+Produce base models, rigs, idle, and locomotion ahead of combat as needed, but
+select and finalize draw, attack, contact, recoil, recovery, and holster
+animation alongside the authoritative Phase 4 timings.
 
 Humanoids use this sequence: unrigged T-pose generation, Tripo Smart Low-Poly
 v2 Quad retopology with a 10,000 target, human-approved Mixamo marker placement,

@@ -114,6 +114,11 @@ does not turn the asset into a skinned character.
 No Tripo Auto Rig or AI-generated motion is used for production humanoids when
 the Mixamo workflow can provide the required baseline.
 
+Base rig, idle, locomotion, and attachment-fit work may precede combat. Draw,
+attack, contact, recoil, recovery, and holster clips must be selected, trimmed,
+and validated alongside the authoritative Phase 4 action timings. Do not lock
+a detached fight-animation set and then reshape gameplay rules around it.
+
 ## Weapons and rigid machines
 
 Weapons remain separate rigid assets with primary grip, optional support grip,
