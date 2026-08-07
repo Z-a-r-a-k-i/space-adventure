@@ -1,0 +1,68 @@
+{
+  "asset_id": "character.crew.protector.v1",
+  "run_id": "prod-tripo-v31bq-20260805-01",
+  "display_name": "Protector",
+  "target_height_meters": 1.98,
+  "height_tolerance_ratio": 0.03,
+  "maximum_planar_range_meters": 0.25,
+  "maximum_vertical_range_meters": 0.25,
+  "maximum_loop_endpoint_delta_meters": 0.03,
+  "triangle_limit": 40000,
+  "mesh_minimum": 2,
+  "mesh_limit": 18,
+  "material_minimum": 2,
+  "material_limit": 2,
+  "bone_limit": 64,
+  "influence_limit": 4,
+  "texture_maximum": 2048,
+  "material_strategy": "protector-two-role",
+  "rigged_source": "art/generated/character.crew.protector.v1/prod-tripo-v31bq-20260805-01/raw/candidate-04/mixamo/protector-rig-tpose-with-skin.fbx",
+  "texture_archive": "art/generated/character.crew.protector.v1/prod-tripo-v31bq-20260805-01/raw/candidate-04/protector-retopo-mixamo-4k.zip",
+  "blend_output": "art/source/character.crew.protector.v1/protector-v1.blend",
+  "glb_output": "game/Assets/Published/character.crew.protector.v1.glb",
+  "remove_bones": [
+    "mixamorig:HeadTop_End"
+  ],
+  "materials": [
+    {"name": "mat.protector.surface.pbr", "role": "surface"},
+    {"name": "mat.protector.undersuit.navy", "role": "undersuit"}
+  ],
+  "actions": [
+    {
+      "name": "anim.humanoid.idle_holstered",
+      "source": "art/generated/character.crew.protector.v1/prod-tripo-v31bq-20260805-01/raw/candidate-04/mixamo/unarmed-idle-50-50-with-skin.fbx",
+      "source_clip": "Unarmed Idle",
+      "loop": true,
+      "loop_blend_frames": 6
+    },
+    {
+      "name": "anim.humanoid.locomotion_holstered",
+      "source": "art/generated/character.crew.protector.v1/prod-tripo-v31bq-20260805-01/raw/candidate-04/mixamo/standard-walk-in-place-50-50-with-skin.fbx",
+      "source_clip": "Standard Walk — In Place, Overdrive 50, Arm-Space 50",
+      "loop": true,
+      "loop_blend_frames": 6,
+      "minimum_foot_lift_meters": 0.04
+    },
+    {
+      "name": "anim.humanoid.walk_holstered",
+      "copy_of": "anim.humanoid.locomotion_holstered",
+      "source_clip": "Standard Walk — In Place, Overdrive 50, Arm-Space 50",
+      "loop": true,
+      "minimum_foot_lift_meters": 0.04
+    }
+  ],
+  "sockets": [
+    {
+      "name": "socket.weapon.hand_primary",
+      "bone": "mixamorig:RightHand",
+      "location": [0.0, 0.0, 0.0],
+      "rotation_degrees": [0.0, 0.0, 0.0]
+    },
+    {
+      "name": "socket.weapon.holster_primary",
+      "bone": "mixamorig:Spine2",
+      "location": [0.0, 0.08, 0.0],
+      "rotation_degrees": [0.0, 0.0, 0.0]
+    }
+  ]
+}

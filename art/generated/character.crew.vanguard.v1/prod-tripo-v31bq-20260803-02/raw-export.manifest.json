@@ -47,6 +47,7 @@
           "cache_relative_path": "raw/mixamo/vanguard-unarmed-idle-with-skin.fbx",
           "bytes": 39613984,
           "selection_state": "accepted production rig and idle baseline",
+          "inspection_record": "art/source/character.crew.vanguard.v1/production.md#neutral-rig-fbx-inspection",
           "local_presence_checked_utc": "2026-08-03",
           "local_presence_status": "present"
         },

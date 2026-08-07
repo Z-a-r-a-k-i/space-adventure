@@ -81,7 +81,7 @@ organization and are not gameplay inventory slots.
   one-handed aim silhouette. The left hand must remain clear of the pistol;
   do not invent a support grip.
 - Reuse the exact shared action-name contract from
-  `art/rigs/crew-humanoid-v1.md`. Use the human-approved Mixamo rig baseline
+  `art/rigs/crew-humanoid-v1.md`. Use the validated Mixamo rig baseline
   and Mixamo library clips, with Blender correction and cleanup.
 - Weapon-specific draw, aim, recoil, recovery, and holster correction waits
   until the complete static Operator/pistol assembly passes review.

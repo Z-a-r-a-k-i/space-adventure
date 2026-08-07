@@ -78,10 +78,16 @@ select and finalize draw, attack, contact, recoil, recovery, and holster
 animation alongside the authoritative Phase 4 timings.
 
 Humanoids use this sequence: unrigged T-pose generation, Tripo Smart Low-Poly
-v2 Quad retopology with a 10,000 target, human-approved Mixamo marker placement,
-Mixamo rig download with skin, Blender weight repair, then Mixamo library clips
-without skin. Skeletal animation is limited to humanoids; non-humanoids must be
-simple floating or stationary rigid assemblies.
+v2 Quad retopology with a 10,000 target, agent-validated Mixamo marker placement
+and Auto-Rigger preview, Mixamo rig download with skin, Blender weight repair,
+then Mixamo library clips without skin. Validate the hierarchy and bone count
+from the exported FBX; provider skeleton labels are requested settings, not
+publication evidence. Use a recorded matching-with-skin donor exception when
+the no-skin export changes the accepted rest pose or armature transform.
+Routine provider steps do not pause for human confirmation; escalate only a
+named defect, scope change, or explicit live-replacement gate. Skeletal
+animation is limited to humanoids;
+non-humanoids must be simple floating or stationary rigid assemblies.
 
 Static props and environment assemblies do not use the humanoid sequence. Give
 them brief-specific topology and material budgets, normalize them in Blender,

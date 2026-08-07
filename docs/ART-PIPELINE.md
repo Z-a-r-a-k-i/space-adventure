@@ -70,23 +70,31 @@ does not turn the asset into a skinned character.
    4K PBR textures, AI Complete off, Generate in Parts off, and 8K Texture off.
    Generate Multi-Views is not a routine prerequisite: use it only for a named
    coverage defect after the direct workflow has failed.
-3. Generate one static, unrigged source, inspect face and eye coherence before
+3. Generate one static, unrigged source, inspect overall source coherence before
    spending on later operations, and preserve the untouched source in the
    ignored run-local cache.
 4. In Tripo Retopology choose Smart Low-Poly v2, Quad, target 10,000, and retain
    original UVs when usable. Record requested and actual counts.
 5. Inspect face, shoulders, elbows, wrists, hips, knees, ankles, hands, feet,
-   armor boundaries, normals, holes, and disconnected parts.
+   armor boundaries, normals, holes, and disconnected parts. The deforming
+   surface must remain continuous from torso through each shoulder and
+   underarm; a detached limb is a source-mesh rejection, not a marker-placement
+   or provider-retry problem.
 6. Export the Tripo Mixamo FBX preset with the current 4K textures. Preserve
    that ZIP as the material master and upload its geometry-only FBX to Mixamo;
    textures do not affect marker placement or skinning.
 7. In Mixamo, orient the character front-facing, enable symmetry, select
    Standard Skeleton (65), and place chin, wrist, elbow, knee, and groin/hip
-   markers on the visible anatomical joint centers. Obtain human approval of
-   the complete placement before Auto-Rigger submission.
-8. Review the Auto-Rigger motion preview for deformation, obtain human
-   approval, confirm the new character, and download the neutral FBX Binary
-   with skin.
+   markers on the visible anatomical joint centers. Inspect the complete
+   placement once and submit when it is anatomically coherent; routine marker
+   placement does not require human confirmation.
+8. Review the Auto-Rigger motion preview for deformation. When it passes,
+   confirm the new character and download the neutral FBX Binary with skin.
+   Adjust markers or return to Blender for a named defect instead of pausing
+   for routine human confirmation.
+   Treat the selected Mixamo skeleton profile as an input request only. Inspect
+   and record the hierarchy, names, and bone count in the downloaded FBX; only
+   the exported file establishes the publication contract.
 9. Download one representative locomotion clip with skin and import that FBX
    untouched into a local ignored Godot baseline. The clip must remain grounded
    and visibly alternate both feet through a sustained gameplay move before
@@ -140,9 +148,11 @@ root motion.
 
 Technical validity does not establish visual quality. Direct visual review is
 required for prominent characters, rigs, animation, weapons, and environments.
-Humanoid marker placement and the Auto-Rigger preview require human approval;
-project-owner or delegated-art approval also remains required wherever the
-roster, roadmap, brief, or live-replacement gate names it.
+The assigned art operator validates humanoid marker placement and the
+Auto-Rigger preview without an intermediate human approval gate. Project-owner
+or delegated-art approval remains required only where the roster, roadmap,
+brief, licensing/privacy state, scope, or live-replacement gate explicitly
+names it.
 
 ## Review evidence
 

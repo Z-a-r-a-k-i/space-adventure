@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3]
+[gd_scene load_steps=26 format=3]
 
 [ext_resource type="Script" path="res://scripts/GameHost.cs" id="1_host"]
 [ext_resource type="Script" path="res://scripts/TacticalCameraController.cs" id="2_camera"]
@@ -8,6 +8,9 @@
 [ext_resource type="PackedScene" path="res://Assets/Published/character.crew.vanguard.v1.glb" id="6_vanguard"]
 [ext_resource type="Script" path="res://scripts/VanguardPresentation.cs" id="7_vanguard_presentation"]
 [ext_resource type="PackedScene" path="res://Assets/Published/assembly.station.service_door.v1.glb" id="8_service_door"]
+[ext_resource type="PackedScene" path="res://Assets/Published/character.npc.station_survivor.v1.glb" id="9_survivor"]
+[ext_resource type="PackedScene" path="res://Assets/Published/character.crew.protector.v1.glb" id="10_protector"]
+[ext_resource type="Script" path="res://scripts/HumanoidPresentation.cs" id="11_humanoid_presentation"]
 
 [sub_resource type="Environment" id="Environment_station"]
 background_mode = 1
@@ -43,20 +46,6 @@ size = Vector3(6, 0.2, 6)
 [sub_resource type="BoxShape3D" id="BoxShape_floor_final"]
 size = Vector3(6, 0.2, 6)
 
-[sub_resource type="StandardMaterial3D" id="Material_survivor"]
-albedo_color = Color(0.78, 0.35, 0.10, 1)
-metallic = 0.15
-roughness = 0.72
-[sub_resource type="StandardMaterial3D" id="Material_protector"]
-albedo_color = Color(0.20, 0.50, 0.45, 1)
-metallic = 0.32
-roughness = 0.58
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_survivor"]
-radius = 0.32
-height = 1.75
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_protector"]
-radius = 0.42
-height = 2.05
 [sub_resource type="CapsuleShape3D" id="CapsuleShape_survivor"]
 radius = 0.35
 height = 1.8
@@ -255,10 +244,11 @@ material_override = SubResource("Material_beacon")
 position = Vector3(-1.5, 0, 0)
 visible = false
 metadata/stable_id = "actor.companion.protector"
-[node name="Body" type="MeshInstance3D" parent="Actors/Protector"]
-position = Vector3(0, 1.05, 0)
-mesh = SubResource("CapsuleMesh_protector")
-material_override = SubResource("Material_protector")
+[node name="ProtectorPresentation" type="Node3D" parent="Actors/Protector"]
+script = ExtResource("11_humanoid_presentation")
+IdleAnimationName = "anim_humanoid_idle_holstered"
+LocomotionAnimationName = "anim_humanoid_locomotion_holstered"
+[node name="Model" parent="Actors/Protector/ProtectorPresentation" instance=ExtResource("10_protector")]
 [node name="SelectionBeacon" type="MeshInstance3D" parent="Actors/Protector"]
 position = Vector3(0, 0.045, 0)
 mesh = SubResource("TorusMesh_beacon")
@@ -271,10 +261,13 @@ position = Vector3(-8.5, 0, 6.5)
 collision_layer = 2
 collision_mask = 0
 metadata/stable_id = "interaction.survivor"
-[node name="Body" type="MeshInstance3D" parent="Interactions/Survivor"]
-position = Vector3(0, 0.9, 0)
-mesh = SubResource("CapsuleMesh_survivor")
-material_override = SubResource("Material_survivor")
+[node name="SurvivorPresentation" type="Node3D" parent="Interactions/Survivor"]
+rotation_degrees = Vector3(0, -90, 0)
+script = ExtResource("11_humanoid_presentation")
+IdleAnimationName = "anim_humanoid_dialogue_idle"
+DialogueSpeakAnimationName = "anim_humanoid_dialogue_speak"
+DialogueListenAnimationName = "anim_humanoid_dialogue_listen"
+[node name="Model" parent="Interactions/Survivor/SurvivorPresentation" instance=ExtResource("9_survivor")]
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Survivor"]
 position = Vector3(0, 0.9, 0)
 shape = SubResource("CapsuleShape_survivor")
@@ -341,10 +334,12 @@ position = Vector3(-1.5, 0, 0)
 collision_layer = 2
 collision_mask = 0
 metadata/stable_id = "interaction.protector"
-[node name="Body" type="MeshInstance3D" parent="Interactions/Protector"]
-position = Vector3(0, 1.05, 0)
-mesh = SubResource("CapsuleMesh_protector")
-material_override = SubResource("Material_protector")
+[node name="ProtectorPresentation" type="Node3D" parent="Interactions/Protector"]
+rotation_degrees = Vector3(0, -90, 0)
+script = ExtResource("11_humanoid_presentation")
+IdleAnimationName = "anim_humanoid_idle_holstered"
+LocomotionAnimationName = "anim_humanoid_locomotion_holstered"
+[node name="Model" parent="Interactions/Protector/ProtectorPresentation" instance=ExtResource("10_protector")]
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Protector"]
 position = Vector3(0, 1.05, 0)
 shape = SubResource("CapsuleShape_protector")

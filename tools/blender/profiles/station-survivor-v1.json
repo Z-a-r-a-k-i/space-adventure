@@ -1,0 +1,57 @@
+{
+  "asset_id": "character.npc.station_survivor.v1",
+  "run_id": "prod-tripo-v31bq-20260804-01",
+  "display_name": "StationSurvivor",
+  "target_height_meters": 1.7,
+  "height_tolerance_ratio": 0.03,
+  "maximum_planar_range_meters": 0.25,
+  "maximum_vertical_range_meters": 0.25,
+  "maximum_loop_endpoint_delta_meters": 0.03,
+  "triangle_limit": 32000,
+  "mesh_minimum": 4,
+  "mesh_limit": 18,
+  "material_minimum": 4,
+  "material_limit": 8,
+  "bone_limit": 64,
+  "influence_limit": 4,
+  "texture_maximum": 2048,
+  "material_strategy": "survivor-five-role",
+  "rigged_source": "art/generated/character.npc.station_survivor.v1/prod-tripo-v31bq-20260804-01/raw/character.npc.station_survivor.v1__rig__mixamo-standard65-with-skin-neutral.fbx",
+  "texture_archive": "art/generated/character.npc.station_survivor.v1/prod-tripo-v31bq-20260804-01/raw/character.npc.station_survivor.v1__retopo__mixamo-4k.zip",
+  "blend_output": "art/source/character.npc.station_survivor.v1/survivor-v1.blend",
+  "glb_output": "game/Assets/Published/character.npc.station_survivor.v1.glb",
+  "remove_bones": [
+    "mixamorig:HeadTop_End"
+  ],
+  "materials": [
+    {"name": "mat.survivor.coverall.navy", "role": "base"},
+    {"name": "mat.survivor.protection.warm_gray", "role": "protection"},
+    {"name": "mat.survivor.accent.amber", "role": "accent"},
+    {"name": "mat.survivor.skin", "role": "skin"},
+    {"name": "mat.survivor.hair", "role": "hair"}
+  ],
+  "actions": [
+    {
+      "name": "anim.humanoid.dialogue_idle",
+      "source": "art/generated/character.npc.station_survivor.v1/prod-tripo-v31bq-20260804-01/raw/character.npc.station_survivor.v1__donor__unarmed-idle-with-skin.fbx",
+      "source_clip": "Unarmed Idle",
+      "loop": true,
+      "loop_blend_frames": 6
+    },
+    {
+      "name": "anim.humanoid.dialogue_speak",
+      "source": "art/generated/character.npc.station_survivor.v1/prod-tripo-v31bq-20260804-01/raw/character.npc.station_survivor.v1__donor__talking-general-conversation-with-skin.fbx",
+      "source_clip": "Talking — General Conversation",
+      "loop": true,
+      "loop_blend_frames": 12
+    },
+    {
+      "name": "anim.humanoid.dialogue_listen",
+      "copy_of": "anim.humanoid.dialogue_idle",
+      "source_clip": "Unarmed Idle — phase offset",
+      "phase_offset_frames": 19,
+      "loop": true
+    }
+  ],
+  "sockets": []
+}

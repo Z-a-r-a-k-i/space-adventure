@@ -1,9 +1,9 @@
 # POC asset roster
 
-Status: approved active inventory. Vanguard, the production five-area station
-route, both service-door instances, terminal, and final airlock are integrated.
-The active NPC and hostile bases are the remaining Phase 3 art gate before
-combat gameplay.
+Status: approved active inventory. Vanguard, Survivor, Protector, the
+production five-area station route, both service-door instances, terminal, and
+final airlock are integrated. The two hostile bases remain the Phase 3 art gate
+before combat gameplay.
 
 ## Presentation rules
 
@@ -50,12 +50,13 @@ Every humanoid follows the same sequence:
 1. one approved front-view T-pose seed and one direct single-image, unrigged
    Tripo HD source using v3.1 Best Quality, Ultra, Triangle 2M, and 4K PBR;
 2. Tripo Smart Low-Poly v2, Quad, target 10,000;
-3. human-approved Mixamo markers with symmetry and Standard Skeleton (65);
-4. Mixamo neutral rig downloaded with skin after human approval of the motion
-   preview;
+3. agent-validated Mixamo markers with symmetry and Standard Skeleton (65);
+4. Mixamo neutral rig downloaded with skin after the motion preview passes
+   deformation review;
 5. Blender weight repair and sockets;
-6. Mixamo library animations downloaded without skin, using `Standard Walk`
-   in-place as the default exploration walk; and
+6. Mixamo library animations downloaded without skin when their rest skeleton
+   matches; otherwise use and record a matching with-skin donor exception.
+   `Standard Walk` in-place remains the default exploration walk; and
 7. Blender cleanup plus exact GLB review in Godot.
 
 Required active-party coverage:
@@ -121,28 +122,29 @@ The active run is
 `art/generated/character.crew.vanguard.v1/prod-tripo-v31bq-20260803-02/`:
 direct single-image 4K unrigged T-pose, Smart Low-Poly v2 Quad target 10k,
 geometry-only Mixamo upload, symmetry, Standard Skeleton (65), and
-human-approved markers and Auto-Rigger preview. Blender publishes the accepted
+agent-validated markers and Auto-Rigger preview. Blender publishes the accepted
 `Unarmed Idle` and in-place `Standard Walk`, limits skinning to four
 influences, preserves the animated Mixamo armature transform, and publishes
-both weapon sockets. Vanguard's with-skin walk donor is a documented exception
-because the tested no-skin baseline export did not preserve the accepted rest
-pose.
+both weapon sockets. Vanguard's, Survivor's, and Protector's matching
+with-skin donors are documented exceptions because their tested no-skin
+exports did not preserve the accepted rest poses.
 
 The untouched walk FBX and exact exported GLB both passed sustained direct
 Godot locomotion review: grounded motion, alternating feet, correct facing,
 stable arrival, and tactical-pause freezing. Vanguard now replaces the
-protagonist greybox and moves at 2.0 m/s. Protector is the fixed post-fight
-recruit and requires its approved production model, rig, idle, and locomotion
-before Phase 4 begins. The carbine, draw, aim, fire, recovery, and holster
-sequence remains coupled to the Phase 4 weapon-handling and combat gate.
+protagonist greybox and moves at 2.0 m/s. Survivor and Protector now replace
+their visible greyboxes; Protector's waiting instance remains unavailable
+beyond the locked solo-exit and its future party instance remains hidden.
+The carbine, shotgun fit, draw, aim, fire, recovery, and holster sequence
+remains coupled to the Phase 4 weapon-handling and combat gate.
 
 ## Integration order
 
 1. Obtain final owner visual approval for the integrated v2 station route and
    both service-door instances; keep the terminal and final airlock unchanged.
-2. Reuse the accepted humanoid contract for the survivor, Protector, and
-   Security Enforcer. Produce the sentry as a simple rigid machine. All visible
-   NPC and combatant bases must be non-greybox before Phase 4 starts.
+2. Reuse the accepted humanoid contract for the Security Enforcer and produce
+   the sentry as a simple rigid machine. Survivor and Protector are complete;
+   all visible combatant bases must be non-greybox before Phase 4 starts.
 3. Finish the separate Vanguard carbine and Protector shotgun attachment fits.
 4. Define the solo tutorial and main party-combat rules, then select and clean
    weapon-handling and fight animations against those authoritative timings.

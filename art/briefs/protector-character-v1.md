@@ -1,8 +1,7 @@
 # Asset brief - Protector character v1
 
-Status: accepted for bounded Tripo generation and offline source production;
-final visual approval, exact normalized height, and gameplay attack binding
-pending
+Status: published, integrated, and visually approved in Godot on 2026-08-07;
+gameplay attack binding remains pending
 
 ## Identity and role
 
@@ -23,10 +22,10 @@ pending
 
 - Approval date: 2026-07-24.
 - Approver: project owner through the Phase 3 production authorization.
-- Authorized operations: generate at most two Tripo candidates, provisionally
-  select the strongest, preserve the untouched static export and provenance,
-  and defer Blender reconstruction, shared-rig binding, sockets, assembly,
-  staging, and Godot review until the owner restarts those pipeline stages.
+- Completed operations: selected direct T-pose task
+  `c9deee40-b461-45e1-840d-c0ca66cac4c3`, Quad-10k retopology, Mixamo rig,
+  Blender reconstruction and weight repair, sockets, idle/walk publication,
+  and locked-route Godot integration.
 - Production owner: Codex on the dedicated art machine.
 - Branch/worktree:
   `codex/phase3-vanguard-production-20260724` at
@@ -34,7 +33,8 @@ pending
 - Provider/privacy: signed-in Tripo Studio Max plan, Sharing Only, no API or
   API key. Do not purchase or upgrade.
 - Phase-blocked fields: gameplay attack ID, damage, range, timing, abilities,
-  ability-specific clips, VFX, audio, and live-route adoption.
+  ability-specific clips, VFX, and audio. The locked-route waiting presentation
+  is integrated.
 
 The Protector is one complete fixed outfit. Outfit seams remain offline source
 organization and are not gameplay inventory slots.
@@ -51,10 +51,10 @@ organization and are not gameplay inventory slots.
   Operator without becoming a mech, exoskeleton, or Space Marine analogue.
 - Use the shared neutral T-pose, meters, Z-up Blender authoring,
   ground-center origin, unit scale, and no shear after offline reconstruction.
-- The exact normalized standing height remains provisional until all three
-  crew bodies are compared together. Do not redesign the shared skeleton to
-  force a number.
-- Publish later through Blender glTF conversion as `+Y` up and `-Z` forward.
+- The accepted rest-pose height target is 1.98 m; the integrated holstered-idle
+  silhouette evaluates to 1.93136 m. Do not redesign the shared skeleton to
+  force a different number.
+- The Blender publication uses glTF `+Y` up and `-Z` forward.
 - No shotgun, other firearm, shield, energy barrier, effect, or loose prop may
   be fused to the character source.
 
@@ -81,7 +81,7 @@ organization and are not gameplay inventory slots.
 - Validate primary-hand fit, support-hand reach, shoulder placement, muzzle
   direction, recoil clearance, back-mount clearance, and draw/holster path.
 - Reuse the exact shared action-name contract from
-  `art/rigs/crew-humanoid-v1.md`. Use the human-approved Mixamo rig baseline
+  `art/rigs/crew-humanoid-v1.md`. Use the validated Mixamo rig baseline
   and Mixamo library clips, with Blender correction and cleanup.
 - Weapon-specific draw, aim, recoil, recovery, and holster correction waits
   until the complete static Protector/shotgun assembly passes review.
@@ -110,4 +110,5 @@ exaggeration, fused joints, embedded weapon geometry, any shield, dominant
 cyan, unrepairable topology, or a body that cannot reuse
 `rig.crew.humanoid.v1` without hierarchy redesign. An absent rigid mounting
 rail is repairable offline when the approved rear-armor surface remains
-usable. Selection remains provisional pending owner review.
+usable. The selected candidate is accepted, published, integrated, and
+visually approved; gameplay attack binding remains a separate later gate.

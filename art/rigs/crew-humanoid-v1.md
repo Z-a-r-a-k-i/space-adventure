@@ -14,8 +14,12 @@ sockets each role needs.
 - Complete Tripo Smart Low-Poly v2 Quad 10k retopology before rigging.
 - Upload the geometry-only FBX to Mixamo, enable symmetry, use Standard
   Skeleton (65), and visually verify all markers before Auto-Rigger submission.
-- Obtain human approval of the complete marker layout and Auto-Rigger preview.
+- Validate the complete marker layout and Auto-Rigger preview autonomously;
+  escalate only a named defect or scope change.
 - Download the accepted neutral rig once with skin.
+- Inspect and record the hierarchy, names, and bone count from that downloaded
+  FBX. The Mixamo skeleton-profile label is a request, not evidence of the
+  effective exported skeleton.
 - Download production Mixamo animation donors without skin after Blender
   weight repair. A character-specific exception may use matching with-skin
   donors when no-skin export changes the accepted rest pose or transform.
