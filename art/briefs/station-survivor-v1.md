@@ -1,7 +1,6 @@
 # Asset brief — station survivor v1
 
-Status: accepted for offline source production; shared-rig reuse and final
-visual approval pending
+Status: published, integrated, and visually approved in Godot on 2026-08-07
 
 ## Identity and role
 
@@ -41,12 +40,12 @@ visual approval pending
 - Provider/privacy resolution: signed-in Tripo Studio Max plan, `Sharing Only`,
   provider-generated source images owned by the project, and no API or API key.
   Do not purchase, upgrade, change privacy, or expose account information.
-- Phase-blocked fields: authored dialogue content, dialogue availability and
-  outcomes, gameplay scene replacement, stable live-scene binding, and any
-  gameplay-coupled animation timing.
-- Dependency-blocked fields: final binding to `rig.crew.humanoid.v1` remains
-  provisional until Vanguard proves the human-approved Mixamo baseline and
-  Blender correction workflow.
+- Phase-blocked fields: changes to authored dialogue content, availability and
+  outcomes, plus any gameplay-coupled animation timing.
+- Shared-rig binding and live-route presentation cover the model, materials,
+  and dialogue actions. Stable live-scene binding covers the runtime mapping
+  from observed dialogue and pause state to those actions. Both are complete;
+  combat behavior remains out of scope for this noncombatant.
 
 The survivor is one fixed complete outfit. Named coverall, vest, work panels,
 boots, cuffs, belt, pouches, shoulder lamp, hair, and head objects are editable
@@ -56,7 +55,7 @@ source seams, not equipment slots or interactive inventory.
 
 | Property | Requirement |
 |---|---|
-| Standing height | 1.70 m target, ±2% after normalization |
+| Standing height | 1.70 m rest-pose target, ±2%; evaluated dialogue silhouettes, ±3% |
 | Published up / front | `+Y` / `-Z` |
 | Pivot | ground-plane center between feet |
 | Neutral pose | symmetrical T-pose compatible with the shared rig |
@@ -157,6 +156,6 @@ Review the static candidate at 7.5 m, 14.5 m, and 20 m. Reject identity or age
 drift, military/party-armor drift, missing or dominant amber lamp, weapon or
 tool geometry, changed hair, fused joints, duplicate face, blocked
 articulation, unusable topology, unclear licensing/privacy, or a candidate that
-cannot later fit the shared rig without redesign. Selection remains
-provisional pending owner visual review. Do not begin final rig binding until
-the Vanguard-first shared-rig gate passes.
+cannot later fit the shared rig without redesign. The integrated production
+candidate passed the owner visual review and the Vanguard-first shared-rig
+gate on 2026-08-07.

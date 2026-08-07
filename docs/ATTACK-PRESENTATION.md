@@ -94,7 +94,7 @@ combat animation while its scope remains deferred.
 
 1. Concept silhouette and attack source.
 2. Exact model assembly and clearances.
-3. Human-approved humanoid rig markers or simple machine pivots.
+3. Validated humanoid rig markers or simple machine pivots.
 4. Full-speed animation and key landmarks without clipping.
 5. Exact GLB assembly in Godot at 14.5 m and 20 m.
 

@@ -1,0 +1,47 @@
+{
+  "schema_version": 2,
+  "asset_id": "character.npc.station_survivor.v1",
+  "run_id": "prod-tripo-v31bq-20260804-01",
+  "provider": {
+    "name": "Tripo Studio",
+    "source_task_id": "fa370b18-b604-417e-8fa2-c6349712708f",
+    "privacy": "Sharing Only"
+  },
+  "exports": [
+    {
+      "cache_relative_path": "raw/character.npc.station_survivor.v1__retopo__mixamo-4k.zip",
+      "bytes": 75796576,
+      "settings": "Smart Low-Poly v2; Quad; target 10000; Mixamo FBX; 4K PBR",
+      "selection_state": "accepted material master and Mixamo upload package"
+    },
+    {
+      "cache_relative_path": "raw/character.npc.station_survivor.v1__rig__mixamo-standard65-with-skin-neutral.fbx",
+      "bytes": 39067616,
+      "settings": "Mixamo Standard Skeleton (65); symmetry; T-pose; with skin",
+      "selection_state": "accepted rig authority",
+      "inspection_record": "art/source/character.npc.station_survivor.v1/production.md#neutral-rig-fbx-inspection"
+    },
+    {
+      "cache_relative_path": "raw/character.npc.station_survivor.v1__donor__unarmed-idle-with-skin.fbx",
+      "bytes": 39256512,
+      "settings": "Unarmed Idle; with skin; 30 fps; no keyframe reduction",
+      "selection_state": "accepted matching-skeleton donor"
+    },
+    {
+      "cache_relative_path": "raw/character.npc.station_survivor.v1__donor__talking-general-conversation-with-skin.fbx",
+      "bytes": 39927520,
+      "settings": "Talking - General Conversation; with skin; 30 fps; no keyframe reduction",
+      "selection_state": "accepted matching-skeleton donor"
+    },
+    {
+      "cache_relative_path": "raw/character.npc.station_survivor.v1__baseline__standard-walk-in-place-50-50-with-skin.fbx",
+      "bytes": 39183136,
+      "settings": "Standard Walk; In Place; Overdrive 50; Arm-Space 50; with skin",
+      "selection_state": "direct provider baseline"
+    }
+  ],
+  "storage": {
+    "class": "ignored-local-workstation-cache",
+    "game_build_dependency": false
+  }
+}

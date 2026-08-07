@@ -69,8 +69,8 @@ recorded in the production run metadata and source production record.
 2. Complete Tripo Smart Low-Poly v2 Quad retopology with a 10,000 target before
    rigging.
 3. Upload the geometry-only FBX to Mixamo, enable symmetry and Standard
-   Skeleton (65), place all anatomical markers, and obtain human approval
-   before submitting the Auto-Rigger.
+   Skeleton (65), place all anatomical markers, validate the complete layout,
+   and submit the Auto-Rigger without a routine human confirmation gate.
 4. Review the preview, download the accepted neutral rig with skin, and repair
    weights in Blender where required.
 5. Download stock Mixamo clips without skin by default. For Vanguard, the

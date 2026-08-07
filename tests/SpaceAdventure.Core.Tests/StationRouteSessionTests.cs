@@ -27,6 +27,7 @@ public sealed class StationRouteSessionTests
         Assert.Equal(new ScenarioId("scenario.station_route"), definition.ScenarioId);
         Assert.Equal(ProtagonistId, definition.Protagonist.Id);
         Assert.Equal(ProtectorActorId, definition.Companion.Id);
+        Assert.Equal(2.0, definition.Companion.MovementSpeedMetersPerSecond);
         Assert.Equal(new ObjectiveId("objective.open_entry_service_door"), definition.EntryDoorObjective.Id);
         Assert.Equal(new ObjectiveId("objective.reach_first_combat"), definition.CombatThresholdObjective.Id);
         Assert.Equal(new AttackId("attack.crew.protector.shotgun"), definition.Companion.Loadout!.BasicAttackId);

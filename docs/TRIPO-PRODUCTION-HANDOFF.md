@@ -16,9 +16,11 @@ Use the signed-in Tripo Studio web application. Do not add a Tripo API key or
 provider-to-Godot bridge.
 
 After preflight acceptance, the assigned art operator may complete routine
-Tripo operations. Mixamo marker placement and the Auto-Rigger preview retain
-their human approval gate. A new owner decision is also needed when the brief,
-roster, licensing/privacy state, or live gameplay activation would change.
+Tripo and Mixamo operations, including marker placement and Auto-Rigger preview
+validation, without intermediate human confirmation. A new owner decision is
+needed only when the brief, roster, licensing/privacy state, scope, or live
+gameplay activation would change, or when a named defect cannot be resolved
+within the accepted pipeline.
 
 ## Generate the static source
 
@@ -32,7 +34,7 @@ roster, licensing/privacy state, or live gameplay activation would change.
 3. Load only the approved front-view seed into Tripo's direct single-image HD
    workflow. Generate Multi-Views is an exception for a named coverage defect,
    not a default production step; the accepted Vanguard comparison produced a
-   better face and eyes from the direct input.
+   more coherent source from the direct input.
 4. Use HD Model with v3.1 Best Quality and Ultra Mesh Quality enabled. For the
    dense pre-retopology source, use Triangle topology with a 2,000,000-face
    target, 4K textures, and PBR. Keep AI Complete, Generate in Parts, and 8K
@@ -47,8 +49,10 @@ roster, licensing/privacy state, or live gameplay activation would change.
    record its task/version, settings, path, and byte size.
 
 For humanoids, require separated limbs, complete hands and feet, readable
-joints, one coherent face, and a continuous deforming surface beneath rigid
-armor. Finish segmentation or part completion before retopology.
+joints, one coherent face, and a continuous deforming surface from the torso
+through both shoulders and underarms beneath rigid armor. A detached limb is a
+source-mesh rejection, not a Mixamo server failure or marker defect. Finish
+segmentation or part completion before retopology.
 
 ## Retopology and export
 
@@ -72,13 +76,16 @@ Do not run Tripo Auto Rig for production humanoids.
 2. Confirm the character is front-facing before opening marker placement.
 3. Enable Use Symmetry, select Standard Skeleton (65), and position the chin,
    wrists, elbows, knees, and groin/hip markers on the visible joint centers.
-4. Inspect the complete marker layout once and obtain human approval before
-   Auto-Rigger submission.
+4. Inspect the complete marker layout once and submit it when the placement is
+   anatomically coherent; do not pause for routine human approval.
 5. Inspect the rig preview for head/neck, shoulder, wrist, hip, knee, ankle,
-   hand, and armor deformation. Obtain human approval; adjust markers or return
-   to Blender for a named defect.
+   hand, and armor deformation. Accept it autonomously when it passes; adjust
+   markers or return to Blender for a named defect.
 6. Confirm the new Mixamo character and download the accepted neutral FBX
    Binary with skin.
+7. Inspect and record the downloaded FBX hierarchy, names, and bone count.
+   `Standard Skeleton (65)` is a requested provider setting; the exported file,
+   which may contain a different effective count, is the publication evidence.
 
 Mixamo is a baseline, not final authority. Visible deformation defects return
 to Blender for weight or joint repair.
@@ -137,13 +144,13 @@ Use Tripo only for the static silhouette. Prefer floating or stationary rigid
 chassis. Blender authors the minimum pivots for aim, recoil, hover, impact, and
 shutdown. Do not accept legs, organic deformation, or complex machine rigs.
 
-## Approval checkpoints
+## Review checkpoints
 
 Humanoids:
 
 1. Static Tripo source.
 2. Quad 10k topology in Blender.
-3. Human-approved Mixamo marker placement and Auto-Rigger preview.
+3. Agent-validated Mixamo marker placement and Auto-Rigger preview.
 4. Rig deformation after Blender correction.
 5. Animation playback on the corrected rig.
 6. Exact GLB import and assembly in Godot.

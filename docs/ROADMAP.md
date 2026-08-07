@@ -59,11 +59,19 @@ approve final visuals, replace live station-route actors, or bypass the shared-
 rig and complete-assembly gates; later owner instructions advanced Vanguard.
 
 Vanguard production art is active. The conforming direct single-image 4K
-T-pose source, Smart Low-Poly v2 Quad-10k result, human-approved Mixamo rig,
+T-pose source, Smart Low-Poly v2 Quad-10k result, validated Mixamo rig,
 Unarmed Idle, and in-place Standard Walk now replace the protagonist greybox
 in the live station route. Blender validation and a fresh GLB
 reimport confirm a grounded 1.82 m character at the gameplay origin; direct
 Godot inspection confirms visible idle and locomotion playback.
+
+On 2026-08-07 the production Survivor and Protector replaced their visible
+capsule presentations without changing interaction or route authority. The
+Survivor publishes three dialogue actions; Protector publishes holstered idle
+and in-place Standard Walk, moves at 2.0 m/s, and carries provisional hand and
+upper-back sockets. Their reusable Godot presentation validates action names,
+blends observed states, faces authoritative movement, and freezes during
+tactical pause. Final contextual visual approval remains open.
 
 On 2026-08-04 the station presentation advanced to route revision
 `station-route-v5`. `kit.station.structure.v2` now covers the complete five-area
@@ -81,12 +89,11 @@ Automated route verification intentionally stops at the first-combat threshold.
   screen. Operator and its pistol are deferred. The active party weapons are
   Vanguard's carbine and Protector's shotgun; define gameplay attacks before
   producing ability-specific art.
-- Integrate and approve each active human as one fixed runtime outfit on the
-  shared skeleton. Vanguard's body, idle, and walk are integrated. Before
-  combat implementation, replace the survivor and Protector greyboxes and
-  prepare reviewed non-greybox base presentations for the first-combat
-  Security Enforcer and sentry. Complete weapon fit and combat animation with
-  the Phase 4 rules and timings. Do not add runtime armor slots.
+- Integrate each active human as one fixed runtime outfit on the shared
+  skeleton. Vanguard, Survivor, and Protector are integrated. Before combat
+  implementation, prepare reviewed non-greybox base presentations for the
+  first-combat Security Enforcer and sentry. Complete weapon fit and combat
+  animation with the Phase 4 rules and timings. Do not add runtime armor slots.
 - Preserve the implemented party cards, individual and group selection,
   formation movement, and observations, but move Protector recruitment after
   the solo tutorial fight. Portraits remain presentation work.

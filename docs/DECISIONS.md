@@ -158,7 +158,8 @@ product and architecture decision.
 ## ADR 0016 — current 3D character production pipeline
 
 Status: accepted by the project owner on 2026-08-02; production defaults
-amended after the conforming Vanguard T-pose pilot on 2026-08-03.
+amended after the conforming Vanguard T-pose pilot on 2026-08-03 and the
+operator-autonomy clarification on 2026-08-04.
 
 Offline art production requires an approved roster asset, reference, brief,
 human approver, licensing/privacy state, and dedicated art worktree. It does not
@@ -174,10 +175,11 @@ a 10,000 target before any rigging.
 Mixamo receives the geometry-only FBX while the 4K ZIP remains the material
 master. The assigned art operator uses a front orientation, symmetry, Standard
 Skeleton (65), and visually verified chin, wrist, elbow, knee, and groin/hip
-markers. A human approves the complete marker placement and Auto-Rigger
-preview. Mixamo provides the with-skin neutral rig baseline and existing
-animation library; production animation donors are downloaded without skin by
-default. `Standard Walk` with In Place on, Overdrive 50, Character Arm-Space
+markers. The operator validates the complete marker placement and Auto-Rigger
+preview without intermediate human confirmation, escalating only a named
+defect or scope change. Mixamo provides the with-skin neutral rig baseline and
+existing animation library; production animation donors are downloaded without
+skin by default. `Standard Walk` with In Place on, Overdrive 50, Character Arm-Space
 50, 30 fps, and no keyframe reduction is the default exploration walk. An
 untouched with-skin locomotion FBX must first pass a sustained direct Godot
 baseline. Blender owns weight repair, sockets, animation cleanup, and GLB
@@ -237,7 +239,7 @@ and asset planning; visual reference approved the same day.
 
 The mobile close-range hostile is a non-sapient humanoid Security Enforcer with
 a reinforced-forearm body attack. It uses the shared T-pose, Tripo Quad-10k,
-human-approved Mixamo, and Blender pipeline. It carries no weapon and publishes
+validated Mixamo, and Blender pipeline. It carries no weapon and publishes
 one reviewed contact socket. The ranged hostile remains a stationary rigid gun
 sentry with aim and recoil pivots.
 

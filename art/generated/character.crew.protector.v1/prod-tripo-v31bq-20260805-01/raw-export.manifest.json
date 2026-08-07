@@ -1,0 +1,47 @@
+{
+  "schema_version": 2,
+  "asset_id": "character.crew.protector.v1",
+  "run_id": "prod-tripo-v31bq-20260805-01",
+  "provider": {
+    "name": "Tripo Studio",
+    "source_task_id": "c9deee40-b461-45e1-840d-c0ca66cac4c3",
+    "privacy": "Sharing Only"
+  },
+  "exports": [
+    {
+      "cache_relative_path": "raw/candidate-04/protector-retopo-mixamo-4k.zip",
+      "bytes": 77163047,
+      "settings": "Smart Low-Poly v2; Quad; target 10000; Mixamo FBX; 4K PBR",
+      "selection_state": "accepted material master and Mixamo upload package"
+    },
+    {
+      "cache_relative_path": "raw/candidate-04/mixamo/protector-rig-tpose-with-skin.fbx",
+      "bytes": 39489504,
+      "settings": "Mixamo symmetry; T-pose; with skin",
+      "selection_state": "accepted rig authority",
+      "inspection_record": "art/source/character.crew.protector.v1/production.md#neutral-rig-fbx-inspection"
+    },
+    {
+      "cache_relative_path": "raw/candidate-04/mixamo/unarmed-idle-50-50-with-skin.fbx",
+      "bytes": 39600064,
+      "settings": "Unarmed Idle; with skin; 30 fps; no keyframe reduction",
+      "selection_state": "accepted matching-skeleton donor"
+    },
+    {
+      "cache_relative_path": "raw/candidate-04/mixamo/standard-walk-in-place-50-50-with-skin.fbx",
+      "bytes": 39554912,
+      "settings": "Standard Walk; In Place; Overdrive 50; Arm-Space 50; with skin",
+      "selection_state": "accepted matching-skeleton donor and direct baseline"
+    },
+    {
+      "cache_relative_path": "raw/candidate-04/mixamo/standard-walk-in-place-50-50-no-skin.fbx",
+      "bytes": 217952,
+      "settings": "Standard Walk; In Place; Overdrive 50; Arm-Space 50; without skin",
+      "selection_state": "diagnostic rejected for rest-skeleton mismatch"
+    }
+  ],
+  "storage": {
+    "class": "ignored-local-workstation-cache",
+    "game_build_dependency": false
+  }
+}

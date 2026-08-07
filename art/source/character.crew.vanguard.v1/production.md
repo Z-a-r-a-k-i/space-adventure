@@ -30,6 +30,23 @@ skeleton did not preserve this character's accepted rest pose. The Vanguard
 therefore uses documented with-skin donors so Blender can compare the exact
 rest skeleton and armature-object transform before removing donor meshes.
 
+## Neutral-rig FBX inspection
+
+The accepted rig authority is the with-skin idle FBX at
+`art/generated/character.crew.vanguard.v1/prod-tripo-v31bq-20260803-02/raw/mixamo/vanguard-unarmed-idle-with-skin.fbx`.
+Blender 5.2 directly inspected 33 bones with one root. Every name below has the
+`mixamorig:` prefix; `→` denotes a direct parent-to-child link:
+
+- `Hips`
+  - `Spine → Spine1 → Spine2`
+    - `Neck → Head → HeadTop_End`
+    - `LeftShoulder → LeftArm → LeftForeArm → LeftHand`
+      - `LeftHandIndex1 → LeftHandIndex2 → LeftHandIndex3 → LeftHandIndex4`
+    - `RightShoulder → RightArm → RightForeArm → RightHand`
+      - `RightHandIndex1 → RightHandIndex2 → RightHandIndex3 → RightHandIndex4`
+  - `LeftUpLeg → LeftLeg → LeftFoot → LeftToeBase → LeftToe_End`
+  - `RightUpLeg → RightLeg → RightFoot → RightToeBase → RightToe_End`
+
 ## Blender assembly
 
 `tools/blender/build_vanguard_character_v1.py` reproducibly builds

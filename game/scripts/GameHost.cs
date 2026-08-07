@@ -69,6 +69,9 @@ public partial class GameHost : Node3D
     private StandardMaterial3D _serviceDoorLockedMaterial = null!;
     private StandardMaterial3D _serviceDoorOpenMaterial = null!;
     private VanguardPresentation _vanguardPresentation = null!;
+    private HumanoidPresentation _survivorPresentation = null!;
+    private HumanoidPresentation _protectorPartyPresentation = null!;
+    private HumanoidPresentation _protectorWaitingPresentation = null!;
     private MeshInstance3D _destinationMarker = null!;
     private Label _objectiveLabel = null!;
     private Label _pauseLabel = null!;
@@ -117,6 +120,12 @@ public partial class GameHost : Node3D
         _camera.FocusOn(_protagonistView.GlobalPosition);
         _vanguardPresentation = GetNode<VanguardPresentation>(
             "Actors/Protagonist/VanguardPresentation");
+        _survivorPresentation = GetNode<HumanoidPresentation>(
+            "Interactions/Survivor/SurvivorPresentation");
+        _protectorPartyPresentation = GetNode<HumanoidPresentation>(
+            "Actors/Protector/ProtectorPresentation");
+        _protectorWaitingPresentation = GetNode<HumanoidPresentation>(
+            "Interactions/Protector/ProtectorPresentation");
         foreach (var actorView in GetNode<Node3D>("Actors").GetChildren().OfType<Node3D>())
         {
             _actorViews.Add(GetStableId(actorView), actorView);
@@ -684,6 +693,7 @@ public partial class GameHost : Node3D
         }
 
         SynchronizeProtagonistPresentation(observation, route);
+        SynchronizeProductionHumanoids(observation, route, definition);
 
         var selectedActors = route.Party
             .Where(actor => _selectedActorIds.Contains(actor.Id))
@@ -947,6 +957,43 @@ public partial class GameHost : Node3D
             action?.HasRemainingMovement == true,
             observation.Paused,
             direction);
+    }
+
+    private void SynchronizeProductionHumanoids(
+        GameObservation observation,
+        StationRouteObservation route,
+        StationRouteDefinition definition)
+    {
+        var survivorSpeaking = route.ActiveDialogue is not null
+            && string.Equals(
+                route.ActiveDialogue.InteractionId.Value,
+                "interaction.survivor",
+                StringComparison.Ordinal);
+        _survivorPresentation.Synchronize(
+            true,
+            survivorSpeaking
+                ? HumanoidPresentationAction.DialogueSpeak
+                : HumanoidPresentationAction.Idle,
+            observation.Paused,
+            Vector3.Zero);
+
+        var protector = route.Party.SingleOrDefault(actor => actor.Id == definition.Companion.Id);
+        var protectorAction = protector?.CurrentAction;
+        var protectorDirection = protectorAction is null || protector is null
+            ? Vector3.Zero
+            : ToGodot(protectorAction.Destination) - ToGodot(protector.Position);
+        _protectorPartyPresentation.Synchronize(
+            protector is not null,
+            protectorAction?.HasRemainingMovement == true
+                ? HumanoidPresentationAction.Locomotion
+                : HumanoidPresentationAction.Idle,
+            observation.Paused,
+            protectorDirection);
+        _protectorWaitingPresentation.Synchronize(
+            protector is null,
+            HumanoidPresentationAction.Idle,
+            observation.Paused,
+            Vector3.Zero);
     }
 
     private void SetAirlockOpen(bool open)
@@ -1979,6 +2026,17 @@ public partial class GameHost : Node3D
             survivorSequence,
             "dialogue_started",
             maximumTicks: 600);
+        RenderObservation(_session.Observe());
+        await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        var survivorDialoguePresentation =
+            _survivorPresentation.CurrentAction == HumanoidPresentationAction.DialogueSpeak;
+        var tacticalPauseFreezesHumanoids = _survivorPresentation.PlaybackPaused
+            && _protectorWaitingPresentation.PlaybackPaused;
+        var waitingProtectorPresentation = _protectorWaitingPresentation.Visible
+            && GetNode<Node3D>("Interactions/Protector").Visible
+            && !_protectorPartyPresentation.Visible
+            && !GetNode<Node3D>("Actors/Protector").Visible;
         var response = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
             schema_version = 2,
@@ -1995,9 +2053,30 @@ public partial class GameHost : Node3D
         RenderObservation(_session.Observe());
         await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        var survivorReturnedToIdle =
+            _survivorPresentation.CurrentAction == HumanoidPresentationAction.Idle;
         var entryDoorPresentation = _serviceDoors[entryDoor.Id.Value];
         var soloExitPresentation = _serviceDoors[soloExit.Id.Value];
+        var entryPathfinder = new GodotSpatialPathfinder(GetWorld3D().NavigationMap);
+        var entryNavigationPath = entryPathfinder.FindPath(
+            definition.Protagonist.Id,
+            _session.Observe().StationRoute!.Protagonist.Position,
+            new WorldPosition(-10.0, 0.0, 0.0));
+        for (var frame = 0;
+             frame < MaximumNavigationInitializationFrames && !entryNavigationPath.IsReachable;
+             frame++)
+        {
+            // Navigation node setters are queued until a server sync. Wait until
+            // the path query itself observes the newly enabled service-door link.
+            await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+            entryNavigationPath = entryPathfinder.FindPath(
+                definition.Protagonist.Id,
+                _session.Observe().StationRoute!.Protagonist.Position,
+                new WorldPosition(-10.0, 0.0, 0.0));
+        }
         var doorNavigationUnlocked = entryDoorPresentation.NavigationLink.Enabled
+            && entryNavigationPath.IsReachable
             && !entryDoorPresentation.Blocker.Disabled
             && entryDoorPresentation.Left.Position.IsEqualApprox(
                 entryDoorPresentation.ClosedLeftPosition)
@@ -2070,6 +2149,10 @@ public partial class GameHost : Node3D
         var passed = IsAccepted(pause)
             && IsAccepted(survivorOrder)
             && IsReached(dialogueWait)
+            && survivorDialoguePresentation
+            && survivorReturnedToIdle
+            && tacticalPauseFreezesHumanoids
+            && waitingProtectorPresentation
             && IsAccepted(response)
             && doorNavigationUnlocked
             && IsAccepted(terminalOrder)
@@ -2112,6 +2195,10 @@ public partial class GameHost : Node3D
                 && arenaArrived is not null
                 && entryDoorOpened.Sequence < arenaArrived.Sequence,
             entry_door_presentation_synchronized = doorPresentationSynchronized,
+            survivor_dialogue_presentation = survivorDialoguePresentation
+                && survivorReturnedToIdle,
+            tactical_pause_freezes_humanoids = tacticalPauseFreezesHumanoids,
+            waiting_protector_visible_party_hidden = waitingProtectorPresentation,
             solo_exit_locked = final.Interactions.Single(
                 interaction => interaction.Id == soloExit.Id).State == InteractionState.Unavailable,
             future_route_navigation_connected = futureRoutePath.IsReachable,

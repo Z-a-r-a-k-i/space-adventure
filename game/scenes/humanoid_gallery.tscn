@@ -1,0 +1,111 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/HumanoidGalleryReview.cs" id="1_gallery"]
+[ext_resource type="Script" path="res://scripts/HumanoidPresentation.cs" id="2_presentation"]
+[ext_resource type="PackedScene" path="res://Assets/Published/character.npc.station_survivor.v1.glb" id="3_survivor"]
+[ext_resource type="PackedScene" path="res://Assets/Published/character.crew.protector.v1.glb" id="4_protector"]
+
+[sub_resource type="Environment" id="Environment_gallery"]
+background_mode = 1
+background_color = Color(0.012, 0.021, 0.04, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.26, 0.34, 0.48, 1)
+ambient_light_energy = 1.15
+tonemap_mode = 2
+ssao_enabled = true
+
+[sub_resource type="StandardMaterial3D" id="Material_floor"]
+albedo_color = Color(0.045, 0.065, 0.095, 1)
+metallic = 0.2
+roughness = 0.76
+
+[node name="HumanoidGallery" type="Node3D"]
+script = ExtResource("1_gallery")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_gallery")
+
+[node name="Floor" type="CSGBox3D" parent="."]
+position = Vector3(0, -0.05, 0)
+material_override = SubResource("Material_floor")
+size = Vector3(10, 0.1, 6)
+
+[node name="Slots" type="Node3D" parent="."]
+
+[node name="SurvivorPresentation" type="Node3D" parent="Slots"]
+position = Vector3(-2.4, 0, 0)
+script = ExtResource("2_presentation")
+IdleAnimationName = "anim_humanoid_dialogue_idle"
+DialogueSpeakAnimationName = "anim_humanoid_dialogue_speak"
+DialogueListenAnimationName = "anim_humanoid_dialogue_listen"
+[node name="Model" parent="Slots/SurvivorPresentation" instance=ExtResource("3_survivor")]
+
+[node name="ProtectorIdlePresentation" type="Node3D" parent="Slots"]
+script = ExtResource("2_presentation")
+IdleAnimationName = "anim_humanoid_idle_holstered"
+LocomotionAnimationName = "anim_humanoid_locomotion_holstered"
+[node name="Model" parent="Slots/ProtectorIdlePresentation" instance=ExtResource("4_protector")]
+
+[node name="ProtectorWalkPresentation" type="Node3D" parent="Slots"]
+position = Vector3(2.4, 0, 0)
+script = ExtResource("2_presentation")
+IdleAnimationName = "anim_humanoid_idle_holstered"
+LocomotionAnimationName = "anim_humanoid_locomotion_holstered"
+[node name="Model" parent="Slots/ProtectorWalkPresentation" instance=ExtResource("4_protector")]
+
+[node name="Labels" type="Node3D" parent="."]
+[node name="Survivor" type="Label3D" parent="Labels"]
+position = Vector3(-2.4, 2.35, 0)
+text = "SURVIVOR — DIALOGUE IDLE"
+font_size = 22
+outline_size = 8
+billboard = 1
+no_depth_test = true
+[node name="ProtectorIdle" type="Label3D" parent="Labels"]
+position = Vector3(0, 2.55, 0)
+text = "PROTECTOR — IDLE"
+font_size = 22
+outline_size = 8
+billboard = 1
+no_depth_test = true
+[node name="ProtectorWalk" type="Label3D" parent="Labels"]
+position = Vector3(2.4, 2.55, 0)
+text = "PROTECTOR — STANDARD WALK"
+font_size = 22
+outline_size = 8
+billboard = 1
+no_depth_test = true
+
+[node name="ReviewCameras" type="Node3D" parent="."]
+[node name="ReviewCamera7_5m" type="Camera3D" parent="ReviewCameras"]
+position = Vector3(2.0, 2.6, 7.05)
+rotation_degrees = Vector3(-15, 0, 0)
+current = true
+fov = 60.0
+metadata/distance_metres = 7.5
+[node name="ReviewCamera14_5m" type="Camera3D" parent="ReviewCameras"]
+position = Vector3(2.0, 4.0, 13.94)
+rotation_degrees = Vector3(-15, 0, 0)
+fov = 60.0
+metadata/distance_metres = 14.5
+[node name="ReviewCamera20m" type="Camera3D" parent="ReviewCameras"]
+position = Vector3(2.0, 5.4, 19.26)
+rotation_degrees = Vector3(-15, 0, 0)
+fov = 60.0
+metadata/distance_metres = 20.0
+
+[node name="KeyLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-48, -35, 0)
+light_color = Color(0.78, 0.88, 1, 1)
+light_energy = 2.1
+shadow_enabled = true
+[node name="FillLight" type="OmniLight3D" parent="."]
+position = Vector3(-3.5, 3.6, -2.2)
+light_color = Color(0.42, 0.58, 1, 1)
+light_energy = 5.0
+omni_range = 10.0
+[node name="RimLight" type="OmniLight3D" parent="."]
+position = Vector3(3.8, 3.2, 2.4)
+light_color = Color(0.25, 0.9, 0.82, 1)
+light_energy = 4.2
+omni_range = 10.0

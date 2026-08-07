@@ -48,7 +48,7 @@ for this C# project.
 | Codex desktop | Current | Agent session and tool coordination |
 | [Chrome](https://www.google.com/chrome/) plus Codex Chrome control | Current | Signed-in Tripo Studio and Mixamo operation |
 | [Tripo Studio](https://www.tripo3d.ai/) account | Live browser service | Candidate generation; no API installation or repository secret is required |
-| [Mixamo](https://www.mixamo.com/) account | Live browser service | Human-reviewed humanoid Auto-Rigger and stock animation library |
+| [Mixamo](https://www.mixamo.com/) account | Live browser service | Agent-reviewed humanoid Auto-Rigger and stock animation library |
 | [`uv`](https://docs.astral.sh/uv/getting-started/installation/) | Current stable | Provides the Blender MCP Python environment; a separate global Python installation is unnecessary |
 | Official Blender MCP | Package `1.0.0`; known-good commit `98b0e49d98321d321c7e631389200f513f765d59` | Interactive Blender inspection and control |
 | Existing `godot-ai-plugin` | Known-good commit below | Godot AI Control, graphical inspection, input, runtime state, and viewport capture |

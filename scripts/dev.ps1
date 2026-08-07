@@ -337,7 +337,7 @@ SpaceAdventure development commands
   scenario [-Name name]   Run a deterministic core scenario as JSON Lines
   plugin-link             Create the ignored local Godot AI Control junction
   import                  Import the Godot project headlessly
-  headless [-Name name]   Run a bounded Godot smoke (bootstrap or station-route)
+  headless [-Name name]   Run a bounded Godot smoke (bootstrap, station-route, or humanoid-gallery)
   capture -Name name      Create and verify a deterministic graphical capture (wall-cutaway)
   editor                  Open the Godot editor with the project
   run                     Launch the graphical bootstrap
@@ -440,12 +440,23 @@ Options:
             Invoke-GodotAutomated -Arguments @("--headless", "--import", "--path", $gameProject)
         }
         "headless" {
-            $smokeArgument = switch ($Name) {
-                "bootstrap" { "--bootstrap-smoke" }
-                "station-route" { "--station-route-smoke" }
-                default { throw "Unknown Godot headless scenario '$Name'. Expected 'bootstrap' or 'station-route'." }
+            $smoke = switch ($Name) {
+                "bootstrap" { @{ Argument = "--bootstrap-smoke"; Scene = $null } }
+                "station-route" { @{ Argument = "--station-route-smoke"; Scene = $null } }
+                "humanoid-gallery" {
+                    @{
+                        Argument = "--humanoid-gallery-smoke"
+                        Scene = "res://scenes/humanoid_gallery.tscn"
+                    }
+                }
+                default { throw "Unknown Godot headless scenario '$Name'. Expected 'bootstrap', 'station-route', or 'humanoid-gallery'." }
             }
-            Invoke-GodotAutomated -Arguments @("--headless", "--path", $gameProject, "--", $smokeArgument)
+            $arguments = @("--headless", "--path", $gameProject)
+            if ($null -ne $smoke.Scene) {
+                $arguments += $smoke.Scene
+            }
+            $arguments += "--", $smoke.Argument
+            Invoke-GodotAutomated -Arguments $arguments
         }
         "capture" {
             if ($Name -ne "wall-cutaway") {
