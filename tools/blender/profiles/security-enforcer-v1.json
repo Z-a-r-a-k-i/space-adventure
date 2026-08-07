@@ -1,0 +1,64 @@
+{
+  "asset_id": "character.enemy.security_enforcer.v1",
+  "run_id": "prod-tripo-v31bq-20260807-01",
+  "display_name": "SecurityEnforcer",
+  "target_height_meters": 1.90,
+  "height_tolerance_ratio": 0.02,
+  "maximum_planar_range_meters": 0.15,
+  "maximum_vertical_range_meters": 0.15,
+  "maximum_loop_endpoint_delta_meters": 0.01,
+  "triangle_limit": 30000,
+  "mesh_minimum": 3,
+  "mesh_limit": 12,
+  "material_minimum": 3,
+  "material_limit": 3,
+  "bone_limit": 64,
+  "influence_limit": 4,
+  "texture_maximum": 2048,
+  "material_strategy": "security-enforcer-three-role",
+  "rigged_source": "art/generated/character.enemy.security_enforcer.v1/prod-tripo-v31bq-20260807-01/raw/candidate-01/mixamo/security-enforcer-rig-tpose-with-skin.fbx",
+  "texture_archive": "art/generated/character.enemy.security_enforcer.v1/prod-tripo-v31bq-20260807-01/raw/candidate-01/security-enforcer-retopo-mixamo-4k.zip",
+  "blend_output": "art/source/character.enemy.security_enforcer.v1/security-enforcer-v1.blend",
+  "glb_output": "game/Assets/Published/character.enemy.security_enforcer.v1.glb",
+  "remove_bones": [
+    "mixamorig:HeadTop_End"
+  ],
+  "materials": [
+    {"name": "mat.security_enforcer.armor.warm_gray", "role": "armor"},
+    {"name": "mat.security_enforcer.undersuit.navy", "role": "undersuit"},
+    {"name": "mat.security_enforcer.threat.red", "role": "threat"}
+  ],
+  "actions": [
+    {
+      "name": "anim.humanoid.idle_holstered",
+      "source": "art/generated/character.enemy.security_enforcer.v1/prod-tripo-v31bq-20260807-01/raw/candidate-01/mixamo/unarmed-idle-50-50-with-skin.fbx",
+      "source_clip": "Unarmed Idle — matching with-skin rest-pose exception",
+      "loop": true,
+      "loop_blend_frames": 6
+    },
+    {
+      "name": "anim.humanoid.locomotion_holstered",
+      "source": "art/generated/character.enemy.security_enforcer.v1/prod-tripo-v31bq-20260807-01/raw/candidate-01/mixamo/standard-walk-in-place-50-50-with-skin.fbx",
+      "source_clip": "Standard Walk — In Place, Overdrive 50, Arm-Space 50; matching with-skin rest-pose exception",
+      "loop": true,
+      "loop_blend_frames": 6,
+      "minimum_foot_lift_meters": 0.04
+    },
+    {
+      "name": "anim.humanoid.walk_holstered",
+      "copy_of": "anim.humanoid.locomotion_holstered",
+      "source_clip": "Standard Walk — In Place, Overdrive 50, Arm-Space 50",
+      "loop": true,
+      "minimum_foot_lift_meters": 0.04
+    }
+  ],
+  "sockets": [
+    {
+      "name": "socket.attack.contact.primary",
+      "bone": "mixamorig:RightHand",
+      "placement_reference": "bone_tail",
+      "location": [0.0, 0.0, 0.0],
+      "rotation_degrees": [0.0, 0.0, 0.0]
+    }
+  ]
+}

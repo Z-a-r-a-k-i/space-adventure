@@ -1,7 +1,7 @@
 # Asset brief — Security Enforcer character v1
 
-Status: accepted gameplay role and approved visual reference; production-ready
-brief awaiting explicit owner acceptance before offline source production
+Status: Phase 3 production base approved by the project owner in the combined
+Godot hostile gallery on 2026-08-07
 
 ## Identity
 
@@ -49,22 +49,24 @@ Quad-10k retopology, agent-validated Mixamo markers with symmetry and
 Standard Skeleton (65), neutral FBX with skin, Blender weight repair, Mixamo
 clips without skin, Blender cleanup, and exact GLB review in Godot.
 
-Required coverage is idle, locomotion, close-combat stance, readable wind-up,
-one reinforced-forearm strike, contact pose, recovery, hit reaction, and down.
-Prefer conservative stock Mixamo locomotion and punch clips. Gameplay owns
-world movement, target selection, range, timing, interruption, contact, and
-damage; combat clips remain in-place.
+Phase 3 publishes only holstered idle, in-place locomotion, a walk alias, and
+the reinforced-right-hand contact socket. Phase 4 adds close-combat stance,
+readable wind-up, one reinforced-forearm strike, contact pose, recovery, hit
+reaction, and down after gameplay owns their authoritative timings. Prefer
+conservative stock Mixamo locomotion and punch clips. Gameplay owns world
+movement, target selection, range, timing, interruption, contact, and damage;
+combat clips remain in-place.
 
 ## Approval gates
 
 1. Project-owner approval of the reference — completed 2026-08-02.
-2. Static T-pose source and Quad-10k topology review.
-3. Agent validation of Mixamo marker placement and the Auto-Rigger preview.
-4. Blender deformation review at shoulders, elbows, wrists, hips, knees,
+2. Project-owner acceptance of this production brief — completed 2026-08-07.
+3. Static T-pose source and Quad-10k topology review.
+4. Agent validation of Mixamo marker placement and the Auto-Rigger preview.
+5. Blender deformation review at shoulders, elbows, wrists, hips, knees,
    ankles, and armor boundaries.
-5. Full-speed strike and recovery with a stable contact socket.
-6. Exact GLB review in Godot at 14.5 m and 20 m.
+6. Exact Phase 3 base GLB review in Godot at 7.5 m, 14.5 m, and 20 m.
+7. Full-speed strike and recovery review remains a Phase 4 gate.
 
-Reference approval does not by itself authorize Tripo submission or live
-replacement. The project owner must separately accept this production-ready
-brief and the normal production preflight must be complete.
+Live station-route activation remains blocked until Phase 4 provides the
+authoritative hostile and combat state.

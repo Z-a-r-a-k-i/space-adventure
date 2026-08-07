@@ -1,0 +1,4 @@
+No new image-generation prompt was used. The production seed is an exact crop
+of the strict front panel from the project-owner-approved
+`security-enforcer-turnaround-v1.png` reference. It preserves the approved
+identity, proportions, T-pose, fixed armor, undersuit, visor, hands, and feet.

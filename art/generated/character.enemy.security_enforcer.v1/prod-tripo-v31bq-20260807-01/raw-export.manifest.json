@@ -1,0 +1,64 @@
+{
+  "schema_version": 2,
+  "asset_id": "character.enemy.security_enforcer.v1",
+  "run_id": "prod-tripo-v31bq-20260807-01",
+  "provider": {
+    "name": "Tripo Studio",
+    "source_task_id": "c48a7f4c-7a43-42c6-ac08-678b4c297821",
+    "privacy": "Sharing Only"
+  },
+  "exports": [
+    {
+      "cache_relative_path": "raw/candidate-01/security-enforcer-source-2m.glb",
+      "bytes": 58065904,
+      "settings": "v3.1 Best Quality; Ultra; Triangle 2M; 4K PBR; GLB",
+      "selection_state": "accepted untouched source"
+    },
+    {
+      "cache_relative_path": "raw/candidate-01/security-enforcer-retopo-quad10k.glb",
+      "bytes": 12041896,
+      "settings": "Smart Low-Poly v2; Quad target 10000; 4K PBR; GLB",
+      "selection_state": "accepted untouched retopology"
+    },
+    {
+      "cache_relative_path": "raw/candidate-01/security-enforcer-retopo-mixamo-4k.zip",
+      "bytes": 68968631,
+      "settings": "Smart Low-Poly v2; Quad target 10000; Mixamo FBX preset; 4K PBR",
+      "selection_state": "accepted geometry-only Mixamo upload package"
+    },
+    {
+      "cache_relative_path": "raw/candidate-01/mixamo/security-enforcer-rig-tpose-with-skin.fbx",
+      "bytes": 35512832,
+      "settings": "Mixamo Standard Skeleton 65; symmetry; T-pose; FBX Binary; with skin",
+      "selection_state": "accepted neutral rig authority"
+    },
+    {
+      "cache_relative_path": "raw/candidate-01/mixamo/standard-walk-in-place-50-50-with-skin.fbx",
+      "bytes": 35588880,
+      "settings": "Standard Walk; In Place; Overdrive 50; Character Arm-Space 50; 30 fps; no keyframe reduction; with skin",
+      "selection_state": "accepted direct Godot baseline and production donor"
+    },
+    {
+      "cache_relative_path": "raw/candidate-01/mixamo/standard-walk-in-place-50-50-no-skin.fbx",
+      "bytes": 259824,
+      "settings": "Standard Walk; In Place; Overdrive 50; Character Arm-Space 50; 30 fps; no keyframe reduction; without skin",
+      "selection_state": "diagnostic only; rejected for rest-pose mismatch"
+    },
+    {
+      "cache_relative_path": "raw/candidate-01/mixamo/unarmed-idle-no-skin.fbx",
+      "bytes": 304688,
+      "settings": "Unarmed Idle; Overdrive 50; Character Arm-Space 50; 30 fps; no keyframe reduction; without skin",
+      "selection_state": "diagnostic only; rejected for rest-pose mismatch"
+    },
+    {
+      "cache_relative_path": "raw/candidate-01/mixamo/unarmed-idle-50-50-with-skin.fbx",
+      "bytes": 35633728,
+      "settings": "Unarmed Idle; Overdrive 50; Character Arm-Space 50; 30 fps; no keyframe reduction; with skin",
+      "selection_state": "accepted production donor; matching rest-pose exception"
+    }
+  ],
+  "storage": {
+    "class": "ignored-local-workstation-cache",
+    "game_build_dependency": false
+  }
+}

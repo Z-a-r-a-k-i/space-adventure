@@ -541,6 +541,7 @@ def assign_semantic_materials(
     required_roles_by_strategy = {
         "survivor-five-role": {"base", "protection", "accent", "skin", "hair"},
         "protector-two-role": {"surface", "undersuit"},
+        "security-enforcer-three-role": {"armor", "undersuit", "threat"},
     }
     if strategy not in required_roles_by_strategy:
         raise RuntimeError(f"Unsupported humanoid material strategy: {strategy}")
@@ -576,7 +577,15 @@ def assign_semantic_materials(
         red, green, blue = sample_base_color(pixels, width, height, u, v)
         hue, saturation, value = colorsys.rgb_to_hsv(red, green, blue)
         height_ratio = (center.z - minimum_z) / max(1e-6, maximum_z - minimum_z)
-        if strategy == "protector-two-role":
+        if strategy == "security-enforcer-three-role":
+            warm_red = hue < 0.08 or hue > 0.97
+            if warm_red and saturation > 0.42 and value > 0.22:
+                role = "threat"
+            elif 0.48 <= hue <= 0.75 and saturation > 0.10 and value < 0.58:
+                role = "undersuit"
+            else:
+                role = "armor"
+        elif strategy == "protector-two-role":
             role = (
                 "undersuit"
                 if 0.48 <= hue <= 0.75 and saturation > 0.12 and value < 0.62
@@ -686,13 +695,18 @@ def add_socket(
     socket.parent = armature
     socket.parent_type = "BONE"
     socket.parent_bone = bone
-    socket.location = tuple(float(value) for value in spec.get("location", [0, 0, 0]))
+    profile_offset = tuple(float(value) for value in spec.get("location", [0, 0, 0]))
+    socket.location = profile_offset
     socket.rotation_euler = tuple(
         math.radians(float(value)) for value in spec.get("rotation_degrees", [0, 0, 0])
     )
     socket["socket_contract"] = str(spec["name"])
     socket["local_forward"] = "-Z"
     socket["local_up"] = "+Y"
+    socket["placement_reference"] = str(spec.get("placement_reference", "bone_tail"))
+    socket["profile_offset_x"] = profile_offset[0]
+    socket["profile_offset_y"] = profile_offset[1]
+    socket["profile_offset_z"] = profile_offset[2]
     bpy.context.scene.collection.objects.link(socket)
     return socket
 
@@ -840,17 +854,58 @@ def validate_exported_glb(
     oversized = [image.name for image in bpy.data.images if max(image.size) > maximum_texture]
     if oversized:
         raise RuntimeError(f"GLB contains oversized textures: {oversized}")
-    expected_sockets = {str(spec["name"]) for spec in profile.get("sockets", [])}
-    imported_sockets = {
-        obj.name
+    expected_socket_specs = {
+        str(spec["name"]): spec for spec in profile.get("sockets", [])
+    }
+    imported_socket_objects = {
+        obj.name: obj
         for obj in bpy.context.scene.objects
         if obj.type == "EMPTY" and obj.name.startswith("socket.")
     }
-    if imported_sockets != expected_sockets:
+    if imported_socket_objects.keys() != expected_socket_specs.keys():
         raise RuntimeError(
-            f"GLB socket mismatch: expected={sorted(expected_sockets)}, "
-            f"actual={sorted(imported_sockets)}"
+            f"GLB socket mismatch: expected={sorted(expected_socket_specs)}, "
+            f"actual={sorted(imported_socket_objects)}"
         )
+    for name, spec in expected_socket_specs.items():
+        socket = imported_socket_objects[name]
+        expected_bone = str(spec["bone"])
+        if (
+            socket.parent != armatures[0]
+            or socket.parent_type != "BONE"
+            or socket.parent_bone != expected_bone
+        ):
+            raise RuntimeError(
+                f"GLB socket {name} is not attached to expected bone {expected_bone}"
+            )
+        expected_rotation = tuple(
+            math.radians(float(value)) for value in spec.get("rotation_degrees", [0, 0, 0])
+        )
+        if any(
+            not math.isclose(actual, expected, rel_tol=0.0, abs_tol=1e-5)
+            for actual, expected in zip(socket.rotation_euler, expected_rotation, strict=True)
+        ):
+            raise RuntimeError(f"GLB socket {name} rotation differs from its profile")
+        if socket.get("socket_contract") != name:
+            raise RuntimeError(f"GLB socket {name} lost its stable contract metadata")
+        if socket.get("local_forward") != "-Z" or socket.get("local_up") != "+Y":
+            raise RuntimeError(f"GLB socket {name} lost its local axis contract")
+        if socket.get("placement_reference") != str(
+            spec.get("placement_reference", "bone_tail")
+        ):
+            raise RuntimeError(f"GLB socket {name} lost its placement reference")
+        expected_offset = tuple(
+            float(value) for value in spec.get("location", [0, 0, 0])
+        )
+        imported_offset = tuple(
+            float(socket.get(f"profile_offset_{axis}", float("nan")))
+            for axis in "xyz"
+        )
+        if any(
+            not math.isclose(actual, expected, rel_tol=0.0, abs_tol=1e-6)
+            for actual, expected in zip(imported_offset, expected_offset, strict=True)
+        ):
+            raise RuntimeError(f"GLB socket {name} lost its profile offset metadata")
     triangles = sum(
         sum(len(polygon.vertices) - 2 for polygon in mesh.data.polygons)
         for mesh in meshes
@@ -868,7 +923,7 @@ def validate_exported_glb(
             "dimensions": [round(value, 5) for value in diagnostic_dimensions],
         },
         "actions": sorted(imported_actions),
-        "sockets": sorted(imported_sockets),
+        "sockets": sorted(imported_socket_objects),
     }
 
 
@@ -970,6 +1025,10 @@ def main() -> None:
     tolerance = float(profile["height_tolerance_ratio"])
     if not target_height * (1.0 - tolerance) <= height <= target_height * (1.0 + tolerance):
         raise RuntimeError(f"Evaluated height {height:.5f} m is outside tolerance")
+    armature["publication_height_meters"] = round(height, 6)
+    armature["publication_ground_y_meters"] = round(ground_minimum, 6)
+    armature["forward_axis"] = "-Z"
+    armature["up_axis"] = "+Y"
 
     sockets = [add_socket(armature, spec) for spec in profile.get("sockets", [])]
     for part in meshes:

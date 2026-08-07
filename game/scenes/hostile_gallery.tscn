@@ -1,0 +1,143 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/HostileGalleryReview.cs" id="1_gallery"]
+[ext_resource type="Script" path="res://scripts/HumanoidPresentation.cs" id="2_presentation"]
+[ext_resource type="PackedScene" path="res://Assets/Published/character.enemy.security_enforcer.v1.glb" id="3_enforcer"]
+[ext_resource type="PackedScene" path="res://Assets/Published/machine.security.gun_sentry.v1.glb" id="4_sentry"]
+
+[sub_resource type="Environment" id="Environment_gallery"]
+background_mode = 1
+background_color = Color(0.012, 0.021, 0.04, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.26, 0.34, 0.48, 1)
+ambient_light_energy = 1.15
+tonemap_mode = 2
+ssao_enabled = true
+
+[sub_resource type="StandardMaterial3D" id="Material_floor"]
+albedo_color = Color(0.045, 0.065, 0.095, 1)
+metallic = 0.2
+roughness = 0.76
+
+[node name="HostileGallery" type="Node3D"]
+script = ExtResource("1_gallery")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_gallery")
+
+[node name="Floor" type="CSGBox3D" parent="."]
+position = Vector3(0, -0.05, 0)
+material_override = SubResource("Material_floor")
+size = Vector3(11, 0.1, 6)
+
+[node name="Slots" type="Node3D" parent="."]
+
+[node name="EnforcerIdlePresentation" type="Node3D" parent="Slots"]
+position = Vector3(-3.6, 0, 0)
+script = ExtResource("2_presentation")
+IdleAnimationName = "anim_humanoid_idle_holstered"
+LocomotionAnimationName = "anim_humanoid_locomotion_holstered"
+[node name="Model" parent="Slots/EnforcerIdlePresentation" instance=ExtResource("3_enforcer")]
+
+[node name="EnforcerWalkPresentation" type="Node3D" parent="Slots"]
+position = Vector3(-1.8, 0, 0)
+script = ExtResource("2_presentation")
+IdleAnimationName = "anim_humanoid_idle_holstered"
+LocomotionAnimationName = "anim_humanoid_locomotion_holstered"
+[node name="Model" parent="Slots/EnforcerWalkPresentation" instance=ExtResource("3_enforcer")]
+
+[node name="SentryNeutral" type="Node3D" parent="Slots"]
+[node name="Model" parent="Slots/SentryNeutral" instance=ExtResource("4_sentry")]
+
+[node name="SentryAim" type="Node3D" parent="Slots"]
+position = Vector3(1.8, 0, 0)
+[node name="Model" parent="Slots/SentryAim" instance=ExtResource("4_sentry")]
+
+[node name="SentryRecoil" type="Node3D" parent="Slots"]
+position = Vector3(3.6, 0, 0)
+[node name="Model" parent="Slots/SentryRecoil" instance=ExtResource("4_sentry")]
+
+[node name="Labels" type="Node3D" parent="."]
+[node name="EnforcerIdle" type="Label3D" parent="Labels"]
+position = Vector3(-3.6, 2.48, 0)
+text = "ENFORCER — IDLE"
+font_size = 20
+outline_size = 8
+billboard = 1
+no_depth_test = true
+[node name="EnforcerWalk" type="Label3D" parent="Labels"]
+position = Vector3(-1.8, 2.48, 0)
+text = "ENFORCER — WALK"
+font_size = 20
+outline_size = 8
+billboard = 1
+no_depth_test = true
+[node name="SentryNeutralLabel" type="Label3D" parent="Labels"]
+position = Vector3(0, 2.48, 0)
+text = "SENTRY — NEUTRAL"
+font_size = 20
+outline_size = 8
+billboard = 1
+no_depth_test = true
+[node name="SentryAimLabel" type="Label3D" parent="Labels"]
+position = Vector3(1.8, 2.48, 0)
+text = "SENTRY — AIM"
+font_size = 20
+outline_size = 8
+billboard = 1
+no_depth_test = true
+[node name="SentryRecoilLabel" type="Label3D" parent="Labels"]
+position = Vector3(3.6, 2.48, 0)
+text = "SENTRY — RECOIL"
+font_size = 20
+outline_size = 8
+billboard = 1
+no_depth_test = true
+
+[node name="ReviewCameras" type="Node3D" parent="."]
+[node name="ReviewCamera7_5m" type="Camera3D" parent="ReviewCameras"]
+position = Vector3(0, 2.6, 7.05)
+rotation_degrees = Vector3(-15, 0, 0)
+current = true
+fov = 60.0
+metadata/distance_metres = 7.5
+[node name="ReviewCamera14_5m" type="Camera3D" parent="ReviewCameras"]
+position = Vector3(0, 4.0, 13.94)
+rotation_degrees = Vector3(-15, 0, 0)
+fov = 60.0
+metadata/distance_metres = 14.5
+[node name="ReviewCamera20m" type="Camera3D" parent="ReviewCameras"]
+position = Vector3(0, 5.4, 19.26)
+rotation_degrees = Vector3(-15, 0, 0)
+fov = 60.0
+metadata/distance_metres = 20.0
+
+[node name="KeyLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-48, -35, 0)
+light_color = Color(0.78, 0.88, 1, 1)
+light_energy = 2.1
+shadow_enabled = true
+[node name="FillLight" type="OmniLight3D" parent="."]
+position = Vector3(-3.5, 3.6, -2.2)
+light_color = Color(0.42, 0.58, 1, 1)
+light_energy = 5.0
+omni_range = 10.0
+[node name="RimLight" type="OmniLight3D" parent="."]
+position = Vector3(3.8, 3.2, 2.4)
+light_color = Color(0.25, 0.9, 0.82, 1)
+light_energy = 4.2
+omni_range = 10.0
+
+[node name="ReviewOverlay" type="CanvasLayer" parent="."]
+
+[node name="Instructions" type="Label" parent="ReviewOverlay"]
+offset_left = 28.0
+offset_top = 24.0
+offset_right = 530.0
+offset_bottom = 58.0
+theme_override_colors/font_color = Color(0.72, 0.94, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 20
+text = "REVIEW DISTANCE  ·  1: 7.5 m  ·  2: 14.5 m  ·  3: 20 m"
