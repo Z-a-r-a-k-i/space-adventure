@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=3]
+[gd_scene load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://scripts/GameHost.cs" id="1_host"]
 [ext_resource type="Script" path="res://scripts/TacticalCameraController.cs" id="2_camera"]
@@ -11,6 +11,8 @@
 [ext_resource type="PackedScene" path="res://Assets/Published/character.npc.station_survivor.v1.glb" id="9_survivor"]
 [ext_resource type="PackedScene" path="res://Assets/Published/character.crew.protector.v1.glb" id="10_protector"]
 [ext_resource type="Script" path="res://scripts/HumanoidPresentation.cs" id="11_humanoid_presentation"]
+[ext_resource type="PackedScene" path="res://Assets/Published/character.enemy.security_enforcer.v1.glb" id="12_enforcer"]
+[ext_resource type="PackedScene" path="res://Assets/Published/weapon.crew.vanguard_carbine.v1.glb" id="13_carbine"]
 
 [sub_resource type="Environment" id="Environment_station"]
 background_mode = 1
@@ -52,6 +54,9 @@ height = 1.8
 [sub_resource type="CapsuleShape3D" id="CapsuleShape_protector"]
 radius = 0.45
 height = 2.1
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_enforcer"]
+radius = 0.44
+height = 1.9
 [sub_resource type="BoxShape3D" id="BoxShape_terminal"]
 size = Vector3(0.9, 1.6, 0.7)
 [sub_resource type="BoxShape3D" id="BoxShape_door_interaction"]
@@ -71,6 +76,17 @@ albedo_color = Color(0.08, 0.70, 0.95, 0.72)
 emission_enabled = true
 emission = Color(0.04, 0.45, 0.72, 1)
 emission_energy_multiplier = 2.2
+[sub_resource type="TorusMesh" id="TorusMesh_hostile"]
+inner_radius = 0.52
+outer_radius = 0.61
+rings = 8
+ring_segments = 32
+[sub_resource type="StandardMaterial3D" id="Material_hostile"]
+transparency = 1
+albedo_color = Color(0.95, 0.12, 0.08, 0.82)
+emission_enabled = true
+emission = Color(0.75, 0.03, 0.02, 1)
+emission_energy_multiplier = 3.0
 
 [node name="StationRoute" type="Node3D"]
 script = ExtResource("1_host")
@@ -226,6 +242,16 @@ metadata/stable_id = "interaction.service_terminal"
 [node name="AirlockApproach" type="Marker3D" parent="Markers"]
 position = Vector3(11.15, 0, 8)
 metadata/stable_id = "interaction.evacuation_airlock"
+[node name="SoloEncounterTrigger" type="Marker3D" parent="Markers"]
+position = Vector3(-10, 0, 2.75)
+metadata/stable_id = "encounter.station.solo_tutorial"
+metadata/trigger_radius_meters = 0.75
+[node name="SoloEncounterRestart" type="Marker3D" parent="Markers"]
+position = Vector3(-10, 0, 2.35)
+metadata/stable_id = "encounter.station.solo_tutorial.restart"
+[node name="SecurityEnforcerSpawn" type="Marker3D" parent="Markers"]
+position = Vector3(-10, 0, -1.4)
+metadata/stable_id = "actor.enemy.security_enforcer.solo"
 
 [node name="Actors" type="Node3D" parent="."]
 [node name="Protagonist" type="Node3D" parent="Actors"]
@@ -235,6 +261,7 @@ metadata/stable_id = "actor.protagonist"
 visible = false
 script = ExtResource("7_vanguard_presentation")
 [node name="Model" parent="Actors/Protagonist/VanguardPresentation" instance=ExtResource("6_vanguard")]
+[node name="Weapon" parent="Actors/Protagonist/VanguardPresentation" instance=ExtResource("13_carbine")]
 [node name="SelectionBeacon" type="MeshInstance3D" parent="Actors/Protagonist"]
 position = Vector3(0, 0.045, 0)
 mesh = SubResource("TorusMesh_beacon")
@@ -253,6 +280,40 @@ LocomotionAnimationName = "anim_humanoid_locomotion_holstered"
 position = Vector3(0, 0.045, 0)
 mesh = SubResource("TorusMesh_beacon")
 material_override = SubResource("Material_beacon")
+
+[node name="Hostiles" type="Node3D" parent="."]
+[node name="SecurityEnforcer" type="Node3D" parent="Hostiles"]
+position = Vector3(-10, 0, -1.4)
+visible = false
+metadata/stable_id = "actor.enemy.security_enforcer.solo"
+[node name="Presentation" type="Node3D" parent="Hostiles/SecurityEnforcer"]
+rotation_degrees = Vector3(0, 180, 0)
+script = ExtResource("11_humanoid_presentation")
+IdleAnimationName = "anim_humanoid_idle_holstered"
+LocomotionAnimationName = "anim_humanoid_walk_holstered"
+MeleeStrikeAnimationName = "anim_humanoid_melee_strike"
+HitReactionAnimationName = "anim_humanoid_hit_reaction"
+DownAnimationName = "anim_humanoid_down"
+[node name="Model" parent="Hostiles/SecurityEnforcer/Presentation" instance=ExtResource("12_enforcer")]
+[node name="TargetBody" type="StaticBody3D" parent="Hostiles/SecurityEnforcer"]
+collision_layer = 8
+collision_mask = 0
+metadata/stable_id = "actor.enemy.security_enforcer.solo"
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/SecurityEnforcer/TargetBody"]
+position = Vector3(0, 0.95, 0)
+shape = SubResource("CapsuleShape_enforcer")
+[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/SecurityEnforcer"]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_hostile")
+material_override = SubResource("Material_hostile")
+[node name="Label" type="Label3D" parent="Hostiles/SecurityEnforcer"]
+position = Vector3(0, 2.25, 0)
+text = "SECURITY ENFORCER"
+font_size = 34
+outline_size = 8
+modulate = Color(1, 0.25, 0.18, 1)
+billboard = 1
+no_depth_test = true
 
 [node name="Interactions" type="Node3D" parent="."]
 

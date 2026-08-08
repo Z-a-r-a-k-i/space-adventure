@@ -4,7 +4,8 @@ Status: approved active inventory. Vanguard, Survivor, Protector, the
 production five-area station route, both service-door instances, terminal, and
 final airlock are integrated. Both hostile production bases passed their
 combined Godot gallery approval on 2026-08-07, closing the Phase 3 hostile-art
-gate before combat gameplay.
+gate. Phase 4 now integrates the Vanguard carbine and Security Enforcer in the
+solo tutorial; the sentry remains reserved for the later party encounter.
 
 ## Presentation rules
 
@@ -55,8 +56,10 @@ Every humanoid follows the same sequence:
 4. Mixamo neutral rig downloaded with skin after the motion preview passes
    deformation review;
 5. Blender weight repair and sockets;
-6. Mixamo library animations downloaded without skin when their rest skeleton
-   matches; otherwise use and record a matching with-skin donor exception.
+6. Mixamo library animations downloaded without skin when their skeleton
+   contract matches and Blender performs a strict local-basis bake with
+   armature-space root displacement;
+   otherwise use and record a matching with-skin donor exception.
    `Standard Walk` in-place remains the default exploration walk; and
 7. Blender cleanup plus exact GLB review in Godot.
 
@@ -124,11 +127,13 @@ The active run is
 direct single-image 4K unrigged T-pose, Smart Low-Poly v2 Quad target 10k,
 geometry-only Mixamo upload, symmetry, Standard Skeleton (65), and
 agent-validated markers and Auto-Rigger preview. Blender publishes the accepted
-`Unarmed Idle` and in-place `Standard Walk`, limits skinning to four
+`Unarmed Idle`, in-place `Standard Walk`, draw, armed idle/locomotion, fire,
+holster, hit, and down actions; limits skinning to four
 influences, preserves the animated Mixamo armature transform, and publishes
-both weapon sockets. Vanguard's, Survivor's, and Protector's matching
-with-skin donors are documented exceptions because their tested no-skin
-exports did not preserve the accepted rest poses.
+both weapon sockets. The Vanguard combat donors use strict local-basis baking
+with armature-space root displacement from Mixamo no-skin exports; its
+rig/idle/walk authority and the
+Survivor/Protector exceptions remain matching-with-skin publications.
 
 The untouched walk FBX and exact exported GLB both passed sustained direct
 Godot locomotion review: grounded motion, alternating feet, correct facing,
@@ -136,16 +141,17 @@ stable arrival, and tactical-pause freezing. Vanguard now replaces the
 protagonist greybox and moves at 2.0 m/s. Survivor and Protector now replace
 their visible greyboxes; Protector's waiting instance remains unavailable
 beyond the locked solo-exit and its future party instance remains hidden.
-The carbine, shotgun fit, draw, aim, fire, recovery, and holster sequence
-remains coupled to the Phase 4 weapon-handling and combat gate.
+The carbine is attached from observed draw/holster phase state and its fire
+clip is aligned with the solo-tutorial release tick. Protector shotgun fit and
+its combat presentation remain coupled to the later Phase 4 party-combat gate.
 
 ## Integration order
 
-1. Keep both hostile bases out of the live station route until Phase 4 supplies
-   authoritative combat state and presentation synchronization.
-2. Finish the separate Vanguard carbine and Protector shotgun attachment fits.
-3. Define the solo tutorial and main party-combat rules, then select and clean
-   weapon-handling and fight animations against those authoritative timings.
+1. Retain the live solo-tutorial Vanguard/Enforcer assembly and complete its
+   project-owner graphical review.
+2. Finish the Protector shotgun attachment and publish only the combat actions
+   required by the later two-character encounter.
+3. Integrate the rigid gun sentry against authoritative aim/recoil timings.
 4. Keep Operator and its pistol deferred unless a later owner decision
    reactivates them. Reuse the retained wall utility only after owner review.
 

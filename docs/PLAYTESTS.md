@@ -61,3 +61,33 @@ Launch `station-route-v5` at 1920×1080 and verify:
 | Date | Operator | Build/content | Result | Evidence and notes |
 | --- | --- | --- | --- | --- |
 | 2026-08-04 | Agent | Uncommitted PR 14 working tree; `station-route-v5` | Technical graphical checkpoint passed; owner feel check pending | The exact structure and door GLBs passed Blender review and fresh reimport. Godot import, the real-navigation headless flow, authoritative door/link/blocker synchronization, the locked navigation-island bypass check, and the deterministic start-room cutaway passed. The retained contextual capture was inspected at 14.5 m; a temporary overwritten capture was inspected at 20 m. Safe Windows window rebinding failed before live input could be injected, so door smoothness, clipping feel, physical clicking, and a free-camera sweep of every inaccessible room remain explicit owner checks rather than inferred passes. |
+
+## Phase 4 solo-tutorial acceptance protocol
+
+Launch `station-route-v6` at 1920×1080 and verify from a fresh process:
+
+1. Complete the survivor exchange and cross the entry service door. Confirm
+   the Enforcer encounter starts once, draws the Vanguard carbine, and pauses
+   automatically in the ready state.
+2. Right-click the Enforcer and resume. Confirm Vanguard approaches into range,
+   faces the target, fires repeatedly, and does not slide or resolve damage from
+   animation contact.
+3. During an Enforcer wind-up, pause, press `1`, left-click its position, and
+   resume. Confirm Suppressive Fire has a readable preview, release pulse,
+   cooldown, and interrupts that wind-up exactly once.
+4. Allow Vanguard to take damage and press `2`. Confirm Field Aid consumes its
+   only charge and heals once. Exercise pause during draw, attack, impact, and
+   hostile strike; animation and transient effects must freeze coherently.
+5. Win once. Confirm the Enforcer down pose, Vanguard holster sequence, cyan far
+   door, collision/navigation unblock, and Protector becoming observable but
+   still unavailable after crossing.
+6. Restart and deliberately lose. Confirm defeat pauses atomically, retry keeps
+   the survivor and entry-door progression, resets only the encounter attempt,
+   and returns to the ready pause without duplicating either actor.
+7. At 7.5 m, 14.5 m, and 20 m inspect the carbine hand/back attachment, muzzle
+   line, both-hand plausibility, Vanguard draw/fire/holster/hit/down deformation,
+   Enforcer approach/strike/hit/down deformation, telegraph readability, health
+   UI, camera controls, and absence of visible greybox presentation.
+
+Automated victory and defeat smokes are required evidence but do not satisfy
+this physical-input and visual-acceptance protocol.

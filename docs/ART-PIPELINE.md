@@ -105,26 +105,40 @@ does not turn the asset into a skinned character.
     download production donors without skin after Blender weight repair. Use
     30 fps, no keyframe reduction, and prefer in-place variants. `Standard
     Walk` with In Place on, Overdrive 50, and Character Arm-Space 50 is the
-    default exploration walk. If a no-skin donor changes the accepted rest
-    skeleton or armature-object transform, document a character-specific
-    exception and use the matching with-skin donor instead.
+    default exploration walk. A no-skin FBX may encode Mixamo's standardized
+    rest-pose representation instead of the accepted character bind pose. It
+    must never be assigned directly. A profile builder may accept it only
+    after exact bone-name, hierarchy, length, and armature-object checks, then
+    bake the donor's local pose deltas onto the accepted skinned rest pose and
+    transfer root displacement in armature space. A global-matrix correction
+    is not equivalent and can rotate or lower an otherwise standing clip. If
+    those checks or fresh-reimport grounding and standing-envelope gates fail,
+    document a character-specific exception and use the matching with-skin
+    donor instead.
 12. In Blender, preserve the Mixamo armature object's imported rotation and
     scale. Never apply transforms directly to an animated armature: if a
     normalized production skeleton is required, retarget and bake evaluated
     world-space poses onto a separate rig. Trim, loop, repair contacts, add
-    constraints and event markers, then export GLB.
+    constraints and presentation markers, then export GLB. The builder must
+    reject a directly transferred donor that changes evaluated ground contact,
+    even when the source skeleton names happen to match.
 13. Reimport the GLB and validate the complete cycle in evaluated world space.
     For the current exploration walk, horizontal hip range must stay at or below
     0.15 m, the loop endpoint delta at or below 0.01 m, vertical hip range at or
     below 0.15 m, and each foot must lift at least 0.04 m. Repeat the same
-    sustained Godot movement used for the untouched baseline.
+    sustained Godot movement used for the untouched baseline. Combat actions
+    authored as standing must also pass a brief-specific evaluated hip-height
+    floor after exact GLB reimport; a named standing action found on the ground
+    is a publication failure regardless of provider metadata.
 
 No Tripo Auto Rig or AI-generated motion is used for production humanoids when
 the Mixamo workflow can provide the required baseline.
 
 Base rig, idle, locomotion, and attachment-fit work may precede combat. Draw,
-attack, contact, recoil, recovery, and holster clips must be selected, trimmed,
-and validated alongside the authoritative Phase 4 action timings. Do not lock
+attack, contact, recoil, recovery, and holster clips are selected, trimmed,
+and validated alongside authoritative fixed-tick action timings. Presentation
+playback speed may align a reviewed clip's release/contact landmark with the
+authoritative release tick; the animation never changes that tick. Do not lock
 a detached fight-animation set and then reshape gameplay rules around it.
 
 ## Weapons and rigid machines

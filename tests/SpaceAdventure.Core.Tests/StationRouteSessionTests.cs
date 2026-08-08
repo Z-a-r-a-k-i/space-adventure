@@ -18,21 +18,28 @@ public sealed class StationRouteSessionTests
     private static readonly DialogueResponseId ServicePowerResponseId = new("response.reroute_service_power");
 
     [Fact]
-    public void SchemaThreeContentParsesWithExactDoorEffectsAndStableIdentities()
+    public void SchemaFourContentParsesWithCombatAndStableIdentities()
     {
         var definition = LoadDefinition();
 
-        Assert.Equal(3, definition.SchemaVersion);
-        Assert.Equal("station-route-v5", definition.ContentRevision);
+        Assert.Equal(4, definition.SchemaVersion);
+        Assert.Equal("station-route-v6", definition.ContentRevision);
         Assert.Equal(new ScenarioId("scenario.station_route"), definition.ScenarioId);
         Assert.Equal(ProtagonistId, definition.Protagonist.Id);
         Assert.Equal(ProtectorActorId, definition.Companion.Id);
         Assert.Equal(2.0, definition.Companion.MovementSpeedMetersPerSecond);
         Assert.Equal(new ObjectiveId("objective.open_entry_service_door"), definition.EntryDoorObjective.Id);
         Assert.Equal(new ObjectiveId("objective.reach_first_combat"), definition.CombatThresholdObjective.Id);
+        Assert.Equal(new ObjectiveId("objective.defeat_security_enforcer"), definition.CombatObjective.Id);
+        Assert.Equal(new ObjectiveId("objective.open_solo_exit_service_door"), definition.SoloExitDoorObjective.Id);
         Assert.Equal(new AttackId("attack.crew.protector.shotgun"), definition.Companion.Loadout!.BasicAttackId);
         Assert.Equal(new AbilityId("ability.crew.protector.guard_ally"), definition.Companion.Loadout.ActiveAbilityId);
         Assert.Equal(AbilityTargetKind.Ally, definition.Companion.Loadout.ActiveAbilityTargetKind);
+        Assert.Equal(2, definition.Combat.Attacks.Count);
+        Assert.Equal(new EncounterId("encounter.station.solo_tutorial"), definition.Combat.Encounter.Id);
+        Assert.Equal(new EntityId("actor.enemy.security_enforcer.solo"), definition.Combat.Hostile.Id);
+        Assert.Equal(140, definition.Combat.Hostile.MaximumHealth);
+        Assert.True(definition.Combat.ProtagonistAbility.InterruptsWindup);
 
         var vanguard = Assert.Single(definition.ProtagonistKits);
         Assert.Equal(VanguardKitId, vanguard.Id);
@@ -54,12 +61,12 @@ public sealed class StationRouteSessionTests
     {
         var json = LoadContentJson();
         var unsupported = json.Replace(
-            "\"schema_version\": 3",
+            "\"schema_version\": 4",
             "\"schema_version\": 99",
             StringComparison.Ordinal);
         var unmapped = json.Replace(
-            "\"schema_version\": 3,",
-            "\"schema_version\": 3, \"unexpected\": true,",
+            "\"schema_version\": 4,",
+            "\"schema_version\": 4, \"unexpected\": true,",
             StringComparison.Ordinal);
 
         Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(unsupported));
@@ -96,7 +103,7 @@ public sealed class StationRouteSessionTests
     }
 
     [Fact]
-    public void ContentParserAcceptsOneOrTwoKitsAndRejectsInvalidKitCounts()
+    public void ContentParserRequiresExactlyOneProtagonistKit()
     {
         var sourceJson = LoadContentJson();
         var sourceRoot = JsonNode.Parse(sourceJson)!.AsObject();
@@ -123,7 +130,8 @@ public sealed class StationRouteSessionTests
         }
 
         Assert.Single(StationRouteContent.ParseJson(WithKits(firstKit)).ProtagonistKits);
-        Assert.Equal(2, StationRouteContent.ParseJson(WithKits(firstKit, secondKit)).ProtagonistKits.Count);
+        Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(
+            WithKits(firstKit, secondKit)));
         Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(WithKits()));
         Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(
             WithKits(firstKit, secondKit, thirdKit)));
@@ -323,7 +331,7 @@ public sealed class StationRouteSessionTests
     }
 
     [Fact]
-    public void MovingThroughAnUnlockedServiceDoorOpensItBeforeArrival()
+    public void MovingThroughAnUnlockedServiceDoorOpensItBeforeCombatAutoPause()
     {
         var session = CreateSession();
         _ = SelectVanguard(session);
@@ -361,9 +369,13 @@ public sealed class StationRouteSessionTests
 
         AdvanceUntil(
             session,
-            observation => observation.Protagonist.Position == arenaDestination
-                && observation.Protagonist.CurrentAction is null,
+            observation => observation.Encounter?.Phase == EncounterPhase.Readying,
             600);
+        Assert.True(session.IsPaused);
+        Assert.Null(ObserveStation(session).Protagonist.CurrentAction);
+        Assert.Equal(
+            new ObjectiveId("objective.defeat_security_enforcer"),
+            ObserveStation(session).Objective.Id);
     }
 
     [Fact]
@@ -443,7 +455,8 @@ public sealed class StationRouteSessionTests
             new StationRouteLayout(
                 new WorldPosition(-10, 0, 8.5),
                 CreateActorPlacements(),
-                CreateInteractionPlacements()),
+                CreateInteractionPlacements(),
+                CreateEncounterPlacement()),
             pathfinder ?? new DirectPathfinder());
     }
 
@@ -463,6 +476,16 @@ public sealed class StationRouteSessionTests
             new(TerminalId, new WorldPosition(-11.5, 0, 6.5), new WorldPosition(-10.65, 0, 6.5)),
             new(AirlockId, new WorldPosition(12, 0, 8), new WorldPosition(11.15, 0, 8)),
         ];
+    }
+
+    private static StationEncounterPlacement CreateEncounterPlacement()
+    {
+        return new StationEncounterPlacement(
+            new EncounterId("encounter.station.solo_tutorial"),
+            new WorldPosition(-10, 0, 2.75),
+            0.75,
+            new WorldPosition(-10, 0, 2.5),
+            new WorldPosition(-10, 0, -1));
     }
 
     private static StationRouteDefinition LoadDefinition()

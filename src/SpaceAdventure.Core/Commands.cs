@@ -60,6 +60,38 @@ public sealed record ChooseDialogueResponseCommand(
     EntityId InteractionId,
     DialogueResponseId ResponseId) : IGameCommand;
 
+public abstract record AbilityTarget(AbilityTargetKind Kind);
+
+public sealed record PositionAbilityTarget(WorldPosition Position)
+    : AbilityTarget(AbilityTargetKind.Position);
+
+public sealed record EntityAbilityTarget(EntityId EntityId)
+    : AbilityTarget(AbilityTargetKind.Entity);
+
+public sealed record AllyAbilityTarget(EntityId ActorId)
+    : AbilityTarget(AbilityTargetKind.Ally);
+
+public sealed record AssignBasicAttackTargetCommand(
+    CommandId CommandId,
+    EntityId ActorId,
+    EntityId TargetId) : IGameCommand;
+
+public sealed record UseAbilityCommand(
+    CommandId CommandId,
+    EntityId ActorId,
+    AbilityId AbilityId,
+    AbilityTarget Target) : IGameCommand;
+
+public sealed record UseItemCommand(
+    CommandId CommandId,
+    EntityId ActorId,
+    ItemId ItemId,
+    EntityId TargetActorId) : IGameCommand;
+
+public sealed record RestartEncounterCommand(
+    CommandId CommandId,
+    EncounterId EncounterId) : IGameCommand;
+
 public enum CommandRejectionCode
 {
     UnknownCommand,
@@ -79,6 +111,21 @@ public enum CommandRejectionCode
     NoActiveDialogue,
     DialogueMismatch,
     UnknownDialogueResponse,
+    CombatInactive,
+    EncounterTransitionActive,
+    UnknownEncounter,
+    InvalidEncounterState,
+    UnknownCombatTarget,
+    CombatantDefeated,
+    UnknownAttack,
+    UnknownAbility,
+    AbilityTargetKindMismatch,
+    AbilityTargetOutOfRange,
+    AbilityOnCooldown,
+    UnknownItem,
+    ItemUnavailable,
+    InvalidItemTarget,
+    NoHealingRequired,
 }
 
 public sealed record CommandAcknowledgement(

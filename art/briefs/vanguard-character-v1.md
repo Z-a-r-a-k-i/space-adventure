@@ -1,7 +1,7 @@
 # Vanguard character v1
 
-Status: conforming 4K T-pose source, Mixamo rig, idle, and walk approved and
-integrated in the station-route prototype.
+Status: production base approved; combat actions and separate carbine are
+integrated in the Phase 4 solo-tutorial candidate pending graphical approval.
 
 ## Identity
 
@@ -25,11 +25,10 @@ not fuse a weapon, shield, cape, scenery, or gameplay object into the mesh.
 The project owner approved offline source production on 2026-07-24 and, on
 2026-08-03, approved the final front-view seed, Quad-10k result, Mixamo marker
 placement, Auto-Rigger preview, and integrated idle-and-walk presentation. The
-Vanguard model may replace its character greybox. The separate carbine and
-weapon-handling sequence remain at their own approval gate.
-
-Gameplay attacks, timing, damage, abilities, VFX, and audio remain
-roadmap-scoped.
+Vanguard model replaces its character greybox. The Phase 4 solo-tutorial
+candidate now binds the separate carbine and reviewed weapon-handling clips to
+authoritative combat timings. Their combined graphical review remains open;
+audio remains roadmap-scoped.
 
 ## Active source
 
@@ -73,9 +72,12 @@ recorded in the production run metadata and source production record.
    and submit the Auto-Rigger without a routine human confirmation gate.
 4. Review the preview, download the accepted neutral rig with skin, and repair
    weights in Blender where required.
-5. Download stock Mixamo clips without skin by default. For Vanguard, the
-   documented with-skin donor exception preserves the accepted rest pose and
-   armature-object transform.
+5. Download stock Mixamo clips without skin by default. Reject direct action
+   assignment when a donor's rest representation differs from the accepted
+   rig; use the documented strict local-basis bake with armature-space root
+   displacement instead. The accepted Vanguard neutral rig and original
+   locomotion baseline remain with-skin
+   sources.
 6. Prove one untouched with-skin locomotion FBX in an ignored direct Godot
    baseline before Blender processes it.
 7. Use `Standard Walk` with In Place on, Overdrive 50, Character Arm-Space 50,
@@ -86,11 +88,11 @@ recorded in the production run metadata and source production record.
 9. Validate every frame of the exported cycle, fresh-reimport the exact GLB,
    and compare sustained Godot movement with the untouched baseline.
 
-Required presentation coverage remains holstered idle and locomotion, draw,
-armed idle and locomotion, raise/aim, fire/recoil, recovery, holster, dialogue
-idle, speaking and listening, terminal interaction, healing use, hit reaction,
-and down. Only holstered idle and exploration walking are active in the current
-prototype; later clips use the contracts in `art/rigs/crew-humanoid-v1.md`.
+The current publication includes holstered idle and locomotion, draw, armed
+idle and locomotion, fire/recoil, holster, hit reaction, and down. Dialogue,
+terminal interaction, and a dedicated healing-use clip remain future polish;
+the solo tutorial uses the fixed-tick contracts in
+`art/rigs/crew-humanoid-v1.md`.
 
 ## Assembly and approval
 

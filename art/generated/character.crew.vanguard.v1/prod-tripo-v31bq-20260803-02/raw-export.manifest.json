@@ -70,6 +70,62 @@
           "selection_state": "rejected because the generic no-skin rest skeleton did not preserve the accepted character rest pose",
           "local_presence_checked_utc": "2026-08-03",
           "local_presence_status": "present"
+        },
+        {
+          "filename": "grab-rifle-from-back-no-skin.fbx",
+          "format": "FBX Binary",
+          "settings": "Grab Rifle From Back; without skin; 30 fps; Overdrive 50; Character Arm-Space 50; no keyframe reduction",
+          "cache_relative_path": "raw/mixamo/grab-rifle-from-back-no-skin.fbx",
+          "bytes": 325744,
+          "selection_state": "accepted draw donor after local-basis Blender retarget bake with armature-space root displacement"
+        },
+        {
+          "filename": "rifle-aiming-idle-no-skin.fbx",
+          "format": "FBX Binary",
+          "settings": "Rifle Aiming Idle; without skin; 30 fps; Overdrive 50; Character Arm-Space 50; no keyframe reduction",
+          "cache_relative_path": "raw/mixamo/rifle-aiming-idle-no-skin.fbx",
+          "bytes": 330272,
+          "selection_state": "accepted armed-idle donor after local-basis Blender retarget bake with armature-space root displacement"
+        },
+        {
+          "filename": "rifle-walk-in-place-no-skin.fbx",
+          "format": "FBX Binary",
+          "settings": "Rifle Walk; In Place; without skin; 30 fps; Overdrive 50; Character Arm-Space 50; no keyframe reduction",
+          "cache_relative_path": "raw/mixamo/rifle-walk-in-place-no-skin.fbx",
+          "bytes": 216336,
+          "selection_state": "accepted armed-locomotion donor after local-basis Blender retarget bake with armature-space root displacement"
+        },
+        {
+          "filename": "firing-rifle-no-skin.fbx",
+          "format": "FBX Binary",
+          "settings": "Firing Rifle; without skin; 30 fps; Overdrive 50; Character Arm-Space 50; no keyframe reduction",
+          "cache_relative_path": "raw/mixamo/firing-rifle-no-skin.fbx",
+          "bytes": 192800,
+          "selection_state": "accepted carbine-release donor after local-basis Blender retarget bake with armature-space root displacement"
+        },
+        {
+          "filename": "put-back-rifle-no-skin.fbx",
+          "format": "FBX Binary",
+          "settings": "Put Back Rifle; back mount; without skin; 30 fps; Overdrive 50; Character Arm-Space 50; no keyframe reduction",
+          "cache_relative_path": "raw/mixamo/put-back-rifle-no-skin.fbx",
+          "bytes": 347600,
+          "selection_state": "accepted holster donor after local-basis Blender retarget bake with armature-space root displacement"
+        },
+        {
+          "filename": "rifle-hit-to-back-no-skin.fbx",
+          "format": "FBX Binary",
+          "settings": "Rifle Hit To Back; without skin; 30 fps; Overdrive 50; Character Arm-Space 50; no keyframe reduction",
+          "cache_relative_path": "raw/mixamo/rifle-hit-to-back-no-skin.fbx",
+          "bytes": 255504,
+          "selection_state": "accepted hit-reaction donor; publication uses standing reaction frames 1-10 after local-basis Blender retarget bake"
+        },
+        {
+          "filename": "rifle-death-no-skin.fbx",
+          "format": "FBX Binary",
+          "settings": "Rifle Death; without skin; 30 fps; Overdrive 50; Character Arm-Space 50; no keyframe reduction",
+          "cache_relative_path": "raw/mixamo/rifle-death-no-skin.fbx",
+          "bytes": 380112,
+          "selection_state": "accepted down donor after local-basis Blender retarget bake with armature-space root displacement"
         }
       ]
     }

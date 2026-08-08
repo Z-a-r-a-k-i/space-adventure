@@ -85,10 +85,35 @@ public partial class HostileGalleryReview : Node3D
     {
         RequireAnimation(_enforcerIdle, HumanoidPresentationAction.Idle);
         RequireAnimation(_enforcerWalk, HumanoidPresentationAction.Locomotion);
+        RequireAnimation(_enforcerIdle, HumanoidPresentationAction.MeleeStrike);
+        RequireAnimation(_enforcerIdle, HumanoidPresentationAction.HitReaction);
+        RequireAnimation(_enforcerIdle, HumanoidPresentationAction.Down);
         ValidateSkeleton(_enforcerIdle);
         ValidateHumanoidPublication(_enforcerIdle);
         ValidateMaterialCount(_enforcerIdle, "Security Enforcer", 3, 3);
         RequireDescendant(_enforcerIdle, "socket.attack.contact.primary");
+
+        _enforcerIdle.Synchronize(
+            true,
+            HumanoidPresentationAction.MeleeStrike,
+            false,
+            Vector3.Forward,
+            playbackSpeed: 1.42f);
+        if (_enforcerIdle.CurrentAction != HumanoidPresentationAction.MeleeStrike)
+        {
+            throw new InvalidOperationException("Security Enforcer did not enter melee presentation.");
+        }
+        _enforcerIdle.Synchronize(
+            true,
+            HumanoidPresentationAction.HitReaction,
+            false,
+            Vector3.Zero);
+        _enforcerIdle.Synchronize(
+            true,
+            HumanoidPresentationAction.Down,
+            true,
+            Vector3.Zero,
+            seekToEndWhenPaused: true);
 
         _enforcerIdle.Synchronize(true, HumanoidPresentationAction.Idle, true, Vector3.Zero);
         _enforcerWalk.Synchronize(

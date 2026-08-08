@@ -33,12 +33,13 @@ There are no unresolved questions blocking the documented POC or bootstrap. New 
 - The production station route uses five authored areas. The survivor choice
   unlocks the entry service door and its navigation link. Approaching it on an
   accepted path completes the authoritative door interaction and opens its
-  leaves automatically. The far service door, Protector, and final airlock
-  remain unavailable until the solo-combat victory is implemented.
-- Vanguard Suppressive Fire is a position-targeted ability and Protector Guard
-  Ally is an ally-targeted ability. Their final combat timing, clips, icons,
-  and effects are defined in Phase 4. Operator Disruptor Shot is deferred with
-  Operator; the concept-art shield remains unassigned.
+  leaves automatically. Solo-combat victory makes the far service door
+  available; opening it makes Protector recruitment available. The final
+  airlock remains locked until the later party encounter is implemented.
+- Vanguard Suppressive Fire is an implemented position-targeted ability.
+  Protector Guard Ally remains an ally-targeted Phase 4 ability whose timing,
+  clips, icon, and effects are not yet defined. Operator Disruptor Shot is
+  deferred with Operator; the concept-art shield remains unassigned.
 - Exactly two controllable characters in the POC; early UI and architecture must not rule out four later.
 - Compact automatic group formation with no formation editor.
 - Free-text input is the protagonist's exact spoken utterance; the game does not rewrite it into different dialogue.

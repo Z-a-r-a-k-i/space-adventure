@@ -4,11 +4,21 @@ SpaceAdventure is the working title for a single-player 3D science-fiction party
 
 ## Repository status
 
-Phase 1, the C# technical bootstrap, and the Phase 2 start-to-destination walking skeleton are complete. Phase 2 includes automated and graphical verification, a greybox wall-cutaway POC, and an owner-operated physical-input playthrough completed on 2026-07-24. Phase 3, the party and conversation slice, is active.
+Phase 1, the C# technical bootstrap, Phase 2 walking skeleton, and Phase 3
+production-presented station route are complete. Phase 4 is active: the first
+bounded solo tutorial combat is implemented and awaiting graphical approval.
 
-The current main scene is a small authored station route, not the complete 8–12 minute POC. It provides one protagonist, point movement over a real navigation mesh, tactical pause, a fixed survivor exchange, an optional service-terminal interaction, an evacuation-airlock objective, and explicit completion. Party control, kit selection, recruitment, branching dialogue, combat, inventory, and runtime model dialogue are later phases.
+The current main scene is a production-presented authored station route, not
+the complete 8–12 minute POC. Vanguard speaks to the survivor, crosses the
+entry service door, and fights one Security Enforcer using repeating carbine
+fire, position-targeted Suppressive Fire, Field Aid, and tactical pause.
+Victory unlocks the far service door and exposes the deferred Protector
+recruitment threshold. The later two-character encounter and final airlock
+completion remain locked.
 
-The next milestone work is the Phase 3 party and conversation slice. The validated Phase 2 protocol and record remain in `docs/PLAYTESTS.md`; milestone sequencing remains in `docs/ROADMAP.md`.
+The next milestone work is graphical acceptance and tuning of the solo fight,
+then Protector combat and the main encounter. Milestone sequencing remains in
+`docs/ROADMAP.md`.
 
 ## Agreed foundation
 
@@ -69,24 +79,44 @@ pwsh -NoProfile -File scripts/dev.ps1 scenario -Name station-route
 pwsh -NoProfile -File scripts/dev.ps1 import
 pwsh -NoProfile -File scripts/dev.ps1 headless -Name bootstrap
 pwsh -NoProfile -File scripts/dev.ps1 headless -Name station-route
+pwsh -NoProfile -File scripts/dev.ps1 headless -Name station-combat-defeat
+pwsh -NoProfile -File scripts/dev.ps1 headless -Name hostile-gallery
 pwsh -NoProfile -File scripts/dev.ps1 capture -Name wall-cutaway
 pwsh -NoProfile -File scripts/dev.ps1 run
 ```
 
-`scenario -Name station-route` completes the pure-core route with a deterministic pathfinder and emits JSON Lines. `headless -Name station-route` loads the real Godot scene and navigation mesh, completes the survivor response, optional terminal, and airlock path, then exits nonzero on failure. `capture -Name wall-cutaway` opens a bounded, noninteractive 1280×720 graphical run, drives the protagonist to a deterministic review state, pauses gameplay, and exercises the live cutaway controller through settled cut → clear-view restore → re-cut checkpoints by changing camera yaw. It then returns to the original camera view and writes `artifacts/visual/captures/wall-cutaway.png` plus a JSON evidence manifest. The command validates the lifecycle and manifest contracts, PNG dimensions and byte length, and the manifest SHA-256 against the generated PNG. The final image still requires visual inspection, and automation does not prove perceived transition smoothness or absence of flicker. `run` launches the playable station route. `run -AutoQuitSeconds <n>` makes that graphical launch bounded by `-TimeoutSeconds` (60 seconds by default). `editor` opens the project editor. `help` lists every implemented option. The root `Makefile` provides equivalent short targets, including `make capture`.
+`scenario -Name station-route` completes the pure-core solo encounter and
+post-victory gate with a deterministic pathfinder and emits JSON Lines.
+`headless -Name station-route` exercises the same victory route through the
+real Godot scene and navigation mesh. `headless -Name station-combat-defeat`
+verifies defeat pause and isolated retry. `hostile-gallery` validates the
+published hostile actions and rigid sentry contract. `capture -Name
+wall-cutaway` retains the deterministic camera-occlusion evidence path. `run`
+launches the playable station route, and `run -AutoQuitSeconds <n>` bounds a
+graphical launch. `editor` opens the project editor; `help` lists every option.
 
 ## Current controls
 
 - Right-click navigable floor to issue a move order.
-- Right-click the survivor, service terminal, or evacuation airlock to issue a contextual interaction order. A distant interaction automatically includes the approach path.
+- Right-click the survivor, service terminal, service door, or hostile to issue
+  the relevant contextual order. A distant interaction automatically includes
+  the approach path; a hostile order repeats basic attacks until replaced or
+  invalidated.
 - Click the authored dialogue response, or press `1`, `Enter`, or keypad Enter.
 - Press `Space` to toggle tactical pause. Orders issued while paused remain pending and the newest pending primary order replaces the previous one.
+- Press `1`, then left-click a valid world position, to target Suppressive
+  Fire; press `Esc` to cancel targeting. Press `2` to use the one-charge Field
+  Aid. The encounter pauses automatically when it becomes ready.
 - Use `WASD` or the arrow keys to pan; `Q`/`E` or middle-mouse drag to rotate; Page Up/Page Down or vertical middle-mouse drag to adjust pitch; and the wheel to zoom.
 - Press `Home` or `R` to reset camera orientation and `F` to focus the protagonist.
 
 When a station wall blocks the camera-to-protagonist view, the opaque wall mesh collapses vertically toward a short 0.45 m base over a brief transition and restores when the view clears. This initial POC uses cached world-space AABBs because the current walls are static, axis-aligned greybox boxes. It is not the production solution for rotated, moving, concave, multi-storey, decorated, or imported environment geometry; later levels should use separately authored cutaway presentation, occlusion volumes or room/floor metadata, and a dithered transition where needed.
 
-The intended manual route is: interact with the orange survivor, choose the single response, optionally inspect the purple service terminal, then interact with the green evacuation airlock. The completion overlay is the end of the Phase 2 slice.
+The current manual route is: talk to the survivor, choose either response,
+optionally inspect the terminal, cross the opening entry door, defeat the
+Security Enforcer, and cross the newly unlocked far service door. Protector is
+then observable but recruitment and the final airlock remain deliberately
+locked for the next Phase 4 slice.
 
 For graphical agent control, `plugin-link` creates an ignored junction to the external `addons/godot_ai` directory. Override its source with `-GodotAiPlugin` or `SPACE_ADVENTURE_GODOT_AI_PLUGIN`. Then open `editor` and enable **Godot AI Control** in Project Settings → Plugins.
 
@@ -124,4 +154,6 @@ Control integration; no second Godot-control addon is required.
 - `docs/ROADMAP.md`: milestone order and exit gates.
 - `docs/OPEN-QUESTIONS.md`: unresolved choices and recommended defaults.
 
-Phase 2 automation and agent-controlled graphical verification are implemented. The remaining Phase 2 gate is an independent human playthrough of the real route, including the wall-visibility check in `docs/PLAYTESTS.md`; do not begin Phase 3 merely because the automated path or visual capture completes.
+Automated victory and defeat paths are implemented. They do not replace the
+required graphical review of combat readability, weapon fit, animation timing,
+camera control, and physical input documented in `docs/PLAYTESTS.md`.

@@ -50,6 +50,33 @@
       "source_clip": "Standard Walk — In Place, Overdrive 50, Arm-Space 50",
       "loop": true,
       "minimum_foot_lift_meters": 0.04
+    },
+    {
+      "name": "anim.humanoid.melee_strike",
+      "source": "art/generated/character.enemy.security_enforcer.v1/prod-tripo-v31bq-20260807-01/raw/candidate-01/mixamo/right-hook-with-skin.fbx",
+      "source_clip": "Right Hook — Overdrive 50, Arm-Space 50; matching with-skin rest-pose exception",
+      "loop": false,
+      "maximum_planar_range_meters": 0.30,
+      "maximum_vertical_range_meters": 0.20,
+      "maximum_endpoint_delta_meters": 0.30
+    },
+    {
+      "name": "anim.humanoid.hit_reaction",
+      "source": "art/generated/character.enemy.security_enforcer.v1/prod-tripo-v31bq-20260807-01/raw/candidate-01/mixamo/hit-reaction-with-skin.fbx",
+      "source_clip": "Hit Reaction — Angle 100, Overdrive 50, Arm-Space 50; matching with-skin rest-pose exception",
+      "loop": false,
+      "maximum_planar_range_meters": 0.30,
+      "maximum_vertical_range_meters": 0.20,
+      "maximum_endpoint_delta_meters": 0.30
+    },
+    {
+      "name": "anim.humanoid.down",
+      "source": "art/generated/character.enemy.security_enforcer.v1/prod-tripo-v31bq-20260807-01/raw/candidate-01/mixamo/falling-back-death-with-skin.fbx",
+      "source_clip": "Falling Back Death — Overdrive 50, Arm-Space 50; matching with-skin rest-pose exception",
+      "loop": false,
+      "maximum_planar_range_meters": 1.00,
+      "maximum_vertical_range_meters": 1.50,
+      "maximum_endpoint_delta_meters": 2.00
     }
   ],
   "sockets": [

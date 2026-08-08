@@ -72,7 +72,7 @@ public partial class AutomationBridge : Node
             var root = document.RootElement;
 
             if (!root.TryGetProperty("schema_version", out var schemaVersion)
-                || schemaVersion.GetInt32() != 2)
+                || schemaVersion.GetInt32() != 3)
             {
                 return Error("unsupported_schema_version");
             }
@@ -113,6 +113,23 @@ public partial class AutomationBridge : Node
                     new EntityId(RequiredString(payload, "actor_id")),
                     new EntityId(RequiredString(payload, "interaction_id")),
                     new DialogueResponseId(RequiredString(payload, "response_id"))),
+                "assign_basic_attack_target" => new AssignBasicAttackTargetCommand(
+                    commandId,
+                    new EntityId(RequiredString(payload, "actor_id")),
+                    new EntityId(RequiredString(payload, "target_id"))),
+                "use_ability" => new UseAbilityCommand(
+                    commandId,
+                    new EntityId(RequiredString(payload, "actor_id")),
+                    new AbilityId(RequiredString(payload, "ability_id")),
+                    new PositionAbilityTarget(ReadPosition(payload.GetProperty("target_position")))),
+                "use_item" => new UseItemCommand(
+                    commandId,
+                    new EntityId(RequiredString(payload, "actor_id")),
+                    new ItemId(RequiredString(payload, "item_id")),
+                    new EntityId(RequiredString(payload, "target_actor_id"))),
+                "restart_encounter" => new RestartEncounterCommand(
+                    commandId,
+                    new EncounterId(RequiredString(payload, "encounter_id"))),
                 _ => null!,
             };
 
@@ -456,6 +473,18 @@ public partial class AutomationBridge : Node
                         response.Text,
                     }),
                 },
+            Hostiles = route.Hostiles?.Select(ProjectHostile),
+            Encounter = route.Encounter is null
+                ? null
+                : new
+                {
+                    Id = route.Encounter.Id.Value,
+                    Phase = ToExternalName(route.Encounter.Phase),
+                    route.Encounter.Attempt,
+                    route.Encounter.TransitionTicksRemaining,
+                    route.Encounter.TransitionTicksTotal,
+                    HostileId = route.Encounter.HostileId.Value,
+                },
         };
     }
 
@@ -478,7 +507,45 @@ public partial class AutomationBridge : Node
             Position = ProjectPosition(actor.Position),
             CurrentAction = ProjectAction(actor.CurrentAction),
             PendingAction = ProjectAction(actor.PendingAction),
+            Combat = ProjectCombatant(actor.Combat),
         };
+    }
+
+    private static object ProjectHostile(HostileObservation hostile)
+    {
+        return new
+        {
+            Id = hostile.Id.Value,
+            hostile.DisplayName,
+            Position = ProjectPosition(hostile.Position),
+            hostile.MovementSpeedMetersPerSecond,
+            Combat = ProjectCombatant(hostile.Combat),
+            CurrentAction = ProjectAction(hostile.CurrentAction),
+        };
+    }
+
+    private static object? ProjectCombatant(CombatantStateObservation? combat)
+    {
+        return combat is null
+            ? null
+            : new
+            {
+                combat.Health,
+                combat.MaximumHealth,
+                combat.IsDefeated,
+                BasicAttackId = combat.BasicAttackId.Value,
+                Cooldowns = combat.Cooldowns.Select(cooldown => new
+                {
+                    AbilityId = cooldown.AbilityId.Value,
+                    cooldown.RemainingTicks,
+                    cooldown.TotalTicks,
+                }),
+                Items = combat.Items.Select(item => new
+                {
+                    ItemId = item.ItemId.Value,
+                    item.Charges,
+                }),
+            };
     }
 
     private static object? ProjectAction(PrimaryActionObservation? action)
@@ -492,6 +559,13 @@ public partial class AutomationBridge : Node
                 Destination = ProjectPosition(action.Destination),
                 action.HasRemainingMovement,
                 InteractionTargetId = action.InteractionTargetId?.Value,
+                CombatTargetId = action.CombatTargetId?.Value,
+                AttackId = action.AttackId?.Value,
+                AbilityId = action.AbilityId?.Value,
+                ItemId = action.ItemId?.Value,
+                Phase = ToExternalName(action.Phase),
+                action.PhaseTicksRemaining,
+                action.PhaseTicksTotal,
             };
     }
 
@@ -583,6 +657,53 @@ public partial class AutomationBridge : Node
             {
                 CommandId = value.CommandId.Value,
                 ScenarioId = value.ScenarioId.Value,
+            },
+            EncounterEventDetail value => new
+            {
+                EncounterId = value.EncounterId.Value,
+                value.Attempt,
+            },
+            AttackEventDetail value => new
+            {
+                SourceId = value.SourceId.Value,
+                TargetId = value.TargetId.Value,
+                AttackId = value.AttackId.Value,
+                value.Hit,
+            },
+            AbilityReleasedEventDetail value => new
+            {
+                SourceId = value.SourceId.Value,
+                TargetPosition = ProjectPosition(value.TargetPosition),
+                AbilityId = value.AbilityId.Value,
+                value.Hit,
+            },
+            DamageAppliedEventDetail value => new
+            {
+                SourceId = value.SourceId.Value,
+                TargetId = value.TargetId.Value,
+                value.Amount,
+                value.RemainingHealth,
+                AttackId = value.AttackId?.Value,
+                AbilityId = value.AbilityId?.Value,
+            },
+            HealingAppliedEventDetail value => new
+            {
+                SourceId = value.SourceId.Value,
+                TargetId = value.TargetId.Value,
+                ItemId = value.ItemId.Value,
+                value.Amount,
+                value.RemainingHealth,
+            },
+            ActionInterruptedEventDetail value => new
+            {
+                ActorId = value.ActorId.Value,
+                SourceId = value.SourceId.Value,
+                AbilityId = value.AbilityId.Value,
+            },
+            CombatantDefeatedEventDetail value => new
+            {
+                CombatantId = value.CombatantId.Value,
+                SourceId = value.SourceId.Value,
             },
             _ => null,
         };

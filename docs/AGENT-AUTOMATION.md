@@ -26,6 +26,7 @@ pwsh -NoProfile -File scripts/dev.ps1 plugin-link
 pwsh -NoProfile -File scripts/dev.ps1 import
 pwsh -NoProfile -File scripts/dev.ps1 headless -Name bootstrap
 pwsh -NoProfile -File scripts/dev.ps1 headless -Name station-route
+pwsh -NoProfile -File scripts/dev.ps1 headless -Name station-combat-defeat
 pwsh -NoProfile -File scripts/dev.ps1 capture -Name wall-cutaway
 pwsh -NoProfile -File scripts/dev.ps1 editor
 pwsh -NoProfile -File scripts/dev.ps1 run
@@ -43,7 +44,7 @@ The Godot host exposes a stable C# node named `AutomationBridge` after the autho
 
 - `GetObservationJson()` — complete clock, pause, and station-route observation.
 - `GetEventsJson(sinceSequence)` — retained events after a sequence, plus oldest/latest sequence and history-gap metadata.
-- `SubmitCommandJson(commandJson)` — schema-v1 command envelope translated into the same typed dispatcher used by input, tests, and the CLI.
+- `SubmitCommandJson(commandJson)` — schema-v3 command envelope translated into the same typed dispatcher used by input, tests, and the CLI.
 - `SetPaused(paused)` — convenience wrapper around the typed pause command.
 - `AdvanceExactTicks(count)` — deterministic development stepping from 0 to 3,000 ticks per call; the session must already be paused.
 - `AdvanceUntilEventJson(afterSequence, eventType, maximumTicks)` — step while paused until a named event or budget exhaustion. The budget must be 1–3,000 ticks, and the result always includes the last observation.
@@ -54,19 +55,21 @@ The Godot host exposes a stable C# node named `AutomationBridge` after the autho
 The command envelope always contains `schema_version`, `command_id`, `type`, and an object `payload`. Implemented command types are:
 
 ```json
-{"schema_version":1,"command_id":"example.pause","type":"set_pause","payload":{"paused":true}}
-{"schema_version":1,"command_id":"example.move","type":"move_actor","payload":{"actor_id":"actor.protagonist","destination":{"x":0.0,"z":1.0}}}
-{"schema_version":1,"command_id":"example.interact","type":"interact","payload":{"actor_id":"actor.protagonist","target_id":"interaction.survivor"}}
-{"schema_version":1,"command_id":"example.response","type":"choose_dialogue_response","payload":{"actor_id":"actor.protagonist","interaction_id":"interaction.survivor","response_id":"response.reroute_service_power"}}
+{"schema_version":3,"command_id":"example.pause","type":"set_pause","payload":{"paused":true}}
+{"schema_version":3,"command_id":"example.move","type":"move_actor","payload":{"actor_id":"actor.protagonist","destination":{"x":-10.0,"y":0.0,"z":2.75}}}
+{"schema_version":3,"command_id":"example.attack","type":"assign_basic_attack_target","payload":{"actor_id":"actor.protagonist","target_id":"actor.enemy.security_enforcer.solo"}}
+{"schema_version":3,"command_id":"example.ability","type":"use_ability","payload":{"actor_id":"actor.protagonist","ability_id":"ability.crew.vanguard.suppressive_fire","target_position":{"x":-10.0,"y":0.0,"z":-1.4}}}
+{"schema_version":3,"command_id":"example.item","type":"use_item","payload":{"actor_id":"actor.protagonist","item_id":"item.healing.field_aid.v1","target_actor_id":"actor.protagonist"}}
+{"schema_version":3,"command_id":"example.retry","type":"restart_encounter","payload":{"encounter_id":"encounter.station.solo_tutorial"}}
 ```
 
-The observation projection uses snake-case JSON and contains tick, pause state, latest event sequence, scenario/content identity, phase, protagonist position and current/pending action, objective, interaction positions/approach points/radii/states, and active dialogue. Event projections include typed details for action assignment/failure, arrival, dialogue, interaction, objective, and completion. The adapter returns JSON-safe values and stable error codes; it never exposes arbitrary property mutation, script evaluation, node deletion, unrestricted method invocation, or private core state. There is no in-process scenario-reset backdoor: launch a fresh bounded process when isolation is required.
+The observation projection uses snake-case JSON and contains tick, pause state, scenario/content identity, party and hostile combat state, current/pending actions with phases and remaining ticks, encounter phase, cooldowns, item charges, objectives, interactions, and dialogue. Event projections include typed encounter, attack, ability, damage, healing, interruption, and defeat details. The adapter returns JSON-safe values and stable error codes; it never exposes arbitrary property mutation, script evaluation, node deletion, unrestricted method invocation, or private core state. Encounter retry is a narrow gameplay command, not a scenario-reset backdoor.
 
 Automation commands name stable actor and target IDs. They do not depend on UI selection or incidental node paths.
 
 ## Simulation scenarios
 
-`SpaceAdventure.SimCli` runs the pure core. `scenario -Name bootstrap` proves the minimal pause contract. `scenario -Name station-route` loads schema-v3 `station-route.json`, uses a deterministic fixture layout/pathfinder, performs the survivor response, optional terminal, and entry-door flow, reaches the solo arena, verifies the far door is locked, and stops successfully without scenario completion. Both emit JSON Lines containing run metadata, command results, events, assertions, duration, and the final snapshot, and exit nonzero on failure.
+`SpaceAdventure.SimCli` runs the pure core. `scenario -Name bootstrap` proves the minimal pause contract. `scenario -Name station-route` loads schema-v4 `station-route.json`, uses a deterministic fixture layout/pathfinder, performs the survivor, terminal, and entry-door flow, fights the solo Enforcer with basic fire, Suppressive Fire, and Field Aid, opens the victory-gated exit, and verifies Protector availability while the final airlock remains locked. Both emit JSON Lines containing run metadata, typed combat events, assertions, duration, and the final snapshot, and exit nonzero on failure.
 
 Later milestones may add external versioned scenario files containing:
 
@@ -82,7 +85,8 @@ A scenario fixture is a reproducible rule bug report. It is not proof that a God
 Both `headless` modes launch the real Godot project with isolated user data and a hard process timeout:
 
 - `headless -Name bootstrap` proves C# assembly/scene startup, valid pause submission, malformed-envelope rejection, observation, and clean shutdown.
-- `headless -Name station-route` waits boundedly for the real authored navigation map, validates scene/content stable-ID binding, pauses, submits the survivor interaction, advances to dialogue, chooses the authored response, verifies that the entry link unlocks while the door remains closed, inspects the optional terminal, routes into the solo arena, verifies that the door opens automatically before arrival, that the solo exit stays locked, and that the inaccessible future-room navigation remains internally connected, prints a structured summary, and shuts down without completing the scenario. Each advance has a fixed tick budget and failures print the command/observation diagnostics.
+- `headless -Name station-route` traverses the authored navigation, completes the survivor and terminal flow, auto-opens the entry door, fights the solo Enforcer, exercises Suppressive Fire and Field Aid, verifies combat presentation and victory-gated navigation, opens the solo exit, and stops at the now-available Protector.
+- `headless -Name station-combat-defeat` deliberately loses the same fight, verifies the atomic defeat pause and retry UI state, submits the typed retry command, and proves that health, charges, cooldowns, actors, and encounter state reset while completed route state remains intact.
 
 The station-route smoke proves engine integration and the real navigation mesh. It is not evidence that click targets, camera feel, text placement, color, or route comprehension are good for a human.
 
@@ -101,9 +105,9 @@ Graphical checks exercise the actual viewport and input mappings. The optional e
 
 The plugin is a development accelerator, not a game dependency. Create its ignored junction with `plugin-link`, open `editor`, and enable **Godot AI Control** only in a worktree that needs live control. Enabling it may write `[editor_plugins]` and `[autoload]` entries to `game/project.godot`; remove those temporary local changes before integration. Ad hoc viewport capture remains an MCP capability. The single deterministic `capture -Name wall-cutaway` regression command is built into the game and does not require the addon. A human can perform the same playable flow without the addon.
 
-For the station route, use `GetScreenPositionJson(stableId)` to locate a known 3D target. An OS-level control tool or a human can right-click that viewport position; when no pointer injector is available, `InjectContextClickJson(stableId)` sends the same Godot mouse event through ray picking and the normal input-to-command path. The helper confirms only that the input was injected. Read events after its returned `event_sequence_before` and require the expected `input.*` command acknowledgement before treating the click as successful. The current graphical path is survivor → authored response → optional terminal → solo-arena destination (entry door auto-opens on approach) → locked exit. Use `Space` during movement to prove that gameplay position stops while camera controls and observations remain responsive, then resume and stop at the combat threshold. The agent check must include graphical input events, while an independent human check remains the proof of physical pointer usability and feel.
+For the station route, use `GetScreenPositionJson(stableId)` to locate a known 3D target. An OS-level control tool or a human can right-click that viewport position; when no pointer injector is available, `InjectContextClickJson(stableId)` sends the same Godot mouse event through ray picking and the normal input-to-command path. The helper confirms only that the input was injected. Read events after its returned `event_sequence_before` and require the expected `input.*` command acknowledgement before treating the click as successful. The current graphical path is survivor → optional terminal → auto-opening entry door → solo fight → victory-gated exit → Protector. Verify both victory and retry after defeat. The agent check must include graphical input events, while an independent human check remains the proof of physical pointer usability and feel.
 
-Current controls are right-click for move/contextual interaction; `1`, Enter, keypad Enter, or the visible button for the authored response; Space for tactical pause; camera-relative WASD/arrows for pan; Q/E or middle drag for yaw; Page Up/Page Down or vertical middle drag for pitch; wheel for zoom; Home/R for orientation reset; and F to focus the protagonist. The opening camera focus is Vanguard's spawn. `E` is camera yaw, not an interaction shortcut.
+Current controls are right-click for movement, interaction, or a repeating basic-attack target; `1` enters Suppressive Fire position targeting and left-click confirms it; `2` queues Field Aid; Escape cancels ability targeting; Space toggles tactical pause. Camera-relative WASD/arrows pan, Q/E or middle drag yaw, Page Up/Page Down or vertical middle drag pitch, wheel zooms, Home/R resets orientation, and F focuses the protagonist. The opening camera focus is Vanguard's spawn. `E` is camera yaw, not an interaction shortcut.
 
 Short visual effects are poor synchronization points. Drive the game to a structured event or stable review state, then capture the viewport. Record the scenario, event sequence, camera profile, resolution, and screenshot path with visual-test artifacts.
 
