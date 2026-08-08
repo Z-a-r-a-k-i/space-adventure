@@ -388,7 +388,7 @@ def validate_scene(objects: list[bpy.types.Object]) -> dict[str, object]:
     triangles = triangle_count(objects)
     if triangles > TRIANGLE_BUDGET:
         raise RuntimeError(f"Sentry publishes {triangles} triangles; budget is {TRIANGLE_BUDGET}")
-    material_names = {material.name for material in bpy.data.materials if material.users > 0}
+    material_names = {item.name for item in bpy.data.materials if item.users > 0}
     if material_names != set(MATERIAL_NAMES.values()):
         raise RuntimeError(f"Unexpected material roles: {sorted(material_names)}")
     if any(obj.type == "ARMATURE" for obj in objects) or bpy.data.actions:
@@ -478,31 +478,30 @@ def save_export_and_validate(
             raise FileExistsError(
                 f"Refusing to overwrite {source} or {publication}; pass --replace"
             )
-    with tempfile.TemporaryDirectory(
-        prefix=".space-adventure-sentry-", dir=publication.parent
-    ) as temp_directory:
-        staging = Path(temp_directory)
-        staged_source = staging / source.name
-        staged_publication = staging / publication.name
-        bpy.ops.wm.save_as_mainfile(filepath=str(staged_source), compress=True)
-        bpy.ops.export_scene.gltf(
-            filepath=str(staged_publication),
-            export_format="GLB",
-            export_yup=True,
-            export_extras=True,
-            export_apply=True,
-            export_animations=False,
-        )
-        authored_metrics = validate_scene(objects)
+        with tempfile.TemporaryDirectory(
+            prefix=".space-adventure-sentry-", dir=publication.parent
+        ) as temp_directory:
+            staging = Path(temp_directory)
+            staged_source = staging / source.name
+            staged_publication = staging / publication.name
+            bpy.ops.wm.save_as_mainfile(filepath=str(staged_source), compress=True)
+            bpy.ops.export_scene.gltf(
+                filepath=str(staged_publication),
+                export_format="GLB",
+                export_yup=True,
+                export_extras=True,
+                export_apply=True,
+                export_animations=False,
+            )
+            authored_metrics = validate_scene(objects)
 
-        bpy.ops.wm.read_factory_settings(use_empty=True)
-        bpy.ops.import_scene.gltf(filepath=str(staged_publication))
-        imported = list(bpy.context.scene.objects)
-        imported_metrics = validate_scene(imported)
+            bpy.ops.wm.read_factory_settings(use_empty=True)
+            bpy.ops.import_scene.gltf(filepath=str(staged_publication))
+            imported = list(bpy.context.scene.objects)
+            imported_metrics = validate_scene(imported)
 
-        backups: dict[Path, Path] = {}
-        promoted: list[Path] = []
-        with exclusive_file_lock(lock_path):
+            backups: dict[Path, Path] = {}
+            promoted: list[Path] = []
             try:
                 if not replace and (source.exists() or publication.exists()):
                     raise FileExistsError("Publication collision detected after staging")
