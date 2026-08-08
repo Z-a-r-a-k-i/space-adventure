@@ -2,8 +2,9 @@
 
 Status: approved active inventory. Vanguard, Survivor, Protector, the
 production five-area station route, both service-door instances, terminal, and
-final airlock are integrated. The two hostile bases remain the Phase 3 art gate
-before combat gameplay.
+final airlock are integrated. Both hostile production bases passed their
+combined Godot gallery approval on 2026-08-07, closing the Phase 3 hostile-art
+gate before combat gameplay.
 
 ## Presentation rules
 
@@ -32,7 +33,7 @@ before combat gameplay.
 | Operator pistol | `weapon.crew.operator_pistol.v1` | Deferred pistol with primary grip and muzzle | Deferred |
 | Protector shotgun | `weapon.crew.protector_shotgun.v1` | Separate shotgun with primary/support grips and muzzle | 3 base / 4 motion |
 | Security Enforcer | `character.enemy.security_enforcer.v1` | Fixed-body humanoid security android with reinforced-forearm body attack | 3 base / 4 motion |
-| Gun sentry | `machine.security.gun_sentry.v1` | Fixed or floating rigid sentry with aim pivot, recoil axis, and muzzle | 3 base / 4 motion |
+| Gun sentry | `machine.security.gun_sentry.v1` | Floor-bolted rigid sentry with aim pivot, recoil axis, and muzzle | 3 base / 4 motion |
 | Service terminal | `prop.station.service_terminal.v1` | Readable optional-interaction hero prop | 3 |
 | Wall utility | `prop.station.wall_utility.v1` | Repeatable noninteractive wall dressing | 5 |
 | Field aid | `item.healing.field_aid.v1` | Hand-scale item only if visibly handled | 4 |
@@ -140,15 +141,12 @@ remains coupled to the Phase 4 weapon-handling and combat gate.
 
 ## Integration order
 
-1. Obtain final owner visual approval for the integrated v2 station route and
-   both service-door instances; keep the terminal and final airlock unchanged.
-2. Reuse the accepted humanoid contract for the Security Enforcer and produce
-   the sentry as a simple rigid machine. Survivor and Protector are complete;
-   all visible combatant bases must be non-greybox before Phase 4 starts.
-3. Finish the separate Vanguard carbine and Protector shotgun attachment fits.
-4. Define the solo tutorial and main party-combat rules, then select and clean
+1. Keep both hostile bases out of the live station route until Phase 4 supplies
+   authoritative combat state and presentation synchronization.
+2. Finish the separate Vanguard carbine and Protector shotgun attachment fits.
+3. Define the solo tutorial and main party-combat rules, then select and clean
    weapon-handling and fight animations against those authoritative timings.
-5. Keep Operator and its pistol deferred unless a later owner decision
+4. Keep Operator and its pistol deferred unless a later owner decision
    reactivates them. Reuse the retained wall utility only after owner review.
 
 ## Post-POC visual anchors

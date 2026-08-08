@@ -44,8 +44,10 @@ not like unrelated generated objects placed in the same room.
 - [Approved station survivor](../reference-sheets/frontier-station-v1/poc-models/station-survivor-turnaround-v1.png)
   freezes the NPC identity. The
   [approved Security Enforcer](../reference-sheets/frontier-station-v1/poc-models/security-enforcer-turnaround-v1.png)
-  freezes the humanoid close-range hostile direction. The rigid gun-sentry
-  reference remains pending.
+  freezes the humanoid close-range hostile direction. The
+  [approved rigid gun sentry](../reference-sheets/frontier-station-v1/poc-models/gun-sentry-turnaround-v1.png)
+  freezes the rectangular gun-head and floor-bolted pedestal direction; its
+  exact hierarchy and motion limits remain defined by the production brief.
 - [Approved wall utility](../reference-sheets/frontier-station-v1/poc-models/station-wall-utility-turnaround-v1.png)
   and [field aid](../reference-sheets/frontier-station-v1/poc-models/field-aid-turnaround-v1.png)
   freeze their prop directions. The field aid uses selected alternative 2 from

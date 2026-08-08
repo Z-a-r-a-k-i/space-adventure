@@ -71,7 +71,8 @@ Survivor publishes three dialogue actions; Protector publishes holstered idle
 and in-place Standard Walk, moves at 2.0 m/s, and carries provisional hand and
 upper-back sockets. Their reusable Godot presentation validates action names,
 blends observed states, faces authoritative movement, and freezes during
-tactical pause. Final contextual visual approval remains open.
+tactical pause. The owner completed their contextual Godot visual approval
+before PR 15 merged on 2026-08-07.
 
 On 2026-08-04 the station presentation advanced to route revision
 `station-route-v5`. `kit.station.structure.v2` now covers the complete five-area
@@ -83,6 +84,13 @@ survivor choice; moving through it automatically completes and opens the entry
 door before Vanguard reaches it. The far link remains locked.
 The evacuation-airlock assembly remains unchanged at the final destination.
 Automated route verification intentionally stops at the first-combat threshold.
+
+On 2026-08-07 the owner approved the Security Enforcer and floor-bolted Gun
+Sentry together in the 1920x1080 hostile gallery. The Enforcer publishes its
+grounded idle, in-place Standard Walk, and reinforced-right-hand contact socket.
+The rigid sentry publishes its bounded aim pivot, recoil axis, and muzzle socket.
+Both remain outside the live route until Phase 4 adds authoritative hostile and
+combat state.
 
 - Keep Vanguard as the only protagonist. Produce Protector as the fixed recruit
   encountered after the solo tutorial fight; do not restore a character-choice

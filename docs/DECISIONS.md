@@ -246,8 +246,10 @@ sentry with aim and recoil pivots.
 This pair preserves mobile melee pressure versus stationary ranged pressure
 without adding custom non-humanoid locomotion or skeletal-machine animation.
 Gameplay still owns attack range, timing, target validity, movement, contact,
-damage, and interruption. The approved Enforcer sheet still requires separate
-production-brief acceptance before 3D generation begins.
+damage, and interruption. The owner accepted the Enforcer production brief and
+the floor-bolted sentry reference on 2026-08-07. Phase 3 may therefore publish
+their non-gameplay bases; final attack, recoil, hit, and shutdown timing remains
+coupled to Phase 4 authority.
 
 ## ADR 0023 — Static station presentation advances into Phase 3
 
