@@ -27,6 +27,8 @@ pwsh -NoProfile -File scripts/dev.ps1 import
 pwsh -NoProfile -File scripts/dev.ps1 headless -Name bootstrap
 pwsh -NoProfile -File scripts/dev.ps1 headless -Name station-route
 pwsh -NoProfile -File scripts/dev.ps1 headless -Name station-combat-defeat
+pwsh -NoProfile -File scripts/dev.ps1 headless -Name humanoid-gallery
+pwsh -NoProfile -File scripts/dev.ps1 headless -Name hostile-gallery
 pwsh -NoProfile -File scripts/dev.ps1 capture -Name wall-cutaway
 pwsh -NoProfile -File scripts/dev.ps1 editor
 pwsh -NoProfile -File scripts/dev.ps1 run

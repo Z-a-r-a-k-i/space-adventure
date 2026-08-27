@@ -12,9 +12,9 @@ The current main scene is a production-presented authored station route, not
 the complete 8–12 minute POC. Vanguard speaks to the survivor, crosses the
 entry service door, and fights one Security Enforcer using repeating carbine
 fire, position-targeted Suppressive Fire, Field Aid, and tactical pause.
-Victory unlocks the far service door and exposes the deferred Protector
-recruitment threshold. The later two-character encounter and final airlock
-completion remain locked.
+Victory unlocks the far service door; crossing it makes the Protector
+recruitment interaction available. The later two-character encounter and
+final airlock completion remain locked.
 
 The next milestone work is graphical acceptance and tuning of the solo fight,
 then Protector combat and the main encounter. Milestone sequencing remains in
@@ -117,8 +117,8 @@ When a station wall blocks the camera-to-protagonist view, the opaque wall mesh 
 The current manual route is: talk to the survivor, choose either response,
 optionally inspect the terminal, cross the opening entry door, defeat the
 Security Enforcer, and cross the newly unlocked far service door. Protector is
-then observable but recruitment and the final airlock remain deliberately
-locked for the next Phase 4 slice.
+then available for recruitment, while the later two-character encounter and
+final airlock remain deliberately locked for the next Phase 4 slice.
 
 For graphical agent control, `plugin-link` creates an ignored junction to the external `addons/godot_ai` directory. Override its source with `-GodotAiPlugin` or `SPACE_ADVENTURE_GODOT_AI_PLUGIN`. Then open `editor` and enable **Godot AI Control** in Project Settings → Plugins.
 
