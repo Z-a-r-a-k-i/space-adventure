@@ -133,7 +133,7 @@ direct single-image 4K unrigged T-pose, Smart Low-Poly v2 Quad target 10k,
 geometry-only Mixamo upload, symmetry, Standard Skeleton (65), and
 agent-validated markers and Auto-Rigger preview. Blender publishes the accepted
 `Unarmed Idle`, in-place `Standard Walk`, draw, armed idle/locomotion, fire,
-holster, hit, and down actions; limits skinning to four
+holster, and down actions; limits skinning to four
 influences, preserves the animated Mixamo armature transform, and publishes
 both weapon sockets. The Vanguard combat donors use strict local-basis baking
 with armature-space root displacement from Mixamo no-skin exports; its

@@ -89,9 +89,10 @@ Launch `station-route-v6` at 1920×1080 and verify from a fresh process:
    the survivor and entry-door progression, resets only the encounter attempt,
    and returns to the ready pause without duplicating either actor.
 7. At 7.5 m, 14.5 m, and 20 m inspect the carbine hand/back attachment, muzzle
-   line, both-hand plausibility, Vanguard draw/fire/holster/hit/down deformation,
-   Enforcer approach/strike/hit/down deformation, telegraph readability, health
-   UI, camera controls, and absence of visible greybox presentation.
+   line, both-hand plausibility, Vanguard draw/fire/holster/down deformation,
+   Enforcer approach/strike/down deformation, numeric damage and impact-effect
+   readability, health UI, camera controls, and absence of visible greybox
+   presentation.
 
 Automated victory and defeat smokes are required evidence but do not satisfy
 this physical-input and visual-acceptance protocol.

@@ -120,6 +120,6 @@ direction changes, idle/walk blending, tactical-pause freezing, and stable
 arrival. The project owner accepted the result on 2026-08-03.
 
 The Phase 4 solo-tutorial integration uses the separate published carbine and
-the draw, armed locomotion, fire, hit, down, and holster actions. Final
+the draw, armed locomotion, fire, down, and holster actions. Final
 project-owner graphical acceptance of the complete live combat presentation
 remains the review gate for this update.

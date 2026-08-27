@@ -110,12 +110,8 @@ public sealed class StationRouteSessionTests
         var firstKit = sourceRoot["protagonist_kits"]!.AsArray()[0]!.DeepClone();
         var secondKit = firstKit.DeepClone().AsObject();
         secondKit["id"] = "kit.protagonist.test-secondary";
-        secondKit["basic_attack_id"] = "attack.crew.test-secondary";
-        secondKit["active_ability_id"] = "ability.crew.test-secondary";
         var thirdKit = secondKit.DeepClone().AsObject();
         thirdKit["id"] = "kit.protagonist.test-tertiary";
-        thirdKit["basic_attack_id"] = "attack.crew.test-tertiary";
-        thirdKit["active_ability_id"] = "ability.crew.test-tertiary";
 
         string WithKits(params JsonNode?[] kitEntries)
         {

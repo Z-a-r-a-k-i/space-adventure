@@ -246,6 +246,14 @@ public partial class GameHost : Node3D
 
         if (@event is InputEventKey { Pressed: true, Echo: false } key)
         {
+            if ((IsKey(key, Key.Enter) || IsKey(key, Key.KpEnter))
+                && _retryButton.Visible)
+            {
+                RestartEncounter();
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+
             if (IsKey(key, Key.Escape) && _abilityTargeting)
             {
                 _abilityTargeting = false;
@@ -630,7 +638,7 @@ public partial class GameHost : Node3D
             CustomMinimumSize = new Vector2(130, 34),
             Text = "RETRY FIGHT",
             Visible = false,
-            FocusMode = Control.FocusModeEnum.None,
+            FocusMode = Control.FocusModeEnum.All,
         };
         _retryButton.Pressed += RestartEncounter;
         statusContent.AddChild(_retryButton);
@@ -645,7 +653,7 @@ public partial class GameHost : Node3D
         var controls = new Label
         {
             Text = "Party cards: select crew   Right-click: move / interact / attack   Space: pause\n"
-                + "1: target Suppressive Fire   2: use Field Aid   Esc: cancel targeting\n"
+                + "1: target Suppressive Fire   2: use Field Aid   Enter: retry after defeat   Esc: cancel targeting\n"
                 + "WASD: pan   Q/E or middle-drag: yaw   PgUp/PgDn: pitch   Wheel: zoom   Home/R: reset   F: focus",
             Modulate = new Color("b9cce0"),
         };
@@ -869,7 +877,13 @@ public partial class GameHost : Node3D
                 : encounter.Phase is EncounterPhase.Securing or EncounterPhase.Victory
                     ? new Color("72f2a8")
                     : new Color("9edfff");
-            _retryButton.Visible = encounter.Phase == EncounterPhase.Defeat;
+            var retryVisible = encounter.Phase == EncounterPhase.Defeat;
+            var retryBecameVisible = retryVisible && !_retryButton.Visible;
+            _retryButton.Visible = retryVisible;
+            if (retryBecameVisible)
+            {
+                _retryButton.GrabFocus();
+            }
         }
         else
         {
@@ -3078,11 +3092,16 @@ public partial class GameHost : Node3D
 
         var defeated = session.Observe().StationRoute!;
         RenderObservation(session.Observe());
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         var pausedAfterDefeat = session.IsPaused;
         var retryVisibleAtDefeat = _retryButton.Visible;
-        var retry = session.Execute(new RestartEncounterCommand(
-            new CommandId("defeat.retry"),
-            definition.Combat.Encounter.Id));
+        var retryKeyboardAccessible = _retryButton.FocusMode == Control.FocusModeEnum.All
+            && _retryButton.HasFocus();
+        _UnhandledInput(new InputEventKey
+        {
+            Keycode = Key.Enter,
+            Pressed = true,
+        });
         var retried = session.Observe().StationRoute!;
         RenderObservation(session.Observe());
         var passed = IsAccepted(survivorOrder)
@@ -3096,7 +3115,7 @@ public partial class GameHost : Node3D
             && defeated.Encounter?.Phase == EncounterPhase.Defeat
             && pausedAfterDefeat
             && retryVisibleAtDefeat
-            && retry.Accepted
+            && retryKeyboardAccessible
             && retried.Encounter?.Phase == EncounterPhase.Readying
             && retried.Encounter.Attempt == 2
             && retried.Protagonist.Combat?.Health
@@ -3120,7 +3139,7 @@ public partial class GameHost : Node3D
             arena_move = IsAccepted(arenaMove),
             arena_reached = IsReached(arenaWait),
             resume_accepted = resume.Accepted,
-            retry_accepted = retry.Accepted,
+            retry_keyboard_accessible = retryKeyboardAccessible,
             retried_phase = retried.Encounter?.Phase.ToString(),
             retried_attempt = retried.Encounter?.Attempt,
             entry_preserved = retried.Interactions.Single(
