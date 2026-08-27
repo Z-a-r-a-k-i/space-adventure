@@ -24,7 +24,7 @@ then Protector combat and the main encounter. Milestone sequencing remains in
 
 - Godot 4.7.1 Mono, Forward+ renderer, Windows desktop first.
 - C# game code with a pure `SpaceAdventure.Core` rules project.
-- An authored 8–12 minute greybox demo before roguelite or procedural systems.
+- An authored 8–12 minute production-presented demo before roguelite or procedural systems.
 - A two-character party for the POC, beginning with the player alone.
 - One typed command path shared by UI, automation, scenarios, and future replays.
 - Structured tests plus real graphical playtests and screenshot inspection.
@@ -102,7 +102,8 @@ graphical launch. `editor` opens the project editor; `help` lists every option.
   the relevant contextual order. A distant interaction automatically includes
   the approach path; a hostile order repeats basic attacks until replaced or
   invalidated.
-- Click the authored dialogue response, or press `1`, `Enter`, or keypad Enter.
+- Click either authored dialogue response, press `1` or `2` for the
+  corresponding response, or use Enter/keypad Enter for the first response.
 - Press `Space` to toggle tactical pause. Orders issued while paused remain
   pending and the newest pending primary order replaces the previous one.
 - Press `1`, then left-click a valid world position, to target Suppressive
@@ -111,7 +112,7 @@ graphical launch. `editor` opens the project editor; `help` lists every option.
 - Use `WASD` or the arrow keys to pan; `Q`/`E` or middle-mouse drag to rotate; Page Up/Page Down or vertical middle-mouse drag to adjust pitch; and the wheel to zoom.
 - Press `Home` or `R` to reset camera orientation and `F` to focus the protagonist.
 
-When a station wall blocks the camera-to-protagonist view, the opaque wall mesh collapses vertically toward a short 0.45 m base over a brief transition and restores when the view clears. This initial POC uses cached world-space AABBs because the current walls are static, axis-aligned greybox boxes. It is not the production solution for rotated, moving, concave, multi-storey, decorated, or imported environment geometry; later levels should use separately authored cutaway presentation, occlusion volumes or room/floor metadata, and a dithered transition where needed.
+When a station wall blocks the camera-to-protagonist view, the opaque wall mesh collapses vertically toward a short 0.45 m base over a brief transition and restores when the view clears. This initial POC uses cached world-space AABBs because the current production wall panels are static and axis-aligned. It is not the production solution for rotated, moving, concave, multi-storey, or deforming environment geometry; later levels should use separately authored cutaway presentation, occlusion volumes or room/floor metadata, and a dithered transition where needed.
 
 The current manual route is: talk to the survivor, choose either response,
 optionally inspect the terminal, cross the opening entry door, defeat the

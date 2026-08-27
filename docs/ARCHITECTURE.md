@@ -104,7 +104,9 @@ The cached-AABB approach is deliberately narrow. It is deterministic, cheap, and
 Commands are explicit C# types under a common gameplay-command contract. The current route implements:
 
 - `SetPauseCommand`.
+- `ChooseProtagonistKitCommand` with the fixed Vanguard POC kit.
 - `MoveActorCommand` with a stable actor ID and world destination.
+- `MovePartyCommand` with stable actor IDs and a formation destination.
 - `InteractCommand` with stable actor and interaction IDs; it includes approach movement when needed.
 - `ChooseDialogueResponseCommand` with stable actor, interaction, and authored response IDs.
 - `AssignBasicAttackTargetCommand` with stable actor and hostile IDs.
@@ -153,9 +155,13 @@ not become an alternate movement authority. See `ATTACK-PRESENTATION.md`.
 
 ## Events and observations
 
-Events are immutable facts with at least an event sequence, simulation tick, event type, and typed data. The runtime retains a bounded recent buffer for tools and presentation. Implemented route events include command acceptance/rejection, primary-action assignment/failure, movement arrival, dialogue and recruitment, interaction completion, objective change, encounter lifecycle, attack wind-up/release, ability release, damage, healing, interruption, combatant defeat, and scenario completion. Cooldowns and item charges are observable state; animation callbacks never emit authoritative combat facts.
+Events are immutable facts with at least an event sequence, simulation tick, event type, and typed data. The runtime retains a bounded recent buffer for tools and presentation. Implemented route events include command acceptance/rejection, protagonist-kit selection, primary-action assignment/failure, movement arrival, dialogue and recruitment, interaction completion, objective change, encounter lifecycle, attack wind-up/release, ability release, damage, healing, interruption, combatant defeat, and scenario completion. Cooldowns and item charges are observable state; animation callbacks never emit authoritative combat facts.
 
-The current observation additionally contains party loadouts and combat state, hostile identity/position/action/health, encounter phase and transition ticks, cooldowns, and item charges. The external automation projection is JSON-safe, snake-case, and versioned at its command boundary.
+The current observation additionally contains available and selected protagonist
+kits, route-power choice, party loadouts and combat state, hostile
+identity/position/action/health, encounter phase and transition ticks,
+cooldowns, and item charges. The external automation projection is JSON-safe,
+snake-case, and versioned at its command boundary.
 
 Use observations and events to answer what happened. Use screenshots and live play to judge composition, readability, animation, art, and input feel.
 
@@ -173,7 +179,17 @@ The POC uses the scripted provider. The current route implements one authored su
 
 ## Automation boundary
 
-The Godot game exposes a stable C# runtime node named `AutomationBridge`. It returns complete route observations, retained events since a sequence with explicit gap metadata, and schema-v3 command acknowledgements. Its JSON adapter supports pause, movement, interaction, dialogue response, basic-attack target, position ability, healing item, and encounter retry commands. Explicit helpers provide pause/resume, exact paused stepping, advancement until a named event with a maximum 3,000-tick budget, stable-ID-to-screen projection, a bounded known-target context-click input hook, and clean shutdown. A fresh process resets the current scenario; retry resets only combat attempt state. The bridge does not expose arbitrary property setters or code evaluation.
+The Godot game exposes a stable C# runtime node named `AutomationBridge`. It
+returns complete route observations, retained events since a sequence with
+explicit gap metadata, and schema-v3 command acknowledgements. Its JSON adapter
+supports protagonist-kit selection, pause, individual and party movement,
+interaction, dialogue response, basic-attack target, position ability, healing
+item, and encounter retry commands. Explicit helpers provide pause/resume,
+exact paused stepping, advancement until a named event with a maximum
+3,000-tick budget, stable-ID-to-screen projection, a bounded known-target
+context-click input hook, and clean shutdown. A fresh process resets the current
+scenario; retry resets only combat attempt state. The bridge does not expose
+arbitrary property setters or code evaluation.
 
 The optional external `godot-ai-plugin` may call those methods and additionally provides scene inspection, real input injection, runtime inspection, and ad hoc viewport capture. Enabling it can temporarily add editor-plugin and autoload entries to `project.godot`; those local entries are not part of the base project. Automated tests and the shipped game do not require the plugin.
 
