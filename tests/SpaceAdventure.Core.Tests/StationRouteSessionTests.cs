@@ -38,7 +38,7 @@ public sealed class StationRouteSessionTests
         Assert.Equal(2, definition.Combat.Attacks.Count);
         Assert.Equal(new EncounterId("encounter.station.solo_tutorial"), definition.Combat.Encounter.Id);
         Assert.Equal(new EntityId("actor.enemy.security_enforcer.solo"), definition.Combat.Hostile.Id);
-        Assert.Equal(140, definition.Combat.Hostile.MaximumHealth);
+        Assert.Equal(100, definition.Combat.Hostile.MaximumHealth);
         Assert.True(definition.Combat.ProtagonistAbility.InterruptsWindup);
 
         var vanguard = Assert.Single(definition.ProtagonistKits);

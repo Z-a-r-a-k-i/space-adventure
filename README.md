@@ -103,7 +103,8 @@ graphical launch. `editor` opens the project editor; `help` lists every option.
   the approach path; a hostile order repeats basic attacks until replaced or
   invalidated.
 - Click the authored dialogue response, or press `1`, `Enter`, or keypad Enter.
-- Press `Space` to toggle tactical pause. Orders issued while paused remain pending and the newest pending primary order replaces the previous one.
+- Press `Space` to toggle tactical pause. Orders issued while paused remain
+  pending and the newest pending primary order replaces the previous one.
 - Press `1`, then left-click a valid world position, to target Suppressive
   Fire; press `Esc` to cancel targeting. Press `2` to use the one-charge Field
   Aid. The encounter pauses automatically when it becomes ready.

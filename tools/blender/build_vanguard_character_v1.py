@@ -36,7 +36,6 @@ ARMED_IDLE_SOURCE = MIXAMO_CACHE / "rifle-aiming-idle-no-skin.fbx"
 ARMED_WALK_SOURCE = MIXAMO_CACHE / "rifle-walk-in-place-no-skin.fbx"
 FIRE_SOURCE = MIXAMO_CACHE / "firing-rifle-no-skin.fbx"
 HOLSTER_SOURCE = MIXAMO_CACHE / "put-back-rifle-no-skin.fbx"
-HIT_SOURCE = MIXAMO_CACHE / "rifle-hit-to-back-no-skin.fbx"
 DOWN_SOURCE = MIXAMO_CACHE / "rifle-death-no-skin.fbx"
 TRIPO_TEXTURE_SOURCE = RUN_ROOT / "raw" / "vanguard-tpose-quad10k-4k.zip"
 BLEND_OUTPUT = (
@@ -77,7 +76,6 @@ ARMED_IDLE_ACTION = "anim.humanoid.idle_armed"
 ARMED_LOCOMOTION_ACTION = "anim.humanoid.locomotion_armed"
 FIRE_ACTION = "anim.humanoid.attack_primary"
 HOLSTER_ACTION = "anim.humanoid.holster_primary"
-HIT_ACTION = "anim.humanoid.hit_reaction"
 DOWN_ACTION = "anim.humanoid.down"
 
 
@@ -113,13 +111,14 @@ def rename_action(
     action: bpy.types.Action,
     name: str,
     source_clip: str,
+    loop_candidate: bool = True,
 ) -> bpy.types.Action:
     action.name = name
     action.use_fake_user = True
     action["source_provider"] = "Mixamo"
     action["source_clip"] = source_clip
     action["root_motion"] = "source-in-place"
-    action["loop_candidate"] = True
+    action["loop_candidate"] = loop_candidate
     return action
 
 
@@ -276,6 +275,7 @@ def load_animation_action(
     name: str,
     source_clip: str,
     end_frame: int | None = None,
+    loop_candidate: bool = True,
 ) -> bpy.types.Action:
     objects, actions = import_fbx(source, global_scale)
     temporary_armature = get_single_armature(objects, source)
@@ -326,7 +326,7 @@ def load_animation_action(
             f"Trimmed donor {source} unexpectedly matches the accepted rest pose"
         )
 
-    action = rename_action(action, name, source_clip)
+    action = rename_action(action, name, source_clip, loop_candidate)
     for obj in objects:
         bpy.data.objects.remove(obj, do_unlink=True)
     if action != actions[0]:
@@ -608,7 +608,6 @@ def validate_exported_glb(path: pathlib.Path) -> dict[str, object]:
         ARMED_LOCOMOTION_ACTION,
         FIRE_ACTION,
         HOLSTER_ACTION,
-        HIT_ACTION,
         DOWN_ACTION,
     }
     if set(actions_by_name) != required_actions:
@@ -624,7 +623,6 @@ def validate_exported_glb(path: pathlib.Path) -> dict[str, object]:
             ARMED_LOCOMOTION_ACTION,
             FIRE_ACTION,
             HOLSTER_ACTION,
-            HIT_ACTION,
         )
     }
     down_action_hips = validate_down_action(armatures[0], actions_by_name[DOWN_ACTION])
@@ -787,7 +785,6 @@ def main() -> None:
         ARMED_WALK_SOURCE,
         FIRE_SOURCE,
         HOLSTER_SOURCE,
-        HIT_SOURCE,
         DOWN_SOURCE,
         TRIPO_TEXTURE_SOURCE,
     ):
@@ -841,20 +838,40 @@ def main() -> None:
         "Standard Walk (In Place)",
     )
     combat_actions = [
-        load_animation_action(DRAW_SOURCE, fbx_global_scale, armature, DRAW_ACTION, "Grab Rifle From Back"),
-        load_animation_action(ARMED_IDLE_SOURCE, fbx_global_scale, armature, ARMED_IDLE_ACTION, "Rifle Aiming Idle"),
-        load_animation_action(ARMED_WALK_SOURCE, fbx_global_scale, armature, ARMED_LOCOMOTION_ACTION, "Rifle Walk (In Place)"),
-        load_animation_action(FIRE_SOURCE, fbx_global_scale, armature, FIRE_ACTION, "Firing Rifle"),
-        load_animation_action(HOLSTER_SOURCE, fbx_global_scale, armature, HOLSTER_ACTION, "Put Back Rifle"),
         load_animation_action(
-            HIT_SOURCE,
+            DRAW_SOURCE,
             fbx_global_scale,
             armature,
-            HIT_ACTION,
-            "Rifle Hit To Back (standing reaction frames 1-10)",
-            end_frame=10,
+            DRAW_ACTION,
+            "Grab Rifle From Back",
+            loop_candidate=False,
         ),
-        load_animation_action(DOWN_SOURCE, fbx_global_scale, armature, DOWN_ACTION, "Rifle Death"),
+        load_animation_action(ARMED_IDLE_SOURCE, fbx_global_scale, armature, ARMED_IDLE_ACTION, "Rifle Aiming Idle"),
+        load_animation_action(ARMED_WALK_SOURCE, fbx_global_scale, armature, ARMED_LOCOMOTION_ACTION, "Rifle Walk (In Place)"),
+        load_animation_action(
+            FIRE_SOURCE,
+            fbx_global_scale,
+            armature,
+            FIRE_ACTION,
+            "Firing Rifle",
+            loop_candidate=False,
+        ),
+        load_animation_action(
+            HOLSTER_SOURCE,
+            fbx_global_scale,
+            armature,
+            HOLSTER_ACTION,
+            "Put Back Rifle",
+            loop_candidate=False,
+        ),
+        load_animation_action(
+            DOWN_SOURCE,
+            fbx_global_scale,
+            armature,
+            DOWN_ACTION,
+            "Rifle Death",
+            loop_candidate=False,
+        ),
     ]
     armature.animation_data_create()
     armature.animation_data.action = idle

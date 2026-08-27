@@ -127,8 +127,9 @@ Status: active. The first bounded solo-tutorial implementation is present on
 repeating Vanguard carbine fire, position-targeted Suppressive Fire, one-charge
 Field Aid, hostile approach/strike behavior, tactical pause, victory-gated
 solo exit, atomic defeat pause, and isolated retry. Reviewed combat clips,
-carbine attachment, telegraph, tracer/impact/pulse effects, core tests, CLI,
-and both victory and defeat Godot smokes are integrated. The later Protector
+carbine attachment, telegraph, tracer/impact/pulse effects, floating damage
+values without hit-reaction animations, core tests, CLI, and both victory and
+defeat Godot smokes are integrated. The later Protector
 combat and gun-sentry encounter remain open.
 
 - Retain the short solo tutorial fight and its victory-gated Protector

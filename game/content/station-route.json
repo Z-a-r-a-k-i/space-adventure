@@ -75,7 +75,7 @@
       {
         "id": "attack.enemy.security_enforcer.body_strike",
         "range_meters": 1.5,
-        "damage": 20,
+        "damage": 15,
         "windup_ticks": 24,
         "recovery_ticks": 36
       }
@@ -102,7 +102,7 @@
       "id": "actor.enemy.security_enforcer.solo",
       "display_name": "Security Enforcer",
       "movement_speed_meters_per_second": 2.1,
-      "maximum_health": 140,
+      "maximum_health": 100,
       "basic_attack_id": "attack.enemy.security_enforcer.body_strike"
     },
     "encounter": {

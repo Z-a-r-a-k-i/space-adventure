@@ -89,9 +89,11 @@ recorded in the production run metadata and source production record.
    and compare sustained Godot movement with the untouched baseline.
 
 The current publication includes holstered idle and locomotion, draw, armed
-idle and locomotion, fire/recoil, holster, hit reaction, and down. Dialogue,
-terminal interaction, and a dedicated healing-use clip remain future polish;
-the solo tutorial uses the fixed-tick contracts in
+idle and locomotion, fire/recoil, holster, and down. Damage feedback uses
+numbers and impact effects; hit-reaction animation is prohibited. Field Aid is
+presented by a validated event-driven green pulse and healing value, without a
+handled prop. Dialogue, terminal interaction, and a dedicated healing-use clip
+remain future polish; the solo tutorial uses the fixed-tick contracts in
 `art/rigs/crew-humanoid-v1.md`.
 
 ## Assembly and approval

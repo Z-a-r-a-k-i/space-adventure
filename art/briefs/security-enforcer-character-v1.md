@@ -53,9 +53,10 @@ for this asset because its no-skin rest representation fails the accepted-rig
 compatibility gate.
 
 The publication includes holstered idle, in-place locomotion, a walk alias,
-the reinforced-right-hand contact socket, melee strike, hit reaction, and
-down. Gameplay owns world movement, target selection, range, timing,
-interruption, contact, and damage; combat clips remain presentation-only.
+the reinforced-right-hand contact socket, melee strike, and down. Damage
+feedback uses numbers and impact effects; hit-reaction animation is prohibited.
+Gameplay owns world movement, target selection, range, timing, interruption,
+contact, and damage; combat clips remain presentation-only.
 
 ## Approval gates
 

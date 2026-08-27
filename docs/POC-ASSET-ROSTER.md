@@ -70,7 +70,12 @@ Required active-party coverage:
 - armed idle, locomotion, raise/aim, fire/recoil, and recovery;
 - dialogue idle, speaking gesture, and listening;
 - terminal interaction and healing use;
-- hit reaction and down.
+- down; damage feedback never requires or plays a hit-reaction clip.
+
+The solo tutorial validates healing use through the authoritative
+`HealingApplied` event, a green pulse, and a floating positive value. A handled
+Field Aid prop and dedicated healing-use animation remain optional future
+polish and are not implied by the current presentation contract.
 
 Vanguard and Protector require two-hand support validation. Operator requires
 one-hand pistol-grip validation only if its deferred scope is reactivated.
@@ -79,8 +84,8 @@ action timing. Ability-specific clips wait for accepted gameplay abilities.
 
 The station survivor selects only dialogue and interaction coverage from the
 shared humanoid contract. The Security Enforcer selects idle, locomotion,
-close-combat stance, wind-up, reinforced-forearm strike, recovery, hit reaction,
-and down. It carries no weapon and publishes
+close-combat stance, wind-up, reinforced-forearm strike, recovery, and down.
+It carries no weapon and publishes
 `socket.attack.contact.primary` at the reviewed striking surface.
 
 ## Static props and environment assemblies

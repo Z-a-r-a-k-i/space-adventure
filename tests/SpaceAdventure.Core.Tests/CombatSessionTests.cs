@@ -68,7 +68,7 @@ public sealed class CombatSessionTests
 
         Assert.Contains(session.EventsSince(0), gameEvent =>
             gameEvent.Type == GameplayEventType.ActionInterrupted);
-        Assert.Equal(110, Observe(session).Hostiles![0].Combat.Health);
+        Assert.Equal(70, Observe(session).Hostiles![0].Combat.Health);
         Assert.Equal(240, Assert.Single(Observe(session).Protagonist.Combat!.Cooldowns).RemainingTicks);
 
         Assert.True(session.Execute(new AssignBasicAttackTargetCommand(
@@ -128,6 +128,35 @@ public sealed class CombatSessionTests
     }
 
     [Fact]
+    public void OneBasicAttackOrderRepeatsWithoutFurtherInput()
+    {
+        var session = CreateAtEncounter();
+        ResumeIntoActiveCombat(session);
+        var commandId = new CommandId("combat.attack.repeating");
+
+        Assert.True(session.Execute(new AssignBasicAttackTargetCommand(
+            commandId,
+            ProtagonistId,
+            EnforcerId)).Accepted);
+
+        AdvanceUntil(
+            session,
+            _ => session.EventsSince(0).Count(gameEvent =>
+                gameEvent.Detail is AttackEventDetail
+                {
+                    SourceId: var sourceId,
+                    Hit: true,
+                }
+                && sourceId == ProtagonistId) >= 2,
+            300);
+
+        var observation = Observe(session);
+        Assert.Equal(80, observation.Hostiles![0].Combat.Health);
+        Assert.Equal(commandId, observation.Protagonist.CurrentAction!.CommandId);
+        Assert.Equal(PrimaryActionKind.Attack, observation.Protagonist.CurrentAction.Kind);
+    }
+
+    [Fact]
     public void FieldAidConsumesOneChargeAndDefeatRetryRestoresOnlyCombatState()
     {
         var session = CreateAtEncounter();
@@ -168,11 +197,11 @@ public sealed class CombatSessionTests
 
         var retried = Observe(session);
         Assert.True(session.IsPaused);
-        Assert.True(session.Tick >= tickBeforeRetry);
+        Assert.Equal(tickBeforeRetry, session.Tick);
         Assert.Equal(EncounterPhase.Readying, retried.Encounter!.Phase);
         Assert.Equal(2, retried.Encounter.Attempt);
         Assert.Equal(100, retried.Protagonist.Combat!.Health);
-        Assert.Equal(140, retried.Hostiles![0].Combat.Health);
+        Assert.Equal(100, retried.Hostiles![0].Combat.Health);
         Assert.Equal(1, Assert.Single(retried.Protagonist.Combat.Items).Charges);
         Assert.Equal(routePower, retried.RoutePowerMode);
         Assert.Equal(entryState, FindInteraction(

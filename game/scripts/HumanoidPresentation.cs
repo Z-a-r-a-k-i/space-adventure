@@ -9,7 +9,6 @@ public enum HumanoidPresentationAction
     DialogueSpeak,
     DialogueListen,
     MeleeStrike,
-    HitReaction,
     Down,
 }
 
@@ -29,9 +28,6 @@ public partial class HumanoidPresentation : Node3D
 
     [Export]
     public string MeleeStrikeAnimationName { get; set; } = string.Empty;
-
-    [Export]
-    public string HitReactionAnimationName { get; set; } = string.Empty;
 
     [Export]
     public string DownAnimationName { get; set; } = string.Empty;
@@ -126,7 +122,6 @@ public partial class HumanoidPresentation : Node3D
                 (DialogueSpeakAnimationName, true),
                 (DialogueListenAnimationName, true),
                 (MeleeStrikeAnimationName, false),
-                (HitReactionAnimationName, false),
                 (DownAnimationName, false),
             }
             .Where(entry => !string.IsNullOrWhiteSpace(entry.Item1))
@@ -180,7 +175,6 @@ public partial class HumanoidPresentation : Node3D
             HumanoidPresentationAction.DialogueSpeak => DialogueSpeakAnimationName,
             HumanoidPresentationAction.DialogueListen => DialogueListenAnimationName,
             HumanoidPresentationAction.MeleeStrike => MeleeStrikeAnimationName,
-            HumanoidPresentationAction.HitReaction => HitReactionAnimationName,
             HumanoidPresentationAction.Down => DownAnimationName,
             _ => throw new ArgumentOutOfRangeException(nameof(action), action, null),
         };

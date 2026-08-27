@@ -338,16 +338,19 @@ airlock remain locked.
 
 Vanguard's carbine uses a 9-tick wind-up and 21-tick recovery. Suppressive Fire
 uses an 18-tick wind-up, 24-tick recovery, 240-tick cooldown, 9 m range, 2 m
-radius, 30 damage, and interrupts an active hostile wind-up. The Enforcer body
-strike uses a 24-tick wind-up and 36-tick recovery. Encounter readying and
-securing each use 42 ticks. These values are authoritative content, not
-animation durations.
+radius, 30 damage, and interrupts an active hostile wind-up. The Enforcer has
+100 maximum health; its body strike deals 15 damage with a 24-tick wind-up and
+36-tick recovery. Encounter readying and securing each use 42 ticks. These
+values are authoritative content, not animation durations.
 
-Godot maps observations and typed release/damage/interruption events to the
-published carbine, reviewed Mixamo clips, melee ring, tracer, impact, and
-ability pulse. Weapon attachment derives from encounter phase and is rebuilt
-on synchronization. Animation callbacks, sockets, physical contact, effects,
-and root motion never resolve gameplay. The Vanguard combat donors use a
+Godot maps observations and typed release/damage/interruption/healing events to
+the published carbine, reviewed Mixamo clips, melee ring, tracer, impact,
+floating damage values, ability pulse, and the Field Aid green pulse with a
+floating positive value. Damage never selects a hit-reaction animation, for
+normal attacks or abilities. Weapon attachment derives from encounter phase
+and is rebuilt on synchronization. Animation callbacks, sockets, physical
+contact, effects, and root motion never resolve gameplay.
+The Vanguard combat donors use a
 strict Blender local-basis bake with armature-space root displacement from
 Mixamo no-skin FBX files; the Enforcer uses
 matching-with-skin donors after its no-skin rest representation failed the

@@ -79,15 +79,21 @@ resynchronization. Animation callbacks never apply gameplay effects.
 | Vanguard ready/draw | 42 ticks | `Grab Rifle From Back`, scaled to the phase; transfer to hand at 48% |
 | Vanguard carbine shot | 9-tick wind-up + 21-tick recovery | `Firing Rifle`, release aligned to wind-up completion; armed idle during recovery |
 | Suppressive Fire | 18-tick wind-up + 24-tick recovery, 240-tick cooldown | the same reviewed rifle release slowed to the authoritative release; Godot renders the 2 m target pulse |
-| Enforcer body strike | 24-tick wind-up + 36-tick recovery | `Right Hook` at 1.42×, contact aligned to wind-up completion |
+| Enforcer body strike | 15 damage; 24-tick wind-up + 36-tick recovery | telegraph/idle for the early wind-up, then `Right Hook` frames 1–10 at 1× during the final nine ticks so contact aligns to release |
 | Victory secure/holster | 42 ticks | `Put Back Rifle`, transfer to upper-back socket at 58% |
 
-Vanguard also publishes `Rifle Aiming Idle`, in-place `Rifle Walk`, `Rifle Hit
-To Back`, and `Rifle Death`. The Enforcer publishes `Hit Reaction` and
-`Falling Back Death`. Presentation reads observations and typed release,
-damage, interruption, victory, and defeat events. Muzzle flashes, tracers,
-ability pulse, impact flashes, and the melee wind-up ring are short Godot-only
-effects; none resolve damage.
+Vanguard also publishes `Rifle Aiming Idle`, in-place `Rifle Walk`, and `Rifle
+Death`. The Enforcer publishes `Falling Back Death`. Presentation reads
+observations and typed release, damage, interruption, victory, and defeat
+events. Damage never selects a hit-reaction animation: floating values, health
+changes, and impact flashes provide the feedback for normal and special hits.
+Muzzle flashes, tracers, ability pulse, impact flashes, and the melee wind-up
+ring are short Godot-only effects; none resolve damage.
+
+Field Aid follows the same authority boundary: `HealingApplied` spawns a short
+green pulse and a floating positive value at the target. The effect validates
+the current healing presentation without requiring a handled prop or skeletal
+healing clip, and it never changes health itself.
 
 ## Brief requirements
 

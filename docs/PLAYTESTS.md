@@ -69,15 +69,19 @@ Launch `station-route-v6` at 1920×1080 and verify from a fresh process:
 1. Complete the survivor exchange and cross the entry service door. Confirm
    the Enforcer encounter starts once, draws the Vanguard carbine, and pauses
    automatically in the ready state.
-2. Right-click the Enforcer and resume. Confirm Vanguard approaches into range,
-   faces the target, fires repeatedly, and does not slide or resolve damage from
-   animation contact.
+2. While still paused, right-click the Enforcer and confirm the repeating
+   attack is pending without advancing time. Press `Space`; Vanguard must then
+   approach into range, face the target, and fire repeatedly without another
+   click. Normal hits display `-10` over the Enforcer and `-15` over Vanguard;
+   neither combatant plays a hit-reaction animation.
 3. During an Enforcer wind-up, pause, press `1`, left-click its position, and
    resume. Confirm Suppressive Fire has a readable preview, release pulse,
-   cooldown, and interrupts that wind-up exactly once.
+   `-30` damage value, cooldown, and interrupts that wind-up exactly once
+   without playing a hit-reaction animation.
 4. Allow Vanguard to take damage and press `2`. Confirm Field Aid consumes its
-   only charge and heals once. Exercise pause during draw, attack, impact, and
-   hostile strike; animation and transient effects must freeze coherently.
+   only charge, heals once, and displays one green pulse with a floating
+   positive value. Exercise pause during draw, attack, impact, and hostile
+   strike; animation and transient effects must freeze coherently.
 5. Win once. Confirm the Enforcer down pose, Vanguard holster sequence, cyan far
    door, collision/navigation unblock, and Protector becoming observable but
    still unavailable after crossing.

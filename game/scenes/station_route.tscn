@@ -292,7 +292,6 @@ script = ExtResource("11_humanoid_presentation")
 IdleAnimationName = "anim_humanoid_idle_holstered"
 LocomotionAnimationName = "anim_humanoid_walk_holstered"
 MeleeStrikeAnimationName = "anim_humanoid_melee_strike"
-HitReactionAnimationName = "anim_humanoid_hit_reaction"
 DownAnimationName = "anim_humanoid_down"
 [node name="Model" parent="Hostiles/SecurityEnforcer/Presentation" instance=ExtResource("12_enforcer")]
 [node name="TargetBody" type="StaticBody3D" parent="Hostiles/SecurityEnforcer"]

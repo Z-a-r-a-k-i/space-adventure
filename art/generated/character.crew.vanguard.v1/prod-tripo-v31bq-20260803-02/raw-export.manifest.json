@@ -112,14 +112,6 @@
           "selection_state": "accepted holster donor after local-basis Blender retarget bake with armature-space root displacement"
         },
         {
-          "filename": "rifle-hit-to-back-no-skin.fbx",
-          "format": "FBX Binary",
-          "settings": "Rifle Hit To Back; without skin; 30 fps; Overdrive 50; Character Arm-Space 50; no keyframe reduction",
-          "cache_relative_path": "raw/mixamo/rifle-hit-to-back-no-skin.fbx",
-          "bytes": 255504,
-          "selection_state": "accepted hit-reaction donor; publication uses standing reaction frames 1-10 after local-basis Blender retarget bake"
-        },
-        {
           "filename": "rifle-death-no-skin.fbx",
           "format": "FBX Binary",
           "settings": "Rifle Death; without skin; 30 fps; Overdrive 50; Character Arm-Space 50; no keyframe reduction",

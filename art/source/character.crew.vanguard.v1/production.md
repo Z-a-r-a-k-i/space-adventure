@@ -25,7 +25,7 @@ Mixamo exports used:
 - `Standard Walk`, In Place, FBX Binary with skin, 30 fps, 36 frames,
   Overdrive 50, Character Arm-Space 50, 39,568,832 bytes.
 - `Grab Rifle From Back`, `Rifle Aiming Idle`, in-place `Rifle Walk`,
-  `Firing Rifle`, `Put Back Rifle`, `Rifle Hit To Back`, and `Rifle Death`,
+  `Firing Rifle`, `Put Back Rifle`, and `Rifle Death`,
   FBX Binary without skin at 30 fps, no keyframe reduction, Overdrive 50, and
   Character Arm-Space 50.
 
@@ -70,8 +70,6 @@ weapon sockets, and publishes:
 - `anim.humanoid.locomotion_armed` from in-place `Rifle Walk`;
 - `anim.humanoid.attack_primary` from `Firing Rifle`;
 - `anim.humanoid.holster_primary` from `Put Back Rifle`;
-- `anim.humanoid.hit_reaction` from standing reaction frames 1-10 of
-  `Rifle Hit To Back`; and
 - `anim.humanoid.down` from `Rifle Death`.
 
 Blender 5.2's native FBX importer is used. Because Mixamo leaves the metallic
@@ -89,9 +87,8 @@ Every vertex is weighted and no vertex has more than four influences. Fresh
 GLB reimport now requires all standing combat actions to keep the evaluated
 hips at or above 0.75 m. The accepted ranges are 1.08575-1.12574 m for draw,
 1.12368-1.12684 m for armed idle, 1.05630-1.13378 m for armed locomotion,
-1.12347-1.12389 m for fire, 1.11231-1.15027 m for holster, and
-0.84942-1.12388 m for the trimmed hit reaction. The down clip ends at
-0.19554 m from a 1.12388 m standing start.
+1.12347-1.12389 m for fire, and 1.11231-1.15027 m for holster. The down
+clip ends at 0.19554 m from a 1.12388 m standing start.
 
 Full-cycle evaluated world-space validation records horizontal hip ranges of
 0.05113 m and 0.06218 m, loop endpoint delta 0.0 m, vertical hip range
@@ -102,11 +99,14 @@ exported GLB passes the same validation after fresh Blender reimport.
 
 Godot imports the GLB's embedded images as Basis Universal data and sanitizes
 the canonical dotted action names to underscore-separated AnimationPlayer
-names. `VanguardPresentation` strictly requires all ten actions, attaches the
-published carbine to the hand or upper-back socket from observed encounter
-state, scales draw/fire/holster playback to the authoritative fixed-tick
-phases, faces the observed target or movement direction, and freezes playback
-during tactical pause. Animation callbacks never change gameplay.
+names. The GLB publishes nine actions. `VanguardPresentation` strictly requires
+the eight runtime-selected actions; `anim.humanoid.locomotion_holstered` is a
+non-required compatibility alias of `anim.humanoid.walk_holstered`. The
+presentation attaches the published carbine to the hand or upper-back socket
+from observed encounter state, scales draw/fire/holster playback to the
+authoritative fixed-tick phases, faces the observed target or movement
+direction, and freezes playback during tactical pause. Animation callbacks
+never change gameplay.
 
 Before Blender publication, the untouched with-skin Standard Walk FBX passed a
 direct ignored Godot baseline: the character remained grounded and visibly

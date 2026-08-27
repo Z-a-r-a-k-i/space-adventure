@@ -13,7 +13,6 @@ public partial class VanguardPresentation : Node3D
     private static readonly StringName LocomotionArmed = "anim_humanoid_locomotion_armed";
     private static readonly StringName AttackPrimary = "anim_humanoid_attack_primary";
     private static readonly StringName HolsterPrimary = "anim_humanoid_holster_primary";
-    private static readonly StringName HitReaction = "anim_humanoid_hit_reaction";
     private static readonly StringName Down = "anim_humanoid_down";
 
     private AnimationPlayer _animationPlayer = null!;
@@ -41,7 +40,6 @@ public partial class VanguardPresentation : Node3D
             (LocomotionArmed, true),
             (AttackPrimary, false),
             (HolsterPrimary, false),
-            (HitReaction, false),
             (Down, false),
         })
         {
@@ -58,8 +56,7 @@ public partial class VanguardPresentation : Node3D
         bool paused,
         Vector3 direction,
         EncounterObservation? encounter,
-        PrimaryActionObservation? currentAction,
-        bool reactingToHit)
+        PrimaryActionObservation? currentAction)
     {
         Visible = active;
         if (!active)
@@ -91,10 +88,6 @@ public partial class VanguardPresentation : Node3D
                     {
                         animation = AttackPrimary;
                         speed = SpeedForTicks(AttackPrimary, currentAction.PhaseTicksTotal);
-                    }
-                    else if (reactingToHit)
-                    {
-                        animation = HitReaction;
                     }
                     else
                     {

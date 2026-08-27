@@ -63,12 +63,6 @@
       "selection_state": "accepted melee-strike donor; matching rest-pose exception"
     },
     {
-      "cache_relative_path": "raw/candidate-01/mixamo/hit-reaction-with-skin.fbx",
-      "bytes": 35623696,
-      "settings": "Hit Reaction; Direction 100; Strength 100; Overdrive 50; Character Arm-Space 50; 30 fps; no keyframe reduction; with skin",
-      "selection_state": "accepted hit-reaction donor; matching rest-pose exception"
-    },
-    {
       "cache_relative_path": "raw/candidate-01/mixamo/falling-back-death-with-skin.fbx",
       "bytes": 35681360,
       "settings": "Falling Back Death; Overdrive 50; Character Arm-Space 50; 30 fps; no keyframe reduction; with skin",

@@ -65,7 +65,6 @@ anim.humanoid.dialogue_speak
 anim.humanoid.dialogue_listen
 anim.humanoid.interact_terminal
 anim.humanoid.use_healing
-anim.humanoid.hit_reaction
 anim.humanoid.down
 anim.humanoid.melee_idle
 anim.humanoid.melee_windup
@@ -76,6 +75,8 @@ anim.humanoid.melee_recovery
 Draw and holster use `event.weapon.transfer_to_hand` and
 `event.weapon.transfer_to_holster`. Combat clips are in-place. Final timings
 and ability-specific animation remain blocked until gameplay defines them.
+Hit-reaction animation is not part of the contract and must never be played;
+damage is presented through values, health changes, and impact effects.
 
 Use Mixamo `Standard Walk`, In Place, Overdrive 50, Character Arm-Space 50,
 30 fps, and no keyframe reduction as the default exploration walk donor.

@@ -38,7 +38,6 @@ script = ExtResource("2_presentation")
 IdleAnimationName = "anim_humanoid_idle_holstered"
 LocomotionAnimationName = "anim_humanoid_locomotion_holstered"
 MeleeStrikeAnimationName = "anim_humanoid_melee_strike"
-HitReactionAnimationName = "anim_humanoid_hit_reaction"
 DownAnimationName = "anim_humanoid_down"
 [node name="Model" parent="Slots/EnforcerIdlePresentation" instance=ExtResource("3_enforcer")]
 
