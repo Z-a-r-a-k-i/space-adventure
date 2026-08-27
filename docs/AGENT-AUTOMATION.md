@@ -27,6 +27,8 @@ pwsh -NoProfile -File scripts/dev.ps1 import
 pwsh -NoProfile -File scripts/dev.ps1 headless -Name bootstrap
 pwsh -NoProfile -File scripts/dev.ps1 headless -Name station-route
 pwsh -NoProfile -File scripts/dev.ps1 headless -Name station-combat-defeat
+pwsh -NoProfile -File scripts/dev.ps1 headless -Name humanoid-gallery
+pwsh -NoProfile -File scripts/dev.ps1 headless -Name hostile-gallery
 pwsh -NoProfile -File scripts/dev.ps1 capture -Name wall-cutaway
 pwsh -NoProfile -File scripts/dev.ps1 editor
 pwsh -NoProfile -File scripts/dev.ps1 run
@@ -55,15 +57,29 @@ The Godot host exposes a stable C# node named `AutomationBridge` after the autho
 The command envelope always contains `schema_version`, `command_id`, `type`, and an object `payload`. Implemented command types are:
 
 ```json
+{"schema_version":3,"command_id":"example.kit","type":"choose_protagonist_kit","payload":{"kit_id":"kit.protagonist.vanguard"}}
 {"schema_version":3,"command_id":"example.pause","type":"set_pause","payload":{"paused":true}}
 {"schema_version":3,"command_id":"example.move","type":"move_actor","payload":{"actor_id":"actor.protagonist","destination":{"x":-10.0,"y":0.0,"z":2.75}}}
+{"schema_version":3,"command_id":"example.party","type":"move_party","payload":{"actor_ids":["actor.protagonist"],"destination":{"x":-10.0,"y":0.0,"z":2.75}}}
+{"schema_version":3,"command_id":"example.interact","type":"interact","payload":{"actor_id":"actor.protagonist","target_id":"interaction.survivor"}}
+{"schema_version":3,"command_id":"example.response","type":"choose_dialogue_response","payload":{"actor_id":"actor.protagonist","interaction_id":"interaction.survivor","response_id":"response.reroute_service_power"}}
 {"schema_version":3,"command_id":"example.attack","type":"assign_basic_attack_target","payload":{"actor_id":"actor.protagonist","target_id":"actor.enemy.security_enforcer.solo"}}
 {"schema_version":3,"command_id":"example.ability","type":"use_ability","payload":{"actor_id":"actor.protagonist","ability_id":"ability.crew.vanguard.suppressive_fire","target_position":{"x":-10.0,"y":0.0,"z":-1.4}}}
 {"schema_version":3,"command_id":"example.item","type":"use_item","payload":{"actor_id":"actor.protagonist","item_id":"item.healing.field_aid.v1","target_actor_id":"actor.protagonist"}}
 {"schema_version":3,"command_id":"example.retry","type":"restart_encounter","payload":{"encounter_id":"encounter.station.solo_tutorial"}}
 ```
 
-The observation projection uses snake-case JSON and contains tick, pause state, scenario/content identity, party and hostile combat state, current/pending actions with phases and remaining ticks, encounter phase, cooldowns, item charges, objectives, interactions, and dialogue. Event projections include typed encounter, attack, ability, damage, healing, interruption, and defeat details. The adapter returns JSON-safe values and stable error codes; it never exposes arbitrary property mutation, script evaluation, node deletion, unrestricted method invocation, or private core state. Encounter retry is a narrow gameplay command, not a scenario-reset backdoor.
+The observation projection uses snake-case JSON and contains tick, pause state,
+latest event sequence, scenario/content identity, party and hostile combat
+state, positions, current/pending actions with phases and remaining ticks,
+available and selected protagonist kits, route-power choice, encounter phase,
+cooldowns, item charges, objectives, interactions, and dialogue. Event
+projections include typed kit-selection, route, encounter, attack, ability,
+damage, healing, interruption, recruitment, victory, and defeat details. The
+adapter returns JSON-safe values and stable error codes; it never exposes
+arbitrary property mutation, script evaluation, node deletion, unrestricted
+method invocation, or private core state. Encounter retry is a narrow gameplay
+command, not a scenario-reset backdoor.
 
 Automation commands name stable actor and target IDs. They do not depend on UI selection or incidental node paths.
 
@@ -107,7 +123,17 @@ The plugin is a development accelerator, not a game dependency. Create its ignor
 
 For the station route, use `GetScreenPositionJson(stableId)` to locate a known 3D target. An OS-level control tool or a human can right-click that viewport position; when no pointer injector is available, `InjectContextClickJson(stableId)` sends the same Godot mouse event through ray picking and the normal input-to-command path. The helper confirms only that the input was injected. Read events after its returned `event_sequence_before` and require the expected `input.*` command acknowledgement before treating the click as successful. The current graphical path is survivor → optional terminal → auto-opening entry door → solo fight → victory-gated exit → Protector. Verify both victory and retry after defeat. The agent check must include graphical input events, while an independent human check remains the proof of physical pointer usability and feel.
 
-Current controls are right-click for movement, interaction, or a repeating basic-attack target. Orders issued during tactical pause remain pending until `Space` resumes the simulation. `1` enters Suppressive Fire position targeting and left-click confirms it; `2` queues Field Aid; Escape cancels ability targeting; Space toggles tactical pause. Camera-relative WASD/arrows pan, Q/E or middle drag yaw, Page Up/Page Down or vertical middle drag pitch, wheel zooms, Home/R resets orientation, and F focuses the protagonist. The opening camera focus is Vanguard's spawn. `E` is camera yaw, not an interaction shortcut.
+Current controls are right-click for movement, interaction, or a repeating
+basic-attack target. During dialogue, `1` or `2` chooses the corresponding
+authored response, Enter/keypad Enter chooses the first response, and either
+visible response button can be clicked. Outside dialogue, `1` enters
+Suppressive Fire position targeting and left-click confirms it; `2` queues
+Field Aid; Escape cancels ability targeting. Orders issued during tactical
+pause remain pending until `Space` resumes the simulation. Camera-relative
+WASD/arrows pan, Q/E or middle drag yaw, Page Up/Page Down or vertical middle
+drag pitch, the wheel zooms, Home/R resets orientation, and F focuses the
+protagonist. Vanguard is deployed automatically and receives the opening camera
+focus. `E` is camera yaw, not an interaction shortcut.
 
 Short visual effects are poor synchronization points. Drive the game to a structured event or stable review state, then capture the viewport. Record the scenario, event sequence, camera profile, resolution, and screenshot path with visual-test artifacts.
 
@@ -134,7 +160,12 @@ Every change to scenes, camera, UI, shaders, materials, models, animation, effec
 
 Headless success alone cannot validate clipping, scale, composition, selection feedback, target clarity, animation, or usability.
 
-Phase 2 provides the automated and agent-controlled graphical verification path, including the deterministic wall-cutaway capture, but its exit gate remains open until a human independently completes the real route, checks wall visibility while moving and rotating the camera, and any usability blocker is corrected. Do not treat automated completion or a passing capture manifest as authorization to begin Phase 3.
+Phase 2 provides the automated and agent-controlled graphical verification
+path, including the deterministic wall-cutaway capture, and its independent
+human exit gate passed on 2026-07-24. The production-presented Phase 3 route and
+Phase 4 solo fight have separate owner-operated camera, door, route-feel, and
+combat-readability checks in `docs/PLAYTESTS.md`; automated victory, defeat, or
+capture evidence must not be reported as that human approval.
 
 ## Parallel-agent workflow
 

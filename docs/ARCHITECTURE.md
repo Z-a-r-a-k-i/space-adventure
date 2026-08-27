@@ -104,7 +104,9 @@ The cached-AABB approach is deliberately narrow. It is deterministic, cheap, and
 Commands are explicit C# types under a common gameplay-command contract. The current route implements:
 
 - `SetPauseCommand`.
+- `ChooseProtagonistKitCommand` with the fixed Vanguard POC kit.
 - `MoveActorCommand` with a stable actor ID and world destination.
+- `MovePartyCommand` with stable actor IDs and a formation destination.
 - `InteractCommand` with stable actor and interaction IDs; it includes approach movement when needed.
 - `ChooseDialogueResponseCommand` with stable actor, interaction, and authored response IDs.
 - `AssignBasicAttackTargetCommand` with stable actor and hostile IDs.
@@ -153,9 +155,13 @@ not become an alternate movement authority. See `ATTACK-PRESENTATION.md`.
 
 ## Events and observations
 
-Events are immutable facts with at least an event sequence, simulation tick, event type, and typed data. The runtime retains a bounded recent buffer for tools and presentation. Implemented route events include command acceptance/rejection, primary-action assignment/failure, movement arrival, dialogue and recruitment, interaction completion, objective change, encounter lifecycle, attack wind-up/release, ability release, damage, healing, interruption, combatant defeat, and scenario completion. Cooldowns and item charges are observable state; animation callbacks never emit authoritative combat facts.
+Events are immutable facts with at least an event sequence, simulation tick, event type, and typed data. The runtime retains a bounded recent buffer for tools and presentation. Implemented route events include command acceptance/rejection, protagonist-kit selection, primary-action assignment/failure, movement arrival, dialogue and recruitment, interaction completion, objective change, encounter lifecycle, attack wind-up/release, ability release, damage, healing, interruption, combatant defeat, and scenario completion. Cooldowns and item charges are observable state; animation callbacks never emit authoritative combat facts.
 
-The current observation additionally contains party loadouts and combat state, hostile identity/position/action/health, encounter phase and transition ticks, cooldowns, and item charges. The external automation projection is JSON-safe, snake-case, and versioned at its command boundary.
+The current observation additionally contains available and selected protagonist
+kits, route-power choice, party loadouts and combat state, hostile
+identity/position/action/health, encounter phase and transition ticks,
+cooldowns, and item charges. The external automation projection is JSON-safe,
+snake-case, and versioned at its command boundary.
 
 Use observations and events to answer what happened. Use screenshots and live play to judge composition, readability, animation, art, and input feel.
 
@@ -169,11 +175,21 @@ Do not add a database, spreadsheet import service, generic graph editor, or mod 
 
 A dialogue provider receives a bounded request containing only relevant world facts, conversation state, allowed intents, and permitted moves. It returns a structured proposal. Deterministic validators check identity, revisions, knowledge, references, size limits, intents, and state-transition preconditions. Accepted effects become ordinary gameplay commands or authored state transitions.
 
-The POC uses the scripted provider. The current route implements one authored survivor line and two authored responses, selected through `ChooseDialogueResponseCommand`; either response atomically completes the survivor interaction, records the route-power choice, advances the objective, and makes the entry service door available. Moving through its unlocked navigation link completes and opens the door on approach, then advances to and triggers the solo tutorial encounter. Combat victory makes the far service door available; crossing it advances to the still-locked Protector-recruitment threshold. These explicit effects are intentionally not a branching dialogue or generic gate framework. An optional local development provider may later invoke the official Codex CLI with ChatGPT sign-in; manual-inbox and recorded providers support inspection and deterministic replay. These are experiment tools, not dependencies of the playable scenario. Model, reasoning effort, and Fast mode are independent per-request profile settings and never enter authoritative or saved gameplay state. See `DIALOGUE-AI.md`.
+The POC uses the scripted provider. The current route implements one authored survivor line and two authored responses, selected through `ChooseDialogueResponseCommand`; either response atomically completes the survivor interaction, records the route-power choice, advances the objective, and makes the entry service door available. Moving through its unlocked navigation link completes and opens the door on approach, then advances to and triggers the solo tutorial encounter. Combat victory makes the far service door available; crossing it makes the authored Protector recruitment interaction available. Choosing its recruitment response adds the Protector to the party, while the following main encounter and final airlock remain locked. These explicit effects are intentionally not a branching dialogue or generic gate framework. An optional local development provider may later invoke the official Codex CLI with ChatGPT sign-in; manual-inbox and recorded providers support inspection and deterministic replay. These are experiment tools, not dependencies of the playable scenario. Model, reasoning effort, and Fast mode are independent per-request profile settings and never enter authoritative or saved gameplay state. See `DIALOGUE-AI.md`.
 
 ## Automation boundary
 
-The Godot game exposes a stable C# runtime node named `AutomationBridge`. It returns complete route observations, retained events since a sequence with explicit gap metadata, and schema-v3 command acknowledgements. Its JSON adapter supports pause, movement, interaction, dialogue response, basic-attack target, position ability, healing item, and encounter retry commands. Explicit helpers provide pause/resume, exact paused stepping, advancement until a named event with a maximum 3,000-tick budget, stable-ID-to-screen projection, a bounded known-target context-click input hook, and clean shutdown. A fresh process resets the current scenario; retry resets only combat attempt state. The bridge does not expose arbitrary property setters or code evaluation.
+The Godot game exposes a stable C# runtime node named `AutomationBridge`. It
+returns complete route observations, retained events since a sequence with
+explicit gap metadata, and schema-v3 command acknowledgements. Its JSON adapter
+supports protagonist-kit selection, pause, individual and party movement,
+interaction, dialogue response, basic-attack target, position ability, healing
+item, and encounter retry commands. Explicit helpers provide pause/resume,
+exact paused stepping, advancement until a named event with a maximum
+3,000-tick budget, stable-ID-to-screen projection, a bounded known-target
+context-click input hook, and clean shutdown. A fresh process resets the current
+scenario; retry resets only combat attempt state. The bridge does not expose
+arbitrary property setters or code evaluation.
 
 The optional external `godot-ai-plugin` may call those methods and additionally provides scene inspection, real input injection, runtime inspection, and ad hoc viewport capture. Enabling it can temporarily add editor-plugin and autoload entries to `project.godot`; those local entries are not part of the base project. Automated tests and the shipped game do not require the plugin.
 

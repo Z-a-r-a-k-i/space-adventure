@@ -12,9 +12,9 @@ The current main scene is a production-presented authored station route, not
 the complete 8–12 minute POC. Vanguard speaks to the survivor, crosses the
 entry service door, and fights one Security Enforcer using repeating carbine
 fire, position-targeted Suppressive Fire, Field Aid, and tactical pause.
-Victory unlocks the far service door and exposes the deferred Protector
-recruitment threshold. The later two-character encounter and final airlock
-completion remain locked.
+Victory unlocks the far service door; crossing it makes the Protector
+recruitment interaction available. The later two-character encounter and
+final airlock completion remain locked.
 
 The next milestone work is graphical acceptance and tuning of the solo fight,
 then Protector combat and the main encounter. Milestone sequencing remains in
@@ -24,7 +24,7 @@ then Protector combat and the main encounter. Milestone sequencing remains in
 
 - Godot 4.7.1 Mono, Forward+ renderer, Windows desktop first.
 - C# game code with a pure `SpaceAdventure.Core` rules project.
-- An authored 8–12 minute greybox demo before roguelite or procedural systems.
+- An authored 8–12 minute production-presented demo before roguelite or procedural systems.
 - A two-character party for the POC, beginning with the player alone.
 - One typed command path shared by UI, automation, scenarios, and future replays.
 - Structured tests plus real graphical playtests and screenshot inspection.
@@ -80,6 +80,7 @@ pwsh -NoProfile -File scripts/dev.ps1 import
 pwsh -NoProfile -File scripts/dev.ps1 headless -Name bootstrap
 pwsh -NoProfile -File scripts/dev.ps1 headless -Name station-route
 pwsh -NoProfile -File scripts/dev.ps1 headless -Name station-combat-defeat
+pwsh -NoProfile -File scripts/dev.ps1 headless -Name humanoid-gallery
 pwsh -NoProfile -File scripts/dev.ps1 headless -Name hostile-gallery
 pwsh -NoProfile -File scripts/dev.ps1 capture -Name wall-cutaway
 pwsh -NoProfile -File scripts/dev.ps1 run
@@ -102,7 +103,8 @@ graphical launch. `editor` opens the project editor; `help` lists every option.
   the relevant contextual order. A distant interaction automatically includes
   the approach path; a hostile order repeats basic attacks until replaced or
   invalidated.
-- Click the authored dialogue response, or press `1`, `Enter`, or keypad Enter.
+- Click either authored dialogue response, press `1` or `2` for the
+  corresponding response, or use Enter/keypad Enter for the first response.
 - Press `Space` to toggle tactical pause. Orders issued while paused remain
   pending and the newest pending primary order replaces the previous one.
 - Press `1`, then left-click a valid world position, to target Suppressive
@@ -111,13 +113,13 @@ graphical launch. `editor` opens the project editor; `help` lists every option.
 - Use `WASD` or the arrow keys to pan; `Q`/`E` or middle-mouse drag to rotate; Page Up/Page Down or vertical middle-mouse drag to adjust pitch; and the wheel to zoom.
 - Press `Home` or `R` to reset camera orientation and `F` to focus the protagonist.
 
-When a station wall blocks the camera-to-protagonist view, the opaque wall mesh collapses vertically toward a short 0.45 m base over a brief transition and restores when the view clears. This initial POC uses cached world-space AABBs because the current walls are static, axis-aligned greybox boxes. It is not the production solution for rotated, moving, concave, multi-storey, decorated, or imported environment geometry; later levels should use separately authored cutaway presentation, occlusion volumes or room/floor metadata, and a dithered transition where needed.
+When a station wall blocks the camera-to-protagonist view, the opaque wall mesh collapses vertically toward a short 0.45 m base over a brief transition and restores when the view clears. This initial POC uses cached world-space AABBs because the current production wall panels are static and axis-aligned. It is not the production solution for rotated, moving, concave, multi-storey, or deforming environment geometry; later levels should use separately authored cutaway presentation, occlusion volumes or room/floor metadata, and a dithered transition where needed.
 
 The current manual route is: talk to the survivor, choose either response,
 optionally inspect the terminal, cross the opening entry door, defeat the
 Security Enforcer, and cross the newly unlocked far service door. Protector is
-then observable but recruitment and the final airlock remain deliberately
-locked for the next Phase 4 slice.
+then available for recruitment, while the later two-character encounter and
+final airlock remain deliberately locked for the next Phase 4 slice.
 
 For graphical agent control, `plugin-link` creates an ignored junction to the external `addons/godot_ai` directory. Override its source with `-GodotAiPlugin` or `SPACE_ADVENTURE_GODOT_AI_PLUGIN`. Then open `editor` and enable **Godot AI Control** in Project Settings → Plugins.
 
