@@ -23,6 +23,26 @@ public enum PrimaryActionKind
 {
     Move,
     Interact,
+    Attack,
+    Ability,
+    Item,
+}
+
+public enum PrimaryActionPhase
+{
+    Moving,
+    Windup,
+    Recovery,
+}
+
+public enum EncounterPhase
+{
+    Dormant,
+    Readying,
+    Active,
+    Securing,
+    Victory,
+    Defeat,
 }
 
 public enum InteractionState
@@ -69,7 +89,26 @@ public sealed record PrimaryActionObservation(
     PrimaryActionKind Kind,
     WorldPosition Destination,
     bool HasRemainingMovement,
-    EntityId? InteractionTargetId);
+    EntityId? InteractionTargetId,
+    EntityId? CombatTargetId = null,
+    AttackId? AttackId = null,
+    AbilityId? AbilityId = null,
+    ItemId? ItemId = null,
+    PrimaryActionPhase Phase = PrimaryActionPhase.Moving,
+    int PhaseTicksRemaining = 0,
+    int PhaseTicksTotal = 0);
+
+public sealed record CooldownObservation(AbilityId AbilityId, int RemainingTicks, int TotalTicks);
+
+public sealed record ItemChargeObservation(ItemId ItemId, int Charges);
+
+public sealed record CombatantStateObservation(
+    int Health,
+    int MaximumHealth,
+    bool IsDefeated,
+    AttackId BasicAttackId,
+    IReadOnlyList<CooldownObservation> Cooldowns,
+    IReadOnlyList<ItemChargeObservation> Items);
 
 public sealed record ActorObservation(
     EntityId Id,
@@ -77,7 +116,24 @@ public sealed record ActorObservation(
     PartyMemberLoadoutObservation? Loadout,
     WorldPosition Position,
     PrimaryActionObservation? CurrentAction,
-    PrimaryActionObservation? PendingAction);
+    PrimaryActionObservation? PendingAction,
+    CombatantStateObservation? Combat = null);
+
+public sealed record HostileObservation(
+    EntityId Id,
+    string DisplayName,
+    WorldPosition Position,
+    double MovementSpeedMetersPerSecond,
+    CombatantStateObservation Combat,
+    PrimaryActionObservation? CurrentAction);
+
+public sealed record EncounterObservation(
+    EncounterId Id,
+    EncounterPhase Phase,
+    int Attempt,
+    int TransitionTicksRemaining,
+    int TransitionTicksTotal,
+    EntityId HostileId);
 
 public sealed record InteractionObservation(
     EntityId Id,
@@ -116,7 +172,9 @@ public sealed record StationRouteObservation(
     RoutePowerMode RoutePowerMode,
     ObjectiveObservation Objective,
     IReadOnlyList<InteractionObservation> Interactions,
-    DialogueObservation? ActiveDialogue);
+    DialogueObservation? ActiveDialogue,
+    IReadOnlyList<HostileObservation>? Hostiles = null,
+    EncounterObservation? Encounter = null);
 
 public enum GameplayEventType
 {
@@ -135,6 +193,17 @@ public enum GameplayEventType
     InteractionCompleted,
     ObjectiveChanged,
     ScenarioCompleted,
+    EncounterStarted,
+    EncounterRestarted,
+    EncounterWon,
+    EncounterDefeated,
+    AttackWindupStarted,
+    AttackReleased,
+    AbilityReleased,
+    DamageApplied,
+    HealingApplied,
+    ActionInterrupted,
+    CombatantDefeated,
 }
 
 public abstract record GameplayEventDetail;
@@ -196,6 +265,46 @@ public sealed record ObjectiveChangedEventDetail(
 public sealed record ScenarioCompletedEventDetail(
     CommandId CommandId,
     ScenarioId ScenarioId) : GameplayEventDetail;
+
+public sealed record EncounterEventDetail(
+    EncounterId EncounterId,
+    int Attempt) : GameplayEventDetail;
+
+public sealed record AttackEventDetail(
+    EntityId SourceId,
+    EntityId TargetId,
+    AttackId AttackId,
+    bool Hit) : GameplayEventDetail;
+
+public sealed record AbilityReleasedEventDetail(
+    EntityId SourceId,
+    WorldPosition TargetPosition,
+    AbilityId AbilityId,
+    bool Hit) : GameplayEventDetail;
+
+public sealed record DamageAppliedEventDetail(
+    EntityId SourceId,
+    EntityId TargetId,
+    int Amount,
+    int RemainingHealth,
+    AttackId? AttackId,
+    AbilityId? AbilityId) : GameplayEventDetail;
+
+public sealed record HealingAppliedEventDetail(
+    EntityId SourceId,
+    EntityId TargetId,
+    ItemId ItemId,
+    int Amount,
+    int RemainingHealth) : GameplayEventDetail;
+
+public sealed record ActionInterruptedEventDetail(
+    EntityId ActorId,
+    EntityId SourceId,
+    AbilityId AbilityId) : GameplayEventDetail;
+
+public sealed record CombatantDefeatedEventDetail(
+    EntityId CombatantId,
+    EntityId SourceId) : GameplayEventDetail;
 
 public sealed record GameplayEvent(
     long Sequence,

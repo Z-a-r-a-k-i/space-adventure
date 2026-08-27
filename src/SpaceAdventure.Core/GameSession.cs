@@ -1,6 +1,6 @@
 namespace SpaceAdventure.Core;
 
-public sealed class GameSession
+public sealed partial class GameSession
 {
     public const int TicksPerSecond = 30;
     public const int MaximumRetainedEvents = 1024;
@@ -67,6 +67,10 @@ public sealed class GameSession
             MovePartyCommand moveParty => Execute(moveParty),
             InteractCommand interact => Execute(interact),
             ChooseDialogueResponseCommand chooseResponse => Execute(chooseResponse),
+            AssignBasicAttackTargetCommand attack => Execute(attack),
+            UseAbilityCommand ability => Execute(ability),
+            UseItemCommand item => Execute(item),
+            RestartEncounterCommand restart => Execute(restart),
             _ => Reject(command.CommandId, CommandRejectionCode.UnknownCommand),
         };
     }
@@ -85,7 +89,9 @@ public sealed class GameSession
 
         _accumulatedSeconds += Math.Min(elapsed.TotalSeconds, MaximumFrameSeconds);
         var advanced = 0;
-        while (_accumulatedSeconds >= SecondsPerTick && advanced < MaximumFrameTicks)
+        while (_accumulatedSeconds >= SecondsPerTick
+            && advanced < MaximumFrameTicks
+            && !IsPaused)
         {
             AdvanceOneTick();
             _accumulatedSeconds -= SecondsPerTick;
@@ -108,12 +114,14 @@ public sealed class GameSession
             return 0;
         }
 
-        for (var index = 0; index < count; index++)
+        var advanced = 0;
+        for (var index = 0; index < count && !IsPaused; index++)
         {
             AdvanceOneTick();
+            advanced++;
         }
 
-        return count;
+        return advanced;
     }
 
     public int StepWhilePaused(int count)
@@ -203,6 +211,7 @@ public sealed class GameSession
             kit.ActiveAbilityName,
             kit.ActiveAbilityTargetKind);
         station.Phase = ScenarioPhase.InProgress;
+        InitializeProtagonistCombatState(station);
         Record(
             GameplayEventType.ProtagonistKitSelected,
             command.CommandId,
@@ -414,7 +423,7 @@ public sealed class GameSession
 
             case StationDialogueResponseEffect.RecruitProtector:
                 RecruitCompanion(station, command.CommandId);
-                ChangeObjective(station, command.CommandId, station.Definition.DestinationObjective);
+                ChangeObjective(station, command.CommandId, station.Definition.MainCombatObjective);
                 break;
 
             default:
@@ -465,6 +474,13 @@ public sealed class GameSession
         {
             actor = null!;
             rejection = CommandRejectionCode.DialogueActive;
+            return false;
+        }
+
+        if (station.Combat.Phase is EncounterPhase.Securing or EncounterPhase.Defeat)
+        {
+            actor = null!;
+            rejection = CommandRejectionCode.EncounterTransitionActive;
             return false;
         }
 
@@ -609,6 +625,16 @@ public sealed class GameSession
             return;
         }
 
+        if (AdvanceEncounterTransition(_stationRoute))
+        {
+            return;
+        }
+
+        if (_stationRoute.Combat.Phase == EncounterPhase.Active)
+        {
+            AdvanceCombatCooldowns(_stationRoute);
+        }
+
         PromotePendingActions();
         foreach (var actor in _stationRoute.Actors.Values.OrderBy(actor => actor.PartyOrder).ToArray())
         {
@@ -617,6 +643,15 @@ public sealed class GameSession
                 AdvanceAction(_stationRoute, actor, action);
             }
         }
+
+        if (_stationRoute.Combat.Phase == EncounterPhase.Active)
+        {
+            AdvanceHostileCombat(_stationRoute);
+        }
+        else if (_stationRoute.Combat.Phase == EncounterPhase.Dormant)
+        {
+            TryStartEncounter(_stationRoute);
+        }
     }
 
     private void AdvanceAction(
@@ -624,6 +659,14 @@ public sealed class GameSession
         ActorRuntime actor,
         PrimaryActionRuntime action)
     {
+        if (action.Kind is PrimaryActionKind.Attack
+            or PrimaryActionKind.Ability
+            or PrimaryActionKind.Item)
+        {
+            AdvancePartyCombatAction(station, actor, action);
+            return;
+        }
+
         var remainingDistance = actor.MovementSpeedMetersPerSecond / TicksPerSecond;
         while (remainingDistance > 0 && action.WaypointIndex < action.Waypoints.Count)
         {
@@ -885,7 +928,10 @@ public sealed class GameSession
             StationInteractionEffect.OpenEntryServiceDoor =>
                 !interaction.Completed
                 && station.CurrentObjective.Id == station.Definition.EntryDoorObjective.Id,
-            StationInteractionEffect.OpenSoloExitServiceDoor => false,
+            StationInteractionEffect.OpenSoloExitServiceDoor =>
+                !interaction.Completed
+                && station.Combat.Phase == EncounterPhase.Victory
+                && station.CurrentObjective.Id == station.Definition.SoloExitDoorObjective.Id,
             StationInteractionEffect.CompleteScenario =>
                 !interaction.Completed
                 && station.CurrentObjective.Id == station.Definition.DestinationObjective.Id
@@ -987,7 +1033,15 @@ public sealed class GameSession
                 station.CurrentObjective.Text,
                 objectiveStatus),
             interactions,
-            activeDialogue);
+            activeDialogue,
+            [ObserveHostile(station)],
+            new EncounterObservation(
+                station.Definition.Combat.Encounter.Id,
+                station.Combat.Phase,
+                station.Combat.Attempt,
+                station.Combat.TransitionTicksRemaining,
+                station.Combat.TransitionTicksTotal,
+                station.Combat.Hostile.Id));
     }
 
     private static ActorObservation ObserveActor(ActorRuntime actor)
@@ -1005,7 +1059,25 @@ public sealed class GameSession
                     actor.Loadout.ActiveAbilityTargetKind),
             actor.Position,
             ObserveAction(actor.CurrentAction),
-            ObserveAction(actor.PendingAction));
+            ObserveAction(actor.PendingAction),
+            actor.MaximumHealth <= 0
+                ? null
+                : new CombatantStateObservation(
+                    actor.Health,
+                    actor.MaximumHealth,
+                    actor.Health <= 0,
+                    actor.Loadout!.BasicAttackId,
+                    actor.Cooldowns
+                        .OrderBy(pair => pair.Key.Value, StringComparer.Ordinal)
+                        .Select(pair => new CooldownObservation(
+                            pair.Key,
+                            pair.Value,
+                            actor.CooldownTotals[pair.Key]))
+                        .ToArray(),
+                    actor.ItemCharges
+                        .OrderBy(pair => pair.Key.Value, StringComparer.Ordinal)
+                        .Select(pair => new ItemChargeObservation(pair.Key, pair.Value))
+                        .ToArray()));
     }
 
     private static ProtagonistKitObservation ObserveKit(ProtagonistKitDefinition kit)
@@ -1030,7 +1102,14 @@ public sealed class GameSession
                 action.Kind,
                 action.Destination,
                 action.WaypointIndex < action.Waypoints.Count,
-                action.InteractionTargetId);
+                action.InteractionTargetId,
+                action.CombatTargetId,
+                action.AttackId,
+                action.AbilityId,
+                action.ItemId,
+                action.Phase,
+                action.PhaseTicksRemaining,
+                action.PhaseTicksTotal);
     }
 
     private static InteractionState GetInteractionState(
@@ -1118,6 +1197,13 @@ public sealed class GameSession
                 "Station route layout must define exactly the companion actor placement.");
         }
 
+        if (layout.Encounter is null
+            || layout.Encounter.EncounterId != definition.Combat.Encounter.Id)
+        {
+            throw new InvalidDataException(
+                "Station route layout must define the configured solo-combat encounter placement.");
+        }
+
         foreach (var interaction in definition.Interactions)
         {
             _ = layout.TryGetInteraction(interaction.Id, out var placement);
@@ -1167,6 +1253,7 @@ public sealed class GameSession
                     interaction => interaction.Definition.Id.Value,
                     StringComparer.Ordinal)
                 .ToArray();
+            Combat = new CombatEncounterRuntime(definition.Combat, layout.Encounter!);
         }
 
         public StationRouteDefinition Definition { get; }
@@ -1180,6 +1267,8 @@ public sealed class GameSession
         public Dictionary<EntityId, InteractionRuntime> Interactions { get; }
 
         public IReadOnlyList<InteractionRuntime> ServiceDoorInteractions { get; }
+
+        public CombatEncounterRuntime Combat { get; }
 
         public StationObjectiveDefinition CurrentObjective { get; set; }
 
@@ -1212,6 +1301,16 @@ public sealed class GameSession
         public PrimaryActionRuntime? CurrentAction { get; set; }
 
         public PrimaryActionRuntime? PendingAction { get; set; }
+
+        public int MaximumHealth { get; set; }
+
+        public int Health { get; set; }
+
+        public Dictionary<AbilityId, int> Cooldowns { get; } = [];
+
+        public Dictionary<AbilityId, int> CooldownTotals { get; } = [];
+
+        public Dictionary<ItemId, int> ItemCharges { get; } = [];
     }
 
     private sealed class InteractionRuntime(
@@ -1240,8 +1339,24 @@ public sealed class GameSession
 
         public EntityId? InteractionTargetId { get; } = interactionTargetId;
 
-        public IReadOnlyList<WorldPosition> Waypoints { get; } = waypoints;
+        public IReadOnlyList<WorldPosition> Waypoints { get; set; } = waypoints;
 
         public int WaypointIndex { get; set; }
+
+        public EntityId? CombatTargetId { get; init; }
+
+        public AttackId? AttackId { get; init; }
+
+        public AbilityId? AbilityId { get; init; }
+
+        public ItemId? ItemId { get; init; }
+
+        public PrimaryActionPhase Phase { get; set; } = PrimaryActionPhase.Moving;
+
+        public int PhaseTicksRemaining { get; set; }
+
+        public int PhaseTicksTotal { get; set; }
+
+        public WorldPosition AbilityTargetPosition { get; init; }
     }
 }

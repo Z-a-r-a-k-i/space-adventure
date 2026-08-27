@@ -29,9 +29,9 @@ deformation, or transforming rigs.
 | Gun sentry | `integrated` | Fixed or floating chassis with aim pivot, muzzle, and recoil axis |
 
 Party weapons are holstered during exploration and transferred to the hand at
-a deterministic animation marker. This is presentation state, not inventory or
-weapon switching. The POC has no reload mechanic unless gameplay later adds
-one.
+a deterministic observed phase boundary recorded by the presentation profile.
+This is presentation state, not inventory or weapon switching. The POC has no
+reload mechanic unless gameplay later adds one.
 
 ## Interfaces
 
@@ -63,13 +63,37 @@ Integrated weapons require ready/track, wind-up, recoil, and recovery. Humanoid
 body attacks require close-combat stance, wind-up, strike/contact, and recovery.
 Gameplay owns world translation; combat animation is in-place.
 
-Draw and holster use:
+Draw and holster may publish these presentation marker identities when a clip
+needs an authored landmark:
 
 - `event.weapon.transfer_to_hand`
 - `event.weapon.transfer_to_holster`
 
 Godot reconstructs the correct attachment after pause, resume, reset, seek, or
 resynchronization. Animation callbacks never apply gameplay effects.
+
+## Implemented solo-tutorial timing
+
+| Action | Authority | Presentation |
+|---|---:|---|
+| Vanguard ready/draw | 42 ticks | `Grab Rifle From Back`, scaled to the phase; transfer to hand at 48% |
+| Vanguard carbine shot | 9-tick wind-up + 21-tick recovery | `Firing Rifle`, release aligned to wind-up completion; armed idle during recovery |
+| Suppressive Fire | 18-tick wind-up + 24-tick recovery, 240-tick cooldown | the same reviewed rifle release slowed to the authoritative release; Godot renders the 2 m target pulse |
+| Enforcer body strike | 15 damage; 24-tick wind-up + 36-tick recovery | telegraph/idle for the early wind-up, then `Right Hook` frames 1–10 at 1× during the final nine ticks so contact aligns to release |
+| Victory secure/holster | 42 ticks | `Put Back Rifle`, transfer to upper-back socket at 58% |
+
+Vanguard also publishes `Rifle Aiming Idle`, in-place `Rifle Walk`, and `Rifle
+Death`. The Enforcer publishes `Falling Back Death`. Presentation reads
+observations and typed release, damage, interruption, victory, and defeat
+events. Damage never selects a hit-reaction animation: floating values, health
+changes, and impact flashes provide the feedback for normal and special hits.
+Muzzle flashes, tracers, ability pulse, impact flashes, and the melee wind-up
+ring are short Godot-only effects; none resolve damage.
+
+Field Aid follows the same authority boundary: `HealingApplied` spawns a short
+green pulse and a floating positive value at the target. The effect validates
+the current healing presentation without requiring a handled prop or skeletal
+healing clip, and it never changes health itself.
 
 ## Brief requirements
 

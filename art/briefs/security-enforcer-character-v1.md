@@ -1,7 +1,8 @@
 # Asset brief — Security Enforcer character v1
 
-Status: Phase 3 production base approved by the project owner in the combined
-Godot hostile gallery on 2026-08-07
+Status: Phase 3 production base approved on 2026-08-07; Phase 4 strike, hit,
+and down actions are integrated in the solo-tutorial candidate pending
+graphical approval.
 
 ## Identity
 
@@ -46,16 +47,16 @@ subordinate to silhouette and attack motion.
 
 Use the normal humanoid pipeline: direct single-image unrigged 4K T-pose,
 Quad-10k retopology, agent-validated Mixamo markers with symmetry and
-Standard Skeleton (65), neutral FBX with skin, Blender weight repair, Mixamo
-clips without skin, Blender cleanup, and exact GLB review in Godot.
+Standard Skeleton (65), neutral FBX with skin, Blender weight repair, Blender
+cleanup, and exact GLB review in Godot. Use matching-with-skin combat donors
+for this asset because its no-skin rest representation fails the accepted-rig
+compatibility gate.
 
-Phase 3 publishes only holstered idle, in-place locomotion, a walk alias, and
-the reinforced-right-hand contact socket. Phase 4 adds close-combat stance,
-readable wind-up, one reinforced-forearm strike, contact pose, recovery, hit
-reaction, and down after gameplay owns their authoritative timings. Prefer
-conservative stock Mixamo locomotion and punch clips. Gameplay owns world
-movement, target selection, range, timing, interruption, contact, and damage;
-combat clips remain in-place.
+The publication includes holstered idle, in-place locomotion, a walk alias,
+the reinforced-right-hand contact socket, melee strike, and down. Damage
+feedback uses numbers and impact effects; hit-reaction animation is prohibited.
+Gameplay owns world movement, target selection, range, timing, interruption,
+contact, and damage; combat clips remain presentation-only.
 
 ## Approval gates
 
@@ -66,7 +67,8 @@ combat clips remain in-place.
 5. Blender deformation review at shoulders, elbows, wrists, hips, knees,
    ankles, and armor boundaries.
 6. Exact Phase 3 base GLB review in Godot at 7.5 m, 14.5 m, and 20 m.
-7. Full-speed strike and recovery review remains a Phase 4 gate.
+7. Full-speed strike, hit, down, and recovery review remains the final Phase 4
+   graphical gate.
 
-Live station-route activation remains blocked until Phase 4 provides the
-authoritative hostile and combat state.
+The solo-tutorial candidate now instantiates this exact publication against
+the authoritative Phase 4 encounter state.

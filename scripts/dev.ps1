@@ -337,7 +337,7 @@ SpaceAdventure development commands
   scenario [-Name name]   Run a deterministic core scenario as JSON Lines
   plugin-link             Create the ignored local Godot AI Control junction
   import                  Import the Godot project headlessly
-  headless [-Name name]   Run a bounded Godot smoke (bootstrap, station-route, humanoid-gallery, or hostile-gallery)
+  headless [-Name name]   Run a bounded Godot smoke (bootstrap, station-route, station-combat-defeat, humanoid-gallery, or hostile-gallery)
   capture -Name name      Create and verify a deterministic graphical capture (wall-cutaway)
   editor                  Open the Godot editor with the project
   run                     Launch the graphical bootstrap
@@ -443,6 +443,7 @@ Options:
             $smoke = switch ($Name) {
                 "bootstrap" { @{ Argument = "--bootstrap-smoke"; Scene = $null } }
                 "station-route" { @{ Argument = "--station-route-smoke"; Scene = $null } }
+                "station-combat-defeat" { @{ Argument = "--station-combat-defeat-smoke"; Scene = $null } }
                 "humanoid-gallery" {
                     @{
                         Argument = "--humanoid-gallery-smoke"
@@ -455,7 +456,7 @@ Options:
                         Scene = "res://scenes/hostile_gallery.tscn"
                     }
                 }
-                default { throw "Unknown Godot headless scenario '$Name'. Expected 'bootstrap', 'station-route', 'humanoid-gallery', or 'hostile-gallery'." }
+                default { throw "Unknown Godot headless scenario '$Name'. Expected 'bootstrap', 'station-route', 'station-combat-defeat', 'humanoid-gallery', or 'hostile-gallery'." }
             }
             $arguments = @("--headless", "--path", $gameProject)
             if ($null -ne $smoke.Scene) {

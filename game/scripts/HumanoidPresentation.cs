@@ -8,6 +8,8 @@ public enum HumanoidPresentationAction
     Locomotion,
     DialogueSpeak,
     DialogueListen,
+    MeleeStrike,
+    Down,
 }
 
 public partial class HumanoidPresentation : Node3D
@@ -23,6 +25,12 @@ public partial class HumanoidPresentation : Node3D
 
     [Export]
     public string DialogueListenAnimationName { get; set; } = string.Empty;
+
+    [Export]
+    public string MeleeStrikeAnimationName { get; set; } = string.Empty;
+
+    [Export]
+    public string DownAnimationName { get; set; } = string.Empty;
 
     [Export(PropertyHint.Range, "0,1,0.01")]
     public float BlendSeconds { get; set; } = 0.16f;
@@ -48,9 +56,9 @@ public partial class HumanoidPresentation : Node3D
                 $"Humanoid presentation '{GetPath()}' requires an idle animation name.");
         }
 
-        foreach (var animationName in ConfiguredAnimationNames())
+        foreach (var (animationName, loop) in ConfiguredAnimations())
         {
-            ValidateAndLoop(animationName);
+            ValidateAnimation(animationName, loop);
         }
 
         Play(HumanoidPresentationAction.Idle);
@@ -60,7 +68,9 @@ public partial class HumanoidPresentation : Node3D
         bool active,
         HumanoidPresentationAction action,
         bool paused,
-        Vector3 movementDirection)
+        Vector3 movementDirection,
+        float playbackSpeed = 1.0f,
+        bool seekToEndWhenPaused = false)
     {
         Visible = active;
         if (!active)
@@ -68,8 +78,13 @@ public partial class HumanoidPresentation : Node3D
             return;
         }
 
-        _animationPlayer.SpeedScale = paused ? 0.0f : 1.0f;
+        _animationPlayer.SpeedScale = paused ? 0.0f : playbackSpeed;
         Play(action);
+        if (paused && seekToEndWhenPaused)
+        {
+            var animation = _animationPlayer.GetAnimation(new StringName(AnimationNameFor(action)));
+            _animationPlayer.Seek(animation.Length, update: true);
+        }
 
         if (action != HumanoidPresentationAction.Locomotion)
         {
@@ -98,21 +113,23 @@ public partial class HumanoidPresentation : Node3D
         return !string.IsNullOrWhiteSpace(name) && _animationPlayer.HasAnimation(name);
     }
 
-    private IEnumerable<StringName> ConfiguredAnimationNames()
+    private IEnumerable<(StringName Name, bool Loop)> ConfiguredAnimations()
     {
         return new[]
             {
-                IdleAnimationName,
-                LocomotionAnimationName,
-                DialogueSpeakAnimationName,
-                DialogueListenAnimationName,
+                (IdleAnimationName, true),
+                (LocomotionAnimationName, true),
+                (DialogueSpeakAnimationName, true),
+                (DialogueListenAnimationName, true),
+                (MeleeStrikeAnimationName, false),
+                (DownAnimationName, false),
             }
-            .Where(name => !string.IsNullOrWhiteSpace(name))
-            .Distinct(StringComparer.Ordinal)
-            .Select(name => new StringName(name));
+            .Where(entry => !string.IsNullOrWhiteSpace(entry.Item1))
+            .GroupBy(entry => entry.Item1, StringComparer.Ordinal)
+            .Select(group => (new StringName(group.Key), group.First().Item2));
     }
 
-    private void ValidateAndLoop(StringName animationName)
+    private void ValidateAnimation(StringName animationName, bool loop)
     {
         if (!_animationPlayer.HasAnimation(animationName))
         {
@@ -123,7 +140,9 @@ public partial class HumanoidPresentation : Node3D
                 + $"'{animationName}'. Available animations: {available}.");
         }
 
-        _animationPlayer.GetAnimation(animationName).LoopMode = Animation.LoopModeEnum.Linear;
+        _animationPlayer.GetAnimation(animationName).LoopMode = loop
+            ? Animation.LoopModeEnum.Linear
+            : Animation.LoopModeEnum.None;
     }
 
     private void Play(HumanoidPresentationAction action)
@@ -136,7 +155,7 @@ public partial class HumanoidPresentation : Node3D
         }
 
         var name = new StringName(animationName);
-        if (_currentAnimation == name && _animationPlayer.IsPlaying())
+        if (_currentAnimation == name)
         {
             CurrentAction = action;
             return;
@@ -155,6 +174,8 @@ public partial class HumanoidPresentation : Node3D
             HumanoidPresentationAction.Locomotion => LocomotionAnimationName,
             HumanoidPresentationAction.DialogueSpeak => DialogueSpeakAnimationName,
             HumanoidPresentationAction.DialogueListen => DialogueListenAnimationName,
+            HumanoidPresentationAction.MeleeStrike => MeleeStrikeAnimationName,
+            HumanoidPresentationAction.Down => DownAnimationName,
             _ => throw new ArgumentOutOfRangeException(nameof(action), action, null),
         };
     }

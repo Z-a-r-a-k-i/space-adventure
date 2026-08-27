@@ -51,7 +51,7 @@ Pure C# targeting `net8.0`. It owns:
 
 The core does not know about nodes, scenes, input events, cameras, meshes, animations, audio, editor plugins, MCP, file dialogs, or viewport capture.
 
-The implemented station-route slice makes this boundary concrete. `GameSession` owns the protagonist position, current and pending primary actions, interaction state, active authored dialogue, objective, and completion. The schema-v3 route explicitly orders survivor choice, entry-service-door opening, and the locked first-combat threshold; the later solo exit, Protector, and airlock remain unavailable until combat work advances them. `StationRouteDefinition` contains validated content while `StationRouteLayout` supplies stable spatial placements. `ISpatialPathfinder` is the only engine-facing spatial contract; it accepts pure `WorldPosition` values and returns an immutable path result.
+The implemented station-route slice makes this boundary concrete. `GameSession` owns party and hostile position, current and pending primary actions, interaction state, authored dialogue, health, cooldowns, item charges, encounter phases, objectives, and progression. The schema-v4 `station-route-v6` content orders survivor choice, entry-service-door opening, the solo Security Enforcer fight, victory-gated solo exit, and Protector recruitment. The final airlock and later main encounter remain unavailable. `StationRouteDefinition` contains validated content while `StationRouteLayout` supplies stable spatial and encounter placements. `ISpatialPathfinder` is the only engine-facing spatial contract; it accepts pure `WorldPosition` values and returns an immutable path result.
 
 ### `game/SpaceAdventure.Game`
 
@@ -75,7 +75,7 @@ A console application references the core and runs rule-level scenarios without 
 
 ### `tests/SpaceAdventure.Core.Tests`
 
-Fast tests construct small fixtures directly and do not load Godot. They cover the pause clock and bounded event retention plus schema-v3 content validation, exact door-effect counts, layout-ID validation, fixed-tick movement, pause and pending-order replacement, unreachable-order atomicity, both authored survivor choices and terminal consequences, atomic entry-door progression, and the unavailable solo exit, Protector, and airlock. Combat, inventory, recruitment, and generated-dialogue rules remain future test work.
+Fast tests construct small fixtures directly and do not load Godot. They cover the pause clock and bounded event retention plus schema-v4 content validation, exact door-effect counts, layout-ID validation, fixed-tick movement, pause and pending-order replacement, unreachable-order atomicity, both authored survivor choices and terminal consequences, atomic door progression, combat start/readiness, repeating attacks, positional ability interruption, cooldowns, one-charge healing, victory progression, defeat pause, retry isolation, and post-fight Protector recruitment. The later main encounter and generated-dialogue rules remain future work.
 
 ## Game session and fixed time
 
@@ -101,20 +101,19 @@ The cached-AABB approach is deliberately narrow. It is deterministic, cheap, and
 
 ## Command contract
 
-Commands are explicit C# types under a common gameplay-command contract. Phase 2 currently implements:
+Commands are explicit C# types under a common gameplay-command contract. The current route implements:
 
 - `SetPauseCommand`.
 - `MoveActorCommand` with a stable actor ID and world destination.
 - `InteractCommand` with stable actor and interaction IDs; it includes approach movement when needed.
 - `ChooseDialogueResponseCommand` with stable actor, interaction, and authored response IDs.
+- `AssignBasicAttackTargetCommand` with stable actor and hostile IDs.
+- `UseAbilityCommand` with a stable ability ID and typed position target.
+- `UseItemCommand` with stable actor, item, and ally target IDs.
+- `RestartEncounterCommand` with a stable encounter ID.
 
-Expected later POC commands include:
-
-- Select or inspect entities through the appropriate adapter state.
-- Assign an attack target.
-- Use an ability with an entity or position target.
-- Use a carried item.
-- Restart the scenario.
+Expected later POC commands include the Protector's attack/ability orders and
+any explicit main-encounter interaction required by that bounded slice.
 
 Selection may remain player-control state in the Godot host rather than world simulation state, but the resulting orders always name stable actor IDs. Automation never depends on which portrait happens to be selected in a UI.
 
@@ -126,9 +125,9 @@ The external JSON envelope contains a schema version, command ID, command type, 
 
 Each party member has a current action and at most one pending primary action in the POC. While paused, a newly accepted primary order replaces that character's prior pending order. On resume, pending actions become eligible in stable order. There is no arbitrary action queue, timeline scripting, or programmable behavior system.
 
-Phase 2 exercises this with movement and contextual interaction. A running order replaces the current primary action. A paused order replaces only the pending primary action, so the character remains stationary until resume; the newest accepted pending order wins. Development-only paused stepping executes the same fixed-tick rule path for deterministic scenarios and is capped at 3,000 ticks per call.
+Movement, contextual interaction, repeating attacks, position-targeted ability use, and healing-item use all share this primary-action boundary. A running order replaces the current primary action. A paused order replaces only the pending primary action, so the character remains stationary until resume; the newest accepted pending order wins. Development-only paused stepping executes the same fixed-tick rule path for deterministic scenarios and is capped at 3,000 ticks per call.
 
-Basic attacks repeat against an explicitly assigned target until invalidated or replaced; active abilities remain explicit orders. Combat start triggers one automatic pause. All subsequent POC pausing is manual.
+Basic attacks repeat against an explicitly assigned target until invalidated or replaced; active abilities and items remain explicit orders. Combat start triggers one automatic pause. Defeat also pauses atomically so retry can be inspected safely; victory does not. All other POC pausing is manual.
 
 ## Combat attack and presentation boundary
 
@@ -146,24 +145,23 @@ owns any telegraph geometry or timing that communicates authoritative danger.
 Model node paths, sockets, animation callbacks, and physical weapon collisions
 never apply damage or advance authoritative state.
 
-Attack observations and events expose enough phase and timing information for
-presentation to align wind-up, release or contact, and recovery. Exact combat
-event types and content schemas are defined with the Phase 4 slice rather than
-added to the current route schema early. Combat clips remain in-place for the
+Attack observations and typed wind-up, attack-release, ability-release,
+damage, healing, interruption, defeat, and encounter events expose the phase
+and fixed-tick timing required for presentation. Combat clips remain in-place for the
 POC: Godot follows observed gameplay position, and animation root motion does
 not become an alternate movement authority. See `ATTACK-PRESENTATION.md`.
 
 ## Events and observations
 
-Events are immutable facts with at least an event sequence, simulation tick, event type, and typed data. The runtime retains a bounded recent buffer for tools and presentation. Implemented route events include command acceptance/rejection, primary-action assignment/failure, movement arrival, dialogue start and response, interaction completion, objective change, and scenario completion. Recruitment, combat, healing, cooldown, victory, and defeat events remain later work.
+Events are immutable facts with at least an event sequence, simulation tick, event type, and typed data. The runtime retains a bounded recent buffer for tools and presentation. Implemented route events include command acceptance/rejection, primary-action assignment/failure, movement arrival, dialogue and recruitment, interaction completion, objective change, encounter lifecycle, attack wind-up/release, ability release, damage, healing, interruption, combatant defeat, and scenario completion. Cooldowns and item charges are observable state; animation callbacks never emit authoritative combat facts.
 
-The current observation contains clock, pause state, latest event sequence, scenario/content identity, route phase, protagonist identity/position/current and pending actions, objective, all relevant interactions and approach points, and the optional active authored dialogue. The external automation projection is JSON-safe, snake-case, and versioned at its command boundary.
+The current observation additionally contains party loadouts and combat state, hostile identity/position/action/health, encounter phase and transition ticks, cooldowns, and item charges. The external automation projection is JSON-safe, snake-case, and versioned at its command boundary.
 
 Use observations and events to answer what happened. Use screenshots and live play to judge composition, readability, animation, art, and input feel.
 
 ## Content boundary
 
-The POC uses small versioned text definitions for gameplay data and Godot scenes for spatial layout and presentation references. The implemented `game/content/station-route.json` defines the schema/revision, protagonist speed, objectives, interaction kinds/radii/effects, survivor line and two fixed responses, and terminal/airlock result text. `station_route.tscn` owns positions, approach markers, collision, and navigation. Both are validated into core records and joined by stable IDs before the scenario starts.
+The POC uses small versioned text definitions for gameplay data and Godot scenes for spatial layout and presentation references. The implemented `game/content/station-route.json` defines schema 4/revision `station-route-v6`, actor loadouts and health, attacks, ability, healing item, encounter transitions, objectives, interaction kinds/radii/effects, authored dialogue, and result text. `station_route.tscn` owns positions, trigger and approach markers, collision, navigation, and production presentation instances. Both are validated into core records and joined by stable IDs before the scenario starts.
 
 Do not add a database, spreadsheet import service, generic graph editor, or mod framework for the POC. If direct text authoring becomes the dominant bottleneck, add an authoring adapter while preserving the validated core contracts.
 
@@ -171,11 +169,11 @@ Do not add a database, spreadsheet import service, generic graph editor, or mod 
 
 A dialogue provider receives a bounded request containing only relevant world facts, conversation state, allowed intents, and permitted moves. It returns a structured proposal. Deterministic validators check identity, revisions, knowledge, references, size limits, intents, and state-transition preconditions. Accepted effects become ordinary gameplay commands or authored state transitions.
 
-The POC uses the scripted provider. The current route implements one authored survivor line and two authored responses, selected through `ChooseDialogueResponseCommand`; either response atomically completes the survivor interaction, records the route-power choice, advances the objective, and makes the entry service door available. Moving through its unlocked navigation link completes and opens the door on approach, then advances to the locked first-combat threshold. These explicit effects are intentionally not a branching dialogue or generic gate framework. An optional local development provider may later invoke the official Codex CLI with ChatGPT sign-in; manual-inbox and recorded providers support inspection and deterministic replay. These are experiment tools, not dependencies of the playable scenario. Model, reasoning effort, and Fast mode are independent per-request profile settings and never enter authoritative or saved gameplay state. See `DIALOGUE-AI.md`.
+The POC uses the scripted provider. The current route implements one authored survivor line and two authored responses, selected through `ChooseDialogueResponseCommand`; either response atomically completes the survivor interaction, records the route-power choice, advances the objective, and makes the entry service door available. Moving through its unlocked navigation link completes and opens the door on approach, then advances to and triggers the solo tutorial encounter. Combat victory makes the far service door available; crossing it advances to the still-locked Protector-recruitment threshold. These explicit effects are intentionally not a branching dialogue or generic gate framework. An optional local development provider may later invoke the official Codex CLI with ChatGPT sign-in; manual-inbox and recorded providers support inspection and deterministic replay. These are experiment tools, not dependencies of the playable scenario. Model, reasoning effort, and Fast mode are independent per-request profile settings and never enter authoritative or saved gameplay state. See `DIALOGUE-AI.md`.
 
 ## Automation boundary
 
-The Godot game exposes a stable C# runtime node named `AutomationBridge`. It returns complete route observations, retained events since a sequence with explicit gap metadata, and schema-v1 command acknowledgements. Its JSON command adapter supports `set_pause`, `move_actor`, `interact`, and `choose_dialogue_response`. Explicit helpers provide pause/resume, exact paused stepping, advancement until a named event with a maximum 3,000-tick budget, stable-ID-to-screen projection, a bounded known-target context-click input hook, and clean shutdown. A fresh process resets the current scenario; there is no mutation-oriented reset backdoor. The bridge does not expose arbitrary coordinates, property setters, or code evaluation.
+The Godot game exposes a stable C# runtime node named `AutomationBridge`. It returns complete route observations, retained events since a sequence with explicit gap metadata, and schema-v3 command acknowledgements. Its JSON adapter supports pause, movement, interaction, dialogue response, basic-attack target, position ability, healing item, and encounter retry commands. Explicit helpers provide pause/resume, exact paused stepping, advancement until a named event with a maximum 3,000-tick budget, stable-ID-to-screen projection, a bounded known-target context-click input hook, and clean shutdown. A fresh process resets the current scenario; retry resets only combat attempt state. The bridge does not expose arbitrary property setters or code evaluation.
 
 The optional external `godot-ai-plugin` may call those methods and additionally provides scene inspection, real input injection, runtime inspection, and ad hoc viewport capture. Enabling it can temporarily add editor-plugin and autoload entries to `project.godot`; those local entries are not part of the base project. Automated tests and the shipped game do not require the plugin.
 

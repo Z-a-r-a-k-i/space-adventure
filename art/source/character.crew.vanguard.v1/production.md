@@ -24,11 +24,18 @@ Mixamo exports used:
 - `Unarmed Idle`, FBX Binary with skin, 30 fps, 58 frames, 39,613,984 bytes;
 - `Standard Walk`, In Place, FBX Binary with skin, 30 fps, 36 frames,
   Overdrive 50, Character Arm-Space 50, 39,568,832 bytes.
+- `Grab Rifle From Back`, `Rifle Aiming Idle`, in-place `Rifle Walk`,
+  `Firing Rifle`, `Put Back Rifle`, and `Rifle Death`,
+  FBX Binary without skin at 30 fps, no keyframe reduction, Overdrive 50, and
+  Character Arm-Space 50.
 
-The no-skin `Unarmed Idle` diagnostic was rejected because its generic rest
-skeleton did not preserve this character's accepted rest pose. The Vanguard
-therefore uses documented with-skin donors so Blender can compare the exact
-rest skeleton and armature-object transform before removing donor meshes.
+The no-skin `Unarmed Idle` diagnostic was rejected as a rig authority because
+its generic rest pose does not preserve this character's accepted bind pose.
+For the combat clips, Blender requires the exact names, hierarchy, bone
+lengths, and armature-object transform. It bakes each donor's local pose delta
+onto the accepted rest pose, transfers root displacement in armature space,
+and removes the donor. Direct curve assignment and the earlier global-matrix
+correction both failed the standing/ground gates and are not permitted.
 
 ## Neutral-rig FBX inspection
 
@@ -57,7 +64,13 @@ weapon sockets, and publishes:
 
 - `anim.humanoid.idle_holstered` from `Unarmed Idle`;
 - `anim.humanoid.locomotion_holstered` from the in-place `Standard Walk`; and
-- `anim.humanoid.walk_holstered` from the same in-place walk donor.
+- `anim.humanoid.walk_holstered` from the same in-place walk donor;
+- `anim.humanoid.draw_primary` from `Grab Rifle From Back`;
+- `anim.humanoid.idle_armed` from `Rifle Aiming Idle`;
+- `anim.humanoid.locomotion_armed` from in-place `Rifle Walk`;
+- `anim.humanoid.attack_primary` from `Firing Rifle`;
+- `anim.humanoid.holster_primary` from `Put Back Rifle`;
+- `anim.humanoid.down` from `Rifle Death`.
 
 Blender 5.2's native FBX importer is used. Because Mixamo leaves the metallic
 texture embedded but unconnected, the build restores that channel from the
@@ -70,7 +83,12 @@ evaluated world-space poses onto a separate rig.
 
 The published body has 10,592 vertices, 11,586 Blender polygons, 21,158
 runtime triangles, 33 bones, one material slot, and a 1.82 m evaluated height.
-Every vertex is weighted and no vertex has more than four influences.
+Every vertex is weighted and no vertex has more than four influences. Fresh
+GLB reimport now requires all standing combat actions to keep the evaluated
+hips at or above 0.75 m. The accepted ranges are 1.08575-1.12574 m for draw,
+1.12368-1.12684 m for armed idle, 1.05630-1.13378 m for armed locomotion,
+1.12347-1.12389 m for fire, and 1.11231-1.15027 m for holster. The down
+clip ends at 0.19554 m from a 1.12388 m standing start.
 
 Full-cycle evaluated world-space validation records horizontal hip ranges of
 0.05113 m and 0.06218 m, loop endpoint delta 0.0 m, vertical hip range
@@ -81,10 +99,14 @@ exported GLB passes the same validation after fresh Blender reimport.
 
 Godot imports the GLB's embedded images as Basis Universal data and sanitizes
 the canonical dotted action names to underscore-separated AnimationPlayer
-names. `VanguardPresentation` strictly requires the canonical idle and walk
-animations, maps them to authoritative movement and tactical-pause state,
-rotates the presentation toward the commanded planar direction, and freezes
-animation while paused.
+names. The GLB publishes nine actions. `VanguardPresentation` strictly requires
+the eight runtime-selected actions; `anim.humanoid.locomotion_holstered` is a
+non-required compatibility alias of `anim.humanoid.walk_holstered`. The
+presentation attaches the published carbine to the hand or upper-back socket
+from observed encounter state, scales draw/fire/holster playback to the
+authoritative fixed-tick phases, faces the observed target or movement
+direction, and freezes playback during tactical pause. Animation callbacks
+never change gameplay.
 
 Before Blender publication, the untouched with-skin Standard Walk FBX passed a
 direct ignored Godot baseline: the character remained grounded and visibly
@@ -97,5 +119,7 @@ Direct graphical review in Godot confirmed scale, floor contact, silhouette,
 direction changes, idle/walk blending, tactical-pause freezing, and stable
 arrival. The project owner accepted the result on 2026-08-03.
 
-The separate carbine, two-hand constraints, draw, aim, fire, recovery, and
-holster sequence remain at their own later review gate.
+The Phase 4 solo-tutorial integration uses the separate published carbine and
+the draw, armed locomotion, fire, down, and holster actions. Final
+project-owner graphical acceptance of the complete live combat presentation
+remains the review gate for this update.

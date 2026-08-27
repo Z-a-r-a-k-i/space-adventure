@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "content_revision": "station-route-v5",
+  "schema_version": 4,
+  "content_revision": "station-route-v6",
   "scenario_id": "scenario.station_route",
   "protagonist": {
     "id": "actor.protagonist",
@@ -41,15 +41,78 @@
   },
   "combat_threshold_objective": {
     "id": "objective.reach_first_combat",
-    "text": "Enter the security arena and assess the locked far door."
+    "text": "Enter the security arena and assess the active security frame."
+  },
+  "combat_objective": {
+    "id": "objective.defeat_security_enforcer",
+    "text": "Defeat the Security Enforcer."
+  },
+  "solo_exit_door_objective": {
+    "id": "objective.open_solo_exit_service_door",
+    "text": "Proceed through the unlocked arena exit."
   },
   "recruitment_objective": {
     "id": "objective.recruit_protector",
     "text": "Recruit the Protector waiting beyond the service junction."
   },
+  "main_combat_objective": {
+    "id": "objective.reach_main_combat",
+    "text": "Advance with the Protector toward the main security arena."
+  },
   "destination_objective": {
     "id": "objective.reach_evacuation_airlock",
     "text": "Lead the party to the evacuation airlock."
+  },
+  "combat": {
+    "attacks": [
+      {
+        "id": "attack.crew.vanguard.carbine",
+        "range_meters": 7.5,
+        "damage": 10,
+        "windup_ticks": 9,
+        "recovery_ticks": 21
+      },
+      {
+        "id": "attack.enemy.security_enforcer.body_strike",
+        "range_meters": 1.5,
+        "damage": 15,
+        "windup_ticks": 24,
+        "recovery_ticks": 36
+      }
+    ],
+    "protagonist_ability": {
+      "id": "ability.crew.vanguard.suppressive_fire",
+      "target_kind": "position",
+      "range_meters": 9.0,
+      "radius_meters": 2.0,
+      "damage": 30,
+      "windup_ticks": 18,
+      "recovery_ticks": 24,
+      "cooldown_ticks": 240,
+      "interrupts_windup": true
+    },
+    "healing_item": {
+      "id": "item.healing.field_aid.v1",
+      "initial_charges": 1,
+      "healing": 40,
+      "windup_ticks": 15,
+      "recovery_ticks": 15
+    },
+    "hostile": {
+      "id": "actor.enemy.security_enforcer.solo",
+      "display_name": "Security Enforcer",
+      "movement_speed_meters_per_second": 2.1,
+      "maximum_health": 100,
+      "basic_attack_id": "attack.enemy.security_enforcer.body_strike"
+    },
+    "encounter": {
+      "id": "encounter.station.solo_tutorial",
+      "hostile_id": "actor.enemy.security_enforcer.solo",
+      "protagonist_maximum_health": 100,
+      "readying_ticks": 42,
+      "securing_ticks": 42,
+      "healing_item_id": "item.healing.field_aid.v1"
+    }
   },
   "interactions": [
     {

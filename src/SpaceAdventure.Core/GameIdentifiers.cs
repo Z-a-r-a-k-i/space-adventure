@@ -90,3 +90,29 @@ public readonly record struct AbilityId
 
     public override string ToString() => Value;
 }
+
+public readonly record struct EncounterId
+{
+    public EncounterId(string value)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        Value = value;
+    }
+
+    public string Value { get; }
+
+    public override string ToString() => Value;
+}
+
+public readonly record struct ItemId
+{
+    public ItemId(string value)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        Value = value;
+    }
+
+    public string Value { get; }
+
+    public override string ToString() => Value;
+}

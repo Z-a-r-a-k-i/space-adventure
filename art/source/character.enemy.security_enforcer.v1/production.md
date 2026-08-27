@@ -42,14 +42,22 @@ Godot intentionally imports the three embedded material images with
 VRAM-compressed Basis Universal textures. It does not extract duplicate PNGs,
 so no separate image-import compression overrides are required.
 
-The three actions are `anim.humanoid.idle_holstered`,
+The five actions are `anim.humanoid.idle_holstered`,
 `anim.humanoid.locomotion_holstered`, and
-`anim.humanoid.walk_holstered`. Locomotion has 0.05393 m planar hip range,
+`anim.humanoid.walk_holstered`, plus `anim.humanoid.melee_strike` from
+`Right Hook` and `anim.humanoid.down` from `Falling Back Death`. Both combat donors use
+the matching-with-skin exception because their downloaded skeleton is the
+accepted rig authority. Locomotion has 0.05393 m planar hip range,
 0.05859 m vertical hip range, zero loop-endpoint delta, and
 0.10307/0.09889 m left/right foot lift. The right-hand contact socket publishes
 as `socket.attack.contact.primary`. Its zero profile offset is intentional:
 Blender bone parenting places it at the `RightHand` bone tail, at the knuckle
 base rather than the wrist, and fresh GLB reimport validates the bone, rotation,
 axes, and placement reference. Exact contact-frame clearance remains coupled to
-Phase 4 timing. Melee stance, wind-up, strike, recovery, hit, and down are
-intentionally absent.
+Phase 4 timing. The live solo-tutorial presentation telegraphs in idle for the
+early wind-up, then starts `Right Hook` nine ticks before release at 1×. Its
+maximum forward extension at source frame 10 therefore aligns with the
+authoritative 24-tick wind-up completion; recovery remains core-owned at 36
+ticks. The measured combat motion envelopes are 0.14803 m planar/0.14797 m
+vertical for the strike and 0.96759/0.71884 m for the falling-down clip. The
+exact GLB fresh-reimports with all five named actions and the contact socket.

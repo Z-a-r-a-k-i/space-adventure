@@ -1,7 +1,7 @@
 # Asset brief — Vanguard carbine v1
 
-Status: accepted for offline source production; final visual approval and
-gameplay attack binding pending
+Status: published and bound to the Phase 4 solo-tutorial candidate; final
+Vanguard assembly review pending
 
 ## Identity and role
 
@@ -13,7 +13,7 @@ gameplay attack binding pending
 | Compatible character | `character.crew.vanguard.v1` |
 | Rig profile | `rig.crew.humanoid.v1` in `art/rigs/crew-humanoid-v1.md` |
 | Attack source | `handheld` |
-| Gameplay attack reference | Pending Phase 3/4 gameplay definition; do not invent |
+| Gameplay attack reference | `attack.vanguard.carbine.basic` |
 | Approved reference | `art/reference-sheets/frontier-station-v1/poc-models/vanguard-carbine-turnaround-v1.png` |
 | Reference SHA-256 | `FE6CB280507202CD63E1B72EBF6F1E6329AD165AB1EA96E0B0E517D195C9B099` |
 
@@ -38,8 +38,8 @@ gameplay attack binding pending
 - Provider/privacy resolution: signed-in Tripo Studio Max plan, Sharing Only,
   no API or API key. Candidate 01 is sufficient; do not spend the unused retry
   without a new named generation defect.
-- Phase-blocked fields: gameplay attack ID, damage, range, timing, reload
-  behavior, command/event mapping, abilities, VFX, and audio.
+- Phase 4 binds the carbine to the authoritative basic attack and Suppressive
+  Fire presentation. Reload behavior, ammunition, and audio remain deferred.
 
 ## Bounds and coordinates
 
@@ -89,8 +89,8 @@ cyan status accent, and readable muzzle opening.
 
 Markers are presentation frames, never hitboxes. Validate both hands, stock
 placement, muzzle line, carry hardware, draw path, aim, recoil, and recovery on
-the exact Vanguard assembly. Final attack timing and gameplay mapping remain
-pending.
+the exact Vanguard assembly. Authoritative attack timing and event mapping live
+in schema-v4 content and the pure core, never in the GLB.
 
 Test both the character-sheet thigh/hip hardware and the animation-sheet
 rear-right/back carry rail. The selected carry transform remains provisional

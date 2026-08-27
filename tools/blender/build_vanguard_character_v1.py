@@ -31,6 +31,12 @@ RUN_ROOT = (
 MIXAMO_CACHE = RUN_ROOT / "raw" / "mixamo"
 RIGGED_SOURCE = MIXAMO_CACHE / "vanguard-unarmed-idle-with-skin.fbx"
 WALK_SOURCE = MIXAMO_CACHE / "vanguard-standard-walk-in-place-with-skin.fbx"
+DRAW_SOURCE = MIXAMO_CACHE / "grab-rifle-from-back-no-skin.fbx"
+ARMED_IDLE_SOURCE = MIXAMO_CACHE / "rifle-aiming-idle-no-skin.fbx"
+ARMED_WALK_SOURCE = MIXAMO_CACHE / "rifle-walk-in-place-no-skin.fbx"
+FIRE_SOURCE = MIXAMO_CACHE / "firing-rifle-no-skin.fbx"
+HOLSTER_SOURCE = MIXAMO_CACHE / "put-back-rifle-no-skin.fbx"
+DOWN_SOURCE = MIXAMO_CACHE / "rifle-death-no-skin.fbx"
 TRIPO_TEXTURE_SOURCE = RUN_ROOT / "raw" / "vanguard-tpose-quad10k-4k.zip"
 BLEND_OUTPUT = (
     REPOSITORY_ROOT
@@ -65,6 +71,12 @@ EXPECTED_BONES = (
 IDLE_ACTION = "anim.humanoid.idle_holstered"
 LOCOMOTION_ACTION = "anim.humanoid.locomotion_holstered"
 WALK_ACTION = "anim.humanoid.walk_holstered"
+DRAW_ACTION = "anim.humanoid.draw_primary"
+ARMED_IDLE_ACTION = "anim.humanoid.idle_armed"
+ARMED_LOCOMOTION_ACTION = "anim.humanoid.locomotion_armed"
+FIRE_ACTION = "anim.humanoid.attack_primary"
+HOLSTER_ACTION = "anim.humanoid.holster_primary"
+DOWN_ACTION = "anim.humanoid.down"
 
 
 def require_file(path: pathlib.Path) -> None:
@@ -99,14 +111,161 @@ def rename_action(
     action: bpy.types.Action,
     name: str,
     source_clip: str,
+    loop_candidate: bool = True,
 ) -> bpy.types.Action:
     action.name = name
     action.use_fake_user = True
     action["source_provider"] = "Mixamo"
     action["source_clip"] = source_clip
     action["root_motion"] = "source-in-place"
-    action["loop_candidate"] = True
+    action["loop_candidate"] = loop_candidate
     return action
+
+
+def action_channelbags(action: bpy.types.Action) -> list[object]:
+    return [
+        channelbag
+        for layer in action.layers
+        for strip in layer.strips
+        for channelbag in strip.channelbags
+    ]
+
+
+def normalize_compatible_donor(
+    target_armature: bpy.types.Object,
+    donor_armature: bpy.types.Object,
+    action: bpy.types.Action,
+    source: pathlib.Path,
+) -> float:
+    """Validate Mixamo's standardized no-skin rest-pose representation."""
+
+    target_bones = {bone.name: bone for bone in target_armature.data.bones}
+    donor_bones = {bone.name: bone for bone in donor_armature.data.bones}
+    length_mismatches: list[tuple[str, float]] = []
+    maximum_rest_delta = 0.0
+    for name, target_bone in target_bones.items():
+        donor_bone = donor_bones[name]
+        length_delta = abs(target_bone.length - donor_bone.length)
+        if length_delta > 0.001:
+            length_mismatches.append((name, length_delta))
+        maximum_rest_delta = max(
+            maximum_rest_delta,
+            max(
+                abs(target_bone.matrix_local[row][column] - donor_bone.matrix_local[row][column])
+                for row in range(4)
+                for column in range(4)
+            ),
+        )
+    if length_mismatches:
+        raise RuntimeError(
+            f"Mixamo donor bone lengths differ for {source}: {length_mismatches[:8]}"
+        )
+
+    hierarchy_mismatches = [
+        name
+        for name, target_bone in target_bones.items()
+        if (target_bone.parent.name if target_bone.parent else None)
+        != (donor_bones[name].parent.name if donor_bones[name].parent else None)
+    ]
+    if hierarchy_mismatches:
+        raise RuntimeError(
+            f"Mixamo donor hierarchy differs for {source}: {hierarchy_mismatches[:8]}"
+        )
+
+    action["donor_rest_pose_variant"] = "mixamo-no-skin"
+    action["donor_maximum_rest_matrix_delta"] = maximum_rest_delta
+    return 1.0
+
+
+def retarget_mixamo_action(
+    target_armature: bpy.types.Object,
+    donor_armature: bpy.types.Object,
+    donor_action: bpy.types.Action,
+    end_frame: int | None = None,
+) -> bpy.types.Action:
+    """Bake Mixamo's local animation deltas onto the accepted skinned rest pose."""
+
+    scene = bpy.context.scene
+    donor_armature.animation_data_create()
+    donor_armature.animation_data.action = donor_action
+    target_armature.animation_data_create()
+    previous_target_action = target_armature.animation_data.action
+    if previous_target_action is None:
+        raise RuntimeError("The accepted Vanguard rig has no reference idle action")
+    previous_frame = scene.frame_current
+    scene.frame_set(math.floor(previous_target_action.frame_range[0]))
+    bpy.context.view_layer.update()
+    target_root_pose_origins = {
+        bone.name: target_armature.pose.bones[bone.name].matrix.translation.copy()
+        for bone in target_armature.data.bones
+        if bone.parent is None
+    }
+    baked_action = bpy.data.actions.new(donor_action.name + "_retargeted")
+    baked_action.use_fake_user = True
+    target_armature.animation_data.action = baked_action
+
+    ordered_names = sorted(
+        (bone.name for bone in target_armature.data.bones),
+        key=lambda name: len(target_armature.data.bones[name].parent_recursive),
+    )
+    start = math.floor(donor_action.frame_range[0])
+    end = math.ceil(donor_action.frame_range[1])
+    if end_frame is not None:
+        if end_frame < start or end_frame > end:
+            raise RuntimeError(
+                f"Invalid retarget trim {start}-{end_frame} for donor range {start}-{end}"
+            )
+        end = end_frame
+    try:
+        for pose_bone in target_armature.pose.bones:
+            pose_bone.rotation_mode = "QUATERNION"
+        scene.frame_set(start)
+        bpy.context.view_layer.update()
+        donor_root_pose_origins = {
+            name: donor_armature.pose.bones[name].matrix.translation.copy()
+            for name in ordered_names
+            if donor_armature.data.bones[name].parent is None
+        }
+        for frame in range(start, end + 1):
+            scene.frame_set(frame)
+            for name in ordered_names:
+                target_pose = target_armature.pose.bones[name]
+                donor_pose = donor_armature.pose.bones[name]
+                # matrix_basis is the animated local delta from each skeleton's
+                # own rest pose. Copying that delta retains the accepted skinned
+                # rest pose while avoiding the global-space correction that can
+                # rotate a standing donor onto the ground.
+                local_delta = donor_pose.matrix_basis.copy()
+                if name in donor_root_pose_origins:
+                    # Mixamo no-skin FBXs encode the absolute standing hip
+                    # height in the root location because their Hips rest bone
+                    # sits at the armature origin. Root displacement must be
+                    # transferred in armature space; its local axes differ from
+                    # the accepted skinned rest representation.
+                    local_delta.translation = (0.0, 0.0, 0.0)
+                target_pose.matrix_basis = local_delta
+                if name in donor_root_pose_origins:
+                    root_matrix = target_pose.matrix.copy()
+                    root_matrix.translation = (
+                        target_root_pose_origins[name]
+                        + donor_pose.matrix.translation
+                        - donor_root_pose_origins[name]
+                    )
+                    target_pose.matrix = root_matrix
+            bpy.context.view_layer.update()
+            for name in ordered_names:
+                pose_bone = target_armature.pose.bones[name]
+                pose_bone.keyframe_insert("location", frame=frame, group=name)
+                pose_bone.keyframe_insert("rotation_quaternion", frame=frame, group=name)
+                pose_bone.keyframe_insert("scale", frame=frame, group=name)
+    finally:
+        scene.frame_set(previous_frame)
+        target_armature.animation_data.action = previous_target_action
+
+    baked_action["retarget_method"] = "mixamo-local-basis-bake"
+    baked_action["source_frame_start"] = start
+    baked_action["source_frame_end"] = end
+    return baked_action
 
 
 def load_animation_action(
@@ -115,6 +274,8 @@ def load_animation_action(
     target_armature: bpy.types.Object,
     name: str,
     source_clip: str,
+    end_frame: int | None = None,
+    loop_candidate: bool = True,
 ) -> bpy.types.Action:
     objects, actions = import_fbx(source, global_scale)
     temporary_armature = get_single_armature(objects, source)
@@ -151,14 +312,25 @@ def load_animation_action(
         )
         if maximum_delta > 1e-4:
             mismatched_rest_bones.append((bone_name, maximum_delta))
+    action = actions[0]
     if mismatched_rest_bones:
+        normalize_compatible_donor(target_armature, temporary_armature, actions[0], source)
+        action = retarget_mixamo_action(
+            target_armature,
+            temporary_armature,
+            actions[0],
+            end_frame=end_frame,
+        )
+    elif end_frame is not None:
         raise RuntimeError(
-            f"Animation rest-pose mismatch for {source}: {mismatched_rest_bones[:8]}"
+            f"Trimmed donor {source} unexpectedly matches the accepted rest pose"
         )
 
-    action = rename_action(actions[0], name, source_clip)
+    action = rename_action(action, name, source_clip, loop_candidate)
     for obj in objects:
         bpy.data.objects.remove(obj, do_unlink=True)
+    if action != actions[0]:
+        bpy.data.actions.remove(actions[0])
     bpy.data.orphans_purge(do_recursive=True)
     return action
 
@@ -385,6 +557,20 @@ def validate_exported_glb(path: pathlib.Path) -> dict[str, object]:
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.context.scene.render.fps = 30
     bpy.ops.import_scene.gltf(filepath=str(path))
+    armatures = [obj for obj in bpy.context.scene.objects if obj.type == "ARMATURE"]
+    if len(armatures) != 1:
+        raise RuntimeError(
+            f"Published Vanguard GLB reimported {len(armatures)} armatures; expected one"
+        )
+    idle_actions = [action for action in bpy.data.actions if action.name == IDLE_ACTION]
+    if len(idle_actions) != 1:
+        raise RuntimeError(
+            f"Published Vanguard GLB reimported {len(idle_actions)} idle actions; expected one"
+        )
+    armatures[0].animation_data_create()
+    armatures[0].animation_data.action = idle_actions[0]
+    bpy.context.scene.frame_set(math.floor(idle_actions[0].frame_range[0]))
+    bpy.context.view_layer.update()
     meshes = [obj for obj in bpy.context.scene.objects if obj.name == "VanguardBody"]
     if len(meshes) != 1:
         raise RuntimeError(
@@ -406,23 +592,48 @@ def validate_exported_glb(path: pathlib.Path) -> dict[str, object]:
         raise RuntimeError(
             f"Published Vanguard GLB reimported at invalid height {height:.5f} m"
         )
-    armatures = [obj for obj in bpy.context.scene.objects if obj.type == "ARMATURE"]
-    if len(armatures) != 1:
-        raise RuntimeError(
-            f"Published Vanguard GLB reimported {len(armatures)} armatures; expected one"
-        )
     walk_actions = [action for action in bpy.data.actions if action.name == WALK_ACTION]
     if len(walk_actions) != 1:
         raise RuntimeError(
             f"Published Vanguard GLB reimported {len(walk_actions)} walk actions; expected one"
         )
     walk_world = validate_in_place(armatures[0], walk_actions[0])
+    actions_by_name = {action.name: action for action in bpy.data.actions}
+    required_actions = {
+        IDLE_ACTION,
+        LOCOMOTION_ACTION,
+        WALK_ACTION,
+        DRAW_ACTION,
+        ARMED_IDLE_ACTION,
+        ARMED_LOCOMOTION_ACTION,
+        FIRE_ACTION,
+        HOLSTER_ACTION,
+        DOWN_ACTION,
+    }
+    if set(actions_by_name) != required_actions:
+        raise RuntimeError(
+            "Published Vanguard GLB action mismatch: "
+            f"expected={sorted(required_actions)}, actual={sorted(actions_by_name)}"
+        )
+    standing_action_hips = {
+        name: validate_standing_action(armatures[0], actions_by_name[name])
+        for name in (
+            DRAW_ACTION,
+            ARMED_IDLE_ACTION,
+            ARMED_LOCOMOTION_ACTION,
+            FIRE_ACTION,
+            HOLSTER_ACTION,
+        )
+    }
+    down_action_hips = validate_down_action(armatures[0], actions_by_name[DOWN_ACTION])
     return {
         "minimum": [round(value, 5) for value in minimum],
         "maximum": [round(value, 5) for value in maximum],
         "center": [round(value, 5) for value in center],
         "height": round(height, 5),
         "walk_world": walk_world,
+        "standing_action_hips": standing_action_hips,
+        "down_action_hips": down_action_hips,
     }
 
 
@@ -509,8 +720,74 @@ def validate_in_place(
     }
 
 
+def evaluated_hip_heights(
+    armature: bpy.types.Object,
+    action: bpy.types.Action,
+) -> list[float]:
+    scene = bpy.context.scene
+    previous_frame = scene.frame_current
+    armature.animation_data_create()
+    previous_action = armature.animation_data.action
+    armature.animation_data.action = action
+    start = math.floor(action.frame_range[0])
+    end = math.ceil(action.frame_range[1])
+    heights: list[float] = []
+    try:
+        for frame in range(start, end + 1):
+            scene.frame_set(frame)
+            bpy.context.view_layer.update()
+            hips = armature.matrix_world @ armature.pose.bones["mixamorig:Hips"].matrix
+            heights.append(hips.translation.z)
+    finally:
+        armature.animation_data.action = previous_action
+        scene.frame_set(previous_frame)
+    return heights
+
+
+def validate_standing_action(
+    armature: bpy.types.Object,
+    action: bpy.types.Action,
+) -> dict[str, float]:
+    heights = evaluated_hip_heights(armature, action)
+    minimum = min(heights)
+    maximum = max(heights)
+    if minimum < 0.75:
+        raise RuntimeError(
+            f"Standing action {action.name} drops the hips to {minimum:.5f} m"
+        )
+    return {"minimum": round(minimum, 5), "maximum": round(maximum, 5)}
+
+
+def validate_down_action(
+    armature: bpy.types.Object,
+    action: bpy.types.Action,
+) -> dict[str, float]:
+    heights = evaluated_hip_heights(armature, action)
+    if heights[0] < 0.75 or heights[-1] > 0.45:
+        raise RuntimeError(
+            f"Down action {action.name} does not move from standing to ground: "
+            f"first={heights[0]:.5f}, last={heights[-1]:.5f}"
+        )
+    return {
+        "first": round(heights[0], 5),
+        "last": round(heights[-1], 5),
+        "minimum": round(min(heights), 5),
+        "maximum": round(max(heights), 5),
+    }
+
+
 def main() -> None:
-    for path in (RIGGED_SOURCE, WALK_SOURCE, TRIPO_TEXTURE_SOURCE):
+    for path in (
+        RIGGED_SOURCE,
+        WALK_SOURCE,
+        DRAW_SOURCE,
+        ARMED_IDLE_SOURCE,
+        ARMED_WALK_SOURCE,
+        FIRE_SOURCE,
+        HOLSTER_SOURCE,
+        DOWN_SOURCE,
+        TRIPO_TEXTURE_SOURCE,
+    ):
         require_file(path)
     BLEND_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     GLB_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
@@ -560,6 +837,42 @@ def main() -> None:
         LOCOMOTION_ACTION,
         "Standard Walk (In Place)",
     )
+    combat_actions = [
+        load_animation_action(
+            DRAW_SOURCE,
+            fbx_global_scale,
+            armature,
+            DRAW_ACTION,
+            "Grab Rifle From Back",
+            loop_candidate=False,
+        ),
+        load_animation_action(ARMED_IDLE_SOURCE, fbx_global_scale, armature, ARMED_IDLE_ACTION, "Rifle Aiming Idle"),
+        load_animation_action(ARMED_WALK_SOURCE, fbx_global_scale, armature, ARMED_LOCOMOTION_ACTION, "Rifle Walk (In Place)"),
+        load_animation_action(
+            FIRE_SOURCE,
+            fbx_global_scale,
+            armature,
+            FIRE_ACTION,
+            "Firing Rifle",
+            loop_candidate=False,
+        ),
+        load_animation_action(
+            HOLSTER_SOURCE,
+            fbx_global_scale,
+            armature,
+            HOLSTER_ACTION,
+            "Put Back Rifle",
+            loop_candidate=False,
+        ),
+        load_animation_action(
+            DOWN_SOURCE,
+            fbx_global_scale,
+            armature,
+            DOWN_ACTION,
+            "Rifle Death",
+            loop_candidate=False,
+        ),
+    ]
     armature.animation_data_create()
     armature.animation_data.action = idle
     bpy.context.scene.frame_set(1)
@@ -581,8 +894,8 @@ def main() -> None:
         add_socket(
             armature,
             "socket.weapon.holster_primary",
-            "mixamorig:Hips",
-            (0.24, 0.08, -0.05),
+            "mixamorig:Spine2",
+            (0.18, 0.10, 0.02),
             (8.0, -12.0, 92.0),
         ),
     ]
@@ -615,7 +928,7 @@ def main() -> None:
         "walk_world_validation": walk_world_validation,
         "actions": {
             action.name: [round(value, 3) for value in action.frame_range]
-            for action in (idle, locomotion, walk)
+            for action in (idle, locomotion, walk, *combat_actions)
         },
         "blend_output": str(BLEND_OUTPUT),
         "glb_output": str(GLB_OUTPUT),

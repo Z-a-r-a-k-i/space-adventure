@@ -1045,9 +1045,24 @@ def main() -> None:
                 if "minimum_foot_lift_meters" in action_specs_by_name[action.name]
                 else None
             ),
-            float(profile.get("maximum_planar_range_meters", 0.25)),
-            float(profile.get("maximum_vertical_range_meters", 0.25)),
-            float(profile.get("maximum_loop_endpoint_delta_meters", 0.03)),
+            float(
+                action_specs_by_name[action.name].get(
+                    "maximum_planar_range_meters",
+                    profile.get("maximum_planar_range_meters", 0.25),
+                )
+            ),
+            float(
+                action_specs_by_name[action.name].get(
+                    "maximum_vertical_range_meters",
+                    profile.get("maximum_vertical_range_meters", 0.25),
+                )
+            ),
+            float(
+                action_specs_by_name[action.name].get(
+                    "maximum_endpoint_delta_meters",
+                    profile.get("maximum_loop_endpoint_delta_meters", 0.03),
+                )
+            ),
         )
         for action in actions
     }

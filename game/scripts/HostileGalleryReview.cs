@@ -85,10 +85,42 @@ public partial class HostileGalleryReview : Node3D
     {
         RequireAnimation(_enforcerIdle, HumanoidPresentationAction.Idle);
         RequireAnimation(_enforcerWalk, HumanoidPresentationAction.Locomotion);
+        RequireAnimation(_enforcerIdle, HumanoidPresentationAction.MeleeStrike);
+        RequireAnimation(_enforcerIdle, HumanoidPresentationAction.Down);
         ValidateSkeleton(_enforcerIdle);
         ValidateHumanoidPublication(_enforcerIdle);
         ValidateMaterialCount(_enforcerIdle, "Security Enforcer", 3, 3);
         RequireDescendant(_enforcerIdle, "socket.attack.contact.primary");
+
+        _enforcerIdle.Synchronize(
+            true,
+            HumanoidPresentationAction.MeleeStrike,
+            false,
+            Vector3.Forward,
+            playbackSpeed: 1.25f);
+        if (_enforcerIdle.CurrentAction != HumanoidPresentationAction.MeleeStrike)
+        {
+            throw new InvalidOperationException("Security Enforcer did not enter melee presentation.");
+        }
+        var enforcerAnimationPlayer = Descendants<AnimationPlayer>(_enforcerIdle).Single();
+        if (!Mathf.IsEqualApprox(enforcerAnimationPlayer.SpeedScale, 1.25f))
+        {
+            throw new InvalidOperationException(
+                "Security Enforcer melee playback ignored the requested speed.");
+        }
+        _enforcerIdle.Synchronize(
+            true,
+            HumanoidPresentationAction.Down,
+            true,
+            Vector3.Zero,
+            seekToEndWhenPaused: true);
+        if (Math.Abs(
+                enforcerAnimationPlayer.CurrentAnimationPosition
+                - enforcerAnimationPlayer.CurrentAnimationLength) > 0.001)
+        {
+            throw new InvalidOperationException(
+                "Security Enforcer paused down presentation did not seek to its final pose.");
+        }
 
         _enforcerIdle.Synchronize(true, HumanoidPresentationAction.Idle, true, Vector3.Zero);
         _enforcerWalk.Synchronize(

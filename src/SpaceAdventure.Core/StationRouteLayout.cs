@@ -11,6 +11,13 @@ public sealed record StationInteractionPlacement(
     WorldPosition Position,
     WorldPosition ApproachPosition);
 
+public sealed record StationEncounterPlacement(
+    EncounterId EncounterId,
+    WorldPosition TriggerCenter,
+    double TriggerRadiusMeters,
+    WorldPosition ProtagonistRestartPosition,
+    WorldPosition HostileSpawnPosition);
+
 public sealed class StationRouteLayout
 {
     private readonly ReadOnlyDictionary<EntityId, StationActorPlacement> _actorPlacements;
@@ -21,7 +28,8 @@ public sealed class StationRouteLayout
     public StationRouteLayout(
         WorldPosition protagonistStart,
         IEnumerable<StationActorPlacement> actors,
-        IEnumerable<StationInteractionPlacement> interactions)
+        IEnumerable<StationInteractionPlacement> interactions,
+        StationEncounterPlacement? encounter = null)
     {
         ArgumentNullException.ThrowIfNull(actors);
         ArgumentNullException.ThrowIfNull(interactions);
@@ -74,6 +82,21 @@ public sealed class StationRouteLayout
         _actorList = new ReadOnlyCollection<StationActorPlacement>(actorDictionary.Values.ToArray());
         _interactionList = new ReadOnlyCollection<StationInteractionPlacement>(
             interactionDictionary.Values.ToArray());
+
+        if (encounter is not null
+            && (!encounter.TriggerCenter.IsFinite
+                || !encounter.ProtagonistRestartPosition.IsFinite
+                || !encounter.HostileSpawnPosition.IsFinite
+                || !double.IsFinite(encounter.TriggerRadiusMeters)
+                || encounter.TriggerRadiusMeters <= 0
+                || encounter.TriggerRadiusMeters > 20))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(encounter),
+                "Encounter placement positions and trigger radius must be finite and bounded.");
+        }
+
+        Encounter = encounter;
     }
 
     public WorldPosition ProtagonistStart { get; }
@@ -81,6 +104,8 @@ public sealed class StationRouteLayout
     public IReadOnlyCollection<StationActorPlacement> Actors => _actorList;
 
     public IReadOnlyCollection<StationInteractionPlacement> Interactions => _interactionList;
+
+    public StationEncounterPlacement? Encounter { get; }
 
     public bool TryGetActor(EntityId actorId, out StationActorPlacement placement)
     {

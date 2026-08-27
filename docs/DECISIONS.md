@@ -321,3 +321,42 @@ progress. Static structure metadata supplies stable wall-occluder IDs; Godot
 discovers them recursively from the imported GLB instead of maintaining a wall
 name map. This decision adds two explicit door effects, not a generic quest or
 gate framework.
+
+## ADR 0026 — The solo tutorial establishes the bounded combat contract
+
+Status: accepted for implementation on 2026-08-08.
+
+The first Phase 4 slice adds one deterministic encounter only: Vanguard versus
+one Security Enforcer in the existing solo arena. The core owns encounter
+trigger/readiness, repeating explicit-target basic attacks, approach and range,
+wind-up/recovery, position-targeted Suppressive Fire, cooldown, interruption,
+one-charge Field Aid, health, damage, healing, victory, defeat pause, isolated
+retry, and post-victory exit availability. Content advances to schema 4 and
+`station-route-v6`. Victory makes the solo exit available; opening it makes
+Protector recruitment available, while the later main encounter and final
+airlock remain locked.
+
+Vanguard's carbine uses a 9-tick wind-up and 21-tick recovery. Suppressive Fire
+uses an 18-tick wind-up, 24-tick recovery, 240-tick cooldown, 9 m range, 2 m
+radius, 30 damage, and interrupts an active hostile wind-up. The Enforcer has
+100 maximum health; its body strike deals 15 damage with a 24-tick wind-up and
+36-tick recovery. Encounter readying and securing each use 42 ticks. These
+values are authoritative content, not animation durations.
+
+Godot maps observations and typed release/damage/interruption/healing events to
+the published carbine, reviewed Mixamo clips, melee ring, tracer, impact,
+floating damage values, ability pulse, and the Field Aid green pulse with a
+floating positive value. Damage never selects a hit-reaction animation, for
+normal attacks or abilities. Weapon attachment derives from encounter phase
+and is rebuilt on synchronization. Animation callbacks, sockets, physical
+contact, effects, and root motion never resolve gameplay.
+The Vanguard combat donors use a
+strict Blender local-basis bake with armature-space root displacement from
+Mixamo no-skin FBX files; the Enforcer uses
+matching-with-skin donors after its no-skin rest representation failed the
+accepted-rig gate. Both exact GLBs must fresh-reimport before integration.
+
+The slice deliberately does not add a generic combat framework, inventory,
+loot, cover, ammunition, reloads, a second hostile, Protector combat, sentry
+AI, or the main party encounter. Those remain separate Phase 4 decisions after
+the solo fight is graphically reviewed.

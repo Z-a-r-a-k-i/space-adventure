@@ -46,9 +46,8 @@ Exit passed: a human and an agent independently moved from the start, interacted
 
 ## Phase 3 — party and conversation slice
 
-Status: active. The Phase 2 human-playthrough gate passed on 2026-07-24. The
-route is being resequenced before combat: Vanguard now reaches a solo tutorial
-fight before recruiting Protector; Operator is deferred.
+Status: completed on 2026-08-07. Vanguard now reaches a solo tutorial fight
+before recruiting Protector; Operator is deferred.
 
 On 2026-07-24 the owner explicitly authorized production and provisional
 integration of the approved roster assets on the dedicated art branch. This
@@ -81,16 +80,16 @@ bound the solo-combat arena. Deterministic Blender sources and GLBs replace
 presentation geometry while Godot keeps navigation, collision, lighting,
 interaction identity, and route state. The entry link opens only after the
 survivor choice; moving through it automatically completes and opens the entry
-door before Vanguard reaches it. The far link remains locked.
+door before Vanguard reaches it. The far link was the Phase 3 combat gate.
 The evacuation-airlock assembly remains unchanged at the final destination.
-Automated route verification intentionally stops at the first-combat threshold.
+Phase 4 automation now fights through that gate while preserving the later
+Protector and final-airlock locks.
 
 On 2026-08-07 the owner approved the Security Enforcer and floor-bolted Gun
 Sentry together in the 1920x1080 hostile gallery. The Enforcer publishes its
 grounded idle, in-place Standard Walk, and reinforced-right-hand contact socket.
 The rigid sentry publishes its bounded aim pivot, recoil axis, and muzzle socket.
-Both remain outside the live route until Phase 4 adds authoritative hostile and
-combat state.
+Their base publications closed the pre-combat art gate.
 
 - Keep Vanguard as the only protagonist. Produce Protector as the fixed recruit
   encountered after the solo tutorial fight; do not restore a character-choice
@@ -123,16 +122,26 @@ archetypes have approved production bases ready for their Phase 4 scenes.
 
 ## Phase 4 — active-pause combat slice
 
-- Add the short solo tutorial fight, then unlock the Protector recruitment
-  exchange and the later two-character encounter.
-- Add basic attacks, one active ability per active party character, cooldowns,
-  health, damage, healing-item use, and readable pending actions.
-- Add the approved humanoid Security Enforcer and integrated-gun sentry as at
-  most two hostile behaviors, with target acquisition, telegraphs, victory,
-  defeat, and restart.
-- Select, clean, and integrate draw, attack, contact, recoil, recovery, and
-  holster animations alongside the authoritative combat timings rather than
-  finalizing fight animation in advance.
+Status: active. The first bounded solo-tutorial implementation is present on
+`station-route-v6`: schema-v4 content, the production Security Enforcer,
+repeating Vanguard carbine fire, position-targeted Suppressive Fire, one-charge
+Field Aid, hostile approach/strike behavior, tactical pause, victory-gated
+solo exit, atomic defeat pause, and isolated retry. Reviewed combat clips,
+carbine attachment, telegraph, tracer/impact/pulse effects, floating damage
+values without hit-reaction animations, core tests, CLI, and both victory and
+defeat Godot smokes are integrated. The later Protector
+combat and gun-sentry encounter remain open.
+
+- Retain the short solo tutorial fight and its victory-gated Protector
+  recruitment, then add the later two-character encounter.
+- Extend the implemented basic attack, cooldown, health, damage, healing-item,
+  and pending-action contracts to Protector's bounded shotgun/guard kit.
+- Add the approved integrated-gun sentry as the second and final POC hostile
+  behavior; retain the implemented Enforcer target acquisition, telegraph,
+  victory, defeat, and restart rules.
+- Select and integrate Protector and sentry attack/recoil presentation beside
+  their authoritative timings; retain the implemented Vanguard and Enforcer
+  timing profiles.
 - Tune action replacement, basic-attack repetition, target visibility, and
   pause rhythm first in the solo tutorial and then with Vanguard plus Protector.
 - Add core, CLI, Godot headless, and graphical combat checks.
