@@ -137,3 +137,17 @@ The current local preview is `artifacts/solo-review/projectiles.mp4`;
 record profile and `performance-victory-1920x1080-14.5-restrained/performance.json`
 contain the follow-up evidence; the performance table above records the
 September 6 experiment before projectiles were added.
+
+## PR 19 review follow-up
+
+The X shortcut now respects the Stop button's availability, floating damage
+numbers appear with projectile impact, and direct review arguments reject
+non-finite camera distances before creating an output manifest.
+
+The canonical build and both graphical input profiles passed. The checks cover
+ignored X presses during dialogue, defeat and securing, valid Stop during
+combat, and damage numbers hidden until arrival. Direct headless Godot runs
+with `NaN`, `Infinity` and `-Infinity` each returned exit code 1 with the range
+validation error and left all review manifests untouched.
+The 1080p Godot recording passed through recruitment; its firing frames were
+inspected to confirm the number appears with the impact flash.

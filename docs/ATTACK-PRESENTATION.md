@@ -106,8 +106,8 @@ Carbine shots and Suppressive Fire launch a bright cyan bolt from the actual
 muzzle, with a short tapered trail that grows behind it. Visual travel uses
 28 m/s clamped to 0.14–0.24 s for readability at close range. The bolt samples
 the same tick/fraction clock as recoil, freezes during tactical pause, and
-clears on retry. Impact flashes and the suppression pulse wait for visual
-arrival; health, damage numbers, interruption, and combat resolution retain
+clears on retry. Impact flashes, floating damage numbers, and the suppression
+pulse wait for visual arrival; health, interruption, and combat resolution retain
 their authoritative release timing. The destination is fixed at release;
 these effects do not perform collision checks or resolve damage.
 

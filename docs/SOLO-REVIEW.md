@@ -103,6 +103,10 @@ alone did not expose accumulated torso offsets or the retry boundary defect.
 Firing checkpoints also check muzzle launch and forward projectile travel;
 the input profile checks the bolt across twelve paused render frames, stepped
 travel, delayed impact, and cleanup on arrival.
+Floating damage numbers appear with the impact flash. The input profile checks
+that X leaves commands and feedback untouched whenever Stop is unavailable
+during dialogue, defeat, or securing. Direct review arguments reject non-finite
+camera distances before creating an output manifest.
 
 MovieWriter uses fixed deltas and can encode slower than real time. The
 `performance` profile instead measures `Stopwatch` intervals between actual

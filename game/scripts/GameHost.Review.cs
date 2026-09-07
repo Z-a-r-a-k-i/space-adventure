@@ -33,7 +33,7 @@ public partial class GameHost
             }
 
             var distance = float.Parse(ReviewArgument("review-distance", "14.5"), CultureInfo.InvariantCulture);
-            if (distance < 7.5 || distance > 20) { throw new InvalidOperationException("Review camera outside supported range."); }
+            if (!float.IsFinite(distance) || distance < 7.5 || distance > 20) { throw new InvalidOperationException("Review camera outside supported range."); }
             var repositoryRoot = Path.GetFullPath(ProjectSettings.GlobalizePath("res://.."));
             var size = GetWindow().Size;
             var recoil = ReviewArgument("review-recoil", "restrained");

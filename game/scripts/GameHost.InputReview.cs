@@ -28,6 +28,17 @@ public partial class GameHost
         await InputFrame();
     }
 
+    private async Task CheckUnavailableStop(string context)
+    {
+        InputCheck($"Stop is unavailable during {context}", !_stopButton.Visible || _stopButton.Disabled);
+        var commandSequence = _humanCommandSequence;
+        var eventSequence = _session!.Observe().LatestEventSequence;
+        var feedback = _feedbackLabel.Text;
+        await InputKey(Key.X);
+        InputCheck($"X preserves commands and feedback during {context}", _humanCommandSequence == commandSequence
+            && _session.Observe().LatestEventSequence == eventSequence && _feedbackLabel.Text == feedback);
+    }
+
     private async Task InputClick(Vector2 position, MouseButton button)
     {
         Input.ParseInputEvent(new InputEventMouseButton { Position = position, ButtonIndex = button, Pressed = true });
@@ -56,6 +67,7 @@ public partial class GameHost
         await InputInteraction("interaction.survivor");
         InputCheck("survivor right click creates human order", ReviewState().Protagonist.PendingAction?.CommandId.Value.StartsWith("input.", StringComparison.Ordinal) == true);
         await ReviewUntil(state => state.ActiveDialogue is not null, 300, fast: true);
+        await CheckUnavailableStop("dialogue");
         await InputKey(Key.Key1);
         InputCheck("dialogue number key selects route", ReviewState().ActiveDialogue is null);
         await InputInteraction("interaction.service_door.entry");
@@ -115,6 +127,7 @@ public partial class GameHost
         {
             await ReviewUntil(state => state.Encounter!.Phase == EncounterPhase.Defeat, 1000, fast: true);
             InputCheck("defeat pauses and exposes retry", _session.IsPaused && _retryButton.Visible);
+            await CheckUnavailableStop("defeat");
             await ReviewCapture("defeat");
             var button = _retryButton.GetGlobalRect();
             InputCheck("retry button fits viewport", GetViewport().GetVisibleRect().Encloses(button));
@@ -150,11 +163,16 @@ public partial class GameHost
         InputCheck("projectile advances with the presentation tick", projectile.Progress > 0
             && projectile.Position.DistanceTo(projectilePosition) > 0.01f);
         var delayedImpact = _combatPresentationEffects.Single(effect => effect.BornTick == projectileEffect.BornTick
-            && effect.DelaySeconds > 0);
+            && effect.Node is MeshInstance3D && effect.DelaySeconds > 0);
+        var delayedNumber = _combatPresentationEffects.Single(effect => effect.BornTick == projectileEffect.BornTick
+            && effect.Node is Label3D);
         InputCheck("impact flash waits for projectile arrival", !delayedImpact.Node.Visible);
+        InputCheck("damage number waits with the impact flash", !delayedNumber.Node.Visible
+            && delayedNumber.DelaySeconds == delayedImpact.DelaySeconds);
         await ReviewTicks((int)Math.Ceiling(projectile.FlightSeconds * GameSession.TicksPerSecond));
         InputCheck("arrival removes the bolt and reveals the impact", !_combatPresentationEffects.Contains(projectileEffect)
             && delayedImpact.Node.Visible);
+        InputCheck("arrival reveals the damage number", delayedNumber.Node.Visible);
         await ReviewUntil(state => state.Protagonist.Combat!.Health <= 85, 200);
         await InputClick(_healButton.GetGlobalRect().GetCenter(), MouseButton.Left);
         InputCheck("Field Aid button creates item order", ReviewState().Protagonist.PendingAction?.Kind == PrimaryActionKind.Item);
@@ -174,7 +192,9 @@ public partial class GameHost
         InputCheck("X stops and clears explicit target", ReviewState().Protagonist.CurrentAction is null
             && ReviewState().Protagonist.Combat!.RememberedAttackTargetId is null);
         await InputWorldClick(_securityEnforcerView.GlobalPosition + Vector3.Up);
-        await ReviewUntil(state => state.Encounter!.Phase == EncounterPhase.Victory, 700);
+        await ReviewUntil(state => state.Encounter!.Phase == EncounterPhase.Securing, 700);
+        await CheckUnavailableStop("securing");
+        await ReviewUntil(state => state.Encounter!.Phase == EncounterPhase.Victory, 60);
         await ReviewCapture("victory");
         await InputInteraction("interaction.service_door.solo_exit");
         await ReviewUntil(state => state.Objective.Id.Value == "objective.recruit_protector", 300, fast: true);

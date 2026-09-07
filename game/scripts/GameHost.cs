@@ -274,7 +274,7 @@ public partial class GameHost : Node3D
                 return;
             }
 
-            if (IsKey(key, Key.X))
+            if (IsKey(key, Key.X) && _stopButton.Visible && !_stopButton.Disabled)
             {
                 StopSelectedActors();
                 GetViewport().SetInputAsHandled();
@@ -1073,17 +1073,19 @@ public partial class GameHost : Node3D
                         var color = damage.TargetId == route.Protagonist.Id
                             ? new Color("ff654f")
                             : new Color("75eeff");
+                        var impactDelay = releasedProjectile is { } release && release.Tick == gameEvent.Tick
+                            && release.Source == damage.SourceId ? release.FlightSeconds : 0;
                         SpawnImpact(
                             damage.SourceId == route.Protagonist.Id
                                 ? CombatImpactPosition(impact, _vanguardPresentation.MuzzlePosition)
                                 : impact + new Vector3(0.0f, 1.05f, 0.0f),
                             color,
-                            releasedProjectile is { } release && release.Tick == gameEvent.Tick
-                                && release.Source == damage.SourceId ? release.FlightSeconds : 0);
+                            impactDelay);
                         SpawnDamageNumber(
                             impact + new Vector3(0.0f, 1.48f, 0.0f),
                             damage.Amount,
-                            color);
+                            color,
+                            impactDelay);
                         if (damage.TargetId == route.Protagonist.Id) { PlayCombatCue("impact", impact); }
                     }
                     break;
@@ -1205,7 +1207,7 @@ public partial class GameHost : Node3D
         _combatPresentationEffects.Add(new TimedPresentationEffect(node, 0.16f, _effectEventTick, delaySeconds));
     }
 
-    private void SpawnDamageNumber(Vector3 position, int amount, Color color)
+    private void SpawnDamageNumber(Vector3 position, int amount, Color color, float delaySeconds = 0)
     {
         var node = new Label3D
         {
@@ -1218,7 +1220,7 @@ public partial class GameHost : Node3D
             NoDepthTest = true,
         };
         AddChild(node);
-        _combatPresentationEffects.Add(new TimedPresentationEffect(node, 0.70f, _effectEventTick));
+        _combatPresentationEffects.Add(new TimedPresentationEffect(node, 0.70f, _effectEventTick, delaySeconds));
     }
 
     private void SpawnFieldAidPresentation(Vector3 position, int amount)
