@@ -123,7 +123,7 @@ archetypes have approved production bases ready for their Phase 4 scenes.
 ## Phase 4 — active-pause combat slice
 
 Status: active. The first bounded solo-tutorial implementation is present on
-`station-route-v6`: schema-v4 content, the production Security Enforcer,
+`station-route-v7`: schema-v4 content, the production Security Enforcer,
 repeating Vanguard carbine fire, position-targeted Suppressive Fire, one-charge
 Field Aid, hostile approach/strike behavior, tactical pause, victory-gated
 solo exit, atomic defeat pause, and isolated retry. Reviewed combat clips,
@@ -131,6 +131,13 @@ carbine attachment, telegraph, tracer/impact/pulse effects, floating damage
 values without hit-reaction animations, core tests, CLI, and both victory and
 defeat Godot smokes are integrated. The later Protector
 combat and gun-sentry encounter remain open.
+
+The September 2026 repair under ADR 0027 addresses repeat-order/recovery rules,
+weapon fit, authored handling, recoil, telegraph, camera, HUD and reliable
+graphical review before expanding this phase. `SOLO-REVIEW.md` documents the
+playable experiment and repeatable checks. Owner hands-on review of the repaired
+solo fight remains the next gate; recruitment marks the end of the current
+playable slice without completing the scenario.
 
 - Retain the short solo tutorial fight and its victory-gated Protector
   recruitment, then add the later two-character encounter.

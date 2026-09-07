@@ -30,6 +30,10 @@ pwsh -NoProfile -File scripts/dev.ps1 headless -Name station-combat-defeat
 pwsh -NoProfile -File scripts/dev.ps1 headless -Name humanoid-gallery
 pwsh -NoProfile -File scripts/dev.ps1 headless -Name hostile-gallery
 pwsh -NoProfile -File scripts/dev.ps1 capture -Name wall-cutaway
+pwsh -NoProfile -File scripts/dev.ps1 review -Mode live -Checkpoint armed
+pwsh -NoProfile -File scripts/dev.ps1 review -Mode input -Sequence victory
+pwsh -NoProfile -File scripts/dev.ps1 review -Mode input -Sequence defeat
+pwsh -NoProfile -File scripts/dev.ps1 review -Mode performance
 pwsh -NoProfile -File scripts/dev.ps1 editor
 pwsh -NoProfile -File scripts/dev.ps1 run
 ```
@@ -45,6 +49,7 @@ The script accepts an explicit `-Godot` path and otherwise resolves `SPACE_ADVEN
 The Godot host exposes a stable C# node named `AutomationBridge` after the authored navigation map has synchronized. Its public methods are:
 
 - `GetObservationJson()` — complete clock, pause, and station-route observation.
+- `GetPresentationDiagnosticsJson()` — sampled clip times, weapon/grip/muzzle metrics, effect ages and lintel state.
 - `GetEventsJson(sinceSequence)` — retained events after a sequence, plus oldest/latest sequence and history-gap metadata.
 - `SubmitCommandJson(commandJson)` — schema-v3 command envelope translated into the same typed dispatcher used by input, tests, and the CLI.
 - `SetPaused(paused)` — convenience wrapper around the typed pause command.
@@ -61,6 +66,7 @@ The command envelope always contains `schema_version`, `command_id`, `type`, and
 {"schema_version":3,"command_id":"example.pause","type":"set_pause","payload":{"paused":true}}
 {"schema_version":3,"command_id":"example.move","type":"move_actor","payload":{"actor_id":"actor.protagonist","destination":{"x":-10.0,"y":0.0,"z":2.75}}}
 {"schema_version":3,"command_id":"example.party","type":"move_party","payload":{"actor_ids":["actor.protagonist"],"destination":{"x":-10.0,"y":0.0,"z":2.75}}}
+{"schema_version":3,"command_id":"example.stop","type":"stop_actors","payload":{"actor_ids":["actor.protagonist"]}}
 {"schema_version":3,"command_id":"example.interact","type":"interact","payload":{"actor_id":"actor.protagonist","target_id":"interaction.survivor"}}
 {"schema_version":3,"command_id":"example.response","type":"choose_dialogue_response","payload":{"actor_id":"actor.protagonist","interaction_id":"interaction.survivor","response_id":"response.reroute_service_power"}}
 {"schema_version":3,"command_id":"example.attack","type":"assign_basic_attack_target","payload":{"actor_id":"actor.protagonist","target_id":"actor.enemy.security_enforcer.solo"}}
@@ -80,6 +86,12 @@ adapter returns JSON-safe values and stable error codes; it never exposes
 arbitrary property mutation, script evaluation, node deletion, unrestricted
 method invocation, or private core state. Encounter retry is a narrow gameplay
 command, not a scenario-reset backdoor.
+
+Action observations also expose `instance_id`, `phase_started_tick`,
+`waiting_reason` and `interrupted`. Combatants expose their remembered attack
+target and offensive recovery deadline. Exact stepping synchronizes the same
+presentation sampler and effect clock used during normal play. See
+`SOLO-REVIEW.md` for plugin-free capture, motion, input and performance profiles.
 
 Automation commands name stable actor and target IDs. They do not depend on UI selection or incidental node paths.
 
@@ -129,7 +141,8 @@ authored response, Enter/keypad Enter chooses the first response, and either
 visible response button can be clicked. Outside dialogue, `1` enters
 Suppressive Fire position targeting and left-click confirms it; `2` queues
 Field Aid; Escape cancels ability targeting. Orders issued during tactical
-pause remain pending until `Space` resumes the simulation. Camera-relative
+pause remain pending until `Space` resumes the simulation. `X` or the Stop
+button clears the selected crew's orders and explicit attack intent. Camera-relative
 WASD/arrows pan, Q/E or middle drag yaw, Page Up/Page Down or vertical middle
 drag pitch, the wheel zooms, Home/R resets orientation, and F focuses the
 protagonist. Vanguard is deployed automatically and receives the opening camera

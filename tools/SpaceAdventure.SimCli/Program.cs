@@ -331,7 +331,7 @@ static int RunStationRoute(JsonLinesOutput output)
         }
 
         if (!healCommandAccepted
-            && combatObservation.Protagonist.Combat!.Health <= 60
+            && combatObservation.Protagonist.Combat!.Health <= 85
             && combatObservation.Protagonist.Combat.Items.Single().Charges > 0)
         {
             var healCommand = session.Execute(new UseItemCommand(
@@ -347,16 +347,10 @@ static int RunStationRoute(JsonLinesOutput output)
         if (healCommandAccepted
             && !attackResumedAfterHeal
             && combatObservation.Protagonist.Combat!.Items.Single().Charges == 0
-            && combatObservation.Protagonist.CurrentAction is null
+            && combatObservation.Protagonist.CurrentAction?.Kind == PrimaryActionKind.Attack
             && combatObservation.Hostiles!.Single().Combat.Health > 0)
         {
-            var resumedAttack = session.Execute(new AssignBasicAttackTargetCommand(
-                new CommandId("station-route.attack-after-field-aid"),
-                definition.Protagonist.Id,
-                definition.Combat.Hostile.Id));
-            EmitCommandResult(output, "assign_basic_attack_target", resumedAttack);
-            attackResumedAfterHeal = resumedAttack.Accepted;
-            events.Flush(session);
+            attackResumedAfterHeal = true;
         }
 
         session.AdvanceTicks(1);
@@ -376,6 +370,7 @@ static int RunStationRoute(JsonLinesOutput output)
             && abilityCommand.Accepted
             && resumed.Accepted
             && healCommandAccepted
+            && attackResumedAfterHeal
             && afterVictory.Encounter?.Phase == EncounterPhase.Victory
             && afterVictory.Hostiles!.Single().Combat.Health == 0
             && afterVictory.Objective.Id == definition.SoloExitDoorObjective.Id
@@ -803,6 +798,7 @@ internal static class ObservationProjection
                     observation.Encounter.Attempt,
                     observation.Encounter.TransitionTicksRemaining,
                     observation.Encounter.TransitionTicksTotal,
+                    observation.Encounter.PhaseStartedTick,
                     hostile_id = observation.Encounter.HostileId.Value,
                 },
         };
@@ -854,6 +850,8 @@ internal static class ObservationProjection
                 observation.Health,
                 observation.MaximumHealth,
                 observation.IsDefeated,
+                remembered_attack_target_id = observation.RememberedAttackTargetId?.Value,
+                observation.OffensiveRecoveryUntilTick,
                 basic_attack_id = observation.BasicAttackId.Value,
                 cooldowns = observation.Cooldowns.Select(cooldown => new
                 {
@@ -887,6 +885,10 @@ internal static class ObservationProjection
                 phase = JsonLinesOutput.ToJsonName(observation.Phase),
                 observation.PhaseTicksRemaining,
                 observation.PhaseTicksTotal,
+                observation.InstanceId,
+                observation.PhaseStartedTick,
+                observation.Interrupted,
+                waiting_reason = observation.WaitingReason is null ? null : JsonLinesOutput.ToJsonName(observation.WaitingReason.Value),
             };
     }
 

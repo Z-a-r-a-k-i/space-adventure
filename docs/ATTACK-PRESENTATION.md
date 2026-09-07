@@ -76,19 +76,40 @@ resynchronization. Animation callbacks never apply gameplay effects.
 
 | Action | Authority | Presentation |
 |---|---:|---|
-| Vanguard ready/draw | 42 ticks | `Grab Rifle From Back`, scaled to the phase; transfer to hand at 48% |
-| Vanguard carbine shot | 9-tick wind-up + 21-tick recovery | `Firing Rifle`, release aligned to wind-up completion; armed idle during recovery |
-| Suppressive Fire | 18-tick wind-up + 24-tick recovery, 240-tick cooldown | the same reviewed rifle release slowed to the authoritative release; Godot renders the 2 m target pulse |
-| Enforcer body strike | 15 damage; 24-tick wind-up + 36-tick recovery | telegraph/idle for the early wind-up, then `Right Hook` frames 1–10 at 1× during the final nine ticks so contact aligns to release |
-| Victory secure/holster | 42 ticks | `Put Back Rifle`, transfer to upper-back socket at 58% |
+| Vanguard ready/draw | 54 ticks / 1.8 s | Blender-authored reach and lift around the fitted rifle; transfer at 25%, support hand joins from 60–90% |
+| Vanguard carbine shot | 9-tick wind-up + 21-tick recovery | fitted armed pose, upper-body aim and release-driven restrained recoil; lower-body locomotion remains available |
+| Suppressive Fire | 6-tick wind-up + 24-tick recovery, 240-tick cooldown | same release-driven recoil, moving muzzle bolt/sound and 2 m target pulse on visual arrival |
+| Enforcer body strike | 15 damage; 42-tick wind-up + 36-tick recovery | full `Right Hook`: gradual anticipation through the first 75% of wind-up, contact at source 0.30 s, remaining follow-through during recovery |
+| Victory secure/holster | 54 ticks / 1.8 s | reverse authored handling path; transfer at 75% |
+
+ADR 0027 supersedes the earlier donor timing recipe. The original firing donor
+remains in the source as provenance, but is not selected for runtime shooting.
+The weapon uses an orthonormal world transform below the scaled Mixamo rig;
+the published body is 0.82 m long and its actual muzzle points along local -Z.
+Authored grip fit plus Godot's built-in two-bone support-hand IK keeps each
+palm within 3 cm of its intended grip in fully armed poses. The sampler
+restores the authored pose before each frame so procedural offsets cannot
+accumulate on animation-compressed constant bones.
+
+Explicit target intent resumes after ability or aid. A released attack's
+recovery deadline survives replacement, movement and Stop. Presentation uses
+action identity, phase start, tick and fraction; exact paused stepping uses the
+same sampler and event clock. See `SOLO-REVIEW.md` for bounded visual and
+real-time checks.
 
 Vanguard also publishes `Rifle Aiming Idle`, in-place `Rifle Walk`, and `Rifle
 Death`. The Enforcer publishes `Falling Back Death`. Presentation reads
 observations and typed release, damage, interruption, victory, and defeat
 events. Damage never selects a hit-reaction animation: floating values, health
 changes, and impact flashes provide the feedback for normal and special hits.
-Muzzle flashes, tracers, ability pulse, impact flashes, and the melee wind-up
-ring are short Godot-only effects; none resolve damage.
+Carbine shots and Suppressive Fire launch a bright cyan bolt from the actual
+muzzle, with a short tapered trail that grows behind it. Visual travel uses
+28 m/s clamped to 0.14–0.24 s for readability at close range. The bolt samples
+the same tick/fraction clock as recoil, freezes during tactical pause, and
+clears on retry. Impact flashes and the suppression pulse wait for visual
+arrival; health, damage numbers, interruption, and combat resolution retain
+their authoritative release timing. The destination is fixed at release;
+these effects do not perform collision checks or resolve damage.
 
 Field Aid follows the same authority boundary: `HealingApplied` spawns a short
 green pulse and a floating positive value at the target. The effect validates

@@ -19,6 +19,7 @@ public sealed partial class GameSession
     private readonly StationRouteRuntime? _stationRoute;
     private double _accumulatedSeconds;
     private long _eventSequence;
+    private long _actionSequence;
 
     public GameSession()
     {
@@ -39,6 +40,8 @@ public sealed partial class GameSession
     public long Tick { get; private set; }
 
     public bool IsPaused { get; private set; }
+
+    public double TickFraction => IsPaused ? 0 : Math.Clamp(_accumulatedSeconds / SecondsPerTick, 0, 1);
 
     public long OldestRetainedEventSequence => _events.Count == 0
         ? _eventSequence + 1
@@ -65,6 +68,7 @@ public sealed partial class GameSession
             ChooseProtagonistKitCommand chooseKit => Execute(chooseKit),
             MoveActorCommand moveActor => Execute(moveActor),
             MovePartyCommand moveParty => Execute(moveParty),
+            StopActorsCommand stop => Execute(stop),
             InteractCommand interact => Execute(interact),
             ChooseDialogueResponseCommand chooseResponse => Execute(chooseResponse),
             AssignBasicAttackTargetCommand attack => Execute(attack),
@@ -94,7 +98,7 @@ public sealed partial class GameSession
             && !IsPaused)
         {
             AdvanceOneTick();
-            _accumulatedSeconds -= SecondsPerTick;
+            _accumulatedSeconds = Math.Max(0, _accumulatedSeconds - SecondsPerTick);
             advanced++;
         }
 
@@ -569,54 +573,6 @@ public sealed partial class GameSession
         }).ToArray();
     }
 
-    private void AssignPrimaryAction(ActorRuntime actor, PrimaryActionRuntime action)
-    {
-        CommandId? replacedCommandId;
-        var pending = IsPaused;
-        if (pending)
-        {
-            replacedCommandId = actor.PendingAction?.CommandId;
-            actor.PendingAction = action;
-        }
-        else
-        {
-            replacedCommandId = actor.CurrentAction?.CommandId;
-            actor.CurrentAction = action;
-            actor.PendingAction = null;
-        }
-
-        Record(
-            GameplayEventType.PrimaryActionAssigned,
-            action.CommandId,
-            detail: new PrimaryActionAssignedEventDetail(
-                action.CommandId,
-                actor.Id,
-                action.Kind,
-                action.Destination,
-                action.InteractionTargetId,
-                pending,
-                replacedCommandId));
-    }
-
-    private void PromotePendingActions()
-    {
-        if (_stationRoute is null)
-        {
-            return;
-        }
-
-        foreach (var actor in _stationRoute.Actors.Values.OrderBy(actor => actor.PartyOrder))
-        {
-            if (actor.PendingAction is not PrimaryActionRuntime pending)
-            {
-                continue;
-            }
-
-            actor.CurrentAction = pending;
-            actor.PendingAction = null;
-        }
-    }
-
     private void AdvanceOneTick()
     {
         Tick++;
@@ -635,9 +591,14 @@ public sealed partial class GameSession
             AdvanceCombatCooldowns(_stationRoute);
         }
 
-        PromotePendingActions();
+        PromotePendingActions(advancingTick: true);
         foreach (var actor in _stationRoute.Actors.Values.OrderBy(actor => actor.PartyOrder).ToArray())
         {
+            if (actor.CurrentAction is null)
+            {
+                ResumeRememberedAttack(_stationRoute, actor);
+            }
+
             if (actor.CurrentAction is PrimaryActionRuntime action)
             {
                 AdvanceAction(_stationRoute, actor, action);
@@ -980,7 +941,7 @@ public sealed partial class GameSession
         return true;
     }
 
-    private static StationRouteObservation ObserveStationRoute(StationRouteRuntime station)
+    private StationRouteObservation ObserveStationRoute(StationRouteRuntime station)
     {
         var objectiveStatus = station.Phase == ScenarioPhase.Completed
             ? ObjectiveStatus.Completed
@@ -1041,10 +1002,11 @@ public sealed partial class GameSession
                 station.Combat.Attempt,
                 station.Combat.TransitionTicksRemaining,
                 station.Combat.TransitionTicksTotal,
-                station.Combat.Hostile.Id));
+                station.Combat.Hostile.Id,
+                station.Combat.PhaseStartedTick));
     }
 
-    private static ActorObservation ObserveActor(ActorRuntime actor)
+    private ActorObservation ObserveActor(ActorRuntime actor)
     {
         return new ActorObservation(
             actor.Id,
@@ -1059,7 +1021,7 @@ public sealed partial class GameSession
                     actor.Loadout.ActiveAbilityTargetKind),
             actor.Position,
             ObserveAction(actor.CurrentAction),
-            ObserveAction(actor.PendingAction),
+            ObserveAction(actor.PendingAction, actor.PendingAction is null ? null : GetWaitingReason(actor, actor.PendingAction)),
             actor.MaximumHealth <= 0
                 ? null
                 : new CombatantStateObservation(
@@ -1077,7 +1039,9 @@ public sealed partial class GameSession
                     actor.ItemCharges
                         .OrderBy(pair => pair.Key.Value, StringComparer.Ordinal)
                         .Select(pair => new ItemChargeObservation(pair.Key, pair.Value))
-                        .ToArray()));
+                        .ToArray(),
+                    actor.RememberedAttackTargetId,
+                    actor.OffensiveRecoveryUntilTick));
     }
 
     private static ProtagonistKitObservation ObserveKit(ProtagonistKitDefinition kit)
@@ -1093,7 +1057,9 @@ public sealed partial class GameSession
             kit.ActiveAbilityTargetKind);
     }
 
-    private static PrimaryActionObservation? ObserveAction(PrimaryActionRuntime? action)
+    private static PrimaryActionObservation? ObserveAction(
+        PrimaryActionRuntime? action,
+        ActionWaitingReason? waitingReason = null)
     {
         return action is null
             ? null
@@ -1109,7 +1075,10 @@ public sealed partial class GameSession
                 action.ItemId,
                 action.Phase,
                 action.PhaseTicksRemaining,
-                action.PhaseTicksTotal);
+                action.PhaseTicksTotal,
+                action.InstanceId,
+                action.PhaseStartedTick,
+                waitingReason);
     }
 
     private static InteractionState GetInteractionState(
@@ -1302,6 +1271,12 @@ public sealed partial class GameSession
 
         public PrimaryActionRuntime? PendingAction { get; set; }
 
+        public EntityId? RememberedAttackTargetId { get; set; }
+
+        public CommandId? RememberedAttackCommandId { get; set; }
+
+        public long OffensiveRecoveryUntilTick { get; set; }
+
         public int MaximumHealth { get; set; }
 
         public int Health { get; set; }
@@ -1356,6 +1331,10 @@ public sealed partial class GameSession
         public int PhaseTicksRemaining { get; set; }
 
         public int PhaseTicksTotal { get; set; }
+
+        public long InstanceId { get; set; }
+
+        public long PhaseStartedTick { get; set; }
 
         public WorldPosition AbilityTargetPosition { get; init; }
     }

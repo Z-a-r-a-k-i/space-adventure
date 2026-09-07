@@ -1,6 +1,6 @@
 {
   "schema_version": 4,
-  "content_revision": "station-route-v6",
+  "content_revision": "station-route-v7",
   "scenario_id": "scenario.station_route",
   "protagonist": {
     "id": "actor.protagonist",
@@ -76,7 +76,7 @@
         "id": "attack.enemy.security_enforcer.body_strike",
         "range_meters": 1.5,
         "damage": 15,
-        "windup_ticks": 24,
+        "windup_ticks": 42,
         "recovery_ticks": 36
       }
     ],
@@ -86,7 +86,7 @@
       "range_meters": 9.0,
       "radius_meters": 2.0,
       "damage": 30,
-      "windup_ticks": 18,
+      "windup_ticks": 6,
       "recovery_ticks": 24,
       "cooldown_ticks": 240,
       "interrupts_windup": true
@@ -109,8 +109,8 @@
       "id": "encounter.station.solo_tutorial",
       "hostile_id": "actor.enemy.security_enforcer.solo",
       "protagonist_maximum_health": 100,
-      "readying_ticks": 42,
-      "securing_ticks": 42,
+      "readying_ticks": 54,
+      "securing_ticks": 54,
       "healing_item_id": "item.healing.field_aid.v1"
     }
   },

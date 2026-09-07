@@ -16,11 +16,37 @@ public partial class VanguardPresentation : Node3D
     private static readonly StringName Down = "anim_humanoid_down";
 
     private AnimationPlayer _animationPlayer = null!;
+    private Skeleton3D _skeleton = null!;
+    private SkeletalPosePlayer _posePlayer = null!;
     private Node3D _weapon = null!;
     private Node3D _handSocket = null!;
     private Node3D _holsterSocket = null!;
     private StringName? _currentAnimation;
     private bool? _weaponInHand;
+    private Node3D _muzzle = null!;
+    private Node3D _primaryGrip = null!;
+    private Node3D _supportGrip = null!;
+    private double _sampleTick;
+    private TwoBoneIK3D _supportIk = null!;
+    private HandOrientationModifier _supportOrientation = null!;
+    private Node3D _supportTarget = null!;
+    private Node3D _supportPole = null!;
+    private BoneAttachment3D[] _boneAttachments = [];
+    private int _rightHand;
+    private int _leftHand;
+    private int _spine;
+    private float _rightPalmOffset;
+    private float _leftPalmOffset;
+    private float _primaryGripError;
+    private float _supportGripError;
+    private double _lastShotTick = double.NegativeInfinity;
+    private int _attempt;
+
+    public bool StrongRecoil { get; set; }
+
+    public Vector3 MuzzlePosition => _muzzle.GlobalPosition;
+
+    public Vector3 MuzzleDirection => -_muzzle.GlobalBasis.Z.Normalized();
 
     public override void _Ready()
     {
@@ -28,8 +54,15 @@ public partial class VanguardPresentation : Node3D
             ?? throw new InvalidOperationException(
                 "The Vanguard presentation must contain an imported AnimationPlayer.");
         _weapon = GetNode<Node3D>("Weapon");
+        _weapon.TopLevel = true;
+        _skeleton = FindDescendant<Skeleton3D>(this)!;
+        _posePlayer = new SkeletalPosePlayer(_animationPlayer, _skeleton);
+        _muzzle = FindSocket("socket.attack.muzzle.primary");
+        _primaryGrip = FindSocket("socket.grip.primary");
+        _supportGrip = FindSocket("socket.grip.support");
         _handSocket = FindSocket("socket.weapon.hand_primary");
         _holsterSocket = FindSocket("socket.weapon.holster_primary");
+        ConfigureSupportHand();
 
         foreach (var (animation, loop) in new[]
         {
@@ -56,7 +89,9 @@ public partial class VanguardPresentation : Node3D
         bool paused,
         Vector3 direction,
         EncounterObservation? encounter,
-        PrimaryActionObservation? currentAction)
+        PrimaryActionObservation? currentAction,
+        double presentationTick = 0,
+        float turnDeltaSeconds = 1.0f / 60.0f)
     {
         Visible = active;
         if (!active)
@@ -65,7 +100,9 @@ public partial class VanguardPresentation : Node3D
         }
 
         var animation = IdleHolstered;
-        var speed = 1.0f;
+        _sampleTick = presentationTick;
+        var clipSeconds = presentationTick / GameSession.TicksPerSecond;
+        long cycle = 0;
         var seekToEnd = false;
         var weaponInHand = false;
 
@@ -75,29 +112,19 @@ public partial class VanguardPresentation : Node3D
             {
                 case EncounterPhase.Readying:
                     animation = DrawPrimary;
-                    speed = SpeedForTicks(DrawPrimary, encounter.TransitionTicksTotal);
-                    weaponInHand = TransitionProgress(encounter) >= 0.48f;
+                    clipSeconds = TransitionProgress(encounter, presentationTick) * _animationPlayer.GetAnimation(DrawPrimary).Length;
+                    weaponInHand = TransitionProgress(encounter, presentationTick) >= 0.25f;
+                    cycle = encounter.Attempt;
                     break;
                 case EncounterPhase.Active:
                     weaponInHand = true;
-                    if (currentAction is
-                    {
-                        Kind: PrimaryActionKind.Attack or PrimaryActionKind.Ability,
-                        Phase: PrimaryActionPhase.Windup,
-                    })
-                    {
-                        animation = AttackPrimary;
-                        speed = SpeedForTicks(AttackPrimary, currentAction.PhaseTicksTotal);
-                    }
-                    else
-                    {
-                        animation = moving ? LocomotionArmed : IdleArmed;
-                    }
+                    animation = moving ? LocomotionArmed : IdleArmed;
                     break;
                 case EncounterPhase.Securing:
                     animation = HolsterPrimary;
-                    speed = SpeedForTicks(HolsterPrimary, encounter.TransitionTicksTotal);
-                    weaponInHand = TransitionProgress(encounter) < 0.58f;
+                    clipSeconds = TransitionProgress(encounter, presentationTick) * _animationPlayer.GetAnimation(HolsterPrimary).Length;
+                    weaponInHand = TransitionProgress(encounter, presentationTick) < 0.75f;
+                    cycle = encounter.Attempt;
                     break;
                 case EncounterPhase.Defeat:
                     animation = Down;
@@ -118,37 +145,122 @@ public partial class VanguardPresentation : Node3D
             animation = moving ? WalkHolstered : IdleHolstered;
         }
 
-        AttachWeapon(weaponInHand);
-        _animationPlayer.SpeedScale = paused ? 0.0f : speed;
-        Play(animation);
         if (seekToEnd)
         {
-            _animationPlayer.Seek(_animationPlayer.GetAnimation(animation).Length, update: true);
+            clipSeconds = _animationPlayer.GetAnimation(animation).Length;
         }
-        FaceDirection(direction);
+        _animationPlayer.SpeedScale = paused ? 0 : 1;
+        var newAttempt = encounter?.Attempt != _attempt;
+        if (newAttempt)
+        {
+            _lastShotTick = double.NegativeInfinity;
+            _attempt = encounter?.Attempt ?? 0;
+        }
+        _posePlayer.Sample(animation, clipSeconds, presentationTick / GameSession.TicksPerSecond, cycle,
+            blendSeconds: seekToEnd || newAttempt ? 0 : 0.12);
+        FaceDirection(direction, turnDeltaSeconds);
+        if (currentAction is { Kind: PrimaryActionKind.Attack or PrimaryActionKind.Ability, Phase: PrimaryActionPhase.Recovery })
+        {
+            NotifyShot(currentAction.PhaseStartedTick);
+        }
+        if (encounter?.Phase == EncounterPhase.Active)
+        {
+            ApplyAimAndRecoil(direction, moving);
+        }
+        foreach (var attachment in _boneAttachments) { attachment.OnSkeletonUpdate(); }
+        AttachWeapon(weaponInHand);
+        SynchronizeSupportHand(encounter, presentationTick);
     }
 
-    private static float TransitionProgress(EncounterObservation encounter)
+    private static float TransitionProgress(EncounterObservation encounter, double presentationTick)
     {
         if (encounter.TransitionTicksTotal <= 0)
         {
             return 1.0f;
         }
 
-        return 1.0f - ((float)encounter.TransitionTicksRemaining / encounter.TransitionTicksTotal);
+        return (float)Math.Clamp((presentationTick - encounter.PhaseStartedTick) / encounter.TransitionTicksTotal, 0, 1);
     }
 
-    private float SpeedForTicks(StringName animation, int ticks)
+    public void NotifyShot(long releaseTick) => _lastShotTick = Math.Max(_lastShotTick, releaseTick);
+
+    private void ConfigureSupportHand()
     {
-        if (ticks <= 0)
-        {
-            return 1.0f;
-        }
-
-        return Mathf.Max(0.05f, (float)_animationPlayer.GetAnimation(animation).Length * 30.0f / ticks);
+        _rightHand = _skeleton.FindBone("mixamorig_RightHand");
+        _leftHand = _skeleton.FindBone("mixamorig_LeftHand");
+        _spine = _skeleton.FindBone("mixamorig_Spine2");
+        var rig = FindDescendants<Node3D>(this).First(node => node.HasMeta("extras")
+            && node.GetMeta("extras").VariantType == Variant.Type.Dictionary
+            && node.GetMeta("extras").AsGodotDictionary().ContainsKey("right_palm_offset_m"));
+        var extras = rig.GetMeta("extras").AsGodotDictionary();
+        _rightPalmOffset = extras["right_palm_offset_m"].AsGodotArray()[1].AsSingle();
+        _leftPalmOffset = extras["left_palm_offset_m"].AsGodotArray()[1].AsSingle();
+        _boneAttachments = _skeleton.GetChildren().OfType<BoneAttachment3D>().ToArray();
+        _supportTarget = new Node3D { Name = "SupportWristTarget", TopLevel = true };
+        _supportPole = new Node3D { Name = "SupportElbowPole", TopLevel = true };
+        AddChild(_supportTarget);
+        AddChild(_supportPole);
+        _supportIk = new TwoBoneIK3D { Name = "SupportHandIK", SettingCount = 1, Active = false };
+        _skeleton.AddChild(_supportIk);
+        _supportIk.SetRootBoneName(0, "mixamorig_LeftArm");
+        _supportIk.SetMiddleBoneName(0, "mixamorig_LeftForeArm");
+        _supportIk.SetEndBoneName(0, "mixamorig_LeftHand");
+        _supportIk.SetTargetNode(0, _supportIk.GetPathTo(_supportTarget));
+        _supportIk.SetPoleNode(0, _supportIk.GetPathTo(_supportPole));
+        _supportIk.SetPoleDirection(0, SkeletonModifier3D.SecondaryDirection.None);
+        _supportOrientation = new HandOrientationModifier { Name = "SupportGripOrientation", HandBone = _leftHand, Active = false };
+        _skeleton.AddChild(_supportOrientation);
+        _skeleton.SkeletonUpdated += MeasureGripErrors;
     }
 
-    private void FaceDirection(Vector3 direction)
+    private Transform3D HandWorld(int bone) => _skeleton.GlobalTransform * _skeleton.GetBoneGlobalPose(bone);
+
+    private void SynchronizeSupportHand(EncounterObservation? encounter, double tick)
+    {
+        var amount = encounter?.Phase switch
+        {
+            EncounterPhase.Active => 1.0f,
+            EncounterPhase.Readying => Mathf.SmoothStep(0, 1, (TransitionProgress(encounter, tick) - 0.60f) / 0.30f),
+            EncounterPhase.Securing => 1 - Mathf.SmoothStep(0, 1, (TransitionProgress(encounter, tick) - 0.10f) / 0.30f),
+            _ => 0,
+        };
+        _supportIk.Active = amount > 0;
+        _supportOrientation.Active = amount > 0;
+        _supportIk.Influence = amount;
+        _supportOrientation.Influence = amount;
+        var handRotation = HandWorld(_leftHand).Basis.Orthonormalized();
+        _supportOrientation.WorldRotation = handRotation;
+        _supportTarget.GlobalPosition = _supportGrip.GlobalPosition - handRotation.Y * _leftPalmOffset;
+        _supportPole.GlobalPosition = GlobalTransform * new Vector3(0.6f, 1.12f, 0.22f);
+    }
+
+    private void MeasureGripErrors()
+    {
+        var right = HandWorld(_rightHand);
+        var left = HandWorld(_leftHand);
+        _primaryGripError = (right.Origin + right.Basis.Y.Normalized() * _rightPalmOffset).DistanceTo(_primaryGrip.GlobalPosition);
+        _supportGripError = (left.Origin + left.Basis.Y.Normalized() * _leftPalmOffset).DistanceTo(_supportGrip.GlobalPosition);
+    }
+
+    private void ApplyAimAndRecoil(Vector3 direction, bool moving)
+    {
+        var local = GlobalBasis.Inverse() * direction;
+        var yaw = Mathf.Clamp(Mathf.Atan2(local.X, local.Z), -0.9f, 0.9f);
+        var distance = new Vector2(local.X, local.Z).Length();
+        var pitch = moving || distance < 0.1f ? 0 : -Mathf.Atan2(1.15f - 1.43f, distance);
+        var age = (_sampleTick - _lastShotTick) / 30;
+        var kick = age is >= 0 and < 0.4
+            ? (float)(age < 0.045 ? Math.Sin(age / 0.045 * Math.PI / 2) : Math.Exp(-(age - 0.045) * 20))
+            : 0;
+        var world = _skeleton.GlobalTransform * _skeleton.GetBoneGlobalPose(_spine);
+        var rotation = new Basis(GlobalBasis.Y.Normalized(), yaw)
+            * new Basis(GlobalBasis.X.Normalized(), pitch - kick * (StrongRecoil ? 0.085f : 0.03f));
+        world.Basis = rotation * world.Basis;
+        world.Origin -= GlobalBasis.Z.Normalized() * kick * (StrongRecoil ? 0.04f : 0.018f);
+        _skeleton.SetBoneGlobalPose(_spine, _skeleton.GlobalTransform.AffineInverse() * world);
+    }
+
+    private void FaceDirection(Vector3 direction, float deltaSeconds)
     {
         var planarDirection = new Vector3(direction.X, 0.0f, direction.Z);
         if (planarDirection.LengthSquared() <= 0.000001f)
@@ -159,20 +271,47 @@ public partial class VanguardPresentation : Node3D
         planarDirection = planarDirection.Normalized();
         // The Mixamo Vanguard faces local +Z after the Blender/glTF conversion.
         var targetYaw = Mathf.Atan2(planarDirection.X, planarDirection.Z);
-        Rotation = new Vector3(0.0f, Mathf.LerpAngle(Rotation.Y, targetYaw, 0.28f), 0.0f);
+        Rotation = new Vector3(0.0f, Mathf.LerpAngle(Rotation.Y, targetYaw, 1 - Mathf.Exp(-16 * deltaSeconds)), 0.0f);
     }
 
     private void AttachWeapon(bool inHand)
     {
-        if (_weaponInHand == inHand)
-        {
-            return;
-        }
-
-        _weapon.Reparent(inHand ? _handSocket : _holsterSocket, keepGlobalTransform: false);
-        _weapon.Transform = Transform3D.Identity;
+        var socket = inHand ? _handSocket : _holsterSocket;
+        // The imported Mixamo armature retains its normalization scale. A rigid
+        // metric prop follows socket position and rotation, not that scale.
+        _weapon.GlobalTransform = new Transform3D(socket.GlobalBasis.Orthonormalized(), socket.GlobalPosition);
         _weaponInHand = inHand;
     }
+
+    public object GetDiagnostics()
+    {
+        var body = FindDescendants<MeshInstance3D>(_weapon).Single();
+        var bounds = body.GetAabb();
+        return new
+        {
+            sample_tick = _sampleTick,
+            clip = _posePlayer.ClipName,
+            clip_seconds = _posePlayer.ClipTime,
+            attachment = _weaponInHand == true ? "hand" : "holster",
+            weapon_length_m = body.GlobalBasis.Z.Length() * bounds.Size.Z,
+            primary_grip_error_m = _primaryGripError,
+            support_grip_error_m = _supportGripError,
+            recoil_variant = StrongRecoil ? "strong" : "restrained",
+            support_grip_world = VectorValues(_supportGrip.GlobalPosition),
+            muzzle_world = VectorValues(MuzzlePosition),
+            muzzle_direction = VectorValues(MuzzleDirection),
+            bones = Enumerable.Range(0, _skeleton.GetBoneCount())
+                .Where(index => _skeleton.GetBoneName(index).Contains("Hand", StringComparison.Ordinal)
+                    || _skeleton.GetBoneName(index).Contains("Arm", StringComparison.Ordinal))
+                .Select(index => new
+                {
+                    name = _skeleton.GetBoneName(index),
+                    position = VectorValues((_skeleton.GlobalTransform * _skeleton.GetBoneGlobalPose(index)).Origin),
+                }),
+        };
+    }
+
+    private static float[] VectorValues(Vector3 value) => [value.X, value.Y, value.Z];
 
     private Node3D FindSocket(string canonicalName)
     {

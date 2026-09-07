@@ -649,6 +649,11 @@ def build(
 
     if imported_material.users == 0:
         bpy.data.materials.remove(imported_material)
+    # Share the verified export-basis correction with repairs of an existing
+    # source. No provider regeneration or retopology is needed for this fix.
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from repair_solo_presentation import normalize_carbine_axis
+    normalize_carbine_axis(root, mesh_obj, [primary, support, muzzle])
     for image in tuple(bpy.data.images):
         if image.users == 0 and image.name not in {"Render Result", "Viewer Node"}:
             bpy.data.images.remove(image)

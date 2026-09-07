@@ -360,3 +360,39 @@ The slice deliberately does not add a generic combat framework, inventory,
 loot, cover, ammunition, reloads, a second hostile, Protector combat, sentry
 AI, or the main party encounter. Those remain separate Phase 4 decisions after
 the solo fight is graphically reviewed.
+
+## ADR 0027 — Repair the solo slice before expanding combat
+
+Status: approved by the project owner on 2026-09-06; implemented and agent-reviewed,
+with owner hands-on acceptance pending. See `SOLO-REVIEW-RESULTS.md`.
+Supersedes the affected timings and animation recipe in
+ADR 0026. The owner also requested one checkout for this experiment, including
+art production, instead of the earlier dedicated-art-worktree convention.
+
+Explicit basic-attack intent survives abilities and Field Aid. Movement,
+interaction, Stop, target defeat, encounter completion, and retry clear it.
+Duplicate target orders preserve the running attack cycle. A released basic
+attack or ability owns an independent recovery deadline; replacing an action
+cannot erase that deadline. Movement cancels unreleased attacks immediately.
+New offensive orders wait in one replaceable pending slot, while healing may
+start during offensive recovery. Pending orders are revalidated before start;
+costs and cooldowns remain release-time effects. Stop is one typed command for
+the selected actors, available through input, HUD, and the JSON adapter.
+
+Content revision v7 retains schema 4, damage, ranges, health, and cooldowns.
+Carbine timing is 9 windup / 21 recovery ticks; Suppressive Fire is 6 / 24;
+Enforcer is 42 / 36. Draw and holster each take 54 ticks (1.8 seconds).
+Recovery transitions directly into the next windup without an incidental tick.
+Observations add action-cycle identity, phase-start ticks, remembered target,
+offensive eligibility, and a pending waiting reason.
+
+Presentation may combine repaired authored poses, upper-body aiming, support
+hand IK, and release-driven recoil. Weapon transforms must preserve authored
+metric dimensions beneath a scaled skeleton. Presentation time follows the
+simulation tick and fraction, including paused exact stepping. A plugin-free
+bounded solo review will capture checkpoints and record motion. Fixed-delta
+movies are visual evidence; separate real-time wall-clock measurements assess
+frame pacing and command latency. Protector combat and the main encounter stay
+deferred. Recruitment ends the playable prototype slice without completing
+the scenario or unlocking the final airlock. Agent verification and the
+owner's hands-on acceptance remain separate.

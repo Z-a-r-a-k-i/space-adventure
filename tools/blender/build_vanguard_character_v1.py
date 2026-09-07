@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import math
 import pathlib
+import sys
 import tempfile
 import zipfile
 
@@ -958,6 +959,14 @@ def main() -> None:
         export_force_sampling=True,
     )
 
+    # Apply the approved solo handling fit after donor assembly, before the
+    # exact-publication reimport gate. Preserve the accepted rest rig and skin.
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+    from repair_solo_presentation import repair_vanguard
+    repair_vanguard()
+    report["solo_handling_revision"] = 2
+    report["actions"][DRAW_ACTION] = [0, 54]
+    report["actions"][HOLSTER_ACTION] = [0, 54]
     exported_glb = validate_exported_glb(GLB_OUTPUT)
     report["exported_glb"] = exported_glb
     print("VANGUARD_BUILD=" + json.dumps(report, separators=(",", ":")))

@@ -17,20 +17,33 @@ public partial class AutomationBridge : Node
 
     private GameSession? _session;
     private Func<string, ScreenPositionProjection?>? _screenProjector;
+    private Action? _synchronizePresentation;
+    private Func<string>? _presentationDiagnostics;
 
     public void Initialize(
         GameSession session,
-        Func<string, ScreenPositionProjection?>? screenProjector = null)
+        Func<string, ScreenPositionProjection?>? screenProjector = null,
+        Action? synchronizePresentation = null,
+        Func<string>? presentationDiagnostics = null)
     {
         _session = session ?? throw new ArgumentNullException(nameof(session));
         _screenProjector = screenProjector;
+        _synchronizePresentation = synchronizePresentation;
+        _presentationDiagnostics = presentationDiagnostics;
     }
 
     public string GetObservationJson()
     {
+        _synchronizePresentation?.Invoke();
         return _session is null
             ? Error("automation_bridge_unavailable")
             : SerializeAcceptedObservation(_session.Observe());
+    }
+
+    public string GetPresentationDiagnosticsJson()
+    {
+        _synchronizePresentation?.Invoke();
+        return _presentationDiagnostics?.Invoke() ?? Error("presentation_diagnostics_unavailable");
     }
 
     public string GetEventsJson(long sinceSequence = 0)
@@ -104,6 +117,11 @@ public partial class AutomationBridge : Node
                         .Select(actorId => new EntityId(actorId.GetString()
                             ?? throw new JsonException("'actor_ids' cannot contain null."))),
                     ReadPosition(payload.GetProperty("destination"))),
+                "stop_actors" => new StopActorsCommand(
+                    commandId,
+                    payload.GetProperty("actor_ids").EnumerateArray()
+                        .Select(actorId => new EntityId(actorId.GetString()
+                            ?? throw new JsonException("'actor_ids' cannot contain null.")))),
                 "interact" => new InteractCommand(
                     commandId,
                     new EntityId(RequiredString(payload, "actor_id")),
@@ -182,7 +200,12 @@ public partial class AutomationBridge : Node
 
         try
         {
-            var advanced = _session.StepWhilePaused(count);
+            for (var index = 0; index < count; index++)
+            {
+                _session.StepWhilePaused(1);
+                _synchronizePresentation?.Invoke();
+            }
+            var advanced = count;
             return JsonSerializer.Serialize(new
             {
                 accepted = true,
@@ -236,6 +259,7 @@ public partial class AutomationBridge : Node
         while (matched is null && advanced < maximumTicks)
         {
             _session.StepWhilePaused(1);
+            _synchronizePresentation?.Invoke();
             advanced++;
             matched = FindEvent(_session, afterSequence, expectedType);
         }
@@ -383,8 +407,9 @@ public partial class AutomationBridge : Node
         return JsonNamingPolicy.SnakeCaseLower.ConvertName(value.ToString());
     }
 
-    private static string SerializeAcknowledgement(CommandAcknowledgement acknowledgement)
+    private string SerializeAcknowledgement(CommandAcknowledgement acknowledgement)
     {
+        _synchronizePresentation?.Invoke();
         return JsonSerializer.Serialize(new
         {
             acknowledgement.Accepted,
@@ -483,6 +508,7 @@ public partial class AutomationBridge : Node
                     route.Encounter.Attempt,
                     route.Encounter.TransitionTicksRemaining,
                     route.Encounter.TransitionTicksTotal,
+                    route.Encounter.PhaseStartedTick,
                     HostileId = route.Encounter.HostileId.Value,
                 },
         };
@@ -533,6 +559,8 @@ public partial class AutomationBridge : Node
                 combat.Health,
                 combat.MaximumHealth,
                 combat.IsDefeated,
+                RememberedAttackTargetId = combat.RememberedAttackTargetId?.Value,
+                combat.OffensiveRecoveryUntilTick,
                 BasicAttackId = combat.BasicAttackId.Value,
                 Cooldowns = combat.Cooldowns.Select(cooldown => new
                 {
@@ -566,6 +594,10 @@ public partial class AutomationBridge : Node
                 Phase = ToExternalName(action.Phase),
                 action.PhaseTicksRemaining,
                 action.PhaseTicksTotal,
+                action.InstanceId,
+                action.PhaseStartedTick,
+                WaitingReason = action.WaitingReason is { } reason ? ToExternalName(reason) : null,
+                action.Interrupted,
             };
     }
 
