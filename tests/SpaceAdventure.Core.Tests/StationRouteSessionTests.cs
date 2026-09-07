@@ -23,7 +23,7 @@ public sealed class StationRouteSessionTests
         var definition = LoadDefinition();
 
         Assert.Equal(4, definition.SchemaVersion);
-        Assert.Equal("station-route-v6", definition.ContentRevision);
+        Assert.Equal("station-route-v7", definition.ContentRevision);
         Assert.Equal(new ScenarioId("scenario.station_route"), definition.ScenarioId);
         Assert.Equal(ProtagonistId, definition.Protagonist.Id);
         Assert.Equal(ProtectorActorId, definition.Companion.Id);

@@ -18,7 +18,7 @@ Entering the cutter is a fixed scenario handoff, not a reusable boarding
 mechanic.
 
 The approved composition reference is
-[`ship-combat-separated-clean-direction-v4.png`](../art/concepts/station-escape-ship-combat-v1/ship-combat-separated-clean-direction-v4.png).
+[ship-combat-separated-clean-direction-v4.png](../../art/concepts/station-escape-ship-combat-v1/ship-combat-separated-clean-direction-v4.png).
 It establishes a strict overhead view with the player ship on the left, the
 enemy ship on the right, both bows pointing upward, and a clear central
 tactical divider. The ships are not physically side by side. Cyan and red

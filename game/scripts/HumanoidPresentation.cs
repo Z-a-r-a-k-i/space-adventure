@@ -36,6 +36,9 @@ public partial class HumanoidPresentation : Node3D
     public float BlendSeconds { get; set; } = 0.16f;
 
     private AnimationPlayer _animationPlayer = null!;
+    private SkeletalPosePlayer _posePlayer = null!;
+    private double _fallbackTick;
+    private double _actionStartedTick;
     private StringName? _currentAnimation;
 
     public HumanoidPresentationAction CurrentAction { get; private set; }
@@ -49,6 +52,7 @@ public partial class HumanoidPresentation : Node3D
         _animationPlayer = FindDescendant<AnimationPlayer>(this)
             ?? throw new InvalidOperationException(
                 $"Humanoid presentation '{GetPath()}' must contain an imported AnimationPlayer.");
+        _posePlayer = new SkeletalPosePlayer(_animationPlayer, FindDescendant<Skeleton3D>(this)!);
 
         if (string.IsNullOrWhiteSpace(IdleAnimationName))
         {
@@ -70,7 +74,11 @@ public partial class HumanoidPresentation : Node3D
         bool paused,
         Vector3 movementDirection,
         float playbackSpeed = 1.0f,
-        bool seekToEndWhenPaused = false)
+        bool seekToEndWhenPaused = false,
+        double presentationTick = double.NaN,
+        double? clipSeconds = null,
+        long cycle = 0,
+        float turnDeltaSeconds = 1.0f / 60.0f)
     {
         Visible = active;
         if (!active)
@@ -79,22 +87,33 @@ public partial class HumanoidPresentation : Node3D
         }
 
         _animationPlayer.SpeedScale = paused ? 0.0f : playbackSpeed;
-        Play(action);
+        if (double.IsNaN(presentationTick))
+        {
+            if (!paused) { _fallbackTick += GetProcessDeltaTime() * 30; }
+            presentationTick = _fallbackTick;
+        }
+        var name = new StringName(AnimationNameFor(action));
+        if (action != CurrentAction) { _actionStartedTick = presentationTick; }
+        var sampleSeconds = clipSeconds ?? (action == HumanoidPresentationAction.Down
+            ? Math.Max(0, presentationTick - _actionStartedTick) / 30
+            : presentationTick / 30 * playbackSpeed);
         if (paused && seekToEndWhenPaused)
         {
-            var animation = _animationPlayer.GetAnimation(new StringName(AnimationNameFor(action)));
-            _animationPlayer.Seek(animation.Length, update: true);
+            sampleSeconds = _animationPlayer.GetAnimation(name).Length;
         }
+        _posePlayer.Sample(name, sampleSeconds, presentationTick / 30, cycle,
+            paused && seekToEndWhenPaused ? 0 : BlendSeconds);
+        CurrentAction = action;
 
         if (action != HumanoidPresentationAction.Locomotion)
         {
             return;
         }
 
-        FaceDirection(movementDirection);
+        FaceDirection(movementDirection, turnDeltaSeconds);
     }
 
-    public void FaceDirection(Vector3 direction)
+    public void FaceDirection(Vector3 direction, float deltaSeconds = 1.0f / 60.0f)
     {
         var planarDirection = new Vector3(direction.X, 0.0f, direction.Z);
         if (planarDirection.LengthSquared() <= 0.000001f)
@@ -104,8 +123,13 @@ public partial class HumanoidPresentation : Node3D
 
         planarDirection = planarDirection.Normalized();
         var targetYaw = Mathf.Atan2(planarDirection.X, planarDirection.Z);
-        Rotation = new Vector3(0.0f, Mathf.LerpAngle(Rotation.Y, targetYaw, 0.28f), 0.0f);
+        Rotation = new Vector3(0.0f, Mathf.LerpAngle(Rotation.Y, targetYaw, 1 - Mathf.Exp(-16 * deltaSeconds)), 0.0f);
     }
+
+    public double ClipLength(HumanoidPresentationAction action) =>
+        _animationPlayer.GetAnimation(new StringName(AnimationNameFor(action))).Length;
+
+    public object GetDiagnostics() => new { clip = _posePlayer.ClipName, clip_seconds = _posePlayer.ClipTime };
 
     public bool HasConfiguredAnimation(HumanoidPresentationAction action)
     {

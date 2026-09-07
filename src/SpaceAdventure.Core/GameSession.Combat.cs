@@ -231,18 +231,21 @@ public sealed partial class GameSession
         Record(GameplayEventType.PauseChanged, paused: true);
     }
 
-    private static void ResetEncounterAttempt(StationRouteRuntime station)
+    private void ResetEncounterAttempt(StationRouteRuntime station)
     {
         var combat = station.Combat;
         var restarting = combat.Phase == EncounterPhase.Defeat;
         combat.Attempt = Math.Max(1, combat.Attempt + (restarting ? 1 : 0));
         combat.Phase = EncounterPhase.Readying;
+        combat.PhaseStartedTick = Tick;
         combat.TransitionTicksTotal = combat.Definition.ReadyingTicks;
         combat.TransitionTicksRemaining = combat.TransitionTicksTotal;
         station.Protagonist.Position = combat.Placement.ProtagonistRestartPosition;
         station.Protagonist.Health = station.Protagonist.MaximumHealth;
         station.Protagonist.CurrentAction = null;
         station.Protagonist.PendingAction = null;
+        ClearAttackIntent(station.Protagonist);
+        station.Protagonist.OffensiveRecoveryUntilTick = 0;
         foreach (var abilityId in station.Protagonist.Cooldowns.Keys.ToArray())
         {
             station.Protagonist.Cooldowns[abilityId] = 0;
@@ -270,6 +273,7 @@ public sealed partial class GameSession
             if (combat.TransitionTicksRemaining == 0)
             {
                 combat.Phase = EncounterPhase.Active;
+                combat.PhaseStartedTick = Tick;
             }
 
             return true;
@@ -284,6 +288,7 @@ public sealed partial class GameSession
         if (combat.TransitionTicksRemaining == 0)
         {
             combat.Phase = EncounterPhase.Victory;
+            combat.PhaseStartedTick = Tick;
             var systemCommand = new CommandId("system.encounter.solo_tutorial.victory");
             ChangeObjective(station, systemCommand, station.Definition.SoloExitDoorObjective);
             Record(
@@ -336,6 +341,7 @@ public sealed partial class GameSession
         if (action.CombatTargetId != hostile.Id || hostile.Health <= 0 || action.AttackId is not AttackId attackId)
         {
             actor.CurrentAction = null;
+            ClearAttackIntent(actor);
             return;
         }
 
@@ -347,6 +353,7 @@ public sealed partial class GameSession
                 if (!AdvanceActorToward(actor, action, hostile.Position))
                 {
                     actor.CurrentAction = null;
+                    ClearAttackIntent(actor);
                     RecordPrimaryActionFailure(actor, action, CommandRejectionCode.DestinationUnreachable);
                 }
 
@@ -359,13 +366,14 @@ public sealed partial class GameSession
 
         if (action.Phase == PrimaryActionPhase.Windup)
         {
-            action.PhaseTicksRemaining--;
+            UpdatePhaseRemaining(action);
             if (action.PhaseTicksRemaining > 0)
             {
                 return;
             }
 
             var hit = actor.Position.DistanceTo(hostile.Position) <= attack.RangeMeters;
+            actor.OffensiveRecoveryUntilTick = Tick + attack.RecoveryTicks;
             Record(
                 GameplayEventType.AttackReleased,
                 action.CommandId,
@@ -384,12 +392,13 @@ public sealed partial class GameSession
             return;
         }
 
-        action.PhaseTicksRemaining--;
+        UpdatePhaseRemaining(action);
         if (action.PhaseTicksRemaining <= 0)
         {
             action.Phase = PrimaryActionPhase.Moving;
             action.PhaseTicksRemaining = 0;
             action.PhaseTicksTotal = 0;
+            AdvancePartyAttack(station, actor, action);
         }
     }
 
@@ -407,13 +416,14 @@ public sealed partial class GameSession
 
         if (action.Phase == PrimaryActionPhase.Windup)
         {
-            action.PhaseTicksRemaining--;
+            UpdatePhaseRemaining(action);
             if (action.PhaseTicksRemaining > 0)
             {
                 return;
             }
 
             actor.Cooldowns[ability.Id] = ability.CooldownTicks;
+            actor.OffensiveRecoveryUntilTick = Tick + ability.RecoveryTicks;
             var hostile = station.Combat.Hostile;
             var hit = hostile.Health > 0
                 && hostile.Position.DistanceTo(action.AbilityTargetPosition) <= ability.RadiusMeters;
@@ -436,6 +446,8 @@ public sealed partial class GameSession
                     hostile.CurrentAction.PhaseTicksRemaining =
                         station.Definition.Combat.GetAttack(hostile.BasicAttackId).RecoveryTicks;
                     hostile.CurrentAction.PhaseTicksTotal = hostile.CurrentAction.PhaseTicksRemaining;
+                    hostile.CurrentAction.PhaseStartedTick = Tick;
+                    hostile.CurrentAction.Interrupted = true;
                     Record(
                         GameplayEventType.ActionInterrupted,
                         action.CommandId,
@@ -452,10 +464,11 @@ public sealed partial class GameSession
             return;
         }
 
-        action.PhaseTicksRemaining--;
+        UpdatePhaseRemaining(action);
         if (action.PhaseTicksRemaining <= 0)
         {
             actor.CurrentAction = null;
+            ResumeRememberedAttack(station, actor);
         }
     }
 
@@ -473,7 +486,7 @@ public sealed partial class GameSession
 
         if (action.Phase == PrimaryActionPhase.Windup)
         {
-            action.PhaseTicksRemaining--;
+            UpdatePhaseRemaining(action);
             if (action.PhaseTicksRemaining > 0)
             {
                 return;
@@ -495,10 +508,11 @@ public sealed partial class GameSession
             return;
         }
 
-        action.PhaseTicksRemaining--;
+        UpdatePhaseRemaining(action);
         if (action.PhaseTicksRemaining <= 0)
         {
             actor.CurrentAction = null;
+            ResumeRememberedAttack(station, actor);
         }
     }
 
@@ -515,6 +529,8 @@ public sealed partial class GameSession
         hostile.CurrentAction ??= new HostileAttackRuntime
         {
             Phase = PrimaryActionPhase.Moving,
+            InstanceId = ++_actionSequence,
+            PhaseStartedTick = Tick,
         };
         var action = hostile.CurrentAction;
         if (action.Phase == PrimaryActionPhase.Moving)
@@ -528,6 +544,9 @@ public sealed partial class GameSession
             action.Phase = PrimaryActionPhase.Windup;
             action.PhaseTicksRemaining = attack.WindupTicks;
             action.PhaseTicksTotal = attack.WindupTicks;
+            action.PhaseStartedTick = Tick;
+            action.InstanceId = ++_actionSequence;
+            action.Interrupted = false;
             Record(
                 GameplayEventType.AttackWindupStarted,
                 detail: new AttackEventDetail(hostile.Id, target.Id, attack.Id, Hit: false));
@@ -536,7 +555,7 @@ public sealed partial class GameSession
 
         if (action.Phase == PrimaryActionPhase.Windup)
         {
-            action.PhaseTicksRemaining--;
+            action.PhaseTicksRemaining = (int)Math.Max(0, action.PhaseStartedTick + action.PhaseTicksTotal - Tick);
             if (action.PhaseTicksRemaining > 0)
             {
                 return;
@@ -559,15 +578,17 @@ public sealed partial class GameSession
             action.Phase = PrimaryActionPhase.Recovery;
             action.PhaseTicksRemaining = attack.RecoveryTicks;
             action.PhaseTicksTotal = attack.RecoveryTicks;
+            action.PhaseStartedTick = Tick;
             return;
         }
 
-        action.PhaseTicksRemaining--;
+        action.PhaseTicksRemaining = (int)Math.Max(0, action.PhaseStartedTick + action.PhaseTicksTotal - Tick);
         if (action.PhaseTicksRemaining <= 0)
         {
             action.Phase = PrimaryActionPhase.Moving;
             action.PhaseTicksRemaining = 0;
             action.PhaseTicksTotal = 0;
+            AdvanceHostileCombat(station);
         }
     }
 
@@ -575,23 +596,32 @@ public sealed partial class GameSession
         EntityId sourceId,
         EntityId targetId,
         AttackDefinition attack,
-        PrimaryActionRuntime action)
+        PrimaryActionRuntime action,
+        long? startedTick = null)
     {
         action.Phase = PrimaryActionPhase.Windup;
         action.PhaseTicksRemaining = attack.WindupTicks;
         action.PhaseTicksTotal = attack.WindupTicks;
+        action.PhaseStartedTick = startedTick ?? Tick;
+        action.InstanceId = ++_actionSequence;
+        action.Waypoints = [];
+        action.WaypointIndex = 0;
         Record(
             GameplayEventType.AttackWindupStarted,
             action.CommandId,
             detail: new AttackEventDetail(sourceId, targetId, attack.Id, Hit: false));
     }
 
-    private static void BeginRecovery(PrimaryActionRuntime action, int ticks)
+    private void BeginRecovery(PrimaryActionRuntime action, int ticks)
     {
         action.Phase = PrimaryActionPhase.Recovery;
         action.PhaseTicksRemaining = ticks;
         action.PhaseTicksTotal = ticks;
+        action.PhaseStartedTick = Tick;
     }
+
+    private void UpdatePhaseRemaining(PrimaryActionRuntime action) =>
+        action.PhaseTicksRemaining = (int)Math.Max(0, action.PhaseStartedTick + action.PhaseTicksTotal - Tick);
 
     private bool AdvanceActorToward(
         ActorRuntime actor,
@@ -755,7 +785,9 @@ public sealed partial class GameSession
         {
             actor.CurrentAction = null;
             actor.PendingAction = null;
+            ClearAttackIntent(actor);
             station.Combat.Phase = EncounterPhase.Defeat;
+            station.Combat.PhaseStartedTick = Tick;
             station.Combat.Hostile.CurrentAction = null;
             Record(
                 GameplayEventType.CombatantDefeated,
@@ -774,14 +806,17 @@ public sealed partial class GameSession
         }
     }
 
-    private static void BeginSecuring(StationRouteRuntime station)
+    private void BeginSecuring(StationRouteRuntime station)
     {
         station.Combat.Phase = EncounterPhase.Securing;
+        station.Combat.PhaseStartedTick = Tick;
         station.Combat.TransitionTicksTotal = station.Combat.Definition.SecuringTicks;
         station.Combat.TransitionTicksRemaining = station.Combat.TransitionTicksTotal;
         station.Combat.Hostile.CurrentAction = null;
         station.Protagonist.CurrentAction = null;
         station.Protagonist.PendingAction = null;
+        ClearAttackIntent(station.Protagonist);
+        station.Protagonist.OffensiveRecoveryUntilTick = 0;
     }
 
     private void RecordPrimaryActionFailure(
@@ -812,7 +847,10 @@ public sealed partial class GameSession
                 AttackId: hostile.BasicAttackId,
                 Phase: action.Phase,
                 PhaseTicksRemaining: action.PhaseTicksRemaining,
-                PhaseTicksTotal: action.PhaseTicksTotal);
+                PhaseTicksTotal: action.PhaseTicksTotal,
+                InstanceId: action.InstanceId,
+                PhaseStartedTick: action.PhaseStartedTick,
+                Interrupted: action.Interrupted);
         return new HostileObservation(
             hostile.Id,
             hostile.DisplayName,
@@ -845,6 +883,8 @@ public sealed partial class GameSession
         public int TransitionTicksRemaining { get; set; }
 
         public int TransitionTicksTotal { get; set; }
+
+        public long PhaseStartedTick { get; set; }
     }
 
     private sealed class HostileRuntime(HostileDefinition definition, WorldPosition position)
@@ -872,6 +912,12 @@ public sealed partial class GameSession
 
     private sealed class HostileAttackRuntime
     {
+        public long InstanceId { get; set; }
+
+        public long PhaseStartedTick { get; set; }
+
+        public bool Interrupted { get; set; }
+
         public PrimaryActionPhase Phase { get; set; }
 
         public int PhaseTicksRemaining { get; set; }

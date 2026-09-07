@@ -1,106 +1,83 @@
-# Product vision
+# Product and POC scope
 
-## Vision
+SpaceAdventure is a single-player 3D science-fiction party RPG about guiding a
+small crew through exploration, conversation, and deliberate real-time combat
+with tactical pause. Aarklash: Legacy is the reference for direct party control
+and readable tactics. Decisions and positioning should matter more than fast
+clicking. Authored, coherent low-poly presentation supports that clarity.
 
-SpaceAdventure is a single-player 3D science-fiction party RPG about guiding a small crew through dangerous places using deliberate real-time tactics, active pause, exploration, and conversation.
+## First playable experience
 
-The initial game is character-scale. The same adventure may later expand into ship command, vehicle combat, and boarding, but those layers must complement rather than replace the party RPG.
+Build one authored 8–12 minute journey through a disabled frontier station:
 
-## Player fantasy
+Vanguard start → survivor conversation → ordinary service door → solo tutorial
+fight → Protector recruitment → two-character encounter → evacuation airlock
+opening and completion summary.
 
-- Lead capable but vulnerable individuals rather than an anonymous army.
-- Read a dangerous situation, pause, assign precise orders, then watch the plan unfold.
-- Build a crew whose abilities and perspectives create both tactical and narrative options.
-- Solve problems through movement, combat, investigation, equipment, and conversation.
-- Eventually command a ship and vehicles while remaining responsible for the people inside them.
+Vanguard is the only protagonist; Protector is the fixed recruit. Operator and
+its pistol are deferred. The optional terminal supplies an inspectable detail;
+one authored dialogue choice must have an observable consequence. Conversation
+is available to eligible sapient NPCs, without guaranteeing persuasion or a
+peaceful route through every encounter. Setting, names, factions, and final
+lore remain provisional.
 
-## Product pillars
+The [roadmap](ROADMAP.md) distinguishes the implemented slice from this target.
 
-### Tactical clarity over reflexes
+## Content budget
 
-Good decisions, positioning, target priority, interrupts, and coordinated abilities matter more than fast clicking. Active pause is a primary control mode, not an accessibility afterthought. Combat direction takes its closest inspiration from *Aarklash: Legacy*: direct individual party control, readable threats, complementary abilities, and frequent tactical replanning.
+- One authored level: start, solo arena, recruitment room, main encounter,
+  final approach, and evacuation airlock. Reserve the airlock assembly for
+  the destination; use ordinary service doors elsewhere.
+- Exactly two controllable characters, deployed solo until recruitment, plus
+  one noncontrollable survivor. Keep control architecture extensible to four
+  without implementing a larger party now.
+- One solo tutorial and one party encounter; at most two hostile behaviors:
+  mobile humanoid Security Enforcer melee and stationary integrated-gun sentry.
+- Each party character has one fixed weapon, repeatable basic attack, and
+  active ability. Vanguard uses a carbine and position-targeted Suppressive
+  Fire; Protector's shotgun/Guard Ally kit is finalized with party combat.
+- One healing-item type. Weapons are separate presentation assets; each human
+  has one fixed outfit. No ammunition, reload, loot, or generalized inventory.
+- Two authored NPC exchanges with selectable responses, one meaningful choice
+  consequence, and one optional inspection.
+- Reviewed production models for every visible environment, NPC, and combatant
+  on the active route. Hidden spatial wrappers may be primitives. The bounded
+  approved asset inventory is in [POC-ASSET-ROSTER.md](POC-ASSET-ROSTER.md).
 
-### A party of distinct people
+## Acceptance
 
-Companions have complementary tactical roles, personal perspectives, and relationships with the world. The player begins alone and earns a party through the adventure. Party members remain individually selectable and controllable rather than collapsing into a single squad unit.
+The player can select either crew member, use additive/group selection and
+compact automatic formation, and issue contextual move, attack, or interact
+orders. Camera pan, free yaw, constrained pitch/zoom, reset, and focus are usable
+without fighting the player. Health, targets, destinations, pending orders,
+cooldowns, charges, valid ability targets, and rejection reasons are legible.
 
-### Conversation is gameplay
+Pause allows deliberate order entry. Attacks communicate source, facing,
+wind-up, release/contact, and recovery. A threat creates a useful interrupt,
+repositioning, defensive, or coordinated targeting decision. Defeat offers
+immediate encounter retry; victory and final completion are unambiguous.
+The [architecture](ARCHITECTURE.md) owns exact command and pause semantics.
 
-When a sapient NPC is present, aware, and fictionally able to communicate, conversation should be exposed as an interaction. Dialogue can reveal information, recruit a companion, change access, alter a later reaction, or fail. Offering dialogue does not guarantee a peaceful solution, and non-sapient threats do not require a dialogue path.
+The finished POC passes five consecutive blocker-free owner-operated
+playthroughs plus the relevant automated checks. These runs exercise Vanguard
+throughout and Protector after recruitment, using production presentation.
+Controls, dialogue, threats, item use, and outcomes must be understandable from
+the game itself. Another contributor must be able to build, reproduce a bug,
+and add a small authored encounter using the repository workflow.
 
-### Authored coherence before generated quantity
+## Deferred
 
-The early game uses small authored scenarios and deliberately simple low-poly art. Future AI generation must operate inside world rules, content schemas, review gates, and authoritative state validation. More content is useful only when it remains understandable and consistent.
+No procedural generation, metaprogression, general quest framework, save
+migration, crafting/economy, runtime LLM calls, vehicles, ship simulation,
+boarding, or multiplayer belongs in the station POC. Bulk asset generation and
+unbounded variants are also outside scope.
 
-### Systems that agents and humans can both operate
+The approved [escape-cutter experiment](future/ship-combat-poc.md) follows POC
+hardening; [generated dialogue](future/dialogue-ai.md) is a separate optional
+experiment. Model output may propose dialogue but never establish world facts
+or mutate rules directly. Larger adventures, progression, relationships, and
+procedural runs depend on the tactical loop proving enjoyable first.
 
-UI, automated playtests, live agent tools, and future replays share gameplay commands. Structured state and events answer logic questions; screenshots and live play answer visual and interaction questions.
-
-### Replaceable production inputs
-
-Models, textures, animations, dialogue providers, and procedural generators are inputs to controlled publication boundaries. Gameplay code and saved state must not depend on one generator, one model vendor, or one temporary art workflow.
-
-## Core play loop
-
-1. Explore and read the situation.
-2. Talk, investigate, or position the party.
-3. Encounter an obstacle or opportunity.
-4. Pause and coordinate actions when tactics matter.
-5. Resolve consequences through dialogue, combat, movement, or resource use.
-6. Continue toward a destination with changed state.
-
-The POC tests one short authored pass through this loop. A later roguelite structure may arrange authored and procedural situations into replayable runs, but it is not required to discover whether the minute-to-minute play is enjoyable.
-
-## Permanent boundaries
-
-- Single-player only. Do not build multiplayer, rollback, replication, accounts, or authoritative-server infrastructure.
-- The game owns authoritative state. An LLM may propose expression or bounded intent but never directly mutates the world.
-- Low-poly is an intentional readability and production choice, not permission for inconsistent art.
-- Human and automated control use the same validated gameplay commands.
-- Content providers are replaceable; game rules and saved state do not encode provider-specific output.
-
-## Scope horizon
-
-### Current POC
-
-- One authored 8–12 minute journey from a start to a destination.
-- Player begins alone as Vanguard, survives a short solo tutorial fight, and
-  then recruits Protector as the fixed companion. Operator is deferred.
-- Point-and-click 3D exploration with an elevated tactical camera.
-- One short solo tutorial fight followed by a two-character active-pause
-  encounter.
-- Authored NPC interaction with one observable choice consequence.
-- One fixed weapon per party character and one usable healing item; no
-  generalized inventory system.
-- Each hostile combatant archetype has an authored basic attack presented
-  through a handheld or integrated weapon, or a readable body attack.
-- Structured automation that can complete and inspect the real scenario.
-- Reviewed low-poly presentation with no visible greybox environment, NPC, or
-  combatant in the active route.
-
-### Post-POC candidates
-
-- The first bounded post-POC experiment is the authored escape-cutter battle
-  defined in `SHIP-COMBAT-POC.md`: two party members, two separated overhead
-  ship views, three ship systems, and one fixed encounter using the existing
-  fixed tick and active pause.
-- Deeper character progression, equipment, inventory, party relationships, and a larger authored adventure.
-- A procedural-run experiment with metaprogression only after the tactical loop is fun.
-- Controlled generative dialogue using recorded, validated provider results.
-- Deeper ship and vehicle command, including boarding as a possible later
-  combat resolution, only after the bounded escape-cutter experiment.
-- Larger AI-assisted environment and content pipelines as generation quality improves.
-
-### Still open
-
-The campaign-versus-roguelite balance, seamless vehicle movement, breadth of generated locations, and final visual language remain long-term subjects for discussion or playtesting. No unresolved decision currently blocks the POC or bootstrap; accepted defaults are recorded in `OPEN-QUESTIONS.md` and `DECISIONS.md`.
-
-## POC success signals
-
-- Coordinating two characters through active pause is enjoyable.
-- Selection, targets, pending orders, threats, cooldowns, and outcomes are understandable without external explanation.
-- Movement and camera operation do not fight the player.
-- Talking feels like a valid action even when it cannot bypass every conflict.
-- The fixed weapon, abilities, and healing item create at least one meaningful tactical choice.
-- A human or agent can reproduce a problem and rerun the relevant scenario.
-- Another contributor can add a small authored encounter without changing engine-level systems.
+No unresolved product decision currently blocks the active slice. Record a
+new blocking question beside its milestone; do not maintain another list of
+already-decided features.

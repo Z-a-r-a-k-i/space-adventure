@@ -29,6 +29,20 @@ public sealed record MoveActorCommand(
     EntityId ActorId,
     WorldPosition Destination) : IGameCommand;
 
+public sealed record StopActorsCommand : IGameCommand
+{
+    public StopActorsCommand(CommandId commandId, IEnumerable<EntityId> actorIds)
+    {
+        ArgumentNullException.ThrowIfNull(actorIds);
+        CommandId = commandId;
+        ActorIds = actorIds.ToArray();
+    }
+
+    public CommandId CommandId { get; }
+
+    public IReadOnlyList<EntityId> ActorIds { get; }
+}
+
 public sealed record MovePartyCommand : IGameCommand
 {
     public MovePartyCommand(

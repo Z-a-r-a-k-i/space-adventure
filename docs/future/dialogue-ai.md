@@ -10,7 +10,9 @@ The POC uses authored dialogue. Generated dialogue is a separately gated experim
 
 ## Development access through the ChatGPT subscription
 
-A ChatGPT subscription is not general API access, but Codex officially supports ChatGPT sign-in and a non-interactive CLI. For this private development POC, a local provider may invoke `codex exec` using the developer's signed-in subscription, receive a schema-constrained response, and pass it through the normal dialogue validator. This avoids an API key without scraping ChatGPT, browser automation, or unofficial session endpoints.
+For this deferred private experiment, a local provider may invoke [`codex exec --output-schema`](https://learn.chatgpt.com/docs/non-interactive-mode) and pass the response through the dialogue validator. It requires [Codex access on the developer's ChatGPT plan](https://learn.chatgpt.com/docs/pricing) and `codex login`; subscription access does not provide general API access.
+
+[ChatGPT sign-in](https://learn.chatgpt.com/docs/auth) avoids manual API-key setup but still manages local credentials in the OS credential store or `auth.json` under `CODEX_HOME`. Keep credentials outside the repository, request packets, logs, and game builds. No CLI version is validated for this provider yet; pin and test one before enabling the experiment.
 
 The automated development flow is:
 
@@ -20,7 +22,7 @@ The automated development flow is:
 4. The game-side validator accepts or rejects it.
 5. Accepted turns are recorded and become deterministic fixtures for subsequent playtests.
 
-A manual inbox remains useful for prompt inspection and recovery, and the scripted provider remains the POC default. Saved Codex authentication is local developer tooling, never game content or a distributable player credential. If generated dialogue is ever shipped to other players, it will require a supported production provider and its own deployment, privacy, quota, and cost design.
+The scripted provider remains the POC default; a manual inbox supports inspection and recovery. Shipping generated dialogue requires a supported production provider with its own deployment, privacy, quota, and cost design.
 
 ## Provider boundary
 

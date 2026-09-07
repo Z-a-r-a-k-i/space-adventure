@@ -3,7 +3,7 @@ using Xunit;
 
 namespace SpaceAdventure.Core.Tests;
 
-public sealed class CombatSessionTests
+public sealed partial class CombatSessionTests
 {
     private static readonly EntityId ProtagonistId = new("actor.protagonist");
     private static readonly EntityId EnforcerId = new("actor.enemy.security_enforcer.solo");
@@ -35,7 +35,7 @@ public sealed class CombatSessionTests
         Assert.True(session.Execute(new SetPauseCommand(
             new CommandId("combat.resume"),
             Paused: false)).Accepted);
-        Assert.Equal(42, session.AdvanceTicks(42));
+        Assert.Equal(54, session.AdvanceTicks(54));
         Assert.Equal(EncounterPhase.Active, Observe(session).Encounter!.Phase);
         session.AdvanceTicks(1);
         Assert.Equal(PrimaryActionKind.Attack, Observe(session).Protagonist.CurrentAction!.Kind);
@@ -64,7 +64,7 @@ public sealed class CombatSessionTests
         Assert.True(session.Execute(new SetPauseCommand(
             new CommandId("combat.resume.suppress"),
             Paused: false)).Accepted);
-        session.AdvanceTicks(18);
+        session.AdvanceTicks(6);
 
         Assert.Contains(session.EventsSince(0), gameEvent =>
             gameEvent.Type == GameplayEventType.ActionInterrupted);
@@ -77,7 +77,7 @@ public sealed class CombatSessionTests
             EnforcerId)).Accepted);
         AdvanceUntil(
             session,
-            observation => observation.Protagonist.Combat!.Health <= 60,
+            observation => observation.Protagonist.Combat!.Health <= 85,
             600);
         Assert.True(session.Execute(new SetPauseCommand(
             new CommandId("combat.pause.finish-heal"),
@@ -240,7 +240,7 @@ public sealed class CombatSessionTests
         Assert.True(session.Execute(new SetPauseCommand(
             new CommandId("combat.resume.initial"),
             Paused: false)).Accepted);
-        session.AdvanceTicks(42);
+        session.AdvanceTicks(54);
         Assert.Equal(EncounterPhase.Active, Observe(session).Encounter!.Phase);
     }
 

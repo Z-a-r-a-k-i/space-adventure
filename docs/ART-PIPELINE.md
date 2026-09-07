@@ -1,194 +1,98 @@
-# Art pipeline
+# Art production
 
-## Goal
+Read this only for asset work. Blender 5.2 owns editable sources and GLB
+publication; Godot 4.7.1 owns runtime presentation. Use the
+[roster](POC-ASSET-ROSTER.md), the asset's brief/reference, and the
+[visual bible](../art/bible/frontier-station-v1.md). Build commands live in
+[tools/blender](../tools/blender/README.md); machine installation is optional
+[reference material](reference/art-workstation.md).
 
-Produce readable, replaceable 3D assets for Godot 4.7.1. AI output is source
-material, never automatic production authority. Blender 5.2 owns final sources
-and GLB export; Godot owns runtime presentation.
+## Before production
 
-## Supported animated subjects
+The asset needs an approved ID, reference, brief, owner, and resolved
+licensing/privacy state. Follow the checkout policy in [AGENTS.md](../AGENTS.md).
+Offline production does not authorize live replacement or later gameplay;
+the [roadmap](ROADMAP.md) owns those gates. Routine provider operations and
+marker validation need no repeated confirmation; escalate a named unrepairable
+defect, scope/licensing change, or an explicit owner review gate.
 
-The POC uses skeletal animation only for humanoids. Non-humanoids must be
-simple rigid assemblies such as floating robots, stationary turrets, doors, or
-single-pivot mechanisms. Do not introduce quadrupeds, walkers, creatures,
-organic wings or tails, or transforming machines that require custom deforming
-rigs and unique locomotion libraries.
+Use signed-in Tripo Studio, without an API key or direct Godot bridge. Check
+the chosen input, privacy setting, and displayed cost before generation. Work
+on one purposeful candidate; a retry needs a named defect. Preserve accepted
+static sources even while character work changes. Structural and collision-
+critical modules are authored dimensionally in Blender.
 
-Gameplay moves rigid machines. Their authored animation is limited to a few
-pivots or transforms for hover, aim, recoil, impact, and shutdown.
+## Humanoids
 
-## Asset lifecycle
+1. Begin with one approved front-view, isolated, unarmed T-pose seed. Generate
+   one image; a batch of candidates is not a multiview input. Use direct
+   single-image HD; multiview requires a named coverage defect. Recorded
+   defaults: Tripo v3.1 Best Quality, Ultra, Triangle 2M, 4K PBR; AI Complete,
+   Generate in Parts, and 8K Texture off.
+2. Inspect the unrigged source, including continuous shoulders/underarms,
+   complete hands/feet, joints, silhouette, and materials. Finish topology or
+   segmentation changes before rigging. A detached limb requires mesh repair,
+   not repeated Mixamo marker submission.
+3. Retopologize with Smart Low-Poly v2, Quad, target 10,000; retain usable UVs
+   and record actual topology counts. Preserve the static GLB and Tripo Mixamo
+   FBX ZIP with 4K textures; the ZIP is the material master. Upload only its
+   geometry FBX to Mixamo.
+4. Face front, use symmetry and Standard Skeleton (65), then validate chin,
+   wrist, elbow, knee, and groin/hip markers and the Auto-Rigger motion preview.
+   Download the accepted neutral rig as FBX Binary with skin. Record actual
+   hierarchy/names/bone count from that file; the provider label is not proof.
+5. Before Blender processing, play one untouched with-skin locomotion FBX in
+   ignored Godot staging during sustained movement. It must stay grounded and
+   alternate feet. Repair weights/joints and armor transitions in Blender.
+6. Prefer Mixamo library donors without skin, 30 fps, no key reduction, and
+   in-place movement. Default walk: Standard Walk, In Place, Overdrive 50,
+   Character Arm-Space 50. Validate bone names, hierarchy, lengths, rest pose,
+   and armature transform before transfer. Bake local pose deltas onto the
+   accepted rest rig and root displacement in armature space. If the no-skin
+   export changes that contract or fails grounding, record a character-specific
+   matching-with-skin exception; never assign it directly because names match.
+7. Preserve imported animated-armature rotation/scale. Normalize only by
+   retargeting and baking evaluated world-space poses onto a separate rig.
+   Repair loops, contacts, sockets, and required actions; export and fresh-import
+   the exact GLB. Check every frame against the untouched baseline and
+   [rig limits](../art/rigs/crew-humanoid-v1.md), including standing hip height.
 
-1. Approve an asset brief, reference, owner, licensing, and privacy state.
-2. Generate or model one useful unrigged source and record provider provenance.
-3. Finish every mesh-changing operation before rigging when the asset deforms;
-   static assets skip rigging entirely.
-4. Review topology and appearance in the owning tool.
-5. Apply only the class-specific work below: humanoid deformation, rigid
-   pivots, or no animation at all.
-6. Normalize scale, orientation, origin, names, materials, and sockets in
-   Blender.
-7. Validate and re-import the exact exported GLB.
-8. Review that GLB in Godot before live integration.
+Tripo Auto Rig, AI humanoid motion, or a non-T-pose source requires an explicit
+recorded owner exception. Base rigs/idle/walk may precede combat; finalize draw,
+attack, contact, recoil, recovery, and holster with authoritative gameplay
+timing under [ATTACK-PRESENTATION.md](ATTACK-PRESENTATION.md).
 
-Live gameplay replacement remains controlled by the roadmap. Offline art work
-does not authorize scene wiring, abilities, attacks, damage, or timing.
+## Static props, weapons, and machines
 
-## Static props and environment assemblies
+Use brief-specific topology/material budgets. Static pieces skip T-pose,
+humanoid Quad-10k defaults, Mixamo, and skinning. Normalize dimensions, axes,
+origin/mounting plane, UVs, materials, and any collision contract in Blender.
+Fresh-import the exact exported GLB and inspect it in Godot.
 
-Static props, modular architecture, furniture, terminals, wall dressing, and
-non-moving equipment do not enter the humanoid pipeline. They need no T-pose,
-fixed Quad-10k target, Mixamo upload, marker review, skeleton, skin weights, or
-animation library.
+Weapons are separate rigid assets; review grips, clearance, sockets, and motion
+with the actual character. Non-humanoids are floating or stationary rigid
+assemblies with a few aim/recoil/hover/shutdown pivots. No legs, quadrupeds,
+organic deformation, or complex machine rigs. Doors may expose rigid leaves
+and material states; gameplay drives them from observations.
 
-1. Prefer dimensionally authored Blender geometry for structural kits,
-   doorframes, floors, walls, collision-critical pieces, and precise modular
-   assemblies. Tripo may supply decorative forms when it saves real work.
-2. Use the topology and material budget from the asset brief. Retopologize or
-   reconstruct only when the source fails silhouette, topology, UV, material,
-   or runtime-performance requirements; there is no universal 10,000-polygon
-   target for props.
-3. In Blender, normalize bounds, axes, origin, mounting plane, material slots,
-   UVs, and any separately authored collision contract.
-4. Export one static GLB, fresh-import that exact file, and inspect it in Godot
-   under representative lighting and camera distances.
-5. Retain a technically validated source and reviewed GLB until a human rejects
-   it or an approved replacement supersedes it. A character-pipeline change
-   does not invalidate an inanimate asset.
+## Publication and review
 
-Doors, terminals, and other stateful assemblies may expose a few rigid parts
-or material states. Gameplay controls those node transforms and states; this
-does not turn the asset into a skinned character.
+Verify class-specific bounds, units, axes, ground contact, topology, UVs,
+materials, weights, hierarchy, actions, sockets/pivots, and fresh GLB import.
+Review live in Tripo/Blender and inspect the exact publication in Godot at
+7.5, 14.5, and 20 m with representative lighting. Technical validity alone
+does not establish visual quality or satisfy an explicit human approval gate.
 
-## Humanoid pipeline
+`asset_gallery.tscn` reviews the separate Vanguard carbine;
+`humanoid_gallery.tscn` reviews Survivor/Protector; `hostile_gallery.tscn`
+reviews Enforcer idle/walk and rigid sentry aim/recoil. Their headless checks
+verify integration. Assembled combat motion, grip, and projectile feedback
+require the [live review profiles](testing.md), not an isolated idle gallery.
 
-1. Start from exactly one approved front-view seed of one isolated, unarmed
-   humanoid in a strict T-pose. Keep the image provider's production image
-   count at one. An A-pose requires a named exception.
-2. Use Tripo's direct single-image HD workflow by default. Select v3.1 Best
-   Quality, Ultra Mesh Quality, Triangle topology with a 2,000,000-face target,
-   4K PBR textures, AI Complete off, Generate in Parts off, and 8K Texture off.
-   Generate Multi-Views is not a routine prerequisite: use it only for a named
-   coverage defect after the direct workflow has failed.
-3. Generate one static, unrigged source, inspect overall source coherence before
-   spending on later operations, and preserve the untouched source in the
-   ignored run-local cache.
-4. In Tripo Retopology choose Smart Low-Poly v2, Quad, target 10,000, and retain
-   original UVs when usable. Record requested and actual counts.
-5. Inspect face, shoulders, elbows, wrists, hips, knees, ankles, hands, feet,
-   armor boundaries, normals, holes, and disconnected parts. The deforming
-   surface must remain continuous from torso through each shoulder and
-   underarm; a detached limb is a source-mesh rejection, not a marker-placement
-   or provider-retry problem.
-6. Export the Tripo Mixamo FBX preset with the current 4K textures. Preserve
-   that ZIP as the material master and upload its geometry-only FBX to Mixamo;
-   textures do not affect marker placement or skinning.
-7. In Mixamo, orient the character front-facing, enable symmetry, select
-   Standard Skeleton (65), and place chin, wrist, elbow, knee, and groin/hip
-   markers on the visible anatomical joint centers. Inspect the complete
-   placement once and submit when it is anatomically coherent; routine marker
-   placement does not require human confirmation.
-8. Review the Auto-Rigger motion preview for deformation. When it passes,
-   confirm the new character and download the neutral FBX Binary with skin.
-   Adjust markers or return to Blender for a named defect instead of pausing
-   for routine human confirmation.
-   Treat the selected Mixamo skeleton profile as an input request only. Inspect
-   and record the hierarchy, names, and bone count in the downloaded FBX; only
-   the exported file establishes the publication contract.
-9. Download one representative locomotion clip with skin and import that FBX
-   untouched into a local ignored Godot baseline. The clip must remain grounded
-   and visibly alternate both feet through a sustained gameplay move before
-   Blender is permitted to process the rig or animation.
-10. Correct joint placement and weights in Blender, especially chin, neck,
-    shoulders, wrists, hips, knees, ankles, gloves, and armor transitions.
-11. Use existing Mixamo library clips as the default motion source and
-    download production donors without skin after Blender weight repair. Use
-    30 fps, no keyframe reduction, and prefer in-place variants. `Standard
-    Walk` with In Place on, Overdrive 50, and Character Arm-Space 50 is the
-    default exploration walk. A no-skin FBX may encode Mixamo's standardized
-    rest-pose representation instead of the accepted character bind pose. It
-    must never be assigned directly. A profile builder may accept it only
-    after exact bone-name, hierarchy, length, and armature-object checks, then
-    bake the donor's local pose deltas onto the accepted skinned rest pose and
-    transfer root displacement in armature space. A global-matrix correction
-    is not equivalent and can rotate or lower an otherwise standing clip. If
-    those checks or fresh-reimport grounding and standing-envelope gates fail,
-    document a character-specific exception and use the matching with-skin
-    donor instead.
-12. In Blender, preserve the Mixamo armature object's imported rotation and
-    scale. Never apply transforms directly to an animated armature: if a
-    normalized production skeleton is required, retarget and bake evaluated
-    world-space poses onto a separate rig. Trim, loop, repair contacts, add
-    constraints and presentation markers, then export GLB. The builder must
-    reject a directly transferred donor that changes evaluated ground contact,
-    even when the source skeleton names happen to match.
-13. Reimport the GLB and validate the complete cycle in evaluated world space.
-    For the current exploration walk, horizontal hip range must stay at or below
-    0.15 m, the loop endpoint delta at or below 0.01 m, vertical hip range at or
-    below 0.15 m, and each foot must lift at least 0.04 m. Repeat the same
-    sustained Godot movement used for the untouched baseline. Combat actions
-    authored as standing must also pass a brief-specific evaluated hip-height
-    floor after exact GLB reimport; a named standing action found on the ground
-    is a publication failure regardless of provider metadata.
-
-No Tripo Auto Rig or AI-generated motion is used for production humanoids when
-the Mixamo workflow can provide the required baseline.
-
-Base rig, idle, locomotion, and attachment-fit work may precede combat. Draw,
-attack, contact, recoil, recovery, and holster clips are selected, trimmed,
-and validated alongside authoritative fixed-tick action timings. Presentation
-playback speed may align a reviewed clip's release/contact landmark with the
-authoritative release tick; the animation never changes that tick. Do not lock
-a detached fight-animation set and then reshape gameplay rules around it.
-
-## Weapons and rigid machines
-
-Weapons remain separate rigid assets with primary grip, optional support grip,
-and muzzle or contact markers. Validate the exact character-plus-weapon
-assembly.
-
-Machines use a small Blender-authored rigid hierarchy. Floating or stationary
-forms are preferred. Reject a design that needs legs, organic deformation,
-complex appendages, or a large bespoke animation set.
-
-## Mechanical validation
-
-Check the fields that apply to the asset class: bounds, units, axes, ground
-contact or mounting plane, transforms, topology, UVs, textures, materials,
-collision contract, pivots, sockets, and fresh GLB import diagnostics. For
-humanoids also check skeleton hierarchy, weights, unweighted vertices,
-influence limits, animation names and durations, loop behavior, contacts, and
-root motion.
-
-Technical validity does not establish visual quality. Direct visual review is
-required for prominent characters, rigs, animation, weapons, and environments.
-The assigned art operator validates humanoid marker placement and the
-Auto-Rigger preview without an intermediate human approval gate. Project-owner
-or delegated-art approval remains required only where the roster, roadmap,
-brief, licensing/privacy state, scope, or live-replacement gate explicitly
-names it.
-
-## Review evidence
-
-Review candidates live in Tripo, meshes and animation live in Blender, and
-runtime imports live in Godot. Prefer direct playback over frame dumps. When a
-frozen handoff image helps, use at most one representative screenshot per
-checkpoint by default; create more only for a named defect.
-
-Screenshots, turntables, contact sheets, sampled frames, and temporary review
-files stay ignored under `artifacts/`. Commit only concise decisions, provider
-IDs/settings, and structural metrics.
-
-## Storage and publication
-
-Untouched provider exports live under ignored
-`art/generated/<asset-id>/<run-id>/raw/`. A tracked manifest records provider
-and task/version IDs, cache-relative paths, settings, byte sizes, and presence.
-Do not content-hash large 3D binaries. Tracked `.blend` and GLB files use normal
-Git/LFS identity.
-
-Do not publish a character GLB until its topology, rig, deformation, animation,
-and complete assembly pass review. Static assets may be retained after their
-brief-specific geometry, material, orientation, and Godot checks pass, even
-while live integration is deferred. Never retain a rejected model or animation
-as an active production asset merely for history.
+Use at most one representative screenshot per checkpoint when a frozen handoff
+helps; more captures need a named defect. Keep media/logs in ignored
+`artifacts/`. Untouched provider exports stay in
+`art/generated/<asset-id>/<run-id>/raw/`. Retain a compact manifest of provider,
+task/version/settings, source path/size, rights, accepted output, and essential
+metrics. Do not content-hash large 3D binaries. Accepted `.blend`/`.glb` use LFS.
+Keep rejected experiments out of active publications; Git retains decisions.

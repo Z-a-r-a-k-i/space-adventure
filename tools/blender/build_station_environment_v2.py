@@ -397,6 +397,8 @@ def build_door_assembly(
         [configured_box(spec) for spec in part_specs["Control_Panel"]],
     )
     objects = [frame, left, right, status, control]
+    if "Lintel" in part_specs:
+        objects.append(join("Lintel", [configured_box(spec) for spec in part_specs["Lintel"]]))
     for obj in objects:
         obj["asset_id"] = asset_id
     left["rigid_part"] = "door_left"
@@ -431,8 +433,10 @@ def build_service_door() -> tuple[str, str, list[str], int, int]:
         "Frame": (
             ("frame.left", (-1.375, 1.325, 0), (0.25, 2.65, 0.28), "armor", 0.045),
             ("frame.right", (1.375, 1.325, 0), (0.25, 2.65, 0.28), "armor", 0.045),
-            ("frame.header", (0, 2.525, 0), (2.50, 0.25, 0.28), "armor", 0.045),
             ("frame.track", (0, 0.075, 0), (2.50, 0.15, 0.35), "dark", 0.025),
+        ),
+        "Lintel": (
+            ("frame.header", (0, 2.525, 0), (2.50, 0.25, 0.28), "armor", 0.045),
         ),
         "Door_Left": (
             ("left.body", (-0.625, 1.25, 0), (1.25, 2.25, 0.18), "dark", 0.04),

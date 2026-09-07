@@ -40,6 +40,7 @@ public partial class TacticalCameraController : Camera3D
     private static readonly Vector3 InitialFocus = new(2.7f, 0.0f, 2.3f);
 
     private readonly List<OccludingWall> _occludingWalls = [];
+    private readonly List<OccludingLintel> _occludingLintels = [];
 
     private Vector3 _focus = InitialFocus;
     private Vector3 _followTarget;
@@ -202,6 +203,39 @@ public partial class TacticalCameraController : Camera3D
             wall.Blend = wall.Desired ? 1.0f : 0.0f;
             ApplyCutaway(wall);
         }
+        AdvanceLintelCutaway(1.0f);
+    }
+
+    public void RegisterLintel(string id, MeshInstance3D mesh, GeometryInstance3D status)
+    {
+        _occludingLintels.Add(new OccludingLintel(id, mesh, status, mesh.GlobalTransform * mesh.GetAabb()));
+    }
+
+    public WallOcclusionObservation[] ObserveLintels() => _occludingLintels.Select(item =>
+        new WallOcclusionObservation(item.Id, item.Desired, item.Mesh.Transparency / 0.94f,
+            Mathf.IsEqualApprox(item.Mesh.Transparency, item.Desired ? 0.94f : 0))).ToArray();
+
+    private void AdvanceLintelCutaway(float seconds)
+    {
+        foreach (var item in _occludingLintels)
+        {
+            var bounds = item.Bounds.Grow(item.Desired ? 0.45f : 0.30f);
+            item.Desired = _hasFollowTarget && (bounds.IntersectsSegment(GlobalPosition, GetOcclusionTarget())
+                || bounds.IntersectsSegment(GlobalPosition, _followTarget + Vector3.Up * 0.2f)
+                || bounds.IntersectsSegment(GlobalPosition, _followTarget + Vector3.Up * 1.6f));
+            var transparency = Mathf.MoveToward(item.Mesh.Transparency, item.Desired ? 0.94f : 0, seconds / CutawayTransitionSeconds);
+            item.Mesh.Transparency = transparency;
+            item.Status.Transparency = transparency;
+        }
+    }
+
+    private sealed class OccludingLintel(string id, MeshInstance3D mesh, GeometryInstance3D status, Aabb bounds)
+    {
+        public string Id { get; } = id;
+        public MeshInstance3D Mesh { get; } = mesh;
+        public GeometryInstance3D Status { get; } = status;
+        public Aabb Bounds { get; } = bounds;
+        public bool Desired { get; set; }
     }
 
     internal (Vector3 Forward, Vector3 Right) GetPanBasis()
@@ -367,6 +401,7 @@ public partial class TacticalCameraController : Camera3D
 
     private void AdvanceCutawayAnimation(float seconds)
     {
+        AdvanceLintelCutaway(seconds);
         var blendStep = seconds / CutawayTransitionSeconds;
         foreach (var wall in _occludingWalls)
         {

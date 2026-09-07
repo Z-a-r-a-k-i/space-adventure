@@ -1,7 +1,9 @@
 # Vanguard character v1
 
 Status: production base approved; combat actions and separate carbine are
-integrated in the Phase 4 solo-tutorial candidate pending graphical approval.
+integrated after the September solo repair. [Roadmap](../../docs/ROADMAP.md)
+tracks combat acceptance; assembly details are in the
+[handling repair record](../source/character.crew.vanguard.v1/production.md#solo-handling-repair--2026-09-06).
 
 ## Identity
 
@@ -27,8 +29,7 @@ The project owner approved offline source production on 2026-07-24 and, on
 placement, Auto-Rigger preview, and integrated idle-and-walk presentation. The
 Vanguard model replaces its character greybox. The Phase 4 solo-tutorial
 candidate now binds the separate carbine and reviewed weapon-handling clips to
-authoritative combat timings. Their combined graphical review remains open;
-audio remains roadmap-scoped.
+authoritative combat timings, with prototype combat audio supplied by Godot.
 
 ## Active source
 

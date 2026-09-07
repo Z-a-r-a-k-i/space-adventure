@@ -26,6 +26,14 @@ public enum PrimaryActionKind
     Attack,
     Ability,
     Item,
+    Stop,
+}
+
+public enum ActionWaitingReason
+{
+    TacticalPause,
+    EncounterReadying,
+    OffensiveRecovery,
 }
 
 public enum PrimaryActionPhase
@@ -96,7 +104,11 @@ public sealed record PrimaryActionObservation(
     ItemId? ItemId = null,
     PrimaryActionPhase Phase = PrimaryActionPhase.Moving,
     int PhaseTicksRemaining = 0,
-    int PhaseTicksTotal = 0);
+    int PhaseTicksTotal = 0,
+    long InstanceId = 0,
+    long PhaseStartedTick = 0,
+    ActionWaitingReason? WaitingReason = null,
+    bool Interrupted = false);
 
 public sealed record CooldownObservation(AbilityId AbilityId, int RemainingTicks, int TotalTicks);
 
@@ -108,7 +120,9 @@ public sealed record CombatantStateObservation(
     bool IsDefeated,
     AttackId BasicAttackId,
     IReadOnlyList<CooldownObservation> Cooldowns,
-    IReadOnlyList<ItemChargeObservation> Items);
+    IReadOnlyList<ItemChargeObservation> Items,
+    EntityId? RememberedAttackTargetId = null,
+    long OffensiveRecoveryUntilTick = 0);
 
 public sealed record ActorObservation(
     EntityId Id,
@@ -133,7 +147,8 @@ public sealed record EncounterObservation(
     int Attempt,
     int TransitionTicksRemaining,
     int TransitionTicksTotal,
-    EntityId HostileId);
+    EntityId HostileId,
+    long PhaseStartedTick = 0);
 
 public sealed record InteractionObservation(
     EntityId Id,

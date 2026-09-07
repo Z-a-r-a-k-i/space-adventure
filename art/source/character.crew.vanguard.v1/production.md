@@ -6,6 +6,11 @@ Production run: `prod-tripo-v31bq-20260803-02`
 
 Integrated: 2026-08-03
 
+The August sections retain the original publication and review evidence.
+The [September handling repair](#solo-handling-repair--2026-09-06) below
+supersedes the original runtime draw/fire/holster recipe. Current contextual
+verification is in [prototype history](../../../docs/archive/prototype-history.md).
+
 ## Authority and provenance
 
 The project owner approved the front-view T-pose seed, Tripo Quad-10k result,
@@ -95,7 +100,7 @@ Full-cycle evaluated world-space validation records horizontal hip ranges of
 0.06088 m, left-foot lift 0.15032 m, and right-foot lift 0.11324 m. The exact
 exported GLB passes the same validation after fresh Blender reimport.
 
-## Godot integration and review
+## Original Godot integration and review — August 2026
 
 Godot imports the GLB's embedded images as Basis Universal data and sanitizes
 the canonical dotted action names to underscore-separated AnimationPlayer
@@ -119,7 +124,37 @@ Direct graphical review in Godot confirmed scale, floor contact, silhouette,
 direction changes, idle/walk blending, tactical-pause freezing, and stable
 arrival. The project owner accepted the result on 2026-08-03.
 
-The Phase 4 solo-tutorial integration uses the separate published carbine and
-the draw, armed locomotion, fire, down, and holster actions. Final
-project-owner graphical acceptance of the complete live combat presentation
-remains the review gate for this update.
+The original Phase 4 solo-tutorial integration used the separate published
+carbine and the draw, armed locomotion, fire, down, and holster actions. The
+September repair below replaces that runtime handling recipe; the August
+locomotion approval is not approval of the complete combat presentation.
+
+## Solo handling repair — 2026-09-06
+
+ADR 0027 authorizes this experiment in the owner's single checkout. Model,
+accepted rest rig, 33 bones, 21,158 triangles, normalized skin weights and the
+1.82 m standing envelope are preserved. Original provider exports remain in
+the ignored raw cache; no new provider generation or skeleton conversion is used.
+
+`repair_solo_presentation.py` (handling revision 2) fits the arm layer of armed
+idle and locomotion to the exact carbine. It authors 55 samples over 1.8 seconds
+for a reach/lift draw and reverse holster. Transfer landmarks are 25% and 75%;
+the support hand joins over 60–90% of draw. The latter portion transitions to
+the actual armed shoulder stance so the support wrist stays reachable on the
+first armed frame after draw or retry. Both socket transforms are authored
+against this complete assembly. The character builder now invokes this repair
+after donor assembly and before its exact-GLB fresh-reimport gate.
+
+Fresh reimport passed after revision 2: standing height 1.82 m, unchanged
+locomotion endpoint/foot-lift metrics, draw/holster hip height 1.12388 m, armed
+idle 1.12368–1.12684 m and armed walk 1.05630–1.13378 m. This supersedes the
+earlier donor draw/holster hip ranges above.
+
+Godot samples from simulation tick/fraction, restores the authored pose before
+procedural changes, uses a normalized world weapon frame, and adds upper-body
+aim, release-driven recoil and built-in two-bone left-arm IK. Palm proxies
+derive from the accepted hand/index anatomy (right 0.062695 m, left 0.060356 m
+along the hand's local Y). Fully armed review checkpoints enforce 3 cm maximum
+proxy-to-grip error; these are rig-fit metrics, not finger-surface measurements.
+The original `Firing Rifle` donor remains published for provenance but no
+longer drives runtime shooting. See `docs/testing.md` for contextual checks.

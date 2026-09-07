@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("help", "doctor", "path-check", "restore", "build", "test", "scenario", "plugin-link", "import", "headless", "capture", "editor", "run")]
+    [ValidateSet("help", "doctor", "path-check", "restore", "build", "test", "scenario", "plugin-link", "import", "headless", "capture", "review", "editor", "run")]
     [string]$Command = "help",
 
     [string]$Godot,
@@ -9,6 +9,24 @@ param(
     [string]$GodotAiPlugin,
 
     [string]$Name = "bootstrap",
+
+    [ValidateSet("live", "capture", "record", "performance", "input")]
+    [string]$Mode = "capture",
+
+    [ValidateSet("victory", "defeat")]
+    [string]$Sequence = "victory",
+
+    [ValidateSet("restrained", "strong")]
+    [string]$Recoil = "restrained",
+
+    [ValidateSet("all", "ready", "draw", "armed", "armed-walk", "fire", "recoil", "anticipation", "contact", "heal", "interrupt", "late-fire", "holster", "victory", "slice-complete", "defeat", "retry")]
+    [string]$Checkpoint = "all",
+
+    [ValidateRange(7.5, 20.0)]
+    [double]$Distance = 14.5,
+
+    [ValidateSet("1280x720", "1920x1080")]
+    [string]$Resolution = "1920x1080",
 
     [ValidateRange(0, 3600)]
     [int]$AutoQuitSeconds = 0,
@@ -27,6 +45,32 @@ $simProject = Join-Path $repoRoot "tools\SpaceAdventure.SimCli\SpaceAdventure.Si
 $userDataRoot = Join-Path $repoRoot "artifacts\godot-user"
 $visualCaptureRoot = Join-Path $repoRoot "artifacts\visual\captures"
 $pluginLink = Join-Path $gameProject "addons\godot_ai"
+
+function Use-PinnedDotNet {
+    $sdkVersion = (Get-Content -LiteralPath (Join-Path $repoRoot "global.json") -Raw | ConvertFrom-Json).sdk.version
+    $dotnetName = if ($IsWindows) { "dotnet.exe" } else { "dotnet" }
+    $candidates = @(
+        $env:DOTNET_ROOT,
+        (Join-Path ([Environment]::GetFolderPath('UserProfile')) '.dotnet'),
+        (Join-Path $repoRoot 'artifacts/tools/dotnet-8.0.319')
+    )
+    $pathCommand = Get-Command dotnet -ErrorAction SilentlyContinue
+    if ($null -ne $pathCommand) {
+        $candidates += Split-Path -Parent $pathCommand.Source
+    }
+
+    foreach ($candidate in $candidates) {
+        if ([string]::IsNullOrWhiteSpace($candidate)) { continue }
+        if ((Test-Path -LiteralPath (Join-Path $candidate $dotnetName) -PathType Leaf) -and
+            (Test-Path -LiteralPath (Join-Path $candidate "sdk/$sdkVersion") -PathType Container)) {
+            $env:DOTNET_ROOT = $candidate
+            $env:PATH = $candidate + [IO.Path]::PathSeparator + $env:PATH
+            return
+        }
+    }
+
+    throw "The pinned .NET SDK $sdkVersion was not found. Install it under your user .dotnet directory or set DOTNET_ROOT."
+}
 
 function Invoke-Checked {
     param(
@@ -181,7 +225,9 @@ function Invoke-GodotAutomated {
             Write-Output $output.TrimEnd()
         }
         if (-not [string]::IsNullOrWhiteSpace($errorOutput)) {
-            Write-Error $errorOutput.TrimEnd()
+            $errorLog = Join-Path $isolatedUserDataRoot 'last-stderr.log'
+            [IO.File]::WriteAllText($errorLog, $errorOutput)
+            Write-Error ($errorOutput.Substring(0, [Math]::Min(8000, $errorOutput.Length)).TrimEnd() + "`nFull stderr: $errorLog")
         }
         if ($timedOut) {
             throw "Godot timed out after $TimeoutSeconds seconds and was terminated."
@@ -322,8 +368,11 @@ function Invoke-RepositoryPathCheck {
     }
 }
 
+$previousPath = $env:PATH
+$previousDotNetRoot = $env:DOTNET_ROOT
 Push-Location $repoRoot
 try {
+    if ($Command -notin @('help', 'path-check', 'plugin-link')) { Use-PinnedDotNet }
     switch ($Command) {
         "help" {
             @"
@@ -339,6 +388,11 @@ SpaceAdventure development commands
   import                  Import the Godot project headlessly
   headless [-Name name]   Run a bounded Godot smoke (bootstrap, station-route, station-combat-defeat, humanoid-gallery, or hostile-gallery)
   capture -Name name      Create and verify a deterministic graphical capture (wall-cutaway)
+  review                  Bounded solo-combat review through ordinary typed commands
+                          -Mode live|capture|record|performance|input -Sequence victory|defeat
+                          -Recoil restrained|strong (restrained is the game default)
+                          -Checkpoint all|armed|fire|... -Distance 7.5..20
+                          -Resolution 1280x720|1920x1080 (record: 1080p/60 fps OGV)
   editor                  Open the Godot editor with the project
   run                     Launch the graphical bootstrap
 
@@ -730,6 +784,29 @@ Options:
             Write-Output "Manifest: $captureManifest"
             Write-Output "SHA-256: $actualSha256"
         }
+        "review" {
+            if ($Mode -eq 'live' -and $Checkpoint -eq 'all') { $Checkpoint = 'armed' }
+            if ($Mode -eq 'record') { $Resolution = '1920x1080' }
+            if (-not $PSBoundParameters.ContainsKey('TimeoutSeconds')) { $TimeoutSeconds = 180 }
+            $arguments = @('--path', $gameProject, '--windowed', '--resolution', $Resolution)
+            if ($Mode -eq 'record') {
+                $movieRoot = Join-Path $repoRoot 'artifacts/solo-review'
+                Assert-NotReparsePoint -Path (Join-Path $repoRoot 'artifacts') -Description 'Review root'
+                Assert-NotReparsePoint -Path $movieRoot -Description 'Review output'
+                New-Item -ItemType Directory -Force -Path $movieRoot | Out-Null
+                $distanceText = $Distance.ToString('0.0', [Globalization.CultureInfo]::InvariantCulture)
+                $moviePath = Join-Path $movieRoot "solo-$Sequence-$Recoil-$distanceText.ogv"
+                Assert-NotReparsePoint -Path $moviePath -Description 'Review movie'
+                $arguments += '--write-movie', $moviePath, '--fixed-fps', '60'
+            }
+            $arguments += '--', "--solo-review=$Mode", "--review-sequence=$Sequence",
+                "--review-recoil=$Recoil",
+                "--review-checkpoint=$Checkpoint",
+                ('--review-distance=' + $Distance.ToString([Globalization.CultureInfo]::InvariantCulture))
+            if ($AutoQuitSeconds -gt 0) { $arguments += "--auto-quit-seconds=$AutoQuitSeconds" }
+            Invoke-GodotAutomated -UserDataScope "solo-review-$Mode-$Sequence" -Arguments $arguments
+            if ($Mode -eq 'record') { Write-Output "Movie: $moviePath" }
+        }
         "editor" {
             Get-GodotAiPortSetting | Out-Null
             Invoke-Godot -Arguments @("--editor", "--path", $gameProject)
@@ -750,5 +827,7 @@ Options:
     }
 }
 finally {
+    $env:PATH = $previousPath
+    $env:DOTNET_ROOT = $previousDotNetRoot
     Pop-Location
 }

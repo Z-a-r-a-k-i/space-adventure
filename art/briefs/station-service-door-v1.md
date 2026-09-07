@@ -14,8 +14,11 @@ Status: accepted by the project owner for PR 14 production on 2026-08-04
 | Pivot | Center of the threshold on the ground plane |
 | Budget | 4,000 triangles and 3 material slots maximum |
 
-The assembly must expose exactly the independently addressable top-level mesh
-parts `Frame`, `Door_Left`, `Door_Right`, `Status_Strip`, and `Control_Panel`.
+The assembly exposes the independently addressable top-level mesh parts
+`Frame`, `Lintel`, `Door_Left`, `Door_Right`, `Status_Strip`, and `Control_Panel`.
+The September 2026 solo-combat experiment separates the existing header as
+`Lintel` so Godot can fade an obstructing header and status strip without
+changing the doorway dimensions, collision, navigation, or moving leaves.
 Both leaves slide horizontally and remain rigid. The GLB owns no collision,
 navigation, gameplay state, rig, or animation.
 

@@ -1,7 +1,7 @@
 # Asset brief — Vanguard carbine v1
 
-Status: published and bound to the Phase 4 solo-tutorial candidate; final
-Vanguard assembly review pending
+Status: published, repaired, and agent-reviewed in the solo slice.
+[Roadmap](../../docs/ROADMAP.md) tracks combat acceptance.
 
 ## Identity and role
 
@@ -26,12 +26,9 @@ Vanguard assembly review pending
   authoring, exact Vanguard assembly fitting, GLB staging, and isolated Godot
   gallery validation.
 - Production owner: Codex on the dedicated art machine.
-- Branch/worktree:
-  `codex/vanguard-walk-animation-20260728` at
-  `C:\Developpement\space-adventure-art-production`.
-- Production resumed by project-owner direction on 2026-07-28. Carbine
-  assembly work remains active alongside character animation; live
-  replacement approval remains pending.
+- Production resumed by project-owner direction on 2026-07-28. The later
+  Phase 4 integration and September repair under ADR 0027 supersede that
+  initial assembly stage.
 - Writable paths: this brief; the matching `art/generated/`, `art/source/`,
   `tools/blender/`, ignored `artifacts/`, and isolated Godot gallery paths
   required by the separate Vanguard/carbine assembly.
@@ -39,7 +36,9 @@ Vanguard assembly review pending
   no API or API key. Candidate 01 is sufficient; do not spend the unused retry
   without a new named generation defect.
 - Phase 4 binds the carbine to the authoritative basic attack and Suppressive
-  Fire presentation. Reload behavior, ammunition, and audio remain deferred.
+  Fire presentation, including Godot-owned prototype audio and moving muzzle
+  bolts. Reload behavior and ammunition remain deferred; the weapon GLB does
+  not own gameplay or effects. See [ATTACK-PRESENTATION.md](../../docs/ATTACK-PRESENTATION.md).
 
 ## Bounds and coordinates
 

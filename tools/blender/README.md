@@ -4,13 +4,13 @@ Scripts resolve the repository containing `tools/blender/`. Use
 `SPACE_ADVENTURE_REPOSITORY` or an explicit `--repository` argument when a tool
 supports another worktree.
 
-Current scripts cover the retained Vanguard carbine source, the deterministic
-Phase 3 station structure v2, service door, evacuation airlock and service
+Current scripts cover the accepted Mixamo Vanguard assembly and carbine, the
+deterministic Phase 3 station structure v2, service door, evacuation airlock and service
 terminal, the profile-driven production humanoids, and the rigid Security Gun
-Sentry. Rejected prop
-candidates, Vanguard character construction, Tripo retargeting, walk
-experiments, and rejected retopology scripts were removed. New character tools
-must target the accepted Mixamo/Blender pipeline rather than revive them.
+Sentry. Earlier rejected prop candidates, character-construction experiments,
+Tripo retargeting, walk experiments, and rejected retopology scripts were
+removed. New character tools must target the accepted Mixamo/Blender pipeline
+rather than revive them.
 
 Provider payloads remain in each ignored run-local `raw/` cache. Verify the
 manifested path and byte size without hashing large 3D binaries.
@@ -45,3 +45,19 @@ The sentry builder publishes a rigid `Base → Aim_Pivot → Recoil` hierarchy,
 validates its dimensions, pivot metadata, muzzle contract and budgets, and then
 fresh-reimports the staged GLB before atomically replacing the source and
 publication paths. It accepts `--replace` only for an intentional rebuild.
+
+The accepted Vanguard uses `build_vanguard_character_v1.py`; its donor assembly
+invokes `repair_solo_presentation.repair_vanguard()` before the exact-GLB
+fresh-reimport gate. `build_vanguard_carbine_v1.py` invokes the same module's
+axis normalization so the published barrel and muzzle point along Godot `-Z`.
+The handling repair preserves the accepted rig and skin, fits armed poses,
+and authors draw/holster around the actual weapon sockets.
+
+Running `repair_solo_presentation.py` directly edits the existing carbine and
+Vanguard Blender sources and overwrites both published GLBs. It is an
+intentional asset-repair operation, not a read-only verification command;
+normal documentation or gameplay checks do not require Blender. Preserve
+the accepted inputs and follow the publication and direct Godot review gates
+in [ART-PIPELINE.md](../../docs/ART-PIPELINE.md). Current provenance and repair
+details live in the [Vanguard production record](../../art/source/character.crew.vanguard.v1/production.md)
+and [carbine production record](../../art/source/weapon.crew.vanguard_carbine.v1/production.md).
