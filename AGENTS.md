@@ -51,7 +51,7 @@ documented local candidate; do not depend on `godot` being on PATH. If a tool
 fails in a sandbox, rerun the exact command outside it when permitted before
 calling it a project defect. Do not start Blender for non-art tasks.
 
-The external `godot-ai-plugin` is optional. Use `dev.ps1 plugin-link` when
+The external `godot-ai-plugin` is optional. Use `scripts/dev.ps1 plugin-link` when
 needed; keep local `[editor_plugins]` and `[autoload]` entries out of commits.
 Never vendor the addon or recursively delete its junction.
 
@@ -61,7 +61,8 @@ ports (default range 6550–6569). Shared scenes, command contracts,
 `project.godot`, and binary assets have one integration owner. One agent does
 not require another worktree.
 
-Before committing, run `dev.ps1 path-check` and `git diff --cached --check`.
+Before committing, run `pwsh -NoProfile -File scripts/dev.ps1 path-check` and
+`git diff --cached --check`.
 
 ## Keep documentation small
 
