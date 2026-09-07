@@ -55,10 +55,15 @@ the number and placement of enemies.
 - Ability controls expose valid targets, range, cooldown, and rejection reasons.
 - Selection, health, current target, destination, cooldowns, and pending primary action are legible.
 - Space toggles tactical pause.
-- Entering combat automatically pauses once; after that, only the player toggles pause.
+- Entering combat automatically pauses once at the beginning of readying;
+  defeat also pauses for retry. Other pausing is player-controlled.
 - While paused, movement, AI, attacks, damage-over-time, ability execution, and cooldowns do not advance.
 - Camera, UI, selection, inspection, observations, and command entry remain responsive while paused.
 - Each character may hold one pending primary action. A new primary action replaces the previous pending action; the POC has no arbitrary action queue.
+- Stop clears the selected crew's current and pending orders and explicit
+  attack intent. It does not bypass recovery from an already released attack.
+  During pause or readying it replaces the pending order, then stops the
+  current action when eligible to execute.
 - Invalid orders return visible and structured rejections without partial state changes.
 
 ## Character and inventory acceptance
@@ -103,9 +108,13 @@ the number and placement of enemies.
   and events; they never resolve damage.
 - At least one party ability targets a position, hostile, or ally so coordinated pause is materially useful.
 - Hostile intent or dangerous actions are telegraphed clearly enough to support an interrupt, reposition, focus-fire, or defensive response.
-- Basic attacks repeat against an explicitly assigned target; abilities remain player-directed.
+- Basic attacks repeat against an explicitly assigned target. Same-target
+  orders preserve cadence; basic fire resumes after a player-directed ability
+  or healing item. Movement, interaction, and Stop clear the remembered target.
 - Movement and action replacement behave consistently before and during tactical pause.
-- Victory and defeat are unambiguous; defeat offers immediate scenario restart.
+- Victory and defeat are unambiguous. Defeat pauses and offers immediate
+  encounter retry, resetting the attempt while preserving completed route
+  progression.
 - Damage may use a seeded random source, but the encounter must not be decided mainly by random variance.
 
 ## Dialogue acceptance

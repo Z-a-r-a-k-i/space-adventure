@@ -17,6 +17,7 @@ The repository provides one canonical PowerShell entry point:
 ```powershell
 pwsh -NoProfile -File scripts/dev.ps1 help
 pwsh -NoProfile -File scripts/dev.ps1 doctor
+pwsh -NoProfile -File scripts/dev.ps1 path-check
 pwsh -NoProfile -File scripts/dev.ps1 restore
 pwsh -NoProfile -File scripts/dev.ps1 build
 pwsh -NoProfile -File scripts/dev.ps1 test
@@ -49,7 +50,7 @@ The script accepts an explicit `-Godot` path and otherwise resolves `SPACE_ADVEN
 The Godot host exposes a stable C# node named `AutomationBridge` after the authored navigation map has synchronized. Its public methods are:
 
 - `GetObservationJson()` — complete clock, pause, and station-route observation.
-- `GetPresentationDiagnosticsJson()` — sampled clip times, weapon/grip/muzzle metrics, effect ages and lintel state.
+- `GetPresentationDiagnosticsJson()` — sampled clip times, weapon/grip/muzzle metrics, projectile origin/position/destination/progress, effect ages/delays, and lintel state.
 - `GetEventsJson(sinceSequence)` — retained events after a sequence, plus oldest/latest sequence and history-gap metadata.
 - `SubmitCommandJson(commandJson)` — schema-v3 command envelope translated into the same typed dispatcher used by input, tests, and the CLI.
 - `SetPaused(paused)` — convenience wrapper around the typed pause command.
@@ -110,7 +111,7 @@ A scenario fixture is a reproducible rule bug report. It is not proof that a God
 
 ## Godot headless scenarios
 
-Both `headless` modes launch the real Godot project with isolated user data and a hard process timeout:
+The gameplay `headless` profiles launch the real Godot project with isolated user data and a hard process timeout:
 
 - `headless -Name bootstrap` proves C# assembly/scene startup, valid pause submission, malformed-envelope rejection, observation, and clean shutdown.
 - `headless -Name station-route` traverses the authored navigation, completes the survivor and terminal flow, auto-opens the entry door, fights the solo Enforcer, exercises Suppressive Fire and Field Aid, verifies combat presentation and victory-gated navigation, opens the solo exit, and stops at the now-available Protector.
@@ -121,6 +122,13 @@ The station-route smoke proves engine integration and the real navigation mesh. 
 On Windows, scripts redirect `APPDATA` and `LOCALAPPDATA` to a worktree-local ignored directory for the test process. The capture command uses the validated child scope `artifacts/godot-user/scopes/capture-wall-cutaway`, distinct from the existing automated and interactive roots. This prevents a capture from sharing Godot editor data or caches with those sessions.
 
 ## Graphical sessions
+
+For the current combat slice, prefer the bounded `review` profiles in
+[SOLO-REVIEW.md](SOLO-REVIEW.md): live checkpoints, diagnostic captures, motion
+recording, Godot keyboard/mouse-event checks, and a separate real-time
+performance sample all work without the addon. Input-event injection proves
+the game input path; it does not constitute an owner-operated physical-input
+playthrough. Fixed-delta recordings cannot establish real-time frame pacing.
 
 Graphical checks exercise the actual viewport and input mappings. The optional external `godot-ai-plugin` may:
 
@@ -141,8 +149,11 @@ authored response, Enter/keypad Enter chooses the first response, and either
 visible response button can be clicked. Outside dialogue, `1` enters
 Suppressive Fire position targeting and left-click confirms it; `2` queues
 Field Aid; Escape cancels ability targeting. Orders issued during tactical
-pause remain pending until `Space` resumes the simulation. `X` or the Stop
-button clears the selected crew's orders and explicit attack intent. Camera-relative
+pause remain pending until `Space` resumes the simulation, then also wait for
+readying or offensive recovery when applicable. `X` or the Stop button clears
+the selected crew's orders and explicit attack intent when available; both
+are unavailable during dialogue, defeat, and victory securing. On defeat,
+Enter/keypad Enter or Retry restarts the encounter attempt. Camera-relative
 WASD/arrows pan, Q/E or middle drag yaw, Page Up/Page Down or vertical middle
 drag pitch, the wheel zooms, Home/R resets orientation, and F focuses the
 protagonist. Vanguard is deployed automatically and receives the opening camera
@@ -181,6 +192,10 @@ combat-readability checks in `docs/PLAYTESTS.md`; automated victory, defeat, or
 capture evidence must not be reported as that human approval.
 
 ## Parallel-agent workflow
+
+ADR 0027 records the owner's single-checkout exception for the current solo
+repair, including art edits. Continue in that checkout; the parallel workflow
+below does not require additional worktrees for a single implementation agent.
 
 1. Start from a clean integration branch and create one branch plus worktree per implementation agent. Worktrunk may create and manage them through `git-wt` on Windows.
 2. Give each task a narrow outcome, explicit file or subsystem ownership, dependencies, and executable exit gate.

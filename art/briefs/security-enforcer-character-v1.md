@@ -67,8 +67,12 @@ contact, and damage; combat clips remain presentation-only.
 5. Blender deformation review at shoulders, elbows, wrists, hips, knees,
    ankles, and armor boundaries.
 6. Exact Phase 3 base GLB review in Godot at 7.5 m, 14.5 m, and 20 m.
-7. Full-speed strike, hit, down, and recovery review remains the final Phase 4
-   graphical gate.
+7. Full-speed anticipation, strike, damage feedback, down, and recovery review
+   remains the final Phase 4 owner graphical gate. The solo slice uses effects
+   and damage numbers without a hit-reaction animation.
 
-The solo-tutorial candidate now instantiates this exact publication against
-the authoritative Phase 4 encounter state.
+The solo tutorial instantiates this exact publication against authoritative
+Phase 4 encounter state. ADR 0027 updates its runtime strike sampling; current
+timings live in [ATTACK-PRESENTATION.md](../../docs/ATTACK-PRESENTATION.md).
+Agent review is recorded in [SOLO-REVIEW-RESULTS.md](../../docs/SOLO-REVIEW-RESULTS.md);
+the owner-operated combat acceptance remains pending.

@@ -10,8 +10,11 @@ There are no unresolved questions blocking the documented POC or bootstrap. New 
 - Authored demo before roguelite or procedural structure.
 - The disabled frontier transfer station is the POC setting.
 - Player starts alone and recruits the second character.
-- Basic attacks repeat after an explicit target order; active abilities remain explicit.
-- Combat automatically pauses when it starts; all later pausing is manual in the POC.
+- Basic attacks repeat after an explicit target order and resume after an
+  ability or Field Aid. Movement, interaction, and Stop clear that intent;
+  repeated target clicks cannot reset the attack cycle or bypass recovery.
+- Combat automatically pauses when readying starts. Defeat also pauses for
+  encounter retry; other pausing is manual in the POC.
 - Free camera yaw with constrained pitch and zoom, plus orientation reset.
 - Vanguard is the only protagonist kit. Protector is the fixed recruit after a
   short solo tutorial fight; Operator is deferred.

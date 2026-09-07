@@ -6,6 +6,11 @@ The gallery currently shows only the separate Vanguard carbine. The approved
 Vanguard body, rig, idle, and walk are reviewed in the live station route and
 are not duplicated in the isolated gallery.
 
+Use the live station's [solo review profiles](SOLO-REVIEW.md) for the assembled
+Vanguard/carbine draw, support-hand fit, firing recoil, projectile launch,
+pause, and holster checks. An isolated weapon or idle gallery cannot establish
+combat timing or the complete two-handed fit.
+
 `game/scenes/humanoid_gallery.tscn` reviews the production Survivor and
 Protector. `game/scenes/hostile_gallery.tscn` reviews the Security Enforcer idle
 and walk plus neutral, aimed, and recoil-test Gun Sentry poses. Run the latter

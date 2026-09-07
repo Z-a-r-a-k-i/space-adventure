@@ -29,9 +29,9 @@ Status: published, integrated, and visually approved in Godot on 2026-08-07
   segmentation/topology/material preparation, create an editable Blender
   source, and stage isolated Blender and Godot review evidence.
 - Production owner: Codex on the dedicated art machine.
-- Branch/worktree:
-  `codex/phase3-vanguard-production-20260724` at
-  `C:\Developpement\space-adventure-art-production`.
+- Historical production branch: `codex/phase3-vanguard-production-20260724`;
+  its dedicated art worktree has been retired. Current checkout selection
+  follows [AGENTS.md](../../AGENTS.md).
 - Writable paths: this brief and the matching
   `art/generated/character.npc.station_survivor.v1/`,
   `art/source/character.npc.station_survivor.v1/`, asset-local Blender tools,

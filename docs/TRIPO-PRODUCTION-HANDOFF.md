@@ -8,7 +8,9 @@ Before opening Tripo, confirm the active asset has:
 
 - an approved roster ID, visual reference, and production brief;
 - recorded project-owner or delegated-art-approver acceptance of the brief,
-  plus a dedicated art worktree;
+  plus a dedicated art worktree or an explicit owner-authorized checkout
+  exception (the current solo repair uses the existing repository under
+  ADR 0027; see [AGENTS.md](../AGENTS.md));
 - resolved licensing and privacy state; and
 - no unresolved design choice that would change the model.
 

@@ -3,16 +3,22 @@
 Status: approved POC visual baseline
 
 Revision: 2026-08-02
-Scope: `station-route-v1` and the approved POC roster
+Scope: the authored station POC and approved roster; the original visual
+baseline was established against `station-route-v1`.
 
 ## Purpose and authority
 
-This document translates the approved concept artwork and current greybox into
+This document translates the approved concept artwork and authored station into
 repeatable art constraints. It governs presentation only. `docs/PRODUCT.md`,
 `docs/POC.md`, and `docs/DECISIONS.md` remain authoritative for product scope,
 gameplay, character kits, and mechanics. The current Godot scene remains
 authoritative for navigation, collision, interaction placement, and stable IDs
 until an explicitly reviewed replacement is integrated.
+
+Current combat animation, timing, and effects follow
+[ATTACK-PRESENTATION.md](../../docs/ATTACK-PRESENTATION.md) and the September
+solo repair under ADR 0027. The visual baseline does not require restoring
+superseded donor playback or adding hit-reaction animation to the current slice.
 
 The visual target is stylized, low-poly, industrial science fiction that stays
 clear from an elevated tactical camera. It should feel authored and cohesive,
@@ -185,8 +191,8 @@ split upper and lower presentation, as described in `docs/ARCHITECTURE.md`.
 - Compact angular armor and one unmistakable red or red-orange threat focus.
 - Silhouette, attack direction, and telegraph remain clear from above.
 - The Enforcer exposes one reinforced forearm contact surface and uses only the
-  humanoid idle, locomotion, strike, recovery, hit, and down coverage required
-  by its brief.
+  humanoid idle, locomotion, strike, recovery, and down coverage required by
+  its brief. The solo slice communicates damage through effects and numbers.
 - The sentry exposes one aim pivot, recoil axis, and muzzle.
 - The sentry has no legs, walk cycle, skeletal deformation, or complex
   mechanical rig.

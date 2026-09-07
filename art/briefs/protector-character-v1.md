@@ -27,9 +27,9 @@ gameplay attack binding remains pending
   Blender reconstruction and weight repair, sockets, idle/walk publication,
   and locked-route Godot integration.
 - Production owner: Codex on the dedicated art machine.
-- Branch/worktree:
-  `codex/phase3-vanguard-production-20260724` at
-  `C:\Developpement\space-adventure-art-production`.
+- Historical production branch: `codex/phase3-vanguard-production-20260724`;
+  its dedicated art worktree has been retired. Current checkout selection
+  follows [AGENTS.md](../../AGENTS.md).
 - Provider/privacy: signed-in Tripo Studio Max plan, Sharing Only, no API or
   API key. Do not purchase or upgrade.
 - Phase-blocked fields: gameplay attack ID, damage, range, timing, abilities,

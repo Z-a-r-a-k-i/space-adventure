@@ -54,10 +54,21 @@ as `socket.attack.contact.primary`. Its zero profile offset is intentional:
 Blender bone parenting places it at the `RightHand` bone tail, at the knuckle
 base rather than the wrist, and fresh GLB reimport validates the bone, rotation,
 axes, and placement reference. Exact contact-frame clearance remains coupled to
-Phase 4 timing. The live solo-tutorial presentation telegraphs in idle for the
-early wind-up, then starts `Right Hook` nine ticks before release at 1×. Its
-maximum forward extension at source frame 10 therefore aligns with the
-authoritative 24-tick wind-up completion; recovery remains core-owned at 36
-ticks. The measured combat motion envelopes are 0.14803 m planar/0.14797 m
+Phase 4 timing. The original ADR 0026 solo presentation telegraphed in idle
+for the early wind-up, then started `Right Hook` nine ticks before release
+at 1×. Source frame 10 aligned with its 24-tick wind-up completion and
+36-tick recovery. Those runtime timings and that sampling recipe are
+superseded by the September repair below. The measured combat motion
+envelopes are 0.14803 m planar/0.14797 m
 vertical for the strike and 0.96759/0.71884 m for the falling-down clip. The
 exact GLB fresh-reimports with all five named actions and the contact socket.
+
+## Solo timing repair — September 2026
+
+ADR 0027 retains the published rig, clips, and contact socket, but samples the
+full `Right Hook` through anticipation, contact, and follow-through on the
+shared simulation-derived presentation clock. The opening portion now moves
+gradually through anticipation instead of holding idle before a late strike.
+Current authoritative timings and clip mapping live in
+[ATTACK-PRESENTATION.md](../../../docs/ATTACK-PRESENTATION.md); contextual
+agent verification is in [SOLO-REVIEW-RESULTS.md](../../../docs/SOLO-REVIEW-RESULTS.md).

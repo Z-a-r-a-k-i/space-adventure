@@ -1,7 +1,10 @@
 # Vanguard character v1
 
 Status: production base approved; combat actions and separate carbine are
-integrated in the Phase 4 solo-tutorial candidate pending graphical approval.
+integrated and agent-reviewed after the September solo repair. Owner hands-on
+acceptance of the complete combat presentation remains pending. See
+[the review results](../../docs/SOLO-REVIEW-RESULTS.md) and the current
+[handling repair record](../source/character.crew.vanguard.v1/production.md#solo-handling-repair--2026-09-06).
 
 ## Identity
 

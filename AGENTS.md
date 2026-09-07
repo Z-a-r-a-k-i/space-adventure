@@ -63,7 +63,10 @@ Before asset production, read `docs/ART-PIPELINE.md`,
 `docs/TRIPO-PRODUCTION-HANDOFF.md`, `docs/POC-ASSET-ROSTER.md`,
 `docs/ATTACK-PRESENTATION.md`, the visual bible, active brief, and approved
 reference provenance. Work only on approved assets in the dedicated art
-worktree; live replacement and gameplay integration remain roadmap-scoped.
+worktree unless the owner explicitly authorizes a shared checkout. ADR 0027
+in [docs/DECISIONS.md](docs/DECISIONS.md) records the current solo-repair
+exception: continue in the owner's existing repository folder, including art
+edits. Live replacement and gameplay integration remain roadmap-scoped.
 
 The active station sequence is Vanguard start and survivor interaction,
 ordinary service door, solo tutorial combat, Protector recruitment, two-member

@@ -326,6 +326,10 @@ gate framework.
 
 Status: accepted for implementation on 2026-08-08.
 
+Timings and animation behavior below describe the original `station-route-v6`
+slice. ADR 0027 supersedes the affected rules and presentation; the original
+values are retained as decision history.
+
 The first Phase 4 slice adds one deterministic encounter only: Vanguard versus
 one Security Enforcer in the existing solo arena. The core owns encounter
 trigger/readiness, repeating explicit-target basic attacks, approach and range,
@@ -390,8 +394,9 @@ Presentation may combine repaired authored poses, upper-body aiming, support
 hand IK, and release-driven recoil. Weapon transforms must preserve authored
 metric dimensions beneath a scaled skeleton. Presentation time follows the
 simulation tick and fraction, including paused exact stepping. A plugin-free
-bounded solo review will capture checkpoints and record motion. Fixed-delta
-movies are visual evidence; separate real-time wall-clock measurements assess
+bounded solo review captures checkpoints, records motion, and exercises Godot
+input events. Fixed-delta movies are visual evidence; separate real-time
+wall-clock measurements assess
 frame pacing and command latency. Protector combat and the main encounter stay
 deferred. Recruitment ends the playable prototype slice without completing
 the scenario or unlocking the final airlock. Agent verification and the

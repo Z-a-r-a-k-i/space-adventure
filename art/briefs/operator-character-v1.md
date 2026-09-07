@@ -28,9 +28,9 @@ pending
   candidates; complete Blender reconstruction, shared-rig binding, sockets,
   static pistol assembly, GLB staging, and isolated Godot gallery review.
 - Production owner: Codex on the dedicated art machine.
-- Branch/worktree:
-  `codex/phase3-vanguard-production-20260724` at
-  `C:\Developpement\space-adventure-art-production`.
+- Historical production branch: `codex/phase3-vanguard-production-20260724`;
+  its dedicated art worktree has been retired. Current checkout selection
+  follows [AGENTS.md](../../AGENTS.md); this record does not reopen deferred work.
 - Provider/privacy: signed-in Tripo Studio Max plan, Sharing Only, no API or
   API key. Do not purchase or upgrade.
 - Phase-blocked fields: gameplay attack ID, damage, range, timing, abilities,

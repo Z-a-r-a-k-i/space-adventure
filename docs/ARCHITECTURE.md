@@ -51,7 +51,7 @@ Pure C# targeting `net8.0`. It owns:
 
 The core does not know about nodes, scenes, input events, cameras, meshes, animations, audio, editor plugins, MCP, file dialogs, or viewport capture.
 
-The implemented station-route slice makes this boundary concrete. `GameSession` owns party and hostile position, current and pending primary actions, interaction state, authored dialogue, health, cooldowns, item charges, encounter phases, objectives, and progression. The schema-v4 `station-route-v6` content orders survivor choice, entry-service-door opening, the solo Security Enforcer fight, victory-gated solo exit, and Protector recruitment. The final airlock and later main encounter remain unavailable. `StationRouteDefinition` contains validated content while `StationRouteLayout` supplies stable spatial and encounter placements. `ISpatialPathfinder` is the only engine-facing spatial contract; it accepts pure `WorldPosition` values and returns an immutable path result.
+The implemented station-route slice makes this boundary concrete. `GameSession` owns party and hostile position, current and pending primary actions, interaction state, authored dialogue, health, cooldowns, item charges, encounter phases, objectives, and progression. The schema-v4 `station-route-v7` content orders survivor choice, entry-service-door opening, the solo Security Enforcer fight, victory-gated solo exit, and Protector recruitment. Recruitment ends the playable slice while the scenario remains in progress; the final airlock and later main encounter remain unavailable. `StationRouteDefinition` contains validated content while `StationRouteLayout` supplies stable spatial and encounter placements. `ISpatialPathfinder` is the only engine-facing spatial contract; it accepts pure `WorldPosition` values and returns an immutable path result.
 
 ### `game/SpaceAdventure.Game`
 
@@ -67,7 +67,7 @@ The Godot 4.7.1 .NET project references the core and owns:
 
 Godot nodes are replaceable views and adapters. They may cache presentation state, but they do not become an alternate source of gameplay truth.
 
-For the station route, `station_route.tscn` owns the five-area serpentine layout, invisible floor collision and navigation wrappers, lights, camera, spawn and approach markers, interaction views, and production GLB instances. Navigation is split at both service doors. The entry `NavigationLink3D` enables when the authoritative interaction becomes available, so pathfinding can route through the still-closed unlocked door. Core movement completes that interaction on approach; the blocker and animated leaves then synchronize from completed state. The solo-exit link stays disabled, while always-on links preserve continuity between the inaccessible Protector, main-arena, and final-approach islands without bypassing that gate. `GameHost` validates gameplay `stable_id` metadata against `station-route.json`, translates ray hits and dialogue UI input into typed commands, and renders core observations. `GodotSpatialPathfinder` performs bounded, validated `NavigationServer3D` path queries. It never moves the protagonist node as gameplay authority; the node is positioned from the latest core observation.
+For the station route, `station_route.tscn` owns the five-area serpentine layout, invisible floor collision and navigation wrappers, lights, camera, spawn and approach markers, interaction views, and production GLB instances. Navigation is split at both service doors. The entry `NavigationLink3D` enables when the authoritative interaction becomes available, so pathfinding can route through the still-closed unlocked door. Core movement completes that interaction on approach; the blocker and animated leaves then synchronize from completed state. The solo-exit link remains disabled until victory makes that door available; always-on downstream links do not bypass the solo gate. `GameHost` validates gameplay `stable_id` metadata against `station-route.json`, translates ray hits and dialogue UI input into typed commands, and renders core observations. `GodotSpatialPathfinder` performs bounded, validated `NavigationServer3D` path queries. Rendered character positions interpolate fixed-tick observations; they never become gameplay authority.
 
 ### `tools/SpaceAdventure.SimCli`
 
@@ -75,13 +75,18 @@ A console application references the core and runs rule-level scenarios without 
 
 ### `tests/SpaceAdventure.Core.Tests`
 
-Fast tests construct small fixtures directly and do not load Godot. They cover the pause clock and bounded event retention plus schema-v4 content validation, exact door-effect counts, layout-ID validation, fixed-tick movement, pause and pending-order replacement, unreachable-order atomicity, both authored survivor choices and terminal consequences, atomic door progression, combat start/readiness, repeating attacks, positional ability interruption, cooldowns, one-charge healing, victory progression, defeat pause, retry isolation, and post-fight Protector recruitment. The later main encounter and generated-dialogue rules remain future work.
+Fast tests construct small fixtures directly and do not load Godot. They cover the pause clock and bounded event retention plus schema-v4 content validation, exact door-effect counts, layout-ID validation, fixed-tick movement, pause and pending-order replacement, unreachable-order atomicity, both authored survivor choices and terminal consequences, atomic door progression, combat start/readiness, repeating attacks, positional ability interruption, cooldowns, one-charge healing, victory progression, defeat pause, retry isolation, and post-fight Protector recruitment. Combat regressions also cover same-target cadence, recovery across replacement, Stop, pending-order revalidation, and basic-fire resumption after an ability or healing. The later main encounter and generated-dialogue rules remain future work.
 
 ## Game session and fixed time
 
 `GameSession` is the authoritative runtime aggregate for one scenario. It advances at 30 gameplay ticks per second.
 
 In real time, the Godot host accumulates frame delta and requests whole ticks. Under tactical pause, it requests no gameplay ticks; input, camera, UI, observation, and command submission continue. Development tools may advance an exact number of ticks while paused. Single stepping is a development capability, not necessarily a player-facing control in the final game.
+
+Character animation, combat effects, and position interpolation share a
+presentation clock derived from the simulation tick and fractional progress.
+Tactical pause freezes that clock; exact paused stepping updates the same
+sampler used in normal play. Camera and HUD input remain responsive.
 
 Systems iterate entities in stable identifier order when order affects results. Randomness is obtained only from the session's seeded random source. We target reproducible rule state and events under the same content and build, not bit-identical animation, physics, or navigation across machines.
 
@@ -99,6 +104,11 @@ Wall cutaway is presentation state, not gameplay state. The Phase 2 controller d
 
 The cached-AABB approach is deliberately narrow. It is deterministic, cheap, and inspectable for the current static axis-aligned wall panels, but it over-approximates non-box silhouettes and becomes invalid for rotated, animated, deforming, concave, streamed, or multi-floor environments. Production walls are discovered recursively from each imported GLB node's `extras.occluder_id` metadata; there is no scene-code wall-name map. Scaling a complete wall still compresses trim and provides a whole-panel collapse rather than a local view hole. Production levels should move to separately authored upper/base presentation, occlusion volumes and room/floor visibility metadata, with a dithered or otherwise sorting-safe visual transition, while retaining stable occluder IDs and structured observation.
 
+Service doors publish a separate lintel mesh. The camera checks cached lintel
+bounds against rays to Vanguard's feet, center, and head with hysteresis, then
+fades the obstructing presentation over 0.15 seconds. Door leaves, collision,
+navigation, and authoritative door state retain their own behavior.
+
 ## Command contract
 
 Commands are explicit C# types under a common gameplay-command contract. The current route implements:
@@ -107,6 +117,8 @@ Commands are explicit C# types under a common gameplay-command contract. The cur
 - `ChooseProtagonistKitCommand` with the fixed Vanguard POC kit.
 - `MoveActorCommand` with a stable actor ID and world destination.
 - `MovePartyCommand` with stable actor IDs and a formation destination.
+- `StopActorsCommand` with stable actor IDs; clears current and pending orders
+  and explicit attack intent without erasing released-attack recovery.
 - `InteractCommand` with stable actor and interaction IDs; it includes approach movement when needed.
 - `ChooseDialogueResponseCommand` with stable actor, interaction, and authored response IDs.
 - `AssignBasicAttackTargetCommand` with stable actor and hostile IDs.
@@ -125,11 +137,30 @@ The external JSON envelope contains a schema version, command ID, command type, 
 
 ## Actions and active pause
 
-Each party member has a current action and at most one pending primary action in the POC. While paused, a newly accepted primary order replaces that character's prior pending order. On resume, pending actions become eligible in stable order. There is no arbitrary action queue, timeline scripting, or programmable behavior system.
+Each party member has a current action and at most one replaceable pending
+primary action. Pending actions expose why they wait: `TacticalPause`,
+`EncounterReadying`, or `OffensiveRecovery`. They are revalidated before
+starting; rejection leaves no partial effects, and costs and cooldowns apply
+only at release. There is no arbitrary action queue or programmable behavior.
 
-Movement, contextual interaction, repeating attacks, position-targeted ability use, and healing-item use all share this primary-action boundary. A running order replaces the current primary action. A paused order replaces only the pending primary action, so the character remains stationary until resume; the newest accepted pending order wins. Development-only paused stepping executes the same fixed-tick rule path for deterministic scenarios and is capped at 3,000 ticks per call.
+Movement, contextual interaction, repeating attacks, position-targeted ability
+use, and healing-item use share this boundary. Paused orders replace the
+pending slot without advancing the current action; Stop also follows these
+pause and readying rules. During normal advancement,
+movement can cancel an unreleased attack; a released attack's independent
+recovery deadline survives replacement, movement, and Stop. New offensive
+orders wait for that deadline, while healing may start during recovery.
+Development-only paused stepping executes the same fixed-tick rules and is
+capped at 3,000 ticks per call.
 
-Basic attacks repeat against an explicitly assigned target until invalidated or replaced; active abilities and items remain explicit orders. Combat start triggers one automatic pause. Defeat also pauses atomically so retry can be inspected safely; victory does not. All other POC pausing is manual.
+Basic attacks repeat against an explicitly assigned target. Same-target
+orders preserve the running cycle; abilities and Field Aid preserve the target
+so basic fire resumes afterward. Movement, interaction, Stop, target defeat,
+encounter completion, and retry clear that intent. Combat start triggers one
+automatic pause at the beginning of readying; draw advances after resume.
+Defeat also pauses atomically; victory does not. All other POC pausing is
+manual. ADR 0027 records the repair; current timings live in
+[ATTACK-PRESENTATION.md](ATTACK-PRESENTATION.md).
 
 ## Combat attack and presentation boundary
 
@@ -153,6 +184,16 @@ and fixed-tick timing required for presentation. Combat clips remain in-place fo
 POC: Godot follows observed gameplay position, and animation root motion does
 not become an alternate movement authority. See `ATTACK-PRESENTATION.md`.
 
+The humanoid sampler restores the authored pose before applying procedural
+aim, recoil, or support-hand IK, avoiding accumulated corrections. Carbine
+presentation preserves metric weapon dimensions beneath the scaled rig and
+launches visual bolts from its actual muzzle. Impact flashes, damage numbers,
+and the suppression pulse wait for visual arrival; damage, health, and
+interruption remain release-time core effects. Bolts do not perform collision
+or hit resolution. Shared projectile resources and prototype audio cues are
+prepared at startup; real-time measurements remain separate from fixed-delta
+MovieWriter review.
+
 ## Events and observations
 
 Events are immutable facts with at least an event sequence, simulation tick, event type, and typed data. The runtime retains a bounded recent buffer for tools and presentation. Implemented route events include command acceptance/rejection, protagonist-kit selection, primary-action assignment/failure, movement arrival, dialogue and recruitment, interaction completion, objective change, encounter lifecycle, attack wind-up/release, ability release, damage, healing, interruption, combatant defeat, and scenario completion. Cooldowns and item charges are observable state; animation callbacks never emit authoritative combat facts.
@@ -167,7 +208,7 @@ Use observations and events to answer what happened. Use screenshots and live pl
 
 ## Content boundary
 
-The POC uses small versioned text definitions for gameplay data and Godot scenes for spatial layout and presentation references. The implemented `game/content/station-route.json` defines schema 4/revision `station-route-v6`, actor loadouts and health, attacks, ability, healing item, encounter transitions, objectives, interaction kinds/radii/effects, authored dialogue, and result text. `station_route.tscn` owns positions, trigger and approach markers, collision, navigation, and production presentation instances. Both are validated into core records and joined by stable IDs before the scenario starts.
+The POC uses small versioned text definitions for gameplay data and Godot scenes for spatial layout and presentation references. The implemented `game/content/station-route.json` defines schema 4/revision `station-route-v7`, actor loadouts and health, attacks, ability, healing item, encounter transitions, objectives, interaction kinds/radii/effects, authored dialogue, and result text. `station_route.tscn` owns positions, trigger and approach markers, collision, navigation, and production presentation instances. Both are validated into core records and joined by stable IDs before the scenario starts.
 
 Do not add a database, spreadsheet import service, generic graph editor, or mod framework for the POC. If direct text authoring becomes the dominant bottleneck, add an authoring adapter while preserving the validated core contracts.
 
@@ -182,7 +223,7 @@ The POC uses the scripted provider. The current route implements one authored su
 The Godot game exposes a stable C# runtime node named `AutomationBridge`. It
 returns complete route observations, retained events since a sequence with
 explicit gap metadata, and schema-v3 command acknowledgements. Its JSON adapter
-supports protagonist-kit selection, pause, individual and party movement,
+supports protagonist-kit selection, pause, individual and party movement, Stop,
 interaction, dialogue response, basic-attack target, position ability, healing
 item, and encounter retry commands. Explicit helpers provide pause/resume,
 exact paused stepping, advancement until a named event with a maximum
@@ -192,6 +233,11 @@ scenario; retry resets only combat attempt state. The bridge does not expose
 arbitrary property setters or code evaluation.
 
 The optional external `godot-ai-plugin` may call those methods and additionally provides scene inspection, real input injection, runtime inspection, and ad hoc viewport capture. Enabling it can temporarily add editor-plugin and autoload entries to `project.godot`; those local entries are not part of the base project. Automated tests and the shipped game do not require the plugin.
+
+The bounded `review` profiles also run without the addon. They reach solo
+combat states through ordinary typed commands and expose presentation
+diagnostics, checkpoint capture, motion recording, Godot input-event checks,
+and real-time frame-pacing measurements. See [SOLO-REVIEW.md](SOLO-REVIEW.md).
 
 The built-in `wall-cutaway` visual-capture mode is a narrower deterministic diagnostic boundary. It reaches a stable gameplay event through normal commands, pauses gameplay, and drives live camera yaw through settled blocking, clear-view, and re-blocking states. It then returns to the original camera view, records the cutaway lifecycle and gameplay observations, captures a 1280×720 graphical frame, writes an atomic schema-v1 JSON/PNG pair, and exits. `scripts/dev.ps1 capture -Name wall-cutaway` independently verifies the lifecycle result, fixed identity, pass flag, dimensions, byte length, and PNG SHA-256. Capture mode does not expose arbitrary scene mutation, establish perceived transition quality, or participate in normal player flow.
 

@@ -40,7 +40,7 @@ Status: completed on 2026-07-24. Automated and graphical verification and the re
 - Add one minimal authored NPC exchange and one optional environmental interaction.
 - Add a Godot critical-path scenario and real-input graphical playtest.
 
-Implemented evidence includes the authored `station_route.tscn`, versioned `station-route.json` content, pure-core route tests and CLI scenario, real-Godot `station-route` headless smoke, runtime observation/input helpers, the graphical control path, the opaque cached-AABB wall-cutaway POC, and its deterministic 1280×720 PNG/JSON capture command. The automated route performs the mandatory survivor exchange, optional terminal inspection, and airlock completion through the same typed commands used by human input. The capture keeps gameplay paused while exercising settled cut → clear-view restore → re-cut states through live camera yaw, then records the original final view. It provides repeatable lifecycle and final-frame evidence, not proof of perceived smoothness or absence of flicker and not a replacement for human judgment.
+Implemented evidence includes the authored `station_route.tscn`, versioned `station-route.json` content, pure-core route tests and CLI scenario, real-Godot `station-route` headless smoke, runtime observation/input helpers, the graphical control path, the opaque cached-AABB wall-cutaway POC, and its deterministic 1280×720 PNG/JSON capture command. The Phase 2 automated route performed the mandatory survivor exchange, optional terminal inspection, and airlock completion through the same typed commands used by human input. Later content revisions moved that completion behind the remaining combat work. The capture keeps gameplay paused while exercising settled cut → clear-view restore → re-cut states through live camera yaw, then records the original final view. It provides repeatable lifecycle and final-frame evidence, not proof of perceived smoothness or absence of flicker and not a replacement for human judgment.
 
 Exit passed: a human and an agent independently moved from the start, interacted, and reached the destination through the real Godot level. On 2026-07-24 the owner completed the documented fresh-process physical-input protocol, confirmed readable wall cutaway and restoration across normal camera movement, and reported no usability blocker.
 
@@ -82,8 +82,8 @@ interaction identity, and route state. The entry link opens only after the
 survivor choice; moving through it automatically completes and opens the entry
 door before Vanguard reaches it. The far link was the Phase 3 combat gate.
 The evacuation-airlock assembly remains unchanged at the final destination.
-Phase 4 automation now fights through that gate while preserving the later
-Protector and final-airlock locks.
+Phase 4 automation now fights through that gate and reaches Protector
+recruitment while the later party encounter and final airlock remain locked.
 
 On 2026-08-07 the owner approved the Security Enforcer and floor-bolted Gun
 Sentry together in the 1920x1080 hostile gallery. The Enforcer publishes its
@@ -127,16 +127,20 @@ Status: active. The first bounded solo-tutorial implementation is present on
 repeating Vanguard carbine fire, position-targeted Suppressive Fire, one-charge
 Field Aid, hostile approach/strike behavior, tactical pause, victory-gated
 solo exit, atomic defeat pause, and isolated retry. Reviewed combat clips,
-carbine attachment, telegraph, tracer/impact/pulse effects, floating damage
-values without hit-reaction animations, core tests, CLI, and both victory and
+carbine attachment, telegraph, moving muzzle bolts, impact/pulse effects,
+floating damage values without hit-reaction animations, core tests, CLI, and both victory and
 defeat Godot smokes are integrated. The later Protector
 combat and gun-sentry encounter remain open.
 
 The September 2026 repair under ADR 0027 addresses repeat-order/recovery rules,
 weapon fit, authored handling, recoil, telegraph, camera, HUD and reliable
-graphical review before expanding this phase. `SOLO-REVIEW.md` documents the
-playable experiment and repeatable checks. Owner hands-on review of the repaired
-solo fight remains the next gate; recruitment marks the end of the current
+graphical review before expanding this phase. Visual bolts now launch from
+the actual muzzle; impact flashes, damage numbers, and suppression pulses
+follow visual arrival while authoritative damage remains release-time.
+[SOLO-REVIEW.md](SOLO-REVIEW.md) documents the playable experiment and
+repeatable checks; [SOLO-REVIEW-RESULTS.md](SOLO-REVIEW-RESULTS.md) records the
+agent input, motion, and real-time performance evidence. Owner hands-on review
+of the repaired solo fight remains the next gate; recruitment marks the end of the current
 playable slice without completing the scenario.
 
 - Retain the short solo tutorial fight and its victory-gated Protector

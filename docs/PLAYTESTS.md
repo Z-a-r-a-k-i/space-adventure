@@ -2,6 +2,12 @@
 
 This file records milestone-gate evidence, not automated-test results. A run counts as a human playtest only when a person operates the real graphical build with a physical pointer and keyboard from a fresh process. Agent injection, CLI scenarios, headless runs, and screenshots remain useful evidence but do not substitute for that classification.
 
+The current gate is the Phase 4 solo-tutorial protocol below. Phase 2 and
+Phase 3 protocols and records describe their historical content revisions;
+their route endpoints do not describe the current build. Agent verification
+of the repaired solo slice is recorded in
+[SOLO-REVIEW-RESULTS.md](SOLO-REVIEW-RESULTS.md).
+
 ## Phase 2 route protocol
 
 Launch from the repository root:
@@ -32,7 +38,7 @@ A blocker means the route cannot be completed, an intended control cannot be dis
 
 The noninteractive `capture -Name wall-cutaway` manifest provides repeatable agent evidence for a deterministic cut → clear-view restore → re-cut lifecycle, and its PNG records one final fixed camera/state. Neither establishes perceived smoothness, transient flicker, camera feel, or physical usability; they are not a human playtest and do not close this gate.
 
-For a completed human record, replace the pending row with the date, `Human`, the Git commit when one exists (otherwise `uncommitted working tree`) and content revision, `Passed` or `Blocked`, and concise notes. A passing record must state that physical target clicking, pause/replacement, camera controls, wall cutaway/restoration, dialogue-button clicking, optional inspection, and completion were all exercised.
+For each completed human run, record the date, `Human`, the Git commit when one exists (otherwise `uncommitted working tree`) and content revision, `Passed` or `Blocked`, and concise notes. A passing Phase 2 record must state that physical target clicking, pause/replacement, camera controls, wall cutaway/restoration, dialogue-button clicking, optional inspection, and completion were all exercised.
 
 The full POC later requires five consecutive blocker-free manual playthroughs
 covering Vanguard's solo tutorial, Protector recruitment, and the two-character
@@ -64,35 +70,61 @@ Launch `station-route-v5` at 1920×1080 and verify:
 
 ## Phase 4 solo-tutorial acceptance protocol
 
-Launch `station-route-v6` at 1920×1080 and verify from a fresh process:
+Status: owner-operated acceptance of the repaired `station-route-v7` slice
+remains pending. Launch with `scripts/dev.ps1 run` at 1920×1080 and verify from
+a fresh process:
 
 1. Complete the survivor exchange and cross the entry service door. Confirm
-   the Enforcer encounter starts once, draws the Vanguard carbine, and pauses
-   automatically in the ready state.
+   the Enforcer encounter starts and automatically pauses once at the
+   beginning of readying. The draw must advance only after resume.
 2. While still paused, right-click the Enforcer and confirm the repeating
    attack is pending without advancing time. Press `Space`; Vanguard must then
-   approach into range, face the target, and fire repeatedly without another
-   click. Normal hits display `-10` over the Enforcer and `-15` over Vanguard;
-   neither combatant plays a hit-reaction animation.
+   finish drawing, approach into range, face the target, and fire repeatedly.
+   Repeated clicks on that same target must neither restart wind-up nor
+   accelerate the firing cadence.
 3. During an Enforcer wind-up, pause, press `1`, left-click its position, and
-   resume. Confirm Suppressive Fire has a readable preview, release pulse,
-   `-30` damage value, cooldown, and interrupts that wind-up exactly once
-   without playing a hit-reaction animation.
+   resume. Confirm Suppressive Fire has a readable targeting preview, muzzle
+   release, cooldown, and interrupts that wind-up exactly once. Basic fire
+   must resume against the assigned target without another click. A new
+   offensive order issued during released-shot recovery must wait rather
+   than fire early.
 4. Allow Vanguard to take damage and press `2`. Confirm Field Aid consumes its
    only charge, heals once, and displays one green pulse with a floating
-   positive value. Exercise pause during draw, attack, impact, and hostile
-   strike; animation and transient effects must freeze coherently.
-5. Win once. Confirm the Enforcer down pose, Vanguard holster sequence, cyan far
-   door, collision/navigation unblock, and Protector becoming observable but
-   still unavailable after crossing.
-6. Restart and deliberately lose. Confirm defeat pauses atomically, retry keeps
-   the survivor and entry-door progression, resets only the encounter attempt,
-   and returns to the ready pause without duplicating either actor.
-7. At 7.5 m, 14.5 m, and 20 m inspect the carbine hand/back attachment, muzzle
+   positive value, then resumes basic fire. Move during wind-up and use both
+   `X` and the Stop button in separate attempts: they must cancel the order
+   and stop automatic fire without removing an already released shot's
+   recovery. While paused, a newer primary order replaces the pending one.
+5. Inspect a cyan bolt leaving the actual muzzle and travelling toward the
+   target. Its impact flash and damage number must appear together on visual
+   arrival; Suppressive Fire also delays its target pulse to that arrival.
+   Health and interruption still resolve at release. Normal hits display
+   `-10` over the Enforcer and `-15` over Vanguard; Suppressive Fire displays
+   `-30`. Neither combatant plays a hit-reaction animation. Pause during draw,
+   bolt flight, impact, and hostile strike; animation and effects must freeze
+   together while camera and UI remain usable.
+6. Win once. Confirm the Enforcer down pose, Vanguard holster sequence, cyan
+   far door, and collision/navigation unblock. Cross the opening door and
+   recruit Protector: the party must contain two members and the HUD must
+   show **Current prototype slice complete**. The later encounter and final
+   airlock remain locked; this is not scenario completion.
+7. Start a fresh run and deliberately lose. Confirm defeat pauses atomically
+   and both the visible Retry button and Enter/keypad Enter work across
+   separate attempts. Retry keeps survivor and entry-door progression, resets
+   only the encounter attempt, and returns to the readying pause without
+   duplicating either actor. `X` must do nothing while Stop is unavailable
+   during dialogue, defeat, or victory securing.
+8. Rotate and lower the camera around both service doors. Obstructing lintels
+   must fade and restore without distracting flicker; wall cutaway must remain
+   readable. Floor clicks through an already open door must issue movement.
+   After the one combat-entry framing, camera input must remain under player
+   control throughout the attempt.
+9. At 7.5 m, 14.5 m, and 20 m inspect the carbine hand/back attachment, muzzle
    line, both-hand plausibility, Vanguard draw/fire/holster/down deformation,
    Enforcer approach/strike/down deformation, numeric damage and impact-effect
-   readability, health UI, camera controls, and absence of visible greybox
-   presentation.
+   readability, health and retry UI, camera controls, and absence of visible
+   greybox presentation. Record the first confusing moment and any visible
+   hitch, even when the route is completable.
 
-Automated victory and defeat smokes are required evidence but do not satisfy
-this physical-input and visual-acceptance protocol.
+Use [SOLO-REVIEW.md](SOLO-REVIEW.md) to reproduce named checkpoints or a defect
+after the manual run. Automated victory, defeat, and Godot input-event checks
+are required evidence but do not satisfy this owner-operated protocol.

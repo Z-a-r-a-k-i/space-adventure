@@ -6,6 +6,12 @@ Production run: `prod-tripo-v31bq-20260803-02`
 
 Integrated: 2026-08-03
 
+The August sections retain the original publication and review evidence.
+The [September handling repair](#solo-handling-repair--2026-09-06) below
+supersedes the original runtime draw/fire/holster recipe. Current contextual
+verification is in [SOLO-REVIEW-RESULTS.md](../../../docs/SOLO-REVIEW-RESULTS.md);
+owner acceptance of the complete combat presentation remains pending.
+
 ## Authority and provenance
 
 The project owner approved the front-view T-pose seed, Tripo Quad-10k result,
@@ -95,7 +101,7 @@ Full-cycle evaluated world-space validation records horizontal hip ranges of
 0.06088 m, left-foot lift 0.15032 m, and right-foot lift 0.11324 m. The exact
 exported GLB passes the same validation after fresh Blender reimport.
 
-## Godot integration and review
+## Original Godot integration and review — August 2026
 
 Godot imports the GLB's embedded images as Basis Universal data and sanitizes
 the canonical dotted action names to underscore-separated AnimationPlayer
@@ -119,10 +125,10 @@ Direct graphical review in Godot confirmed scale, floor contact, silhouette,
 direction changes, idle/walk blending, tactical-pause freezing, and stable
 arrival. The project owner accepted the result on 2026-08-03.
 
-The Phase 4 solo-tutorial integration uses the separate published carbine and
-the draw, armed locomotion, fire, down, and holster actions. Final
-project-owner graphical acceptance of the complete live combat presentation
-remains the review gate for this update.
+The original Phase 4 solo-tutorial integration used the separate published
+carbine and the draw, armed locomotion, fire, down, and holster actions. The
+September repair below replaces that runtime handling recipe; the August
+locomotion approval is not approval of the complete combat presentation.
 
 ## Solo handling repair — 2026-09-06
 
