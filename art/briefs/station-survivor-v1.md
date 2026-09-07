@@ -29,9 +29,6 @@ Status: published, integrated, and visually approved in Godot on 2026-08-07
   segmentation/topology/material preparation, create an editable Blender
   source, and stage isolated Blender and Godot review evidence.
 - Production owner: Codex on the dedicated art machine.
-- Historical production branch: `codex/phase3-vanguard-production-20260724`;
-  its dedicated art worktree has been retired. Current checkout selection
-  follows [AGENTS.md](../../AGENTS.md).
 - Writable paths: this brief and the matching
   `art/generated/character.npc.station_survivor.v1/`,
   `art/source/character.npc.station_survivor.v1/`, asset-local Blender tools,
@@ -124,7 +121,7 @@ party.
 
 Create or select exactly one strict front-view T-pose seed from the approved
 sheet, then follow the direct single-image settings in
-`docs/TRIPO-PRODUCTION-HANDOFF.md`: v3.1 Best Quality, Ultra, Triangle 2M, 4K
+`docs/ART-PIPELINE.md`: v3.1 Best Quality, Ultra, Triangle 2M, 4K
 PBR, AI Complete off, Generate in Parts off, and 8K Texture off. Start with one
 candidate. A second is allowed only for a named defect such as duplicate face,
 changed identity, fused legs or hands, missing back construction, or unusable

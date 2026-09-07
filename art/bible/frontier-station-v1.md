@@ -9,8 +9,8 @@ baseline was established against `station-route-v1`.
 ## Purpose and authority
 
 This document translates the approved concept artwork and authored station into
-repeatable art constraints. It governs presentation only. `docs/PRODUCT.md`,
-`docs/POC.md`, and `docs/DECISIONS.md` remain authoritative for product scope,
+repeatable art constraints. It governs presentation only. `docs/PRODUCT.md`
+and `docs/DECISIONS.md` remain authoritative for product scope,
 gameplay, character kits, and mechanics. The current Godot scene remains
 authoritative for navigation, collision, interaction placement, and stable IDs
 until an explicitly reviewed replacement is integrated.

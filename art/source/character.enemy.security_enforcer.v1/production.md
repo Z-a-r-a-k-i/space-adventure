@@ -71,4 +71,4 @@ shared simulation-derived presentation clock. The opening portion now moves
 gradually through anticipation instead of holding idle before a late strike.
 Current authoritative timings and clip mapping live in
 [ATTACK-PRESENTATION.md](../../../docs/ATTACK-PRESENTATION.md); contextual
-agent verification is in [SOLO-REVIEW-RESULTS.md](../../../docs/SOLO-REVIEW-RESULTS.md).
+agent verification is in [prototype-history.md](../../../docs/archive/prototype-history.md).

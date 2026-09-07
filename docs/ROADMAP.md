@@ -1,230 +1,40 @@
 # Roadmap
 
-Milestones use playable outcomes and exit gates rather than speculative dates.
-Each phase should leave the project runnable and should avoid building the next
-phase's gameplay systems early. Offline source production for an approved
-roster asset may proceed ahead of its gameplay phase under ADR 0016 when its
-reference, production-ready art brief, ownership, licensing, and privacy gates
-pass. Staged art and isolated asset-gallery review do not activate the owning
-gameplay phase or authorize live content replacement and integration.
+## Current state
 
-## Phase 0 — document and baseline agreement
+Phase 4 is active on `station-route-v7` (content schema 4). The playable route
+reaches survivor choice, entry door, Vanguard versus one Security Enforcer,
+victory-gated exit, and Protector recruitment. Recruitment shows **Current
+prototype slice complete**; the scenario remains in progress. Protector
+combat, the sentry encounter, and final airlock completion are unavailable.
 
-Status: completed.
+The solo repair and agent rule/engine/input/motion checks are complete.
+**Next gate: owner hands-on acceptance of the solo fight**, especially weapon
+handling, interrupt readability, camera/input feel, and pause rhythm. Use the
+[manual protocol](testing.md#manual-playtest) and fix named blockers before
+expanding combat. Evidence is summarized in [history](archive/prototype-history.md).
 
-- Align the vision, POC, architecture, technology, automation, dialogue, art, and agent rules.
-- Record unresolved product choices with recommended defaults and decision deadlines.
-- Confirm the Godot 4.7.1 Mono and .NET installation paths.
-- Classify the previous GDScript spike as superseded reference material.
+## Remaining milestones
 
-Exit: the user accepts the documents or identifies the specific changes required before bootstrap.
+| Phase | Work | Exit |
+| --- | --- | --- |
+| 4 — Party combat | After solo acceptance, finalize Protector's shotgun/Guard Ally timing and presentation, then add the rigid sentry and main two-character encounter using existing command rules. | Active pause materially helps coordinate both characters; victory, defeat, retry, and graphical checks pass. |
+| 5 — Complete station POC | Join both fights, recruitment, dialogue consequence, inspection, healing, opening final airlock, and completion summary into the authored 8–12 minute flow. Add comprehension polish only. | Five consecutive blocker-free manual runs and the relevant automated checks pass. |
+| 6 — Hardening | Reproduce an accepted asset and a small authored encounter from a clean checkout; record useful startup/frame-time/memory/tooling baselines. | Another contributor can author and verify them using the documented workflow. |
+| 7 — Ship experiment | One separately gated escape-cutter battle under the approved [spec](future/ship-combat-poc.md). Prove deterministic greybox before final art. | Rule, CLI, Godot, graphical, and owner-operated checks pass; pause-based crew/power/target decisions are useful. |
 
-## Phase 1 — C# technical bootstrap
+Phases 0–3 established the C# foundation, walking skeleton, and production
+station/character bases. Their completion evidence belongs in history, not
+the current work list.
 
-Status: completed. The typed `set_pause` path is proven through core tests, the CLI, and the Godot host. Restore, build, tests, import, bounded headless launch, graphical launch, live runtime control, input injection, clean shutdown, and viewport inspection have passed. A separate plugin-free copy also built and passed its headless smoke.
+## Scope discipline
 
-- Create the root solution, pure core project, Godot .NET project, test project, simulation CLI, and canonical PowerShell command surface.
-- Pin the intended SDK behavior and enable nullable references and analyzers.
-- Prove restore, build, one core test, one CLI scenario, Godot import, headless launch, graphical launch, and clean shutdown.
-- Link the external Godot addon locally and prove runtime inspection, input injection, and viewport capture without making it a dependency.
-- Isolate Godot user data, logs, and MCP ports for worktrees.
+Each change should test the active milestone's playable outcome. Approved
+offline assets may be prepared under the [art pipeline](ART-PIPELINE.md), but
+that does not activate a later gameplay phase or authorize live replacement.
+Animation and effects are finalized alongside authoritative combat timings.
 
-Exit: a clean checkout can run the same minimal typed command through a core test, the CLI, and the Godot host; the result is structurally observable; and a graphical frame can be captured and inspected.
-
-## Phase 2 — start-to-destination walking skeleton
-
-Status: completed on 2026-07-24. Automated and graphical verification and the required owner-operated physical-input playthrough have passed.
-
-- Greybox the compact station route with a start and evacuation-airlock destination.
-- Add one controllable protagonist, elevated tactical camera, point movement, navigation, interaction, objective state, and completion.
-- Add one minimal authored NPC exchange and one optional environmental interaction.
-- Add a Godot critical-path scenario and real-input graphical playtest.
-
-Implemented evidence includes the authored `station_route.tscn`, versioned `station-route.json` content, pure-core route tests and CLI scenario, real-Godot `station-route` headless smoke, runtime observation/input helpers, the graphical control path, the opaque cached-AABB wall-cutaway POC, and its deterministic 1280×720 PNG/JSON capture command. The Phase 2 automated route performed the mandatory survivor exchange, optional terminal inspection, and airlock completion through the same typed commands used by human input. Later content revisions moved that completion behind the remaining combat work. The capture keeps gameplay paused while exercising settled cut → clear-view restore → re-cut states through live camera yaw, then records the original final view. It provides repeatable lifecycle and final-frame evidence, not proof of perceived smoothness or absence of flicker and not a replacement for human judgment.
-
-Exit passed: a human and an agent independently moved from the start, interacted, and reached the destination through the real Godot level. On 2026-07-24 the owner completed the documented fresh-process physical-input protocol, confirmed readable wall cutaway and restoration across normal camera movement, and reported no usability blocker.
-
-## Phase 3 — party and conversation slice
-
-Status: completed on 2026-08-07. Vanguard now reaches a solo tutorial fight
-before recruiting Protector; Operator is deferred.
-
-On 2026-07-24 the owner explicitly authorized production and provisional
-integration of the approved roster assets on the dedicated art branch. This
-scope change permits Blender-owned source work, provisional GLB publication,
-and isolated asset-gallery integration while retaining an immediate greybox
-fallback. That original authorization did not define attacks or abilities,
-approve final visuals, replace live station-route actors, or bypass the shared-
-rig and complete-assembly gates; later owner instructions advanced Vanguard.
-
-Vanguard production art is active. The conforming direct single-image 4K
-T-pose source, Smart Low-Poly v2 Quad-10k result, validated Mixamo rig,
-Unarmed Idle, and in-place Standard Walk now replace the protagonist greybox
-in the live station route. Blender validation and a fresh GLB
-reimport confirm a grounded 1.82 m character at the gameplay origin; direct
-Godot inspection confirms visible idle and locomotion playback.
-
-On 2026-08-07 the production Survivor and Protector replaced their visible
-capsule presentations without changing interaction or route authority. The
-Survivor publishes three dialogue actions; Protector publishes holstered idle
-and in-place Standard Walk, moves at 2.0 m/s, and carries provisional hand and
-upper-back sockets. Their reusable Godot presentation validates action names,
-blends observed states, faces authoritative movement, and freezes during
-tactical pause. The owner completed their contextual Godot visual approval
-before PR 15 merged on 2026-08-07.
-
-On 2026-08-04 the station presentation advanced to route revision
-`station-route-v5`. `kit.station.structure.v2` now covers the complete five-area
-serpentine route, and two instances of `assembly.station.service_door.v1`
-bound the solo-combat arena. Deterministic Blender sources and GLBs replace
-presentation geometry while Godot keeps navigation, collision, lighting,
-interaction identity, and route state. The entry link opens only after the
-survivor choice; moving through it automatically completes and opens the entry
-door before Vanguard reaches it. The far link was the Phase 3 combat gate.
-The evacuation-airlock assembly remains unchanged at the final destination.
-Phase 4 automation now fights through that gate and reaches Protector
-recruitment while the later party encounter and final airlock remain locked.
-
-On 2026-08-07 the owner approved the Security Enforcer and floor-bolted Gun
-Sentry together in the 1920x1080 hostile gallery. The Enforcer publishes its
-grounded idle, in-place Standard Walk, and reinforced-right-hand contact socket.
-The rigid sentry publishes its bounded aim pivot, recoil axis, and muzzle socket.
-Their base publications closed the pre-combat art gate.
-
-- Keep Vanguard as the only protagonist. Produce Protector as the fixed recruit
-  encountered after the solo tutorial fight; do not restore a character-choice
-  screen. Operator and its pistol are deferred. The active party weapons are
-  Vanguard's carbine and Protector's shotgun; define gameplay attacks before
-  producing ability-specific art.
-- Integrate each active human as one fixed runtime outfit on the shared
-  skeleton. Vanguard, Survivor, and Protector are integrated. Before combat
-  implementation, prepare reviewed non-greybox base presentations for the
-  first-combat Security Enforcer and sentry. Complete weapon fit and combat
-  animation with the Phase 4 rules and timings. Do not add runtime armor slots.
-- Preserve the implemented party cards, individual and group selection,
-  formation movement, and observations, but move Protector recruitment after
-  the solo tutorial fight. Portraits remain presentation work.
-- Preserve the survivor route choice, observable consequence, and Protector
-  recruitment exchange, gating that exchange in the post-fight room.
-- Retain the integrated production station kit and service doors across the
-  start, first-combat, recruitment, main-encounter, and destination rooms.
-  Keep all primitive collision, navigation, lighting, and interaction wrappers
-  invisible and keep the final airlock publication unchanged.
-- Verify dialogue state validation, door progression, pause behavior, and the
-  Vanguard path to the first-combat threshold. Repeated full manual play
-  remains open.
-
-Exit: the complete authored route uses production-presented environment with no
-visible environment, NPC, or combatant greybox. The player starts as Vanguard,
-talks to the production survivor, crosses the ordinary service door, and
-reaches the production-presented first-combat room. Protector and both hostile
-archetypes have approved production bases ready for their Phase 4 scenes.
-
-## Phase 4 — active-pause combat slice
-
-Status: active. The first bounded solo-tutorial implementation is present on
-`station-route-v7`: schema-v4 content, the production Security Enforcer,
-repeating Vanguard carbine fire, position-targeted Suppressive Fire, one-charge
-Field Aid, hostile approach/strike behavior, tactical pause, victory-gated
-solo exit, atomic defeat pause, and isolated retry. Reviewed combat clips,
-carbine attachment, telegraph, moving muzzle bolts, impact/pulse effects,
-floating damage values without hit-reaction animations, core tests, CLI, and both victory and
-defeat Godot smokes are integrated. The later Protector
-combat and gun-sentry encounter remain open.
-
-The September 2026 repair under ADR 0027 addresses repeat-order/recovery rules,
-weapon fit, authored handling, recoil, telegraph, camera, HUD and reliable
-graphical review before expanding this phase. Visual bolts now launch from
-the actual muzzle; impact flashes, damage numbers, and suppression pulses
-follow visual arrival while authoritative damage remains release-time.
-[SOLO-REVIEW.md](SOLO-REVIEW.md) documents the playable experiment and
-repeatable checks; [SOLO-REVIEW-RESULTS.md](SOLO-REVIEW-RESULTS.md) records the
-agent input, motion, and real-time performance evidence. Owner hands-on review
-of the repaired solo fight remains the next gate; recruitment marks the end of the current
-playable slice without completing the scenario.
-
-- Retain the short solo tutorial fight and its victory-gated Protector
-  recruitment, then add the later two-character encounter.
-- Extend the implemented basic attack, cooldown, health, damage, healing-item,
-  and pending-action contracts to Protector's bounded shotgun/guard kit.
-- Add the approved integrated-gun sentry as the second and final POC hostile
-  behavior; retain the implemented Enforcer target acquisition, telegraph,
-  victory, defeat, and restart rules.
-- Select and integrate Protector and sentry attack/recoil presentation beside
-  their authoritative timings; retain the implemented Vanguard and Enforcer
-  timing profiles.
-- Tune action replacement, basic-attack repetition, target visibility, and
-  pause rhythm first in the solo tutorial and then with Vanguard plus Protector.
-- Add core, CLI, Godot headless, and graphical combat checks.
-
-Exit: the solo fight teaches the combat controls, Protector is recruited only
-after it, active pause materially helps coordinate both characters in the main
-encounter, and victory and defeat work through human and automated control.
-
-## Phase 5 — authored POC completion
-
-- Join the tutorial, conversations, traversal, optional interaction, item use,
-  encounters, choice consequence, visibly opening evacuation airlock, and
-  completion summary into one 8–12 minute flow.
-- Add only the sound, effects, and UI polish needed for comprehension.
-- Test Vanguard throughout the critical path and Protector from recruitment
-  through the main encounter; there is no multi-kit protagonist choice.
-- Record manual playtests and address blockers before adding breadth.
-
-Exit: five consecutive full manual playthroughs complete without a blocker;
-Vanguard's production presentation has been exercised throughout, Protector's
-from recruitment onward, and all documented automated suites pass.
-
-## Phase 6 — POC production hardening
-
-- Re-run and audit one accepted representative character or environment asset
-  through the hardened Blender, GLB, multi-angle, Godot import, and
-  structured-review pipeline from a clean checkout.
-- Document encounter, dialogue, scenario, and asset authoring from a clean checkout.
-- Establish startup, frame-time, memory, test-duration, and artifact-size baselines.
-- Exercise parallel-agent work on genuinely separate subsystems and fix observed coordination problems.
-
-Exit: another agent can add a small authored encounter and one reviewed asset using only the repository workflow.
-
-## Phase 7 — escape-cutter ship-combat proof of concept
-
-Status: direction approved on 2026-07-29; implementation is gated until the
-Phase 6 exit passes unless the project owner explicitly reprioritizes it in a
-later decision.
-
-- Keep the station POC ending at its evacuation-airlock completion summary.
-- Begin a separate authored scenario with a short launch-bay transition,
-  entering the cutter, and one fixed hostile encounter.
-- Reuse the pure C# gameplay core, typed command boundary, explicit fixed tick,
-  structured observations, and active-pause semantics.
-- Add exactly two player crew, one player cutter, one deterministic hostile
-  ship, weapons, engines, shields, a fixed reactor budget, crew room movement,
-  system targeting, damage, repair, victory, defeat, and restart.
-- Present two separate strict-overhead ship views with the player ship on the
-  left, the enemy ship on the right, both pointing upward, a central divider,
-  and no movement or trajectory lines.
-- Prove the complete deterministic greybox before authorizing final ship
-  models, production UI, or integration with the station scenario.
-
-The complete content budget, rules, non-goals, and verification layers are
-defined in `SHIP-COMBAT-POC.md`.
-
-Exit: pure-core tests, the deterministic CLI encounter, Godot headless smoke,
-direct graphical inspection, and an owner-operated physical-input playthrough
-all pass; pausing to reassign crew, power, and target is readable and
-tactically useful.
-
-## Separately gated post-POC experiments
-
-1. Deeper tactics, more abilities, progression, equipment, and a larger party.
-2. A larger static adventure with saving and authored quest structure.
-3. A procedural-run prototype and only then possible metaprogression.
-4. Controlled dialogue generation, beginning with authored/scripted and recorded providers plus an optional local Codex CLI experiment.
-5. Deeper ship and vehicle command beyond Phase 7, with boarding as one
-   possible later resolution.
-6. Scaled AI-assisted environment, character, animation, and content
-   production.
-
-If two-character active-pause ground combat is not clear and enjoyable in
-greybox, improve or reconsider it before Phase 7 or before adding progression,
-procedural generation, vehicles, deeper ship systems, or live model dialogue.
+Operator, wall-utility integration, broader inventory/progression, procedural
+runs, generated dialogue, deeper ship systems, and boarding remain deferred.
+The owner may reprioritize explicitly; record consequential changes in
+[DECISIONS.md](DECISIONS.md).

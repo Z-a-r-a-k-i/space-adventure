@@ -26,9 +26,6 @@ pending
   and defer Blender reconstruction, marker authoring, assembly, staging, and
   Godot review until the owner restarts those pipeline stages.
 - Production owner: Codex on the dedicated art machine.
-- Historical production branch: `codex/phase3-vanguard-production-20260724`;
-  its dedicated art worktree has been retired. Current checkout selection
-  follows [AGENTS.md](../../AGENTS.md).
 - Provider/privacy: signed-in Tripo Studio Max plan, Sharing Only, no API, API
   key, purchase, or upgrade.
 - Phase-blocked fields: gameplay attack ID, damage, range, timing, ammunition,

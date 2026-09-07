@@ -27,9 +27,6 @@ gameplay attack binding remains pending
   Blender reconstruction and weight repair, sockets, idle/walk publication,
   and locked-route Godot integration.
 - Production owner: Codex on the dedicated art machine.
-- Historical production branch: `codex/phase3-vanguard-production-20260724`;
-  its dedicated art worktree has been retired. Current checkout selection
-  follows [AGENTS.md](../../AGENTS.md).
 - Provider/privacy: signed-in Tripo Studio Max plan, Sharing Only, no API or
   API key. Do not purchase or upgrade.
 - Phase-blocked fields: gameplay attack ID, damage, range, timing, abilities,
@@ -91,7 +88,7 @@ organization and are not gameplay inventory slots.
 
 Create or select exactly one strict front-view T-pose seed from the approved
 sheet and use the shared direct single-image Tripo settings in
-`docs/TRIPO-PRODUCTION-HANDOFF.md`. Preserve the complete unarmed identity and
+`docs/ART-PIPELINE.md`. Preserve the complete unarmed identity and
 fixed outfit. Generate no shotgun, shield, energy barrier, environment, text,
 pedestal, duplicate body, action pose, or baked effect. Generate a second
 candidate only when the first has a named identity, articulation, topology, or

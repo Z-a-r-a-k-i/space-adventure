@@ -28,10 +28,10 @@ compartments, crew positioning, subsystem pressure, targeting, and tactical
 pause. It intentionally does not copy FTL's pixel art, interface, icons, ship
 silhouettes, or room layouts.
 
-These images do not supersede `docs/POC.md`, `docs/ROADMAP.md`,
-`docs/POC-ASSET-ROSTER.md`, or `docs/OPEN-QUESTIONS.md`. The bounded gameplay
+These images do not supersede `docs/PRODUCT.md`, `docs/ROADMAP.md`,
+or `docs/POC-ASSET-ROSTER.md`. The bounded gameplay
 scope and sequencing decision are now recorded in
-`docs/SHIP-COMBAT-POC.md` and ADR 0021. Ship combat and humanoid enemies remain
+`docs/future/ship-combat-poc.md` and ADR 0021. Ship combat and humanoid enemies remain
 outside the approved station POC.
 
 ## Outputs

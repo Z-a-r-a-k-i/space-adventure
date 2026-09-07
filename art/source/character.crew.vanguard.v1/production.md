@@ -9,8 +9,7 @@ Integrated: 2026-08-03
 The August sections retain the original publication and review evidence.
 The [September handling repair](#solo-handling-repair--2026-09-06) below
 supersedes the original runtime draw/fire/holster recipe. Current contextual
-verification is in [SOLO-REVIEW-RESULTS.md](../../../docs/SOLO-REVIEW-RESULTS.md);
-owner acceptance of the complete combat presentation remains pending.
+verification is in [prototype history](../../../docs/archive/prototype-history.md).
 
 ## Authority and provenance
 
@@ -158,4 +157,4 @@ derive from the accepted hand/index anatomy (right 0.062695 m, left 0.060356 m
 along the hand's local Y). Fully armed review checkpoints enforce 3 cm maximum
 proxy-to-grip error; these are rig-fit metrics, not finger-surface measurements.
 The original `Firing Rifle` donor remains published for provenance but no
-longer drives runtime shooting. See `docs/SOLO-REVIEW.md` for contextual checks.
+longer drives runtime shooting. See `docs/testing.md` for contextual checks.

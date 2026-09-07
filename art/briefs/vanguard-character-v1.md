@@ -1,9 +1,8 @@
 # Vanguard character v1
 
 Status: production base approved; combat actions and separate carbine are
-integrated and agent-reviewed after the September solo repair. Owner hands-on
-acceptance of the complete combat presentation remains pending. See
-[the review results](../../docs/SOLO-REVIEW-RESULTS.md) and the current
+integrated after the September solo repair. [Roadmap](../../docs/ROADMAP.md)
+tracks combat acceptance; assembly details are in the
 [handling repair record](../source/character.crew.vanguard.v1/production.md#solo-handling-repair--2026-09-06).
 
 ## Identity

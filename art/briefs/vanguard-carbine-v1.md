@@ -1,8 +1,7 @@
 # Asset brief — Vanguard carbine v1
 
-Status: published, repaired, and agent-reviewed in the Phase 4 solo slice;
-owner hands-on acceptance of the complete combat presentation remains pending.
-See [the current review results](../../docs/SOLO-REVIEW-RESULTS.md).
+Status: published, repaired, and agent-reviewed in the solo slice.
+[Roadmap](../../docs/ROADMAP.md) tracks combat acceptance.
 
 ## Identity and role
 
@@ -27,12 +26,9 @@ See [the current review results](../../docs/SOLO-REVIEW-RESULTS.md).
   authoring, exact Vanguard assembly fitting, GLB staging, and isolated Godot
   gallery validation.
 - Production owner: Codex on the dedicated art machine.
-- Historical production branch: `codex/vanguard-walk-animation-20260728`;
-  its dedicated art worktree has been retired. Current checkout selection
-  follows [AGENTS.md](../../AGENTS.md).
 - Production resumed by project-owner direction on 2026-07-28. The later
   Phase 4 integration and September repair under ADR 0027 supersede that
-  initial assembly stage; the complete combat acceptance gate remains open.
+  initial assembly stage.
 - Writable paths: this brief; the matching `art/generated/`, `art/source/`,
   `tools/blender/`, ignored `artifacts/`, and isolated Godot gallery paths
   required by the separate Vanguard/carbine assembly.

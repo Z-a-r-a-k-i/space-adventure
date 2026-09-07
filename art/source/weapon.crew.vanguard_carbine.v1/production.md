@@ -19,4 +19,4 @@ Vanguard armature's inherited 0.01906913 scale. The reviewed assembled length
 is 0.82 m (±2% enforced at every checkpoint). Primary/support grip and actual
 muzzle frames remain presentation-only; they never resolve range or damage.
 No new provider source, material family, weapon mechanic or art dependency was
-introduced. Contextual checks are recorded in `docs/SOLO-REVIEW-RESULTS.md`.
+introduced. Contextual checks are recorded in `docs/archive/prototype-history.md`.

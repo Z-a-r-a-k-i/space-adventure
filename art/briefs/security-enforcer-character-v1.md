@@ -1,8 +1,7 @@
 # Asset brief — Security Enforcer character v1
 
-Status: Phase 3 production base approved on 2026-08-07; Phase 4 strike, hit,
-and down actions are integrated in the solo-tutorial candidate pending
-graphical approval.
+Status: production base approved on 2026-08-07; strike and down are integrated
+in the solo tutorial. [Roadmap](../../docs/ROADMAP.md) tracks combat acceptance.
 
 ## Identity
 
@@ -58,21 +57,9 @@ feedback uses numbers and impact effects; hit-reaction animation is prohibited.
 Gameplay owns world movement, target selection, range, timing, interruption,
 contact, and damage; combat clips remain presentation-only.
 
-## Approval gates
+## Approval and integration
 
-1. Project-owner approval of the reference — completed 2026-08-02.
-2. Project-owner acceptance of this production brief — completed 2026-08-07.
-3. Static T-pose source and Quad-10k topology review.
-4. Agent validation of Mixamo marker placement and the Auto-Rigger preview.
-5. Blender deformation review at shoulders, elbows, wrists, hips, knees,
-   ankles, and armor boundaries.
-6. Exact Phase 3 base GLB review in Godot at 7.5 m, 14.5 m, and 20 m.
-7. Full-speed anticipation, strike, damage feedback, down, and recovery review
-   remains the final Phase 4 owner graphical gate. The solo slice uses effects
-   and damage numbers without a hit-reaction animation.
-
-The solo tutorial instantiates this exact publication against authoritative
-Phase 4 encounter state. ADR 0027 updates its runtime strike sampling; current
-timings live in [ATTACK-PRESENTATION.md](../../docs/ATTACK-PRESENTATION.md).
-Agent review is recorded in [SOLO-REVIEW-RESULTS.md](../../docs/SOLO-REVIEW-RESULTS.md);
-the owner-operated combat acceptance remains pending.
+The owner approved the reference on 2026-08-02 and this brief on 2026-08-07.
+Production review follows [Art pipeline](../../docs/ART-PIPELINE.md).
+ADR 0027 updates runtime strike sampling; the current mapping lives in
+[Attack presentation](../../docs/ATTACK-PRESENTATION.md).

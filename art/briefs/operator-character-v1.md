@@ -28,9 +28,6 @@ pending
   candidates; complete Blender reconstruction, shared-rig binding, sockets,
   static pistol assembly, GLB staging, and isolated Godot gallery review.
 - Production owner: Codex on the dedicated art machine.
-- Historical production branch: `codex/phase3-vanguard-production-20260724`;
-  its dedicated art worktree has been retired. Current checkout selection
-  follows [AGENTS.md](../../AGENTS.md); this record does not reopen deferred work.
 - Provider/privacy: signed-in Tripo Studio Max plan, Sharing Only, no API or
   API key. Do not purchase or upgrade.
 - Phase-blocked fields: gameplay attack ID, damage, range, timing, abilities,
@@ -98,7 +95,7 @@ check. The two-candidate maximum includes every existing attempt.
 
 If one bounded replacement is justified, create or select exactly one strict
 front-view T-pose seed from the approved sheet and use the shared direct
-single-image Tripo settings in `docs/TRIPO-PRODUCTION-HANDOFF.md`. Preserve the
+single-image Tripo settings in `docs/ART-PIPELINE.md`. Preserve the
 complete unarmed identity and fixed outfit. Generate no pistol, shield,
 environment, text, pedestal, duplicate body, action pose, or baked effect.
 
