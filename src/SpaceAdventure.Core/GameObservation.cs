@@ -25,8 +25,8 @@ public enum PrimaryActionKind
     Interact,
     Attack,
     Ability,
-    Item,
     Stop,
+    Face,
 }
 
 public enum ActionWaitingReason
@@ -65,7 +65,8 @@ public enum AbilityTargetKind
 {
     Position,
     Entity,
-    Ally,
+    Barrier,
+    Self,
 }
 
 public enum RoutePowerMode
@@ -83,14 +84,20 @@ public sealed record ProtagonistKitObservation(
     AttackId BasicAttackId,
     AbilityId ActiveAbilityId,
     string ActiveAbilityName,
-    AbilityTargetKind ActiveAbilityTargetKind);
+    AbilityTargetKind ActiveAbilityTargetKind,
+    AbilityId SecondaryAbilityId,
+    string SecondaryAbilityName,
+    AbilityTargetKind SecondaryAbilityTargetKind);
 
 public sealed record PartyMemberLoadoutObservation(
     string WeaponName,
     AttackId BasicAttackId,
     AbilityId ActiveAbilityId,
     string ActiveAbilityName,
-    AbilityTargetKind ActiveAbilityTargetKind);
+    AbilityTargetKind ActiveAbilityTargetKind,
+    AbilityId SecondaryAbilityId,
+    string SecondaryAbilityName,
+    AbilityTargetKind SecondaryAbilityTargetKind);
 
 public sealed record PrimaryActionObservation(
     CommandId CommandId,
@@ -101,18 +108,17 @@ public sealed record PrimaryActionObservation(
     EntityId? CombatTargetId = null,
     AttackId? AttackId = null,
     AbilityId? AbilityId = null,
-    ItemId? ItemId = null,
     PrimaryActionPhase Phase = PrimaryActionPhase.Moving,
     int PhaseTicksRemaining = 0,
     int PhaseTicksTotal = 0,
     long InstanceId = 0,
     long PhaseStartedTick = 0,
     ActionWaitingReason? WaitingReason = null,
-    bool Interrupted = false);
+    bool Interrupted = false,
+    WorldPosition? AbilityFacing = null,
+    WorldPosition? Facing = null);
 
 public sealed record CooldownObservation(AbilityId AbilityId, int RemainingTicks, int TotalTicks);
-
-public sealed record ItemChargeObservation(ItemId ItemId, int Charges);
 
 public sealed record CombatantStateObservation(
     int Health,
@@ -120,15 +126,19 @@ public sealed record CombatantStateObservation(
     bool IsDefeated,
     AttackId BasicAttackId,
     IReadOnlyList<CooldownObservation> Cooldowns,
-    IReadOnlyList<ItemChargeObservation> Items,
     EntityId? RememberedAttackTargetId = null,
-    long OffensiveRecoveryUntilTick = 0);
+    long OffensiveRecoveryUntilTick = 0,
+    long? DefeatedAtTick = null,
+    EntityId? TauntedBy = null,
+    int TauntRemainingTicks = 0);
 
 public sealed record ActorObservation(
     EntityId Id,
     string DisplayName,
     PartyMemberLoadoutObservation? Loadout,
     WorldPosition Position,
+    WorldPosition Facing,
+    bool FacingHeld,
     PrimaryActionObservation? CurrentAction,
     PrimaryActionObservation? PendingAction,
     CombatantStateObservation? Combat = null);
@@ -147,8 +157,27 @@ public sealed record EncounterObservation(
     int Attempt,
     int TransitionTicksRemaining,
     int TransitionTicksTotal,
-    EntityId HostileId,
-    long PhaseStartedTick = 0);
+    IReadOnlyList<EntityId> HostileIds,
+    long PhaseStartedTick = 0,
+    BarrierObservation? Barrier = null,
+    IReadOnlyList<ProjectileObservation>? Projectiles = null);
+
+public sealed record BarrierObservation(EntityId SourceId, WorldPosition Position, WorldPosition Facing,
+    int RemainingTicks, int TotalTicks, double WidthMeters, double HeightMeters, long DeployedAtTick);
+
+public enum BarrierEndReason { Expired, EncounterEnded, Replaced }
+
+public sealed record BarrierEventDetail(EntityId SourceId, WorldPosition Position, WorldPosition Facing,
+    AbilityId AbilityId, BarrierEndReason? EndReason = null) : GameplayEventDetail;
+
+public sealed record TauntEventDetail(EntityId SourceId, EntityId TargetId, int DurationTicks) : GameplayEventDetail;
+
+public sealed record ProjectileObservation(long Id, EntityId SourceId, EntityId TargetId, AttackId AttackId,
+    WorldPosition Origin, WorldPosition Destination, WorldPosition Position, long ReleasedAtTick, int FlightTicks);
+
+public sealed record ProjectileEventDetail(long Id, EntityId SourceId, EntityId TargetId, AttackId AttackId,
+    WorldPosition Origin, WorldPosition Destination, int FlightTicks, WorldPosition? ImpactPosition = null,
+    bool Blocked = false) : GameplayEventDetail;
 
 public sealed record InteractionObservation(
     EntityId Id,
@@ -193,6 +222,12 @@ public sealed record StationRouteObservation(
 
 public enum GameplayEventType
 {
+    TauntApplied,
+    BarrierDeployed,
+    BarrierEnded,
+    ProjectileLaunched,
+    ProjectileBlocked,
+    ProjectileImpacted,
     SessionStarted,
     PauseChanged,
     CommandAccepted,
@@ -216,7 +251,6 @@ public enum GameplayEventType
     AttackReleased,
     AbilityReleased,
     DamageApplied,
-    HealingApplied,
     ActionInterrupted,
     CombatantDefeated,
 }
@@ -304,13 +338,6 @@ public sealed record DamageAppliedEventDetail(
     int RemainingHealth,
     AttackId? AttackId,
     AbilityId? AbilityId) : GameplayEventDetail;
-
-public sealed record HealingAppliedEventDetail(
-    EntityId SourceId,
-    EntityId TargetId,
-    ItemId ItemId,
-    int Amount,
-    int RemainingHealth) : GameplayEventDetail;
 
 public sealed record ActionInterruptedEventDetail(
     EntityId ActorId,

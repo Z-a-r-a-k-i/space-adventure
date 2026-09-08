@@ -9,9 +9,9 @@ pause rules live in [Architecture](ARCHITECTURE.md).
 
 | Source | Current role | Required presentation |
 | --- | --- | --- |
-| Handheld | Vanguard carbine; later Protector shotgun | Separate weapon, primary/support grips, muzzle, hand/holster attachments |
+| Handheld | Vanguard carbine; Protector shotgun | Separate weapon, primary/support grips, muzzle, hand/holster attachments |
 | Body | Security Enforcer | Reinforced strike surface and contact socket |
-| Integrated | Later rigid sentry | Muzzle with bounded aim and recoil pivots |
+| Integrated | Rigid sentry | Muzzle with bounded aim and recoil pivots |
 
 Character attachments are `socket.weapon.hand_primary` and
 `socket.weapon.holster_primary`. Weapons expose `socket.grip.primary`, optional
@@ -26,29 +26,42 @@ authored one-handed transfer portions. Draw/holster landmarks may be named
 Attachments must reconstruct correctly after pause, seek, retry, or resync.
 World movement remains core-owned; combat animation is in-place.
 
-## Current solo mapping
+## Current combat mapping
 
-- Vanguard uses fitted authored handling, upper-body aim, restrained
-  release-driven recoil, and support-hand IK. The older Firing Rifle donor
+- Both crew use `ArmedHumanoidPresentation`: fitted authored handling,
+  upper-body aim, release-driven recoil, and support-hand IK. Protector uses
+  stronger shotgun recoil. The older Firing Rifle donor
   remains provenance, not the runtime shooting driver. Draw transfers at 25%,
   support joins over 60–90%, and holster transfers at 75% of observed duration.
 - Preserve metric weapon size below the scaled Mixamo rig with an orthonormal
-  world transform. Review enforces 0.82 m ±2% length and at most 3 cm armed
-  palm-proxy-to-grip error. Restore the authored bone pose before applying
+  world transform. Review checks each weapon's metric length and at most 3 cm
+  armed palm-proxy-to-grip error. Restore the authored bone pose before applying
   procedural corrections so repeated sampling cannot accumulate offsets.
 - Enforcer samples the full Right Hook: source 0–0.10 s during the first 75%
   of wind-up, 0.10–0.30 s during the final 25%, then remaining follow-through
   during recovery. This presents the authoritative contact tick.
+- Sentry aim turns around the gun mount with bounded yaw/pitch and turn speed;
+  close or rear targets cannot flip the head. Its adapter corrects the retained
+  GLB's floor-level empty pivots and reconstructs the barrel-tip muzzle.
 - Animation and effects share simulation tick/fraction time, including pause
-  and exact stepping. Release events launch cyan bolts from the actual muzzle
-  toward a destination fixed at release. Travel is visual, without collision
-  or damage authority. Impact flashes, floating numbers, and suppression pulse
-  wait for arrival; health and interruption still resolve at release.
-- Healing events produce a green pulse and positive number. Ordinary damage
-  uses health, values, and effects without hit-reaction clips. Shared projectile
-  resources and prototype cues are prepared at startup to reduce first-use work.
+  and exact stepping. Crew bolts launch from the actual muzzle; their impact
+  effects wait for visual arrival while core damage resolves at release.
+  Sentry bolts instead follow core launch/block/arrival events. A barrier hit
+  removes the bolt and flashes the shield without a damage number.
+- Barrier expands upward from its placed ground base. Its clipped outline
+  matches the core hit plane. The two-click preview shows placement, incoming-fire
+  direction, and the protected side; the queued tint preserves that fixed pose.
+  Ground chevrons show the crew's separate current/queued headings.
+  Burst presents each release from the carbine muzzle. Taunt uses a
+  radius pulse and threat countdowns. Crew cards and target lines show attack state.
+  Damage uses health, values, and effects. Shared projectile resources and
+  cues warm at startup.
+- Crew down clips retain the Rifle Death donor's pelvis rotation and bake
+  evaluated mesh contact with the floor. They start at the observed defeat tick. Ordinary pause freezes
+  them; after total defeat, a bounded presentation-only clock lets the final
+  fall finish while the core stays paused. Retry resets that clock and pose.
 
-Projectile speed/trail/delay details belong in
+Crew projectile speed/trail/delay details belong in
 [CarbineProjectile.cs](../game/scripts/CarbineProjectile.cs) and
 [GameHost.cs](../game/scripts/GameHost.cs), rather than another tuning table.
 Review full-speed draw, repeated fire, contact, recovery, and retry using

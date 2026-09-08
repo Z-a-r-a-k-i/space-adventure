@@ -14,6 +14,8 @@ try
     {
         BootstrapScenarioId => RunBootstrap(output),
         StationRouteScenarioId => RunStationRoute(output),
+        "station-party" => RunStationRoute(output, party: true),
+        "station-party-defeat" => RunStationRoute(output, party: true, defeat: true),
         _ => ReportUnknownScenario(output, scenarioId),
     };
 }
@@ -101,7 +103,7 @@ static int RunBootstrap(JsonLinesOutput output)
     return passed ? 0 : 1;
 }
 
-static int RunStationRoute(JsonLinesOutput output)
+static int RunStationRoute(JsonLinesOutput output, bool party = false, bool defeat = false)
 {
     const int MaximumTicksPerLeg = 900;
 
@@ -113,7 +115,7 @@ static int RunStationRoute(JsonLinesOutput output)
     var definition = StationRouteContent.ParseJson(File.ReadAllText(contentPath));
     var layout = StationRouteFixture.CreateLayout(definition);
     var pathfinder = new StationRouteFixturePathfinder(
-        [definition.Protagonist.Id, definition.Companion.Id, definition.Combat.Hostile.Id]);
+        new[] { definition.Protagonist.Id, definition.Companion.Id }.Concat(definition.Combat.Hostiles.Select(hostile => hostile.Id)));
     var session = GameSession.CreateStationRoute(
         definition,
         layout,
@@ -137,8 +139,8 @@ static int RunStationRoute(JsonLinesOutput output)
     output.Emit(new
     {
         kind = "run_metadata",
-        schema_version = 3,
-        scenario_id = StationRouteScenarioId,
+        schema_version = 8,
+        scenario_id = party ? (defeat ? "station-party-defeat" : "station-party") : StationRouteScenarioId,
         content_scenario_id = definition.ScenarioId.Value,
         content_revision = definition.ContentRevision,
         content_asset = "content/station-route.json",
@@ -307,8 +309,6 @@ static int RunStationRoute(JsonLinesOutput output)
     events.Flush(session);
 
     CommandAcknowledgement? attackCommand = null;
-    var healCommandAccepted = false;
-    var attackResumedAfterHeal = false;
     for (var tick = 0; tick < MaximumTicksPerLeg; tick++)
     {
         var combatObservation = RequireStationObservation(session.Observe());
@@ -320,37 +320,14 @@ static int RunStationRoute(JsonLinesOutput output)
         if (attackCommand is null
             && combatObservation.Protagonist.CurrentAction is null
             && combatObservation.Protagonist.PendingAction is null
-            && combatObservation.Protagonist.Combat!.Cooldowns.Single().RemainingTicks > 0)
+            && combatObservation.Protagonist.Combat!.Cooldowns.Single(value => value.AbilityId == definition.Combat.ProtagonistAbility.Id).RemainingTicks > 0)
         {
             attackCommand = session.Execute(new AssignBasicAttackTargetCommand(
                 new CommandId("station-route.attack-enforcer"),
                 definition.Protagonist.Id,
-                definition.Combat.Hostile.Id));
+                definition.Combat.SoloHostile.Id));
             EmitCommandResult(output, "assign_basic_attack_target", attackCommand);
             events.Flush(session);
-        }
-
-        if (!healCommandAccepted
-            && combatObservation.Protagonist.Combat!.Health <= 85
-            && combatObservation.Protagonist.Combat.Items.Single().Charges > 0)
-        {
-            var healCommand = session.Execute(new UseItemCommand(
-                new CommandId("station-route.use-field-aid"),
-                definition.Protagonist.Id,
-                definition.Combat.HealingItem.Id,
-                definition.Protagonist.Id));
-            EmitCommandResult(output, "use_item", healCommand);
-            healCommandAccepted = healCommand.Accepted;
-            events.Flush(session);
-        }
-
-        if (healCommandAccepted
-            && !attackResumedAfterHeal
-            && combatObservation.Protagonist.Combat!.Items.Single().Charges == 0
-            && combatObservation.Protagonist.CurrentAction?.Kind == PrimaryActionKind.Attack
-            && combatObservation.Hostiles!.Single().Combat.Health > 0)
-        {
-            attackResumedAfterHeal = true;
         }
 
         session.AdvanceTicks(1);
@@ -359,23 +336,20 @@ static int RunStationRoute(JsonLinesOutput output)
     var securing = RequireStationObservation(session.Observe());
     if (securing.Encounter?.Phase == EncounterPhase.Securing)
     {
-        session.AdvanceTicks(definition.Combat.Encounter.SecuringTicks);
+        session.AdvanceTicks(definition.Combat.SoloEncounter.SecuringTicks);
     }
     events.Flush(session);
 
     var afterVictory = RequireStationObservation(session.Observe());
     assertions.Check(
-        "combat_is_won_with_attack_ability_and_field_aid",
+        "combat_is_won_with_attack_and_ability",
         attackCommand?.Accepted == true
             && abilityCommand.Accepted
             && resumed.Accepted
-            && healCommandAccepted
-            && attackResumedAfterHeal
             && afterVictory.Encounter?.Phase == EncounterPhase.Victory
             && afterVictory.Hostiles!.Single().Combat.Health == 0
             && afterVictory.Objective.Id == definition.SoloExitDoorObjective.Id
             && session.EventsSince(0).Any(gameEvent => gameEvent.Type == GameplayEventType.DamageApplied)
-            && session.EventsSince(0).Any(gameEvent => gameEvent.Type == GameplayEventType.HealingApplied)
             && session.EventsSince(0).Any(gameEvent => gameEvent.Type == GameplayEventType.EncounterWon));
 
     var exitCommand = session.Execute(new InteractCommand(
@@ -408,6 +382,12 @@ static int RunStationRoute(JsonLinesOutput output)
         "critical_path_remains_within_total_tick_budget",
         session.Tick <= MaximumTicksPerLeg * 5L);
 
+    if (party)
+    {
+        pathfinder.SoloExitUnlocked = true;
+        RunPartyContinuation(session, definition, events, assertions, output, defeat);
+    }
+
     stopwatch.Stop();
     output.Emit(new
     {
@@ -420,6 +400,84 @@ static int RunStationRoute(JsonLinesOutput output)
     });
 
     return assertions.Passed ? 0 : 1;
+}
+
+static void RunPartyContinuation(GameSession session, StationRouteDefinition definition, GameplayEventOutput events,
+    ScenarioAssertions assertions, JsonLinesOutput output, bool defeat)
+{
+    var protagonist = definition.Protagonist.Id;
+    var protector = definition.Companion.Id;
+    void Order(IGameCommand command)
+    {
+        var result = session.Execute(command);
+        EmitCommandResult(output, command.GetType().Name, result);
+        if (!result.Accepted) { throw new InvalidOperationException($"Party scenario order {command.CommandId}: {result.RejectionCode}"); }
+    }
+    void Until(Func<StationRouteObservation, bool> condition, int ticks)
+    {
+        if (!AdvanceUntil(session, condition, ticks).ConditionReached)
+        { throw new InvalidOperationException($"Party scenario exceeded {ticks} ticks at {session.Tick}."); }
+    }
+    StationRouteObservation State() => RequireStationObservation(session.Observe());
+    Order(new InteractCommand(new CommandId("party.recruit"), protagonist, new EntityId("interaction.protector")));
+    Until(state => state.ActiveDialogue is not null, 600);
+    Order(new ChooseDialogueResponseCommand(new CommandId("party.join"), protagonist, new EntityId("interaction.protector"),
+        new DialogueResponseId("response.recruit_protector")));
+    Order(new SetPauseCommand(new CommandId("party.travel.resume"), false));
+    Order(new MovePartyCommand(new CommandId("party.enter"), [protagonist, protector], new WorldPosition(0, 0, 5)));
+    Until(state => state.Encounter!.Id == definition.Combat.PartyEncounter.Id, 600);
+    assertions.Check("party_entry_pauses_and_resets_both_kits", session.IsPaused && State().Party.Count == 2
+        && State().Party.All(actor => actor.Combat!.Health == actor.Combat.MaximumHealth));
+    if (!defeat)
+    {
+        Order(new AssignBasicAttackTargetCommand(new CommandId("party.vanguard.target"), protagonist, new EntityId("actor.enemy.gun_sentry.main")));
+        Order(new AssignBasicAttackTargetCommand(new CommandId("party.protector.target"), protector, new EntityId("actor.enemy.security_enforcer.main")));
+    }
+    Order(new SetPauseCommand(new CommandId("party.resume"), false));
+    Until(state => state.Encounter!.Phase == EncounterPhase.Active, 30);
+    if (defeat)
+    {
+        Until(state => state.Party.Any(actor => actor.Combat!.IsDefeated), 900);
+        assertions.Check("one_down_does_not_end_party_fight", State().Encounter!.Phase == EncounterPhase.Active);
+        Until(state => state.Encounter!.Phase == EncounterPhase.Defeat, 1200);
+        Order(new RestartEncounterCommand(new CommandId("party.retry"), definition.Combat.PartyEncounter.Id));
+        assertions.Check("party_retry_preserves_route_and_restores_all_combatants", session.IsPaused && State().Encounter!.Attempt == 2
+            && State().Party.Count == 2 && State().Party.All(actor => actor.Combat!.Health == actor.Combat.MaximumHealth)
+            && State().Hostiles!.All(hostile => hostile.Combat.Health == hostile.Combat.MaximumHealth)
+            && State().RoutePowerMode != RoutePowerMode.Unset);
+    }
+    else
+    {
+        session.AdvanceTicks(9);
+        Order(new UseAbilityCommand(new CommandId("party.barrier"), protector, definition.Combat.Barrier.Id,
+            new BarrierAbilityTarget(new WorldPosition(.55, 0, 5.3), new WorldPosition(0, 0, 1))));
+        session.AdvanceTicks(definition.Combat.Barrier.WindupTicks);
+        assertions.Check("barrier_observes_fixed_position_and_facing", State().Encounter!.Barrier is { } barrier
+            && barrier.SourceId == protector && barrier.Position == definition.Combat.Barrier.CenterAt(new WorldPosition(.55, 0, 5.3)));
+        Order(new UseAbilityCommand(new CommandId("party.taunt"), protector, definition.Combat.Taunt.Id, new SelfAbilityTarget()));
+        session.AdvanceTicks(definition.Combat.Taunt.WindupTicks);
+        assertions.Check("taunt_redirects_nearby_hostiles", State().Hostiles!.All(enemy => enemy.Combat.TauntedBy == protector));
+        Order(new UseAbilityCommand(new CommandId("party.burst"), protagonist, definition.Combat.Burst.Id,
+            new EntityAbilityTarget(new EntityId("actor.enemy.gun_sentry.main"))));
+        for (var tick = 0; tick < 1500 && State().Encounter!.Phase == EncounterPhase.Active; tick++)
+        {
+            var state = State();
+            foreach (var actor in state.Party.Where(actor => !actor.Combat!.IsDefeated))
+            {
+                if (actor.Combat!.RememberedAttackTargetId is null && actor.PendingAction is null)
+                {
+                    var target = state.Hostiles!.FirstOrDefault(hostile => !hostile.Combat.IsDefeated);
+                    if (target is not null) { Order(new AssignBasicAttackTargetCommand(new CommandId($"party.retarget.{actor.Id}.{session.Tick}"), actor.Id, target.Id)); }
+                }
+            }
+            session.AdvanceTicks(1);
+        }
+        Until(state => state.Encounter!.Phase == EncounterPhase.Victory, 60);
+        assertions.Check("party_victory_completes_slice_with_final_airlock_deferred", State().Objective.Status == ObjectiveStatus.Completed
+            && State().Hostiles!.All(hostile => hostile.Combat.IsDefeated) && State().Phase == ScenarioPhase.InProgress
+            && FindInteraction(State(), new EntityId("interaction.evacuation_airlock")).State == InteractionState.Unavailable);
+    }
+    events.Flush(session);
 }
 
 static StationRouteObservation RequireStationObservation(GameObservation observation)
@@ -569,6 +627,17 @@ internal sealed class GameplayEventOutput(JsonLinesOutput output)
         return detail switch
         {
             null => null,
+            TauntEventDetail taunt => new { detail_type = "taunt", source_id = taunt.SourceId.Value, target_id = taunt.TargetId.Value, taunt.DurationTicks },
+            BarrierEventDetail barrier => new
+            {
+                detail_type = "barrier", source_id = barrier.SourceId.Value,
+                position = barrier.Position, facing = barrier.Facing, ability_id = barrier.AbilityId.Value, end_reason = barrier.EndReason?.ToString(),
+            },
+            ProjectileEventDetail projectile => new
+            {
+                detail_type = "projectile", projectile.Id, source_id = projectile.SourceId.Value, target_id = projectile.TargetId.Value,
+                attack_id = projectile.AttackId.Value, projectile.Origin, projectile.Destination, projectile.ImpactPosition, projectile.FlightTicks, projectile.Blocked,
+            },
             ProtagonistKitSelectedEventDetail selected => new
             {
                 detail_type = "protagonist_kit_selected",
@@ -681,15 +750,6 @@ internal sealed class GameplayEventOutput(JsonLinesOutput output)
                 attack_id = damage.AttackId?.Value,
                 ability_id = damage.AbilityId?.Value,
             },
-            HealingAppliedEventDetail healing => new
-            {
-                detail_type = "healing_applied",
-                source_id = healing.SourceId.Value,
-                target_id = healing.TargetId.Value,
-                item_id = healing.ItemId.Value,
-                healing.Amount,
-                healing.RemainingHealth,
-            },
             ActionInterruptedEventDetail interrupted => new
             {
                 detail_type = "action_interrupted",
@@ -780,6 +840,9 @@ internal static class ObservationProjection
                 active_ability_id = kit.ActiveAbilityId.Value,
                 kit.ActiveAbilityName,
                 active_ability_target_kind = JsonLinesOutput.ToJsonName(kit.ActiveAbilityTargetKind),
+                    secondary_ability_id = kit.SecondaryAbilityId.Value,
+                    kit.SecondaryAbilityName,
+                    secondary_ability_target_kind = JsonLinesOutput.ToJsonName(kit.SecondaryAbilityTargetKind),
             }).ToArray(),
             selected_protagonist_kit_id = observation.SelectedProtagonistKit?.Id.Value,
             route_power_mode = JsonLinesOutput.ToJsonName(observation.RoutePowerMode),
@@ -799,7 +862,14 @@ internal static class ObservationProjection
                     observation.Encounter.TransitionTicksRemaining,
                     observation.Encounter.TransitionTicksTotal,
                     observation.Encounter.PhaseStartedTick,
-                    hostile_id = observation.Encounter.HostileId.Value,
+                    hostile_ids = observation.Encounter.HostileIds.Select(id => id.Value),
+                    barrier = observation.Encounter.Barrier is { } barrier ? new
+                    {
+                        source_id = barrier.SourceId.Value, position = barrier.Position, facing = barrier.Facing,
+                        remaining_ticks = barrier.RemainingTicks, total_ticks = barrier.TotalTicks,
+                        width_meters = barrier.WidthMeters, height_meters = barrier.HeightMeters, deployed_at_tick = barrier.DeployedAtTick,
+                    } : null,
+                    projectiles = observation.Encounter.Projectiles,
                 },
         };
     }
@@ -820,10 +890,14 @@ internal static class ObservationProjection
                     observation.Loadout.ActiveAbilityName,
                     active_ability_target_kind = JsonLinesOutput.ToJsonName(
                         observation.Loadout.ActiveAbilityTargetKind),
+                    secondary_ability_id = observation.Loadout.SecondaryAbilityId.Value,
+                    observation.Loadout.SecondaryAbilityName,
+                    secondary_ability_target_kind = JsonLinesOutput.ToJsonName(observation.Loadout.SecondaryAbilityTargetKind),
                 },
             position = ProjectPosition(observation.Position),
             current_action = ProjectAction(observation.CurrentAction),
             pending_action = ProjectAction(observation.PendingAction),
+            facing = ProjectPosition(observation.Facing), facing_held = observation.FacingHeld,
             combat = ProjectCombatant(observation.Combat),
         };
     }
@@ -851,18 +925,14 @@ internal static class ObservationProjection
                 observation.MaximumHealth,
                 observation.IsDefeated,
                 remembered_attack_target_id = observation.RememberedAttackTargetId?.Value,
-                observation.OffensiveRecoveryUntilTick,
+                observation.OffensiveRecoveryUntilTick, observation.DefeatedAtTick,
+                taunted_by = observation.TauntedBy?.Value, observation.TauntRemainingTicks,
                 basic_attack_id = observation.BasicAttackId.Value,
                 cooldowns = observation.Cooldowns.Select(cooldown => new
                 {
                     ability_id = cooldown.AbilityId.Value,
                     cooldown.RemainingTicks,
                     cooldown.TotalTicks,
-                }).ToArray(),
-                items = observation.Items.Select(item => new
-                {
-                    item_id = item.ItemId.Value,
-                    item.Charges,
                 }).ToArray(),
             };
     }
@@ -879,9 +949,10 @@ internal static class ObservationProjection
                 has_remaining_movement = observation.HasRemainingMovement,
                 interaction_target_id = observation.InteractionTargetId?.Value,
                 combat_target_id = observation.CombatTargetId?.Value,
+                ability_facing = observation.AbilityFacing is { } facing ? ProjectPosition(facing) : null,
+                facing = observation.Facing is { } heading ? ProjectPosition(heading) : null,
                 attack_id = observation.AttackId?.Value,
                 ability_id = observation.AbilityId?.Value,
-                item_id = observation.ItemId?.Value,
                 phase = JsonLinesOutput.ToJsonName(observation.Phase),
                 observation.PhaseTicksRemaining,
                 observation.PhaseTicksTotal,
@@ -970,16 +1041,20 @@ internal static class StationRouteFixture
             [new StationActorPlacement(definition.Companion.Id, new WorldPosition(-1.5, 0, 0))],
             placements,
             new StationEncounterPlacement(
-                definition.Combat.Encounter.Id,
+                definition.Combat.SoloEncounter.Id,
                 new WorldPosition(-10, 0, 2.75),
                 0.75,
                 new WorldPosition(-10, 0, 2.35),
-                new WorldPosition(-10, 0, -1.4)));
+                new WorldPosition(-10, 0, -1.4)),
+            new StationEncounterPlacement(definition.Combat.PartyEncounter.Id, new WorldPosition(0, 0, 5), 2,
+                new WorldPosition(-.55, 0, 4.5), new WorldPosition(-2, 0, 8), new WorldPosition(.55, 0, 4.5),
+                [new StationActorPlacement(new EntityId("actor.enemy.gun_sentry.main"), new WorldPosition(2.5, 0, 10.5))], new WorldPosition(0, 0, -1)));
     }
 }
 
 internal sealed class StationRouteFixturePathfinder(IEnumerable<EntityId> actorIds) : ISpatialPathfinder
 {
+    public bool SoloExitUnlocked { get; set; }
     private const double CoordinateTolerance = 0.0001;
     private static readonly WorldPosition EntryDoor = new(-10, 0, 4);
     private readonly HashSet<EntityId> _actorIds = actorIds.ToHashSet();
@@ -1020,6 +1095,12 @@ internal sealed class StationRouteFixturePathfinder(IEnumerable<EntityId> actorI
                 : SpatialPathResult.Unreachable;
         }
 
+        if ((originRegion == FixtureRegion.SoloArena && destinationRegion == FixtureRegion.FutureRoute)
+            || (originRegion == FixtureRegion.FutureRoute && destinationRegion == FixtureRegion.SoloArena))
+        {
+            return SoloExitUnlocked ? SpatialPathResult.Reachable([new WorldPosition(-5, 0, 0), destination])
+                : SpatialPathResult.Unreachable;
+        }
         return SpatialPathResult.Unreachable;
     }
 

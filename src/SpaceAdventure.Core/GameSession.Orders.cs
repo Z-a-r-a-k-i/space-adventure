@@ -35,7 +35,7 @@ public sealed partial class GameSession
     }
 
     private static bool IsOffensive(PrimaryActionRuntime action) =>
-        action.Kind is PrimaryActionKind.Attack or PrimaryActionKind.Ability;
+        action.Kind == PrimaryActionKind.Attack || (action.Kind == PrimaryActionKind.Ability && !action.DefensiveAbility);
 
     private static bool SameAttack(PrimaryActionRuntime? current, PrimaryActionRuntime next) =>
         current?.Kind == PrimaryActionKind.Attack
@@ -66,7 +66,7 @@ public sealed partial class GameSession
             actor.RememberedAttackTargetId = action.CombatTargetId;
             actor.RememberedAttackCommandId = action.CommandId;
         }
-        else if (action.Kind is PrimaryActionKind.Move or PrimaryActionKind.Interact or PrimaryActionKind.Stop)
+        else if (action.Kind is PrimaryActionKind.Move or PrimaryActionKind.Interact or PrimaryActionKind.Stop or PrimaryActionKind.Face)
         {
             ClearAttackIntent(actor);
         }
@@ -74,11 +74,13 @@ public sealed partial class GameSession
         // A repeated click still supersedes a different pending order. It never
         // restarts the attack cycle that is already running against this target.
         if (SameAttack(actor.PendingAction, action)
-            || (SameAttack(actor.CurrentAction, action) && (!IsPaused || actor.PendingAction is null)))
+            || (SameAttack(actor.CurrentAction, action) && (!IsPaused
+                || actor.PendingAction is null && actor.HeldFacing is null)))
         {
             if (!IsPaused)
             {
                 actor.PendingAction = null;
+                actor.HeldFacing = null;
             }
 
             return;
@@ -107,8 +109,11 @@ public sealed partial class GameSession
                 action.InteractionTargetId, pending, replacedCommandId));
     }
 
-    private void StartPrimaryAction(ActorRuntime actor, PrimaryActionRuntime action, long startedTick)
+    private void StartPrimaryAction(ActorRuntime actor, PrimaryActionRuntime action, long startedTick, bool preserveFacing = false)
     {
+        if (action.Kind == PrimaryActionKind.Face) { actor.HeldFacing = action.Facing; }
+        else if (!preserveFacing && (action.Kind is PrimaryActionKind.Move or PrimaryActionKind.Interact || IsOffensive(action)))
+        { actor.HeldFacing = null; }
         if (SameAttack(actor.CurrentAction, action))
         {
             return;
@@ -123,10 +128,12 @@ public sealed partial class GameSession
 
         if (action.Kind == PrimaryActionKind.Attack
             && action.AttackId is AttackId attackId
-            && actor.Position.DistanceTo(station.Combat.Hostile.Position)
-                <= station.Definition.Combat.GetAttack(attackId).RangeMeters)
+            && action.CombatTargetId is EntityId targetId
+            && station.Combat.Hostiles.TryGetValue(targetId, out var hostile)
+            && hostile.Health > 0
+            && actor.Position.DistanceTo(hostile.Position) <= station.Definition.Combat.GetAttack(attackId).RangeMeters)
         {
-            BeginAttackWindup(actor.Id, station.Combat.Hostile.Id,
+            BeginAttackWindup(actor.Id, hostile.Id,
                 station.Definition.Combat.GetAttack(attackId), action, startedTick);
         }
     }
@@ -164,24 +171,35 @@ public sealed partial class GameSession
         }
     }
 
-    private static CommandRejectionCode? ValidatePendingAction(
+    private CommandRejectionCode? ValidatePendingAction(
         StationRouteRuntime station, ActorRuntime actor, PrimaryActionRuntime action)
     {
-        if (action.Kind is PrimaryActionKind.Attack or PrimaryActionKind.Ability or PrimaryActionKind.Item)
+        if (action.Kind is PrimaryActionKind.Attack or PrimaryActionKind.Ability)
         {
             if (station.Combat.Phase != EncounterPhase.Active)
             {
                 return CommandRejectionCode.CombatInactive;
             }
 
-            if (actor.Health <= 0 || station.Combat.Hostile.Health <= 0)
+            if (actor.Health <= 0)
             {
                 return CommandRejectionCode.CombatantDefeated;
             }
         }
 
+        if (action.Kind == PrimaryActionKind.Attack &&
+            (action.CombatTargetId is not EntityId targetId || !station.Combat.Hostiles.TryGetValue(targetId, out var hostile) || hostile.Health <= 0))
+        {
+            return CommandRejectionCode.CombatantDefeated;
+        }
         if (action.Kind == PrimaryActionKind.Ability)
         {
+            if (action.AbilityId == station.Definition.Combat.Barrier.Id)
+            {
+                return ValidateBarrierTarget(station, actor, action.AbilityTargetPosition, action.AbilityFacing);
+            }
+            if (action.AbilityId == station.Definition.Combat.Burst.Id || action.AbilityId == station.Definition.Combat.Taunt.Id)
+            { return ValidateSecondaryAbility(station, actor, action.AbilityId.Value, action.CombatTargetId); }
             var ability = station.Definition.Combat.ProtagonistAbility;
             if (actor.Cooldowns.GetValueOrDefault(ability.Id) > 0)
             {
@@ -194,19 +212,6 @@ public sealed partial class GameSession
             }
         }
 
-        if (action.Kind == PrimaryActionKind.Item)
-        {
-            if (actor.ItemCharges.GetValueOrDefault(station.Definition.Combat.HealingItem.Id) <= 0)
-            {
-                return CommandRejectionCode.ItemUnavailable;
-            }
-
-            if (actor.Health >= actor.MaximumHealth)
-            {
-                return CommandRejectionCode.NoHealingRequired;
-            }
-        }
-
         return null;
     }
 
@@ -214,21 +219,17 @@ public sealed partial class GameSession
     {
         if (station.Combat.Phase != EncounterPhase.Active || actor.Health <= 0
             || actor.PendingAction is not null || Tick < actor.OffensiveRecoveryUntilTick
-            || actor.RememberedAttackTargetId != station.Combat.Hostile.Id
-            || station.Combat.Hostile.Health <= 0
+            || actor.RememberedAttackTargetId is not EntityId targetId
+            || !station.Combat.Hostiles.TryGetValue(targetId, out var hostile) || hostile.Health <= 0
             || actor.RememberedAttackCommandId is not CommandId commandId)
         {
             return;
         }
-
-        var action = new PrimaryActionRuntime(
-            commandId, PrimaryActionKind.Attack, station.Combat.Hostile.Position, null, [])
+        var action = new PrimaryActionRuntime(commandId, PrimaryActionKind.Attack, hostile.Position, null, [])
         {
-            CombatTargetId = station.Combat.Hostile.Id,
-            AttackId = actor.Loadout!.BasicAttackId,
-            InstanceId = ++_actionSequence,
+            CombatTargetId = hostile.Id, AttackId = actor.Loadout!.BasicAttackId, InstanceId = ++_actionSequence,
         };
-        StartPrimaryAction(actor, action, Tick);
+        StartPrimaryAction(actor, action, Tick, preserveFacing: true);
     }
 
     private static void ClearAttackIntent(ActorRuntime actor)

@@ -33,10 +33,11 @@ The [roadmap](ROADMAP.md) distinguishes the implemented slice from this target.
   without implementing a larger party now.
 - One solo tutorial and one party encounter; at most two hostile behaviors:
   mobile humanoid Security Enforcer melee and stationary integrated-gun sentry.
-- Each party character has one fixed weapon, repeatable basic attack, and
-  active ability. Vanguard uses a carbine and position-targeted Suppressive
-  Fire; Protector's shotgun/Guard Ally kit is finalized with party combat.
-- One healing-item type. Weapons are separate presentation assets; each human
+- Each party character has one fixed weapon, repeatable basic attack, and two
+  active skills. Vanguard uses a carbine, area Interrupt, and targeted Burst
+  damage. Protector uses a shotgun, a stationary directional Barrier that blocks projectiles,
+  and a nearby-enemy Taunt. Crew attack only explicitly assigned targets.
+- Weapons are separate presentation assets; each human
   has one fixed outfit. No ammunition, reload, loot, or generalized inventory.
 - Two authored NPC exchanges with selectable responses, one meaningful choice
   consequence, and one optional inspection.
@@ -46,11 +47,12 @@ The [roadmap](ROADMAP.md) distinguishes the implemented slice from this target.
 
 ## Acceptance
 
-The player can select either crew member, use additive/group selection and
+The player can select either crew member, drag a selection box, use additive selection and
 compact automatic formation, and issue contextual move, attack, or interact
-orders. Camera pan, free yaw, constrained pitch/zoom, reset, and focus are usable
+orders. Tab changes ability focus within the selected group. Camera edge/keyboard pan,
+free yaw, constrained pitch/zoom, reset, and focus are usable
 without fighting the player. Health, targets, destinations, pending orders,
-cooldowns, charges, valid ability targets, and rejection reasons are legible.
+cooldowns, valid ability targets, and rejection reasons are legible.
 
 Pause allows deliberate order entry. Attacks communicate source, facing,
 wind-up, release/contact, and recovery. A threat creates a useful interrupt,
@@ -61,7 +63,7 @@ The [architecture](ARCHITECTURE.md) owns exact command and pause semantics.
 The finished POC passes five consecutive blocker-free owner-operated
 playthroughs plus the relevant automated checks. These runs exercise Vanguard
 throughout and Protector after recruitment, using production presentation.
-Controls, dialogue, threats, item use, and outcomes must be understandable from
+Controls, dialogue, threats, skills, and outcomes must be understandable from
 the game itself. Another contributor must be able to build, reproduce a bug,
 and add a small authored encounter using the repository workflow.
 

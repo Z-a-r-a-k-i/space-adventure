@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=3]
+[gd_scene load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://scripts/GameHost.cs" id="1_host"]
 [ext_resource type="Script" path="res://scripts/TacticalCameraController.cs" id="2_camera"]
@@ -6,13 +6,17 @@
 [ext_resource type="PackedScene" path="res://Assets/Published/assembly.station.evacuation_airlock.v1.glb" id="4_airlock"]
 [ext_resource type="PackedScene" path="res://Assets/Published/prop.station.service_terminal.v1.glb" id="5_terminal"]
 [ext_resource type="PackedScene" path="res://Assets/Published/character.crew.vanguard.v1.glb" id="6_vanguard"]
-[ext_resource type="Script" path="res://scripts/VanguardPresentation.cs" id="7_vanguard_presentation"]
+[ext_resource type="Script" path="res://scripts/ArmedHumanoidPresentation.cs" id="7_vanguard_presentation"]
 [ext_resource type="PackedScene" path="res://Assets/Published/assembly.station.service_door.v1.glb" id="8_service_door"]
 [ext_resource type="PackedScene" path="res://Assets/Published/character.npc.station_survivor.v1.glb" id="9_survivor"]
 [ext_resource type="PackedScene" path="res://Assets/Published/character.crew.protector.v1.glb" id="10_protector"]
 [ext_resource type="Script" path="res://scripts/HumanoidPresentation.cs" id="11_humanoid_presentation"]
 [ext_resource type="PackedScene" path="res://Assets/Published/character.enemy.security_enforcer.v1.glb" id="12_enforcer"]
 [ext_resource type="PackedScene" path="res://Assets/Published/weapon.crew.vanguard_carbine.v1.glb" id="13_carbine"]
+
+[ext_resource type="PackedScene" path="res://Assets/Published/weapon.crew.protector_shotgun.v1.glb" id="15_shotgun"]
+[ext_resource type="PackedScene" path="res://Assets/Published/machine.security.gun_sentry.v1.glb" id="16_sentry"]
+[ext_resource type="Script" path="res://scripts/SentryPresentation.cs" id="17_sentry_presentation"]
 
 [sub_resource type="Environment" id="Environment_station"]
 background_mode = 1
@@ -253,6 +257,23 @@ metadata/stable_id = "encounter.station.solo_tutorial.restart"
 position = Vector3(-10, 0, -1.4)
 metadata/stable_id = "actor.enemy.security_enforcer.solo"
 
+[node name="PartyEncounterTrigger" type="Marker3D" parent="Markers"]
+position = Vector3(0, 0, 5)
+metadata/stable_id = "encounter.station.party"
+metadata/trigger_radius_meters = 2.0
+[node name="PartyVanguardRestart" type="Marker3D" parent="Markers"]
+position = Vector3(-0.55, 0, 4.5)
+metadata/stable_id = "encounter.station.party.vanguard"
+[node name="PartyProtectorRestart" type="Marker3D" parent="Markers"]
+position = Vector3(0.55, 0, 4.5)
+metadata/stable_id = "encounter.station.party.protector"
+[node name="MainEnforcerSpawn" type="Marker3D" parent="Markers"]
+position = Vector3(-2, 0, 8)
+metadata/stable_id = "actor.enemy.security_enforcer.main"
+[node name="SentrySpawn" type="Marker3D" parent="Markers"]
+position = Vector3(2.5, 0, 10.5)
+metadata/stable_id = "actor.enemy.gun_sentry.main"
+
 [node name="Actors" type="Node3D" parent="."]
 [node name="Protagonist" type="Node3D" parent="Actors"]
 position = Vector3(-10, 0, 8.5)
@@ -272,10 +293,9 @@ position = Vector3(-1.5, 0, 0)
 visible = false
 metadata/stable_id = "actor.companion.protector"
 [node name="ProtectorPresentation" type="Node3D" parent="Actors/Protector"]
-script = ExtResource("11_humanoid_presentation")
-IdleAnimationName = "anim_humanoid_idle_holstered"
-LocomotionAnimationName = "anim_humanoid_locomotion_holstered"
+script = ExtResource("7_vanguard_presentation")
 [node name="Model" parent="Actors/Protector/ProtectorPresentation" instance=ExtResource("10_protector")]
+[node name="Weapon" parent="Actors/Protector/ProtectorPresentation" instance=ExtResource("15_shotgun")]
 [node name="SelectionBeacon" type="MeshInstance3D" parent="Actors/Protector"]
 position = Vector3(0, 0.045, 0)
 mesh = SubResource("TorusMesh_beacon")
@@ -313,6 +333,57 @@ outline_size = 8
 modulate = Color(1, 0.25, 0.18, 1)
 billboard = 1
 no_depth_test = true
+
+[node name="MainEnforcer" type="Node3D" parent="Hostiles"]
+position = Vector3(-2, 0, 8)
+visible = false
+metadata/stable_id = "actor.enemy.security_enforcer.main"
+[node name="Presentation" type="Node3D" parent="Hostiles/MainEnforcer"]
+rotation_degrees = Vector3(0, 180, 0)
+script = ExtResource("11_humanoid_presentation")
+IdleAnimationName = "anim_humanoid_idle_holstered"
+LocomotionAnimationName = "anim_humanoid_walk_holstered"
+MeleeStrikeAnimationName = "anim_humanoid_melee_strike"
+DownAnimationName = "anim_humanoid_down"
+[node name="Model" parent="Hostiles/MainEnforcer/Presentation" instance=ExtResource("12_enforcer")]
+[node name="TargetBody" type="StaticBody3D" parent="Hostiles/MainEnforcer"]
+collision_layer = 8
+collision_mask = 0
+metadata/stable_id = "actor.enemy.security_enforcer.main"
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/MainEnforcer/TargetBody"]
+position = Vector3(0, 0.95, 0)
+shape = SubResource("CapsuleShape_enforcer")
+[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/MainEnforcer"]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_hostile")
+material_override = SubResource("Material_hostile")
+[node name="Label" type="Label3D" parent="Hostiles/MainEnforcer"]
+position = Vector3(0, 2.25, 0)
+text = "SECURITY ENFORCER"
+font_size = 34
+outline_size = 8
+modulate = Color(1, 0.25, 0.18, 1)
+billboard = 1
+no_depth_test = true
+
+[node name="Sentry" type="Node3D" parent="Hostiles"]
+position = Vector3(2.5, 0, 10.5)
+visible = false
+metadata/stable_id = "actor.enemy.gun_sentry.main"
+[node name="Presentation" type="Node3D" parent="Hostiles/Sentry"]
+script = ExtResource("17_sentry_presentation")
+[node name="Model" parent="Hostiles/Sentry/Presentation" instance=ExtResource("16_sentry")]
+[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Sentry"]
+collision_layer = 0
+collision_mask = 0
+metadata/stable_id = "actor.enemy.gun_sentry.main"
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Sentry/TargetBody"]
+position = Vector3(0, 1.1, 0)
+shape = SubResource("CapsuleShape_enforcer")
+[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Sentry"]
+position = Vector3(0, 0.04, 0)
+mesh = SubResource("TorusMesh_hostile")
+material_override = SubResource("Material_hostile")
 
 [node name="Interactions" type="Node3D" parent="."]
 

@@ -39,7 +39,10 @@ public sealed record PartyMemberLoadoutDefinition(
     AttackId BasicAttackId,
     AbilityId ActiveAbilityId,
     string ActiveAbilityName,
-    AbilityTargetKind ActiveAbilityTargetKind);
+    AbilityTargetKind ActiveAbilityTargetKind,
+    AbilityId SecondaryAbilityId,
+    string SecondaryAbilityName,
+    AbilityTargetKind SecondaryAbilityTargetKind);
 
 public sealed record ProtagonistKitDefinition(
     ProtagonistKitId Id,
@@ -49,7 +52,10 @@ public sealed record ProtagonistKitDefinition(
     AttackId BasicAttackId,
     AbilityId ActiveAbilityId,
     string ActiveAbilityName,
-    AbilityTargetKind ActiveAbilityTargetKind);
+    AbilityTargetKind ActiveAbilityTargetKind,
+    AbilityId SecondaryAbilityId,
+    string SecondaryAbilityName,
+    AbilityTargetKind SecondaryAbilityTargetKind);
 
 public sealed record StationObjectiveDefinition(ObjectiveId Id, string Text);
 
@@ -148,7 +154,7 @@ public sealed class StationRouteDefinition
 
 public static class StationRouteContent
 {
-    public const int SupportedSchemaVersion = 4;
+    public const int SupportedSchemaVersion = 9;
 
     private const int MaximumIdLength = 128;
     private const int MaximumTextLength = 4096;
@@ -171,7 +177,7 @@ public static class StationRouteContent
         }
         catch (JsonException exception)
         {
-            throw new InvalidDataException("Station route content is not valid schema-v4 JSON.", exception);
+            throw new InvalidDataException($"Station route content is not valid schema-v{SupportedSchemaVersion} JSON.", exception);
         }
 
         if (dto.SchemaVersion != SupportedSchemaVersion)
@@ -226,8 +232,8 @@ public static class StationRouteContent
         }
 
         var interactions = dto.Interactions.Select(ParseInteraction).ToArray();
-        var combat = ParseCombat(dto.Combat, kits, protagonist.Id, companion.Id);
-        ValidateInteractionSet(protagonist.Id, companion.Id, combat.Hostile.Id, interactions);
+        var combat = ParseCombat(dto.Combat, kits, protagonist.Id, companion.Id, companion.Loadout!);
+        ValidateInteractionSet(protagonist.Id, companion.Id, combat.Hostiles.Select(hostile => hostile.Id), interactions);
 
         return new StationRouteDefinition(
             dto.SchemaVersion,
@@ -269,7 +275,10 @@ public static class StationRouteContent
                 new AttackId(RequireText(value.BasicAttackId, "protagonist_kits[].basic_attack_id", MaximumIdLength)),
                 new AbilityId(RequireText(value.ActiveAbilityId, "protagonist_kits[].active_ability_id", MaximumIdLength)),
                 RequireText(value.ActiveAbilityName, "protagonist_kits[].active_ability_name", MaximumTextLength),
-                ParseAbilityTargetKind(value.ActiveAbilityTargetKind));
+                ParseAbilityTargetKind(value.ActiveAbilityTargetKind),
+                new AbilityId(RequireText(value.SecondaryAbilityId, "secondary_ability_id", MaximumIdLength)),
+                RequireText(value.SecondaryAbilityName, "secondary_ability_name", MaximumTextLength),
+                ParseAbilityTargetKind(value.SecondaryAbilityTargetKind));
         }).ToArray();
 
         if (kits.Select(kit => kit.Id).Distinct().Count() != kits.Length
@@ -300,7 +309,8 @@ public static class StationRouteContent
         {
             "position" => AbilityTargetKind.Position,
             "entity" => AbilityTargetKind.Entity,
-            "ally" => AbilityTargetKind.Ally,
+            "barrier" => AbilityTargetKind.Barrier,
+            "self" => AbilityTargetKind.Self,
             _ => throw new InvalidDataException($"Unknown active ability target kind '{value}'."),
         };
     }
@@ -339,7 +349,10 @@ public static class StationRouteContent
                     actor.Loadout.ActiveAbilityName,
                     $"{field}.loadout.active_ability_name",
                     MaximumTextLength),
-                ParseAbilityTargetKind(actor.Loadout.ActiveAbilityTargetKind));
+                ParseAbilityTargetKind(actor.Loadout.ActiveAbilityTargetKind),
+                new AbilityId(RequireText(actor.Loadout.SecondaryAbilityId, "secondary_ability_id", MaximumIdLength)),
+                RequireText(actor.Loadout.SecondaryAbilityName, "secondary_ability_name", MaximumTextLength),
+                ParseAbilityTargetKind(actor.Loadout.SecondaryAbilityTargetKind));
         }
 
         if (requiresLoadout != (loadout is not null))
@@ -564,7 +577,8 @@ public static class StationRouteContent
         CombatDto? combat,
         IReadOnlyList<ProtagonistKitDefinition> kits,
         EntityId protagonistId,
-        EntityId companionId)
+        EntityId companionId,
+        PartyMemberLoadoutDefinition companionLoadout)
     {
         if (combat is null)
         {
@@ -572,10 +586,10 @@ public static class StationRouteContent
         }
 
         if (combat.Attacks is null
-            || combat.Attacks.Count != 2
+            || combat.Attacks.Count != 4
             || combat.Attacks.Any(attack => attack is null))
         {
-            throw new InvalidDataException("Solo combat requires exactly two attacks.");
+            throw new InvalidDataException("Station combat requires exactly four attacks.");
         }
 
         var attacks = combat.Attacks.Select((attack, index) =>
@@ -586,7 +600,9 @@ public static class StationRouteContent
                 RequirePositiveBounded(value.RangeMeters, $"combat.attacks[{index}].range_meters", 50),
                 RequirePositiveBounded(value.Damage, $"combat.attacks[{index}].damage", 10000),
                 RequirePositiveBounded(value.WindupTicks, $"combat.attacks[{index}].windup_ticks", 3000),
-                RequirePositiveBounded(value.RecoveryTicks, $"combat.attacks[{index}].recovery_ticks", 3000));
+                RequirePositiveBounded(value.RecoveryTicks, $"combat.attacks[{index}].recovery_ticks", 3000),
+                value.ProjectileSpeedMetersPerSecond == 0 ? 0
+                    : RequirePositiveBounded(value.ProjectileSpeedMetersPerSecond, $"combat.attacks[{index}].projectile_speed_meters_per_second", 100));
         }).ToArray();
         if (attacks.Select(attack => attack.Id).Distinct().Count() != attacks.Length)
         {
@@ -606,57 +622,107 @@ public static class StationRouteContent
             RequirePositiveBounded(abilityDto.CooldownTicks, "combat.protagonist_ability.cooldown_ticks", 30000),
             abilityDto.InterruptsWindup);
 
-        var itemDto = combat.HealingItem
-            ?? throw new InvalidDataException("Combat requires healing_item.");
-        var item = new ItemDefinition(
-            new ItemId(RequireText(itemDto.Id, "combat.healing_item.id", MaximumIdLength)),
-            RequirePositiveBounded(itemDto.InitialCharges, "combat.healing_item.initial_charges", 10),
-            RequirePositiveBounded(itemDto.Healing, "combat.healing_item.healing", 10000),
-            RequirePositiveBounded(itemDto.WindupTicks, "combat.healing_item.windup_ticks", 3000),
-            RequirePositiveBounded(itemDto.RecoveryTicks, "combat.healing_item.recovery_ticks", 3000));
-
-        var hostileDto = combat.Hostile
-            ?? throw new InvalidDataException("Combat requires hostile.");
-        var hostile = new HostileDefinition(
-            new EntityId(RequireText(hostileDto.Id, "combat.hostile.id", MaximumIdLength)),
-            RequireText(hostileDto.DisplayName, "combat.hostile.display_name", MaximumTextLength),
-            RequirePositiveBounded(
-                hostileDto.MovementSpeedMetersPerSecond,
-                "combat.hostile.movement_speed_meters_per_second",
-                20),
-            RequirePositiveBounded(hostileDto.MaximumHealth, "combat.hostile.maximum_health", 10000),
-            new AttackId(RequireText(hostileDto.BasicAttackId, "combat.hostile.basic_attack_id", MaximumIdLength)));
-        if (hostile.Id == protagonistId || hostile.Id == companionId)
+        if (combat.Hostiles is not { Count: 3 } || combat.Hostiles.Any(hostile => hostile is null)
+            || combat.Encounters is not { Count: 2 } || combat.Encounters.Any(encounter => encounter is null))
         {
-            throw new InvalidDataException("Hostile ID must be distinct from party actor IDs.");
+            throw new InvalidDataException("Station combat requires three hostiles across two encounters.");
         }
-
-        var encounterDto = combat.Encounter
-            ?? throw new InvalidDataException("Combat requires encounter.");
-        var encounter = new EncounterDefinition(
-            new EncounterId(RequireText(encounterDto.Id, "combat.encounter.id", MaximumIdLength)),
-            new EntityId(RequireText(encounterDto.HostileId, "combat.encounter.hostile_id", MaximumIdLength)),
-            RequirePositiveBounded(
-                encounterDto.ProtagonistMaximumHealth,
-                "combat.encounter.protagonist_maximum_health",
-                10000),
-            RequirePositiveBounded(encounterDto.ReadyingTicks, "combat.encounter.readying_ticks", 3000),
-            RequirePositiveBounded(encounterDto.SecuringTicks, "combat.encounter.securing_ticks", 3000),
-            new ItemId(RequireText(encounterDto.HealingItemId, "combat.encounter.healing_item_id", MaximumIdLength)));
-
-        var protagonistKit = kits.Single();
-        if (protagonistKit.BasicAttackId != attacks[0].Id
-            || protagonistKit.ActiveAbilityId != ability.Id
-            || ability.TargetKind != AbilityTargetKind.Position
-            || hostile.BasicAttackId != attacks[1].Id
-            || encounter.HostileId != hostile.Id
-            || encounter.HealingItemId != item.Id)
+        var hostiles = combat.Hostiles.Select(value =>
         {
-            throw new InvalidDataException(
-                "Solo combat references must exactly match the Vanguard, Enforcer, ability, and healing definitions.");
+            var hostile = value!;
+            var behavior = hostile.Behavior switch
+            {
+                "melee" => HostileBehavior.Melee,
+                "sentry" => HostileBehavior.Sentry,
+                _ => throw new InvalidDataException("Unknown hostile behavior."),
+            };
+            var speed = hostile.MovementSpeedMetersPerSecond;
+            if (behavior == HostileBehavior.Sentry && speed != 0)
+            {
+                throw new InvalidDataException("Sentries must remain stationary.");
+            }
+            if (behavior == HostileBehavior.Melee) { RequirePositiveBounded(speed, "hostile speed", 20); }
+            return new HostileDefinition(
+                new EntityId(RequireText(hostile.Id, "hostile.id", MaximumIdLength)),
+                RequireText(hostile.DisplayName, "hostile.display_name", MaximumTextLength), speed,
+                RequirePositiveBounded(hostile.MaximumHealth, "hostile.maximum_health", 10000),
+                new AttackId(RequireText(hostile.BasicAttackId, "hostile.basic_attack_id", MaximumIdLength)), behavior);
+        }).ToArray();
+        var encounters = combat.Encounters.Select(value =>
+        {
+            var encounter = value!;
+            if (encounter.HostileIds is null || encounter.HostileIds.Count != (encounter.RequiresCompanion ? 2 : 1))
+            {
+                throw new InvalidDataException("Encounter has the wrong hostile count.");
+            }
+            return new EncounterDefinition(
+                new EncounterId(RequireText(encounter.Id, "encounter.id", MaximumIdLength)),
+                Array.AsReadOnly(encounter.HostileIds.Select(id => new EntityId(RequireText(id, "encounter.hostile_ids", MaximumIdLength))).ToArray()),
+                RequirePositiveBounded(encounter.ProtagonistMaximumHealth, "encounter.protagonist_maximum_health", 10000),
+                RequirePositiveBounded(encounter.ReadyingTicks, "encounter.readying_ticks", 3000),
+                RequirePositiveBounded(encounter.SecuringTicks, "encounter.securing_ticks", 3000),
+                encounter.RequiresCompanion);
+        }).ToArray();
+        var barrierDto = combat.Barrier ?? throw new InvalidDataException("Combat requires barrier.");
+        var barrier = new BarrierDefinition(
+            new AbilityId(RequireText(barrierDto.Id, "barrier.id", MaximumIdLength)),
+            RequirePositiveBounded(barrierDto.RangeMeters, "barrier.range_meters", 10),
+            RequirePositiveBounded(barrierDto.WindupTicks, "barrier.windup_ticks", 3000),
+            RequirePositiveBounded(barrierDto.RecoveryTicks, "barrier.recovery_ticks", 3000),
+            RequirePositiveBounded(barrierDto.DurationTicks, "barrier.duration_ticks", 3000),
+            RequirePositiveBounded(barrierDto.CooldownTicks, "barrier.cooldown_ticks", 30000),
+            RequirePositiveBounded(barrierDto.WidthMeters, "barrier.width_meters", 10),
+            RequirePositiveBounded(barrierDto.HeightMeters, "barrier.height_meters", 5),
+            RequirePositiveBounded(barrierDto.CenterHeightMeters, "barrier.center_height_meters", 3));
+        var burstDto = combat.Burst ?? throw new InvalidDataException("Combat requires burst.");
+        var burst = new BurstDefinition(
+            new AbilityId(RequireText(burstDto.Id, "burst.id", MaximumIdLength)),
+            RequirePositiveBounded(burstDto.RangeMeters, "burst.range_meters", 50),
+            RequirePositiveBounded(burstDto.DamagePerShot, "burst.damage_per_shot", 10000),
+            RequirePositiveBounded(burstDto.ShotCount, "burst.shot_count", 6),
+            RequirePositiveBounded(burstDto.ShotIntervalTicks, "burst.shot_interval_ticks", 60),
+            RequirePositiveBounded(burstDto.WindupTicks, "burst.windup_ticks", 3000),
+            RequirePositiveBounded(burstDto.RecoveryTicks, "burst.recovery_ticks", 3000),
+            RequirePositiveBounded(burstDto.CooldownTicks, "burst.cooldown_ticks", 30000));
+        var tauntDto = combat.Taunt ?? throw new InvalidDataException("Combat requires taunt.");
+        var taunt = new TauntDefinition(
+            new AbilityId(RequireText(tauntDto.Id, "taunt.id", MaximumIdLength)),
+            RequirePositiveBounded(tauntDto.RadiusMeters, "taunt.radius_meters", 20),
+            RequirePositiveBounded(tauntDto.DurationTicks, "taunt.duration_ticks", 3000),
+            RequirePositiveBounded(tauntDto.WindupTicks, "taunt.windup_ticks", 3000),
+            RequirePositiveBounded(tauntDto.RecoveryTicks, "taunt.recovery_ticks", 3000),
+            RequirePositiveBounded(tauntDto.CooldownTicks, "taunt.cooldown_ticks", 30000));
+        var hostileIds = hostiles.Select(hostile => hostile.Id).ToHashSet();
+        var encounterHostiles = encounters.SelectMany(encounter => encounter.HostileIds).ToArray();
+        var attackIds = attacks.Select(attack => attack.Id).ToHashSet();
+        if (hostileIds.Count != 3 || hostileIds.Contains(protagonistId) || hostileIds.Contains(companionId)
+            || encounters.Select(encounter => encounter.Id).Distinct().Count() != 2
+            || encounters.Count(encounter => encounter.RequiresCompanion) != 1
+            || encounterHostiles.Distinct().Count() != 3 || !hostileIds.SetEquals(encounterHostiles)
+            || hostiles.Any(hostile => !attackIds.Contains(hostile.BasicAttackId))
+            || !attackIds.Contains(kits.Single().BasicAttackId) || !attackIds.Contains(companionLoadout.BasicAttackId)
+            || kits.Single().ActiveAbilityId != ability.Id || ability.TargetKind != AbilityTargetKind.Position
+            || new[] { barrier.Id, ability.Id, burst.Id, taunt.Id }.Distinct().Count() != 4
+            || kits.Single().ActiveAbilityTargetKind != AbilityTargetKind.Position
+            || kits.Single().SecondaryAbilityId != burst.Id || kits.Single().SecondaryAbilityTargetKind != AbilityTargetKind.Entity
+            || companionLoadout.SecondaryAbilityId != taunt.Id || companionLoadout.SecondaryAbilityTargetKind != AbilityTargetKind.Self
+            || companionLoadout.ActiveAbilityId != barrier.Id
+            || companionLoadout.ActiveAbilityTargetKind != AbilityTargetKind.Barrier)
+        {
+            throw new InvalidDataException("Combat identifiers and loadout references must be unique and complete.");
         }
-
-        return new StationCombatDefinition(attacks, ability, item, hostile, encounter);
+        var solo = encounters.Single(encounter => !encounter.RequiresCompanion);
+        if (hostiles.Any(hostile => (hostile.Behavior == HostileBehavior.Sentry)
+            != (attacks.Single(attack => attack.Id == hostile.BasicAttackId).ProjectileSpeedMetersPerSecond > 0)))
+        { throw new InvalidDataException("Sentry attacks require projectile speed; melee attacks are immediate."); }
+        var soloHostile = hostiles.Single(hostile => hostile.Id == solo.HostileIds.Single());
+        if (soloHostile.Behavior != HostileBehavior.Melee || hostiles.Count(hostile => hostile.Behavior == HostileBehavior.Sentry) != 1)
+        {
+            throw new InvalidDataException("The solo encounter uses melee; the party encounter adds one sentry.");
+        }
+        return new StationCombatDefinition(Array.AsReadOnly(attacks), ability, Array.AsReadOnly(hostiles),
+            Array.AsReadOnly(encounters), barrier,
+            RequirePositiveBounded(combat.CompanionMaximumHealth, "combat.companion_maximum_health", 10000), burst, taunt);
     }
 
     private static int RequirePositiveBounded(int value, string field, int maximum)
@@ -682,10 +748,10 @@ public static class StationRouteContent
     private static void ValidateInteractionSet(
         EntityId protagonistId,
         EntityId companionId,
-        EntityId hostileId,
+        IEnumerable<EntityId> hostileIds,
         IReadOnlyCollection<StationInteractionDefinition> interactions)
     {
-        var identifiers = new HashSet<EntityId> { protagonistId, companionId, hostileId };
+        var identifiers = new HashSet<EntityId>(hostileIds) { protagonistId, companionId };
         foreach (var interaction in interactions)
         {
             if (!identifiers.Add(interaction.Id))
@@ -821,6 +887,10 @@ public static class StationRouteContent
 
         [JsonPropertyName("active_ability_target_kind")]
         public string? ActiveAbilityTargetKind { get; init; }
+
+        [JsonPropertyName("secondary_ability_id")] public string? SecondaryAbilityId { get; init; }
+        [JsonPropertyName("secondary_ability_name")] public string? SecondaryAbilityName { get; init; }
+        [JsonPropertyName("secondary_ability_target_kind")] public string? SecondaryAbilityTargetKind { get; init; }
     }
 
     private sealed class KitDto
@@ -848,6 +918,10 @@ public static class StationRouteContent
 
         [JsonPropertyName("active_ability_target_kind")]
         public string? ActiveAbilityTargetKind { get; init; }
+
+        [JsonPropertyName("secondary_ability_id")] public string? SecondaryAbilityId { get; init; }
+        [JsonPropertyName("secondary_ability_name")] public string? SecondaryAbilityName { get; init; }
+        [JsonPropertyName("secondary_ability_target_kind")] public string? SecondaryAbilityTargetKind { get; init; }
     }
 
     private sealed class ObjectiveDto
@@ -918,18 +992,60 @@ public static class StationRouteContent
         [JsonPropertyName("protagonist_ability")]
         public AbilityDto? ProtagonistAbility { get; init; }
 
-        [JsonPropertyName("healing_item")]
-        public ItemDto? HealingItem { get; init; }
+        [JsonPropertyName("hostiles")]
+        public List<HostileDto?>? Hostiles { get; init; }
 
-        [JsonPropertyName("hostile")]
-        public HostileDto? Hostile { get; init; }
+        [JsonPropertyName("encounters")]
+        public List<EncounterDto?>? Encounters { get; init; }
 
-        [JsonPropertyName("encounter")]
-        public EncounterDto? Encounter { get; init; }
+        [JsonPropertyName("barrier")]
+        public BarrierDto? Barrier { get; init; }
+        [JsonPropertyName("burst")] public BurstDto? Burst { get; init; }
+        [JsonPropertyName("taunt")] public TauntDto? Taunt { get; init; }
+
+        [JsonPropertyName("companion_maximum_health")]
+        public int CompanionMaximumHealth { get; init; }
+    }
+
+    private sealed class BarrierDto
+    {
+        [JsonPropertyName("id")] public string? Id { get; init; }
+        [JsonPropertyName("range_meters")] public double RangeMeters { get; init; }
+        [JsonPropertyName("windup_ticks")] public int WindupTicks { get; init; }
+        [JsonPropertyName("recovery_ticks")] public int RecoveryTicks { get; init; }
+        [JsonPropertyName("duration_ticks")] public int DurationTicks { get; init; }
+        [JsonPropertyName("cooldown_ticks")] public int CooldownTicks { get; init; }
+        [JsonPropertyName("width_meters")] public double WidthMeters { get; init; }
+        [JsonPropertyName("height_meters")] public double HeightMeters { get; init; }
+        [JsonPropertyName("center_height_meters")] public double CenterHeightMeters { get; init; }
+    }
+
+    private sealed class BurstDto
+    {
+        [JsonPropertyName("id")] public string? Id { get; init; }
+        [JsonPropertyName("range_meters")] public double RangeMeters { get; init; }
+        [JsonPropertyName("damage_per_shot")] public int DamagePerShot { get; init; }
+        [JsonPropertyName("shot_count")] public int ShotCount { get; init; }
+        [JsonPropertyName("shot_interval_ticks")] public int ShotIntervalTicks { get; init; }
+        [JsonPropertyName("windup_ticks")] public int WindupTicks { get; init; }
+        [JsonPropertyName("recovery_ticks")] public int RecoveryTicks { get; init; }
+        [JsonPropertyName("cooldown_ticks")] public int CooldownTicks { get; init; }
+    }
+
+    private sealed class TauntDto
+    {
+        [JsonPropertyName("id")] public string? Id { get; init; }
+        [JsonPropertyName("radius_meters")] public double RadiusMeters { get; init; }
+        [JsonPropertyName("duration_ticks")] public int DurationTicks { get; init; }
+        [JsonPropertyName("windup_ticks")] public int WindupTicks { get; init; }
+        [JsonPropertyName("recovery_ticks")] public int RecoveryTicks { get; init; }
+        [JsonPropertyName("cooldown_ticks")] public int CooldownTicks { get; init; }
     }
 
     private sealed class AttackDto
     {
+        [JsonPropertyName("projectile_speed_meters_per_second")]
+        public double ProjectileSpeedMetersPerSecond { get; init; }
         [JsonPropertyName("id")]
         public string? Id { get; init; }
 
@@ -976,26 +1092,10 @@ public static class StationRouteContent
         public bool InterruptsWindup { get; init; }
     }
 
-    private sealed class ItemDto
-    {
-        [JsonPropertyName("id")]
-        public string? Id { get; init; }
-
-        [JsonPropertyName("initial_charges")]
-        public int InitialCharges { get; init; }
-
-        [JsonPropertyName("healing")]
-        public int Healing { get; init; }
-
-        [JsonPropertyName("windup_ticks")]
-        public int WindupTicks { get; init; }
-
-        [JsonPropertyName("recovery_ticks")]
-        public int RecoveryTicks { get; init; }
-    }
-
     private sealed class HostileDto
     {
+        [JsonPropertyName("behavior")]
+        public string? Behavior { get; init; }
         [JsonPropertyName("id")]
         public string? Id { get; init; }
 
@@ -1017,8 +1117,11 @@ public static class StationRouteContent
         [JsonPropertyName("id")]
         public string? Id { get; init; }
 
-        [JsonPropertyName("hostile_id")]
-        public string? HostileId { get; init; }
+        [JsonPropertyName("hostile_ids")]
+        public List<string?>? HostileIds { get; init; }
+
+        [JsonPropertyName("requires_companion")]
+        public bool RequiresCompanion { get; init; }
 
         [JsonPropertyName("protagonist_maximum_health")]
         public int ProtagonistMaximumHealth { get; init; }
@@ -1029,7 +1132,5 @@ public static class StationRouteContent
         [JsonPropertyName("securing_ticks")]
         public int SecuringTicks { get; init; }
 
-        [JsonPropertyName("healing_item_id")]
-        public string? HealingItemId { get; init; }
     }
 }

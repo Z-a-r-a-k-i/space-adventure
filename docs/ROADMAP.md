@@ -2,24 +2,26 @@
 
 ## Current state
 
-Phase 4 is active on `station-route-v7` (content schema 4). The playable route
-reaches survivor choice, entry door, Vanguard versus one Security Enforcer,
-victory-gated exit, and Protector recruitment. Recruitment shows **Current
-prototype slice complete**; the scenario remains in progress. Protector
-combat, the sentry encounter, and final airlock completion are unavailable.
+Phase 4 is active on `station-route-v13` (content schema 9). The owner accepted
+the solo fight and requested faster weapon draw. The local preview now joins
+recruitment to Vanguard/Protector versus an Enforcer and stationary sentry,
+with independent orders, two skills per crew member,
+party retry, and a compact tactical HUD. [Product](PRODUCT.md) owns the kits.
+Arena victory ends this slice; final airlock completion remains unavailable.
 
-The solo repair and agent rule/engine/input/motion checks are complete.
-**Next gate: owner hands-on acceptance of the solo fight**, especially weapon
-handling, interrupt readability, camera/input feel, and pause rhythm. Use the
-[manual protocol](testing.md#manual-playtest) and fix named blockers before
-expanding combat. Evidence is summarized in [history](archive/prototype-history.md).
+**Next gate: review and merge the party combat slice.** The owner accepted the
+current preview on 2026-09-08. The fitted Protector and shotgun are included
+under `game/Assets/Published/`; running the game needs no local art staging.
+Rebuild instructions live with the [party presentation tool](../tools/blender/README.md).
+The workstation's display workaround is in [Testing](testing.md); the measured
+frame-pacing result is in [history](archive/prototype-history.md).
 
 ## Remaining milestones
 
 | Phase | Work | Exit |
 | --- | --- | --- |
-| 4 — Party combat | After solo acceptance, finalize Protector's shotgun/Guard Ally timing and presentation, then add the rigid sentry and main two-character encounter using existing command rules. | Active pause materially helps coordinate both characters; victory, defeat, retry, and graphical checks pass. |
-| 5 — Complete station POC | Join both fights, recruitment, dialogue consequence, inspection, healing, opening final airlock, and completion summary into the authored 8–12 minute flow. Add comprehension polish only. | Five consecutive blocker-free manual runs and the relevant automated checks pass. |
+| 4 — Party combat | Review and merge the accepted party/UI slice. | Active pause helps coordinate both characters; victory, defeat, retry, and graphical checks pass; owner accepts the slice. |
+| 5 — Complete station POC | Join both fights, recruitment, dialogue consequence, inspection, opening final airlock, and completion summary into the authored 8–12 minute flow. Add comprehension polish only. | Five consecutive blocker-free manual runs and the relevant automated checks pass. |
 | 6 — Hardening | Reproduce an accepted asset and a small authored encounter from a clean checkout; record useful startup/frame-time/memory/tooling baselines. | Another contributor can author and verify them using the documented workflow. |
 | 7 — Ship experiment | One separately gated escape-cutter battle under the approved [spec](future/ship-combat-poc.md). Prove deterministic greybox before final art. | Rule, CLI, Godot, graphical, and owner-operated checks pass; pause-based crew/power/target decisions are useful. |
 

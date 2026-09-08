@@ -3,7 +3,7 @@ using SpaceAdventure.Core;
 
 namespace SpaceAdventure.Game;
 
-public partial class VanguardPresentation : Node3D
+public partial class ArmedHumanoidPresentation : Node3D
 {
     // Godot's glTF importer sanitizes the canonical dotted action names.
     private static readonly StringName IdleHolstered = "anim_humanoid_idle_holstered";
@@ -41,8 +41,11 @@ public partial class VanguardPresentation : Node3D
     private float _supportGripError;
     private double _lastShotTick = double.NegativeInfinity;
     private int _attempt;
+    private EncounterId? _encounterId;
 
     public bool StrongRecoil { get; set; }
+
+    public double DownDurationSeconds => _animationPlayer.GetAnimation(Down).Length;
 
     public Vector3 MuzzlePosition => _muzzle.GlobalPosition;
 
@@ -52,7 +55,7 @@ public partial class VanguardPresentation : Node3D
     {
         _animationPlayer = FindDescendant<AnimationPlayer>(this)
             ?? throw new InvalidOperationException(
-                "The Vanguard presentation must contain an imported AnimationPlayer.");
+                "The armed presentation must contain an imported AnimationPlayer.");
         _weapon = GetNode<Node3D>("Weapon");
         _weapon.TopLevel = true;
         _skeleton = FindDescendant<Skeleton3D>(this)!;
@@ -91,7 +94,10 @@ public partial class VanguardPresentation : Node3D
         EncounterObservation? encounter,
         PrimaryActionObservation? currentAction,
         double presentationTick = 0,
-        float turnDeltaSeconds = 1.0f / 60.0f)
+        float turnDeltaSeconds = 1.0f / 60.0f,
+        bool defeated = false,
+        long? defeatedAtTick = null,
+        Vector3? bodyFacing = null)
     {
         Visible = active;
         if (!active)
@@ -103,7 +109,6 @@ public partial class VanguardPresentation : Node3D
         _sampleTick = presentationTick;
         var clipSeconds = presentationTick / GameSession.TicksPerSecond;
         long cycle = 0;
-        var seekToEnd = false;
         var weaponInHand = false;
 
         if (encounter is not null)
@@ -129,7 +134,6 @@ public partial class VanguardPresentation : Node3D
                 case EncounterPhase.Defeat:
                     animation = Down;
                     weaponInHand = true;
-                    seekToEnd = paused;
                     break;
                 case EncounterPhase.Victory:
                 case EncounterPhase.Dormant:
@@ -145,31 +149,40 @@ public partial class VanguardPresentation : Node3D
             animation = moving ? WalkHolstered : IdleHolstered;
         }
 
-        if (seekToEnd)
+        if (defeated)
         {
-            clipSeconds = _animationPlayer.GetAnimation(animation).Length;
+            animation = Down;
+            weaponInHand = true;
+            clipSeconds = Math.Clamp((presentationTick - (defeatedAtTick ?? presentationTick))
+                / GameSession.TicksPerSecond, 0, DownDurationSeconds);
+            cycle = defeatedAtTick ?? 0;
         }
         _animationPlayer.SpeedScale = paused ? 0 : 1;
-        var newAttempt = encounter?.Attempt != _attempt;
+        var newAttempt = encounter?.Attempt != _attempt || encounter?.Id != _encounterId;
         if (newAttempt)
         {
             _lastShotTick = double.NegativeInfinity;
             _attempt = encounter?.Attempt ?? 0;
+            _encounterId = encounter?.Id;
         }
         _posePlayer.Sample(animation, clipSeconds, presentationTick / GameSession.TicksPerSecond, cycle,
-            blendSeconds: seekToEnd || newAttempt ? 0 : 0.12);
-        FaceDirection(direction, turnDeltaSeconds);
-        if (currentAction is { Kind: PrimaryActionKind.Attack or PrimaryActionKind.Ability, Phase: PrimaryActionPhase.Recovery })
+            blendSeconds: newAttempt ? 0 : 0.12);
+        if (!defeated)
+        {
+            if (bodyFacing is { } heading) { Rotation = new Vector3(0, Mathf.Atan2(heading.X, heading.Z), 0); }
+            else { FaceDirection(direction, turnDeltaSeconds); }
+        }
+        if (currentAction is { Kind: PrimaryActionKind.Attack, Phase: PrimaryActionPhase.Recovery })
         {
             NotifyShot(currentAction.PhaseStartedTick);
         }
-        if (encounter?.Phase == EncounterPhase.Active)
+        if (!defeated && encounter?.Phase == EncounterPhase.Active)
         {
             ApplyAimAndRecoil(direction, moving);
         }
         foreach (var attachment in _boneAttachments) { attachment.OnSkeletonUpdate(); }
         AttachWeapon(weaponInHand);
-        SynchronizeSupportHand(encounter, presentationTick);
+        SynchronizeSupportHand(defeated ? null : encounter, presentationTick);
     }
 
     private static float TransitionProgress(EncounterObservation encounter, double presentationTick)
@@ -269,7 +282,7 @@ public partial class VanguardPresentation : Node3D
         }
 
         planarDirection = planarDirection.Normalized();
-        // The Mixamo Vanguard faces local +Z after the Blender/glTF conversion.
+        // The accepted Mixamo rigs face local +Z after Blender/glTF conversion.
         var targetYaw = Mathf.Atan2(planarDirection.X, planarDirection.Z);
         Rotation = new Vector3(0.0f, Mathf.LerpAngle(Rotation.Y, targetYaw, 1 - Mathf.Exp(-16 * deltaSeconds)), 0.0f);
     }
@@ -297,6 +310,15 @@ public partial class VanguardPresentation : Node3D
             primary_grip_error_m = _primaryGripError,
             support_grip_error_m = _supportGripError,
             recoil_variant = StrongRecoil ? "strong" : "restrained",
+            death_pose = new
+            {
+                head_height_m = HandWorld(_skeleton.FindBone("mixamorig_Head")).Origin.Y - GlobalPosition.Y,
+                hips_height_m = HandWorld(_skeleton.FindBone("mixamorig_Hips")).Origin.Y - GlobalPosition.Y,
+                lowest_foot_height_m = Math.Min(HandWorld(_skeleton.FindBone("mixamorig_LeftFoot")).Origin.Y,
+                    HandWorld(_skeleton.FindBone("mixamorig_RightFoot")).Origin.Y) - GlobalPosition.Y,
+                highest_foot_height_m = Math.Max(HandWorld(_skeleton.FindBone("mixamorig_LeftFoot")).Origin.Y,
+                    HandWorld(_skeleton.FindBone("mixamorig_RightFoot")).Origin.Y) - GlobalPosition.Y,
+            },
             support_grip_world = VectorValues(_supportGrip.GlobalPosition),
             muzzle_world = VectorValues(MuzzlePosition),
             muzzle_direction = VectorValues(MuzzleDirection),
@@ -320,7 +342,7 @@ public partial class VanguardPresentation : Node3D
                 string.Equals(node.Name, canonicalName, StringComparison.Ordinal)
                 || string.Equals(node.Name, sanitizedName, StringComparison.Ordinal))
             ?? throw new InvalidOperationException(
-                $"The Vanguard GLB is missing required socket '{canonicalName}'.");
+                $"The armed character or weapon GLB is missing required socket '{canonicalName}'.");
     }
 
     private void ValidateAnimation(StringName animationName, bool loop)
@@ -330,7 +352,7 @@ public partial class VanguardPresentation : Node3D
             var available = string.Join(", ", _animationPlayer.GetAnimationList()
                 .Select(name => name.ToString()));
             throw new InvalidOperationException(
-                $"The Vanguard GLB is missing required animation '{animationName}'. "
+                $"The armed character GLB is missing required animation '{animationName}'. "
                 + $"Available animations: {available}.");
         }
 

@@ -2,6 +2,9 @@
 game/.godot/
 game/.godot-codex-user/
 
+# Workstation-specific Godot display settings
+game/override.cfg
+
 # .NET-generated state
 **/bin/
 **/obj/

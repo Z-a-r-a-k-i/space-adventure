@@ -12,6 +12,24 @@ public partial class GameHost
     private long _effectEventTick;
     private readonly Dictionary<EntityId, MotionSample> _motionSamples = [];
     private int _framedEncounterAttempt;
+    private EncounterId? _framedEncounterId;
+    private double _defeatPresentationSeconds;
+
+    private void AdvanceDefeatPresentation(GameObservation observation, double delta)
+    {
+        if (observation.StationRoute?.Encounter?.Phase == EncounterPhase.Defeat)
+        {
+            // Rules remain paused. Only the terminal fall and released effects settle.
+            var duration = Math.Max(_vanguardPresentation.DownDurationSeconds,
+                _protectorPartyPresentation.DownDurationSeconds) + .5;
+            _defeatPresentationSeconds = Math.Min(duration, _defeatPresentationSeconds + Math.Clamp(delta, 0, .25));
+        }
+        else if (_defeatPresentationSeconds > 0)
+        {
+            _defeatPresentationSeconds = 0;
+            _presentationTick = observation.Tick;
+        }
+    }
 
     private void PrepareProjectileResources()
     {
@@ -19,14 +37,14 @@ public partial class GameHost
         // from scene startup instead of constructing materials on the first shot.
         var warmup = new Node3D { Name = "ProjectileResources", Visible = false, ProcessMode = ProcessModeEnum.Disabled };
         AddChild(warmup);
-        foreach (var color in new[] { new Color("57ddff"), new Color("66f5ff") })
+        foreach (var color in new[] { new Color("57ddff"), new Color("66f5ff"), new Color("f2c879"), new Color("ff7659") })
         {
             var projectile = new CarbineProjectile();
             projectile.Configure(Vector3.Zero, Vector3.Forward, color);
             projectile.Sample(0.5f);
             warmup.AddChild(projectile);
         }
-        foreach (var cue in new[] { "carbine", "impact", "aid", "interrupt" }) { _ = CombatAudio.Get(cue); }
+        foreach (var cue in new[] { "carbine", "shotgun", "sentry", "guard", "impact", "interrupt" }) { _ = CombatAudio.Get(cue); }
     }
 
     private Vector3 SamplePosition(EntityId id, WorldPosition position, long tick, int attempt)
@@ -51,9 +69,16 @@ public partial class GameHost
     private void FrameCombatEntry(StationRouteObservation route)
     {
         if (route.Encounter is not { Phase: EncounterPhase.Readying } encounter
-            || encounter.Attempt == _framedEncounterAttempt) { return; }
+            || encounter.Attempt == _framedEncounterAttempt && encounter.Id == _framedEncounterId) { return; }
         _framedEncounterAttempt = encounter.Attempt;
-        var midpoint = ToGodot(route.Protagonist.Position).Lerp(ToGodot(route.Hostiles!.Single().Position), 0.25f);
+        _framedEncounterId = encounter.Id;
+        _motionSamples.Clear();
+        _facingSamples.Clear();
+        var positions = route.Party.Select(actor => ToGodot(actor.Position)).Concat(route.Hostiles!.Select(hostile => ToGodot(hostile.Position))).ToArray();
+        var midpoint = positions.Aggregate(Vector3.Zero, (sum, position) => sum + position) / positions.Length;
+        var viewDirection = _camera.ProjectRayNormal(GetViewport().GetVisibleRect().GetCenter());
+        var towardCamera = new Vector3(-viewDirection.X, 0, -viewDirection.Z).Normalized();
+        midpoint += towardCamera * 1.4f;
         // One explicit frame at entry/retry. Subsequent player camera input is never overridden.
         _camera.FocusOn(midpoint);
     }
@@ -80,6 +105,7 @@ public partial class GameHost
         var next = _reviewSampleTick ?? (_session.IsPaused
             ? _session.Tick
             : Math.Max(0, _session.Tick - 1 + _session.TickFraction));
+        if (_defeatPresentationSeconds > 0) { next = _session.Tick + _defeatPresentationSeconds * GameSession.TicksPerSecond; }
         if (_reviewSampleTick is null) { next = Math.Max(_presentationTick, next); }
         _presentationDeltaSeconds = (float)Math.Clamp((next - _presentationTick) / GameSession.TicksPerSecond, 0, 0.25);
         _presentationTick = next;
@@ -89,14 +115,18 @@ public partial class GameHost
     {
         if (_session is null) { return; }
         var observation = _session.Observe();
+        AdvanceDefeatPresentation(observation, 0);
         UpdatePresentationTime();
         foreach (var item in _session.EventsSince(_presentationEventSequence))
         {
             if (item.Tick > _presentationTick) { break; }
-            if (item.Detail is AttackEventDetail attack && item.Type == GameplayEventType.AttackReleased
-                && attack.SourceId == _definition!.Protagonist.Id || item.Detail is AbilityReleasedEventDetail)
+            if (item.Detail is AttackEventDetail attack && item.Type == GameplayEventType.AttackReleased)
             {
-                _vanguardPresentation.NotifyShot(item.Tick);
+                ArmedPresentation(attack.SourceId)?.NotifyShot(item.Tick);
+            }
+            if (item.Detail is AbilityReleasedEventDetail ability)
+            {
+                ArmedPresentation(ability.SourceId)?.NotifyShot(item.Tick);
             }
         }
         RenderObservation(observation, timeAlreadyUpdated: true);
@@ -138,6 +168,10 @@ public partial class GameHost
         protagonist_position = new[] { _protagonistView.GlobalPosition.X, _protagonistView.GlobalPosition.Y, _protagonistView.GlobalPosition.Z },
         enforcer_position = new[] { _securityEnforcerView.GlobalPosition.X, _securityEnforcerView.GlobalPosition.Y, _securityEnforcerView.GlobalPosition.Z },
         vanguard = _vanguardPresentation.GetDiagnostics(),
+        protector = _protectorPartyPresentation.GetDiagnostics(),
+        sentry = _enemyViews.Values.FirstOrDefault(view => view.Sentry is not null)?.Sentry?.GetDiagnostics(),
+        selected_actor_ids = _selectedActorIds.Select(id => id.Value),
+        focused_actor_id = _focusedActorId?.Value,
         enforcer = _securityEnforcerPresentation.GetDiagnostics(),
         lintels = _camera.ObserveLintels(),
         projectiles = _combatPresentationEffects.Select(effect => effect.Node)

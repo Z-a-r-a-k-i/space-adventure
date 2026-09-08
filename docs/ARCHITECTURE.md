@@ -45,12 +45,35 @@ the current action. Stop follows those same waiting rules and clears explicit
 attack intent. There is no arbitrary action queue.
 
 Basic attacks remember an explicitly assigned target. Same-target orders
-preserve the cycle; abilities and Field Aid preserve the target for automatic
-resumption. Movement, interaction, Stop, target defeat, encounter completion,
+preserve the cycle; abilities preserve the target for automatic
+resumption. Movement, interaction, facing, Stop, target defeat, encounter completion,
 and retry clear that intent. A running move can cancel an unreleased attack;
 released offense owns an independent recovery deadline that replacements
-cannot erase. New offense waits for recovery, while healing may begin during
-it. See [GameSession.Orders.cs](../src/SpaceAdventure.Core/GameSession.Orders.cs).
+cannot erase. New offense waits for recovery; Barrier and Taunt may begin
+during it. See [GameSession.Orders.cs](../src/SpaceAdventure.Core/GameSession.Orders.cs).
+
+Idle crew wait for an explicit attack order, including after their target falls.
+Facing orders turn selected actors in place at a bounded fixed-tick rate and
+hold that heading; move, interaction, or offensive orders release it.
+Defensive abilities preserve it. Godot interpolates observed body facing;
+upper-body aim follows the assigned target.
+
+Selection and ability focus belong to the Godot adapter. Drag selection collects
+living crew; Tab cycles ability focus without changing a selected group. Group
+orders and individual abilities still use the same validated core commands.
+Party members own independent health, skill cooldowns, and orders.
+Barrier validates a ground position and facing, then keeps that world pose
+independently of Protector's movement, heading, or defeat. Expiry and encounter
+completion remove it. Sentry projectiles have
+fixed-tick flight and a release-fixed destination; the core checks their
+segments against the shield's fixed silhouette before applying arrival damage. Crew
+bolts remain presentation only. Taunt temporarily overrides nearby enemies'
+target choice, preserving released projectiles and recovery. Stationary sentry
+range/sector limits still apply. Burst releases separately timed shots and
+revalidates the target for each; cancellation retains spent cooldown/recovery.
+Hostiles retain targets through wind-up; sentry releases also check its firing
+sector. All hostiles down means victory; all crew down means defeat. Retry
+restores both sides and clears barriers and projectiles.
 
 ## Content and spatial boundary
 

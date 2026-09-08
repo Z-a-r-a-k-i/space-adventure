@@ -1,8 +1,9 @@
 # SpaceAdventure
 
 A single-player science-fiction party RPG built with Godot 4.7.1 .NET and C#.
-The current prototype is a station route with a solo tactical-pause fight and
-Protector recruitment. See the [roadmap](docs/ROADMAP.md) for the next gate.
+The current local prototype joins a solo tactical-pause fight, Protector
+recruitment, and a two-character arena. See the [roadmap](docs/ROADMAP.md) for
+the current milestone and next gate.
 
 ## Run
 
@@ -27,20 +28,29 @@ console executable; an editor plugin is optional. `help` lists all commands.
 | Input | Action |
 | --- | --- |
 | Right-click floor / target | Move / interact / repeat basic attacks |
+| Left-click crew / portrait | Select a character |
+| Left-drag around crew | Select a group; Shift-drag adds crew |
+| Tab / Shift + Tab | Cycle ability focus forward/backward within the group; with one selected, cycle living crew |
+| Shift + left-click crew / portrait | Add or remove a character from the selection |
 | Space | Tactical pause; newest pending order replaces the previous one |
-| 1, then left-click | Suppressive Fire; Escape cancels targeting |
-| 2 | Use the single Field Aid charge |
-| X or Stop | Cancel orders and attack intent; follows pause/readying rules |
+| 1, then left-click | Vanguard: aim Interrupt on the floor. Protector: place Barrier on the floor, then click again to face incoming fire. Escape/right-click cancels |
+| 2 | Vanguard: click an enemy for Burst. Protector: Taunt nearby enemies |
+| X or Stop | Cancel orders; follows pause/readying rules |
+| T, then left-click; Alt + right-click | Turn selected crew in place |
 | Dialogue 1/2, Enter, or buttons | Choose a response; Enter chooses the first |
 | Defeat Enter/keypad Enter or Retry | Restart the fight, preserving route progress |
-| WASD/arrows | Camera-relative pan |
+| Mouse at window edge; WASD/arrows | Camera-relative pan; edge scrolling stops over HUD, during selection drags, or outside the active game window |
 | Q/E or middle drag | Yaw; vertical middle drag changes pitch |
 | Page Up/Down; wheel | Pitch; zoom |
-| Home/R; F | Reset orientation; focus Vanguard |
+| Home/R; F | Reset orientation; focus selected crew |
 
 Stop is unavailable during dialogue, defeat, and victory securing. Combat
-pauses when readying starts; resume to play the draw. Basic fire resumes after
-an ability or healing; movement, interaction, and Stop clear the target.
+pauses when readying starts; resume to play the draw. Crew only attack assigned
+targets. Basic fire resumes after an ability; movement, interaction, facing,
+and Stop clear the target. Manual facing holds the heading; move or attack
+orders release it. Move, face, attack, and Stop apply to the selected living
+crew. Abilities belong to the focused portrait. The arena ends when every enemy or every crew
+member is down; retry restores the encounter while preserving route progress.
 
 ## Work on the prototype
 

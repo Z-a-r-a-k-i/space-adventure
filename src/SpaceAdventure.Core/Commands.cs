@@ -68,6 +68,21 @@ public sealed record InteractCommand(
     EntityId ActorId,
     EntityId TargetId) : IGameCommand;
 
+public sealed record FaceActorsCommand : IGameCommand
+{
+    public FaceActorsCommand(CommandId commandId, IEnumerable<EntityId> actorIds, WorldPosition facing)
+    {
+        ArgumentNullException.ThrowIfNull(actorIds);
+        CommandId = commandId;
+        ActorIds = actorIds.ToArray();
+        Facing = facing;
+    }
+
+    public CommandId CommandId { get; }
+    public IReadOnlyList<EntityId> ActorIds { get; }
+    public WorldPosition Facing { get; }
+}
+
 public sealed record ChooseDialogueResponseCommand(
     CommandId CommandId,
     EntityId ActorId,
@@ -82,8 +97,10 @@ public sealed record PositionAbilityTarget(WorldPosition Position)
 public sealed record EntityAbilityTarget(EntityId EntityId)
     : AbilityTarget(AbilityTargetKind.Entity);
 
-public sealed record AllyAbilityTarget(EntityId ActorId)
-    : AbilityTarget(AbilityTargetKind.Ally);
+public sealed record SelfAbilityTarget() : AbilityTarget(AbilityTargetKind.Self);
+
+public sealed record BarrierAbilityTarget(WorldPosition Position, WorldPosition Facing)
+    : AbilityTarget(AbilityTargetKind.Barrier);
 
 public sealed record AssignBasicAttackTargetCommand(
     CommandId CommandId,
@@ -95,12 +112,6 @@ public sealed record UseAbilityCommand(
     EntityId ActorId,
     AbilityId AbilityId,
     AbilityTarget Target) : IGameCommand;
-
-public sealed record UseItemCommand(
-    CommandId CommandId,
-    EntityId ActorId,
-    ItemId ItemId,
-    EntityId TargetActorId) : IGameCommand;
 
 public sealed record RestartEncounterCommand(
     CommandId CommandId,
@@ -118,6 +129,7 @@ public enum CommandRejectionCode
     EmptyPartySelection,
     DuplicateActor,
     InvalidDestination,
+    InvalidFacing,
     DestinationUnreachable,
     UnknownInteraction,
     InteractionUnavailable,
@@ -136,10 +148,7 @@ public enum CommandRejectionCode
     AbilityTargetKindMismatch,
     AbilityTargetOutOfRange,
     AbilityOnCooldown,
-    UnknownItem,
-    ItemUnavailable,
-    InvalidItemTarget,
-    NoHealingRequired,
+    InvalidAbilityTarget,
 }
 
 public sealed record CommandAcknowledgement(

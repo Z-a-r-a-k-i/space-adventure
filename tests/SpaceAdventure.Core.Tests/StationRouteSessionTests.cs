@@ -18,12 +18,12 @@ public sealed class StationRouteSessionTests
     private static readonly DialogueResponseId ServicePowerResponseId = new("response.reroute_service_power");
 
     [Fact]
-    public void SchemaFourContentParsesWithCombatAndStableIdentities()
+    public void SchemaFiveContentParsesWithCombatAndStableIdentities()
     {
         var definition = LoadDefinition();
 
-        Assert.Equal(4, definition.SchemaVersion);
-        Assert.Equal("station-route-v7", definition.ContentRevision);
+        Assert.Equal(9, definition.SchemaVersion);
+        Assert.Equal("station-route-v13", definition.ContentRevision);
         Assert.Equal(new ScenarioId("scenario.station_route"), definition.ScenarioId);
         Assert.Equal(ProtagonistId, definition.Protagonist.Id);
         Assert.Equal(ProtectorActorId, definition.Companion.Id);
@@ -33,18 +33,18 @@ public sealed class StationRouteSessionTests
         Assert.Equal(new ObjectiveId("objective.defeat_security_enforcer"), definition.CombatObjective.Id);
         Assert.Equal(new ObjectiveId("objective.open_solo_exit_service_door"), definition.SoloExitDoorObjective.Id);
         Assert.Equal(new AttackId("attack.crew.protector.shotgun"), definition.Companion.Loadout!.BasicAttackId);
-        Assert.Equal(new AbilityId("ability.crew.protector.guard_ally"), definition.Companion.Loadout.ActiveAbilityId);
-        Assert.Equal(AbilityTargetKind.Ally, definition.Companion.Loadout.ActiveAbilityTargetKind);
-        Assert.Equal(2, definition.Combat.Attacks.Count);
-        Assert.Equal(new EncounterId("encounter.station.solo_tutorial"), definition.Combat.Encounter.Id);
-        Assert.Equal(new EntityId("actor.enemy.security_enforcer.solo"), definition.Combat.Hostile.Id);
-        Assert.Equal(100, definition.Combat.Hostile.MaximumHealth);
+        Assert.Equal(new AbilityId("ability.crew.protector.barrier"), definition.Companion.Loadout.ActiveAbilityId);
+        Assert.Equal(AbilityTargetKind.Barrier, definition.Companion.Loadout.ActiveAbilityTargetKind);
+        Assert.Equal(4, definition.Combat.Attacks.Count);
+        Assert.Equal(new EncounterId("encounter.station.solo_tutorial"), definition.Combat.SoloEncounter.Id);
+        Assert.Equal(new EntityId("actor.enemy.security_enforcer.solo"), definition.Combat.SoloHostile.Id);
+        Assert.Equal(75, definition.Combat.SoloHostile.MaximumHealth);
         Assert.True(definition.Combat.ProtagonistAbility.InterruptsWindup);
 
         var vanguard = Assert.Single(definition.ProtagonistKits);
         Assert.Equal(VanguardKitId, vanguard.Id);
         Assert.Equal(new AttackId("attack.crew.vanguard.carbine"), vanguard.BasicAttackId);
-        Assert.Equal(new AbilityId("ability.crew.vanguard.suppressive_fire"), vanguard.ActiveAbilityId);
+        Assert.Equal(new AbilityId("ability.crew.vanguard.interrupt"), vanguard.ActiveAbilityId);
         Assert.Equal(6, definition.Interactions.Count);
         Assert.Single(definition.Interactions, interaction =>
             interaction.Effect == StationInteractionEffect.OpenEntryServiceDoor);
@@ -61,12 +61,12 @@ public sealed class StationRouteSessionTests
     {
         var json = LoadContentJson();
         var unsupported = json.Replace(
-            "\"schema_version\": 4",
+            "\"schema_version\": 9",
             "\"schema_version\": 99",
             StringComparison.Ordinal);
         var unmapped = json.Replace(
-            "\"schema_version\": 4,",
-            "\"schema_version\": 4, \"unexpected\": true,",
+            "\"schema_version\": 9,",
+            "\"schema_version\": 9, \"unexpected\": true,",
             StringComparison.Ordinal);
 
         Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(unsupported));
@@ -75,7 +75,7 @@ public sealed class StationRouteSessionTests
 
     [Theory]
     [InlineData("attack.crew.protector.shotgun", "attack.crew.vanguard.carbine")]
-    [InlineData("ability.crew.protector.guard_ally", "ability.crew.vanguard.suppressive_fire")]
+    [InlineData("ability.crew.protector.barrier", "ability.crew.vanguard.interrupt")]
     public void ContentParserRejectsCompanionLoadoutIdentifiersUsedByAProtagonistKit(
         string companionIdentifier,
         string protagonistIdentifier)

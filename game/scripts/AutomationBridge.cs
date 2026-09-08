@@ -85,7 +85,7 @@ public partial class AutomationBridge : Node
             var root = document.RootElement;
 
             if (!root.TryGetProperty("schema_version", out var schemaVersion)
-                || schemaVersion.GetInt32() != 3)
+                || schemaVersion.GetInt32() != 8)
             {
                 return Error("unsupported_schema_version");
             }
@@ -122,6 +122,11 @@ public partial class AutomationBridge : Node
                     payload.GetProperty("actor_ids").EnumerateArray()
                         .Select(actorId => new EntityId(actorId.GetString()
                             ?? throw new JsonException("'actor_ids' cannot contain null.")))),
+                "face_actors" => new FaceActorsCommand(commandId,
+                    payload.GetProperty("actor_ids").EnumerateArray()
+                        .Select(actorId => new EntityId(actorId.GetString()
+                            ?? throw new JsonException("'actor_ids' cannot contain null."))),
+                    ReadPosition(payload.GetProperty("facing"))),
                 "interact" => new InteractCommand(
                     commandId,
                     new EntityId(RequiredString(payload, "actor_id")),
@@ -139,12 +144,7 @@ public partial class AutomationBridge : Node
                     commandId,
                     new EntityId(RequiredString(payload, "actor_id")),
                     new AbilityId(RequiredString(payload, "ability_id")),
-                    new PositionAbilityTarget(ReadPosition(payload.GetProperty("target_position")))),
-                "use_item" => new UseItemCommand(
-                    commandId,
-                    new EntityId(RequiredString(payload, "actor_id")),
-                    new ItemId(RequiredString(payload, "item_id")),
-                    new EntityId(RequiredString(payload, "target_actor_id"))),
+                    ReadAbilityTarget(payload)),
                 "restart_encounter" => new RestartEncounterCommand(
                     commandId,
                     new EncounterId(RequiredString(payload, "encounter_id"))),
@@ -363,6 +363,25 @@ public partial class AutomationBridge : Node
         GetTree().Quit(exitCode);
     }
 
+    private static AbilityTarget ReadAbilityTarget(JsonElement payload)
+    {
+        var hasPosition = payload.TryGetProperty("target_position", out var position);
+        var hasActor = payload.TryGetProperty("target_actor_id", out var actor);
+        var hasFacing = payload.TryGetProperty("target_facing", out var facing);
+        var hasSelf = payload.TryGetProperty("target_self", out var self);
+        if (hasFacing)
+        {
+            if (!hasPosition || hasActor || hasSelf) { throw new JsonException("Barrier requires a ground position and facing."); }
+            return new BarrierAbilityTarget(ReadPosition(position), ReadPosition(facing));
+        }
+        if ((hasActor ? 1 : 0) + (hasPosition ? 1 : 0) + (hasSelf ? 1 : 0) != 1)
+        { throw new JsonException("Use one target: position, hostile actor, or self."); }
+        if (hasActor) { return new EntityAbilityTarget(new EntityId(actor.GetString()!)); }
+        if (hasSelf)
+        { if (!self.GetBoolean()) { throw new JsonException("target_self must be true."); } return new SelfAbilityTarget(); }
+        return new PositionAbilityTarget(ReadPosition(position));
+    }
+
     private static WorldPosition ReadPosition(JsonElement element)
     {
         var y = element.TryGetProperty("y", out var yElement) ? yElement.GetDouble() : 0.0;
@@ -463,6 +482,9 @@ public partial class AutomationBridge : Node
                 ActiveAbilityId = kit.ActiveAbilityId.Value,
                 kit.ActiveAbilityName,
                 ActiveAbilityTargetKind = ToExternalName(kit.ActiveAbilityTargetKind),
+                    SecondaryAbilityId = kit.SecondaryAbilityId.Value,
+                    kit.SecondaryAbilityName,
+                    SecondaryAbilityTargetKind = ToExternalName(kit.SecondaryAbilityTargetKind),
             }),
             SelectedProtagonistKitId = route.SelectedProtagonistKit?.Id.Value,
             RoutePowerMode = ToExternalName(route.RoutePowerMode),
@@ -509,7 +531,19 @@ public partial class AutomationBridge : Node
                     route.Encounter.TransitionTicksRemaining,
                     route.Encounter.TransitionTicksTotal,
                     route.Encounter.PhaseStartedTick,
-                    HostileId = route.Encounter.HostileId.Value,
+                    HostileIds = route.Encounter.HostileIds.Select(id => id.Value),
+                    Barrier = route.Encounter.Barrier is { } barrier ? new
+                    {
+                        SourceId = barrier.SourceId.Value, Position = ProjectPosition(barrier.Position), Facing = ProjectPosition(barrier.Facing),
+                        barrier.RemainingTicks, barrier.TotalTicks, barrier.WidthMeters, barrier.HeightMeters, barrier.DeployedAtTick,
+                    } : null,
+                    Projectiles = route.Encounter.Projectiles?.Select(projectile => new
+                    {
+                        projectile.Id, SourceId = projectile.SourceId.Value, TargetId = projectile.TargetId.Value,
+                        AttackId = projectile.AttackId.Value, Origin = ProjectPosition(projectile.Origin),
+                        Destination = ProjectPosition(projectile.Destination), Position = ProjectPosition(projectile.Position),
+                        projectile.ReleasedAtTick, projectile.FlightTicks,
+                    }),
                 },
         };
     }
@@ -529,8 +563,12 @@ public partial class AutomationBridge : Node
                     ActiveAbilityId = actor.Loadout.ActiveAbilityId.Value,
                     actor.Loadout.ActiveAbilityName,
                     ActiveAbilityTargetKind = ToExternalName(actor.Loadout.ActiveAbilityTargetKind),
+                    SecondaryAbilityId = actor.Loadout.SecondaryAbilityId.Value,
+                    actor.Loadout.SecondaryAbilityName,
+                    SecondaryAbilityTargetKind = ToExternalName(actor.Loadout.SecondaryAbilityTargetKind),
                 },
             Position = ProjectPosition(actor.Position),
+            Facing = ProjectPosition(actor.Facing), actor.FacingHeld,
             CurrentAction = ProjectAction(actor.CurrentAction),
             PendingAction = ProjectAction(actor.PendingAction),
             Combat = ProjectCombatant(actor.Combat),
@@ -560,18 +598,14 @@ public partial class AutomationBridge : Node
                 combat.MaximumHealth,
                 combat.IsDefeated,
                 RememberedAttackTargetId = combat.RememberedAttackTargetId?.Value,
-                combat.OffensiveRecoveryUntilTick,
+                combat.OffensiveRecoveryUntilTick, combat.DefeatedAtTick,
+                TauntedBy = combat.TauntedBy?.Value, combat.TauntRemainingTicks,
                 BasicAttackId = combat.BasicAttackId.Value,
                 Cooldowns = combat.Cooldowns.Select(cooldown => new
                 {
                     AbilityId = cooldown.AbilityId.Value,
                     cooldown.RemainingTicks,
                     cooldown.TotalTicks,
-                }),
-                Items = combat.Items.Select(item => new
-                {
-                    ItemId = item.ItemId.Value,
-                    item.Charges,
                 }),
             };
     }
@@ -588,9 +622,10 @@ public partial class AutomationBridge : Node
                 action.HasRemainingMovement,
                 InteractionTargetId = action.InteractionTargetId?.Value,
                 CombatTargetId = action.CombatTargetId?.Value,
+                AbilityFacing = action.AbilityFacing is { } facing ? ProjectPosition(facing) : null,
+                Facing = action.Facing is { } heading ? ProjectPosition(heading) : null,
                 AttackId = action.AttackId?.Value,
                 AbilityId = action.AbilityId?.Value,
-                ItemId = action.ItemId?.Value,
                 Phase = ToExternalName(action.Phase),
                 action.PhaseTicksRemaining,
                 action.PhaseTicksTotal,
@@ -621,6 +656,19 @@ public partial class AutomationBridge : Node
     {
         return detail switch
         {
+            TauntEventDetail value => new { SourceId = value.SourceId.Value, TargetId = value.TargetId.Value, value.DurationTicks },
+            BarrierEventDetail value => new
+            {
+                SourceId = value.SourceId.Value, AbilityId = value.AbilityId.Value,
+                Position = ProjectPosition(value.Position), Facing = ProjectPosition(value.Facing),
+                EndReason = value.EndReason is { } reason ? ToExternalName(reason) : null,
+            },
+            ProjectileEventDetail value => new
+            {
+                value.Id, SourceId = value.SourceId.Value, TargetId = value.TargetId.Value, AttackId = value.AttackId.Value,
+                Origin = ProjectPosition(value.Origin), Destination = ProjectPosition(value.Destination), value.FlightTicks,
+                ImpactPosition = value.ImpactPosition is { } impact ? ProjectPosition(impact) : null, value.Blocked,
+            },
             ProtagonistKitSelectedEventDetail value => new
             {
                 CommandId = value.CommandId.Value,
@@ -717,14 +765,6 @@ public partial class AutomationBridge : Node
                 value.RemainingHealth,
                 AttackId = value.AttackId?.Value,
                 AbilityId = value.AbilityId?.Value,
-            },
-            HealingAppliedEventDetail value => new
-            {
-                SourceId = value.SourceId.Value,
-                TargetId = value.TargetId.Value,
-                ItemId = value.ItemId.Value,
-                value.Amount,
-                value.RemainingHealth,
             },
             ActionInterruptedEventDetail value => new
             {

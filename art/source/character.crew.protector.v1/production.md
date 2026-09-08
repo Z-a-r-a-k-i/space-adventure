@@ -36,9 +36,25 @@ action aliases plus both weapon sockets.
 
 The hand socket is parented to `mixamorig:RightHand`; the upper-back holster is
 parented to `mixamorig:Spine2`. Both use local `-Z` forward and `+Y` up by the
-socket contract, but exact shotgun clearance and fit remain explicitly pending.
+socket contract.
 
-Godot uses the same strict `HumanoidPresentation` component for the waiting and
-future party instances. Only one is visible at a time, tactical pause freezes
-both, locomotion faces authoritative movement direction, and the content speed
-is 2.0 m/s to match the accepted Standard Walk cadence.
+The waiting instance retains `HumanoidPresentation`. The local party preview
+uses `ArmedHumanoidPresentation`; only one instance is visible at a time.
+
+## Party handling — 2026-09-07
+
+`tools/blender/build_party_presentation.py` preserves this rig, skin, and
+holstered locomotion, borrows the accepted Vanguard armed wrist orientation,
+and fits Protector's own arms to the cleaned shotgun. It authors armed
+idle/walk, draw/holster, attack reference, down, and fitted sockets. Runtime
+aim, recoil, and support-hand IK use the shared component. The modified source
+was reviewed in the party preview and published as
+`game/Assets/Published/character.crew.protector.v1.glb` after the owner's
+2026-09-08 acceptance. Future builder output stays in ignored staging until reviewed.
+
+The 2026-09-08 death repair replaces the authored kneel with the retained
+[Vanguard Rifle Death donor](../character.crew.vanguard.v1/production.md#death-repair--2026-09-08).
+`repair_crew_death.py` transfers its pelvis rotation onto Protector's accepted
+rig, settles the torso and boots, and grounds the evaluated mesh throughout the fall.
+The party builder invokes that repair; the source and published GLB use the same
+fresh-import check.
