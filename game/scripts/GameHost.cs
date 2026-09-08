@@ -362,6 +362,7 @@ public partial class GameHost : Node3D
         GD.Print($"SPACEADVENTURE_NAV_READY iteration={NavigationServer3D.MapGetIterationId(navigationMap)} regions={NavigationServer3D.MapGetRegions(navigationMap).Count} vertices={navigationRegion.NavigationMesh?.GetVertices().Length ?? 0} polygons={navigationRegion.NavigationMesh?.GetPolygonCount() ?? 0}");
         var contentJson = Godot.FileAccess.GetFileAsString("res://content/station-route.json");
         _definition = StationRouteContent.ParseJson(contentJson);
+        ValidateCombatViews(_definition);
         CreateBarrierViews();
         _interactionDefinitions.Clear();
         _interactionDefinitionsByEffect.Clear();
@@ -1488,10 +1489,7 @@ public partial class GameHost : Node3D
             && hostileCollider.HasMeta("stable_id"))
         {
             var targetId = new EntityId(hostileCollider.GetMeta("stable_id").AsString());
-            foreach (var actor in SelectedLivingActors(route))
-            {
-                Dispatch(new AssignBasicAttackTargetCommand(NextHumanCommandId("attack"), actor.Id, targetId));
-            }
+            AttackWithSelectedCrew(targetId);
             return;
         }
 
@@ -1517,11 +1515,11 @@ public partial class GameHost : Node3D
         }
 
         var hitPosition = floorHit["position"].AsVector3();
+        if (selectedActors.Length == 0)
+        { SetFeedback("Select a living crew member first.", TacticalUi.Danger); return; }
         Dispatch(new MovePartyCommand(
             NextHumanCommandId("move-party"),
-            selectedActors.Length == 0
-                ? [route.Protagonist.Id]
-                : selectedActors.Select(actor => actor.Id),
+            selectedActors.Select(actor => actor.Id),
             ToCore(WithGroundHeight(hitPosition))));
     }
 
@@ -1612,7 +1610,7 @@ public partial class GameHost : Node3D
                 : null;
     }
 
-    private static string DescribeAction(StationRouteObservation route, PrimaryActionObservation action)
+    private string DescribeAction(StationRouteObservation route, PrimaryActionObservation action)
     {
         if (action.InteractionTargetId is EntityId targetId)
         {

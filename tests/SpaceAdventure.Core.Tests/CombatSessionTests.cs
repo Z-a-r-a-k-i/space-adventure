@@ -9,7 +9,7 @@ public sealed partial class CombatSessionTests
     private static readonly EntityId EnforcerId = new("actor.enemy.security_enforcer.solo");
     private static readonly EntityId SoloExitDoorId = new("interaction.service_door.solo_exit");
     private static readonly EntityId ProtectorInteractionId = new("interaction.protector");
-    private static readonly AbilityId SuppressiveFireId = new("ability.crew.vanguard.interrupt");
+    private static readonly AbilityId InterruptId = new("ability.crew.vanguard.interrupt");
 
     [Fact]
     public void EncounterAutoPausesOnceAndPromotesThePendingAttackAfterReadying()
@@ -58,7 +58,7 @@ public sealed partial class CombatSessionTests
         Assert.True(session.Execute(new UseAbilityCommand(
             new CommandId("combat.suppress"),
             ProtagonistId,
-            SuppressiveFireId,
+            InterruptId,
             new PositionAbilityTarget(hostilePosition))).Accepted);
         Assert.True(session.Execute(new SetPauseCommand(
             new CommandId("combat.resume.suppress"),
@@ -69,7 +69,7 @@ public sealed partial class CombatSessionTests
             gameEvent.Type == GameplayEventType.ActionInterrupted);
         var wounded = Observe(session).Hostiles![0].Combat;
         Assert.Equal(wounded.MaximumHealth - 5, wounded.Health);
-        Assert.Equal(240, Observe(session).Protagonist.Combat!.Cooldowns.Single(value => value.AbilityId == SuppressiveFireId).RemainingTicks);
+        Assert.Equal(240, Observe(session).Protagonist.Combat!.Cooldowns.Single(value => value.AbilityId == InterruptId).RemainingTicks);
 
         Assert.True(session.Execute(new AssignBasicAttackTargetCommand(
             new CommandId("combat.attack.finish"),

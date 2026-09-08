@@ -41,7 +41,7 @@ public partial class GameHost
             _reviewDrivesClock = true; _reviewSampleTick = _session.Tick;
         }
         await ReviewUntil(_ => ShotCount() == combat.Burst.ShotCount, 30);
-        InputCheck("Burst emits distinct releases and leaves Interrupt ready", ShotCount() == 3
+        InputCheck("Burst emits distinct releases and leaves Interrupt ready", ShotCount() == combat.Burst.ShotCount
             && ReviewState().Protagonist.Combat!.Cooldowns.Single(cd => cd.AbilityId == combat.ProtagonistAbility.Id).RemainingTicks == 0
             && ReviewState().Protagonist.Combat!.Cooldowns.Single(cd => cd.AbilityId == combat.Burst.Id).RemainingTicks > 0);
         InputCheck("all skill tiles fit the viewport", new[] { _abilityButton, _secondaryAbilityButton, _stopButton }

@@ -169,7 +169,11 @@ public partial class ArmedHumanoidPresentation : Node3D
             blendSeconds: newAttempt ? 0 : 0.12);
         if (!defeated)
         {
-            if (bodyFacing is { } heading) { Rotation = new Vector3(0, Mathf.Atan2(heading.X, heading.Z), 0); }
+            if (bodyFacing is { } heading)
+            {
+                if (heading.IsFinite() && new Vector2(heading.X, heading.Z).LengthSquared() > .000001f)
+                { Rotation = new Vector3(0, Mathf.Atan2(heading.X, heading.Z), 0); }
+            }
             else { FaceDirection(direction, turnDeltaSeconds); }
         }
         if (currentAction is { Kind: PrimaryActionKind.Attack, Phase: PrimaryActionPhase.Recovery })

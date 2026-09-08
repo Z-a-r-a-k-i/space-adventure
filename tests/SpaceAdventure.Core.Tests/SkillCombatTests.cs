@@ -30,7 +30,7 @@ public sealed partial class CombatSessionTests
         var shots = session.EventsSince(0).Where(e => e.Detail is AbilityReleasedEventDetail a && a.AbilityId == BurstId).ToArray();
         Assert.Equal(new[] { first.Tick, first.Tick + 5, first.Tick + 10 }, shots.Select(e => e.Tick));
         Assert.Equal(target.Combat.MaximumHealth - 54, Observe(session).Hostiles!.Single(enemy => enemy.Id == SentryId).Combat.Health);
-        Assert.Equal(0, Observe(session).Protagonist.Combat!.Cooldowns.Single(cd => cd.AbilityId == SuppressiveFireId).RemainingTicks);
+        Assert.Equal(0, Observe(session).Protagonist.Combat!.Cooldowns.Single(cd => cd.AbilityId == InterruptId).RemainingTicks);
         Assert.Equal(290, Observe(session).Protagonist.Combat!.Cooldowns.Single(cd => cd.AbilityId == BurstId).RemainingTicks);
     }
 
@@ -106,14 +106,18 @@ public sealed partial class CombatSessionTests
     }
 
     [Fact]
-    public void TauntAndForearmBarrierCanBeCombinedToBlockSentryFire()
+    public void TauntAndBarrierBlockSentryFireWhileMeleeStillDamagesProtector()
     {
         var session = CreateAtPartyEncounter(); Assert.True(Barrier(session).Accepted); ResumeIntoActiveCombat(session); session.AdvanceTicks(6);
         Assert.True(Taunt(session).Accepted); session.AdvanceTicks(6);
         var before = Observe(session).Party[1].Combat!.Health;
+        var after = session.Observe().LatestEventSequence;
         AdvanceUntil(session, _ => session.EventsSince(0).Any(e => e.Type == GameplayEventType.ProjectileBlocked), 90);
+        AdvanceUntil(session, _ => session.EventsSince(after).Any(e => e.Detail is DamageAppliedEventDetail damage
+            && damage.SourceId == MainEnforcerId && damage.TargetId == ProtectorId), 90);
+        Assert.NotNull(Observe(session).Encounter!.Barrier);
         Assert.DoesNotContain(session.EventsSince(0), e => e.Detail is DamageAppliedEventDetail d && d.SourceId == SentryId);
-        Assert.True(Observe(session).Party[1].Combat!.Health <= before); // Melee remains dangerous through the shield.
+        Assert.True(Observe(session).Party[1].Combat!.Health < before);
     }
 
     [Fact]

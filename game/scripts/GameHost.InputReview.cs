@@ -139,7 +139,7 @@ public partial class GameHost
             InputCheck("retry button fits viewport", GetViewport().GetVisibleRect().Encloses(button));
             await InputClick(button.GetCenter(), MouseButton.Left);
             InputCheck("retry button creates a new attempt", ReviewState().Encounter!.Attempt == 2
-                && ReviewState().Protagonist.Combat!.Health == 100);
+                && ReviewState().Protagonist.Combat!.Health == ReviewState().Protagonist.Combat!.MaximumHealth);
             await ReviewTicks(_definition!.Combat.SoloEncounter.ReadyingTicks);
             await ReviewCapture("retry");
             FinishSoloReview();
@@ -187,6 +187,18 @@ public partial class GameHost
         var sequence = _session.Observe().LatestEventSequence;
         await InputClick(_abilityButton.GetGlobalRect().GetCenter(), MouseButton.Left);
         InputCheck("ability button enters targeting", _abilityTargeting);
+        var beforeRejection = ReviewState().Protagonist.PendingAction;
+        var abilityFocus = _camera.FocusPoint;
+        var distantFloor = ToGodot(ReviewState().Protagonist.Position)
+            + Vector3.Right * (float)(_definition!.Combat.ProtagonistAbility.RangeMeters + 1);
+        _camera.FocusOn(distantFloor);
+        await InputFrame();
+        await InputWorldClick(distantFloor, MouseButton.Left);
+        InputCheck("out-of-range Interrupt retains targeting and reports ability range", _abilityTargeting
+            && _feedbackLabel.Text == "Outside ability range." && ReviewState().Protagonist.PendingAction == beforeRejection);
+        await ReviewCapture("ability-range");
+        _camera.FocusPoint = abilityFocus;
+        await InputFrame();
         await InputWorldClick(ToGodot(ReviewState().Hostiles![0].Position), MouseButton.Left);
         InputCheck("left click confirms targeted ability", ReviewState().Protagonist.PendingAction?.Kind == PrimaryActionKind.Ability && !_abilityTargeting);
         await ReviewUntil(_ => _session.EventsSince(sequence).Any(item => item.Type == GameplayEventType.ActionInterrupted), 50);

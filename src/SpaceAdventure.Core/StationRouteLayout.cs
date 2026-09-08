@@ -111,6 +111,7 @@ public sealed class StationRouteLayout
              || partyEncounter.AdditionalHostiles.Any(actor => !actor.Position.IsFinite)
              || partyEncounter.AdditionalHostiles.Select(actor => actor.ActorId).Distinct().Count() != partyEncounter.AdditionalHostiles.Count
              || partyEncounter.SentryForward is not { IsFinite: true } forward
+             || forward.Y != 0
              || Math.Abs(forward.X * forward.X + forward.Z * forward.Z - 1) > 0.001))
         {
             throw new ArgumentOutOfRangeException(nameof(partyEncounter), "Party encounter placements and facing must be finite and valid.");

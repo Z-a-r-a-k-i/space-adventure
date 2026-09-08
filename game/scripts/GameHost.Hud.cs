@@ -211,12 +211,12 @@ public partial class GameHost
     private static string AttackTargetName(StationRouteObservation route, PrimaryActionObservation? action) =>
         action?.CombatTargetId is not null ? route.Hostiles?.FirstOrDefault(hostile => hostile.Id == action.CombatTargetId)?.DisplayName ?? "" : "";
 
-    private static string ShortAction(PrimaryActionObservation? action) => action?.Kind switch
+    private string ShortAction(PrimaryActionObservation? action) => action?.Kind switch
     {
         PrimaryActionKind.Attack => action.Phase == PrimaryActionPhase.Moving ? "Closing range" : action.Phase == PrimaryActionPhase.Windup ? "Firing" : "Recovering",
-        PrimaryActionKind.Ability => action.AbilityFacing is not null ? "Deploying barrier"
-            : action.AbilityId?.Value.EndsWith(".taunt", StringComparison.Ordinal) == true ? "Taunt"
-            : action.AbilityId?.Value.EndsWith(".burst", StringComparison.Ordinal) == true ? "Burst fire" : "Interrupt",
+        PrimaryActionKind.Ability => action.AbilityId == _definition!.Combat.Barrier.Id ? "Deploying barrier"
+            : action.AbilityId == _definition.Combat.Taunt.Id ? "Taunt"
+            : action.AbilityId == _definition.Combat.Burst.Id ? "Burst fire" : "Interrupt",
         PrimaryActionKind.Move => "Moving",
         PrimaryActionKind.Interact => "Interacting", PrimaryActionKind.Stop => "Stop", PrimaryActionKind.Face => "Turning", _ => "Ready",
     };
@@ -298,8 +298,7 @@ public partial class GameHost
                 {
                     if (_abilityTargeting && _targetAbilityKind == AbilityTargetKind.Entity) { ConfirmEnemyAbility(targetId); return; }
                     CancelAbilityTargeting();
-                    foreach (var member in SelectedLivingActors(_session!.Observe().StationRoute!).ToArray())
-                    { Dispatch(new AssignBasicAttackTargetCommand(NextHumanCommandId("attack"), member.Id, targetId)); }
+                    AttackWithSelectedCrew(targetId);
                 });
                 button.CustomMinimumSize = new Vector2(224, 68);
                 button.TooltipText = "Assign this target to the selected crew.";

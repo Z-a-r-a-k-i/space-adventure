@@ -43,7 +43,8 @@ public partial class GameHost
         if (await ReviewCapture("ready")) { return; }
         await ReviewTicks(_definition.Combat.PartyEncounter.ReadyingTicks / 2);
         if (await ReviewCapture("draw")) { return; }
-        await ReviewTicks(_definition.Combat.PartyEncounter.ReadyingTicks / 2);
+        await ReviewTicks(_definition.Combat.PartyEncounter.ReadyingTicks
+            - _definition.Combat.PartyEncounter.ReadyingTicks / 2);
         CheckSentryMountAndCloseTargets();
         if (await ReviewCapture("armed")) { return; }
         if (_reviewMode == "performance") { await RunRealtimePerformanceAsync(); return; }
@@ -55,6 +56,15 @@ public partial class GameHost
             var fallenPresentation = ArmedPresentation(fallen.Id)!;
             if (_reviewMode == "input")
             {
+                await InputClick(_partyButtons[fallen.Id.Value].GetGlobalRect().GetCenter(), MouseButton.Left);
+                var commands = _humanCommandSequence;
+                var hostile = ReviewState().Hostiles!.First(enemy => !enemy.Combat.IsDefeated);
+                await InputWorldClick(ToGodot(hostile.Position) + Vector3.Up);
+                InputCheck("a downed selection explains rejected world attack orders", _humanCommandSequence == commands
+                    && _feedbackLabel.Text == "Select a living crew member first.");
+                await InputClick(_threatRows[hostile.Id].Button.GetGlobalRect().GetCenter(), MouseButton.Left);
+                InputCheck("a downed selection explains rejected threat-card orders", _humanCommandSequence == commands
+                    && _feedbackLabel.Text == "Select a living crew member first.");
                 await InputFrame();
                 var pausedTick = _session.Tick;
                 var pose = JsonSerializer.SerializeToElement(fallenPresentation.GetDiagnostics());

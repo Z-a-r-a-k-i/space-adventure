@@ -127,7 +127,7 @@ public sealed partial class CombatSessionTests
         session.AdvanceTicks(1);
         Assert.All(Observe(session).Hostiles!, hostile => Assert.Equal(PrimaryActionPhase.Windup, hostile.CurrentAction!.Phase));
         Assert.True(session.Execute(new UseAbilityCommand(new CommandId("party.suppress.both"), ProtagonistId,
-            SuppressiveFireId, new PositionAbilityTarget(new WorldPosition(0.4, 0, 5.5)))).Accepted);
+            InterruptId, new PositionAbilityTarget(new WorldPosition(0.4, 0, 5.5)))).Accepted);
         session.AdvanceTicks(6);
         Assert.All(Observe(session).Hostiles!, hostile =>
         {
@@ -246,11 +246,22 @@ public sealed partial class CombatSessionTests
     }
 
     [Fact]
+    public void SentryPlacementRejectsAVerticalComponentInItsFacing()
+    {
+        var placement = CreatePartyPlacement() with { SentryForward = new WorldPosition(0, 1, -1) };
+        Assert.Throws<ArgumentOutOfRangeException>(() => CreateLayout(placement));
+    }
+
+    [Fact]
     public void SentryKeepsItsWindupTargetWhenRelativeDistancesChange()
     {
         var session = CreateAtPartyEncounter();
         ResumeIntoActiveCombat(session);
         session.AdvanceTicks(1);
+        var initial = Observe(session);
+        var initialSentry = initial.Hostiles!.Single(hostile => hostile.Id == SentryId);
+        Assert.True(initial.Protagonist.Position.DistanceTo(initialSentry.Position)
+            > initial.Party[1].Position.DistanceTo(initialSentry.Position));
         Assert.Equal(ProtagonistId, Observe(session).Hostiles!.Single(hostile => hostile.Id == SentryId).CurrentAction!.CombatTargetId);
         Assert.True(session.Execute(new MoveActorCommand(new CommandId("sentry.target.moves"), ProtagonistId,
             new WorldPosition(2.5, 0, 8.8))).Accepted);

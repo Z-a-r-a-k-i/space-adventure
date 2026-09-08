@@ -631,12 +631,18 @@ internal sealed class GameplayEventOutput(JsonLinesOutput output)
             BarrierEventDetail barrier => new
             {
                 detail_type = "barrier", source_id = barrier.SourceId.Value,
-                position = barrier.Position, facing = barrier.Facing, ability_id = barrier.AbilityId.Value, end_reason = barrier.EndReason?.ToString(),
+                position = ObservationProjection.ProjectPosition(barrier.Position),
+                facing = ObservationProjection.ProjectPosition(barrier.Facing),
+                ability_id = barrier.AbilityId.Value, end_reason = barrier.EndReason?.ToString(),
             },
             ProjectileEventDetail projectile => new
             {
                 detail_type = "projectile", projectile.Id, source_id = projectile.SourceId.Value, target_id = projectile.TargetId.Value,
-                attack_id = projectile.AttackId.Value, projectile.Origin, projectile.Destination, projectile.ImpactPosition, projectile.FlightTicks, projectile.Blocked,
+                attack_id = projectile.AttackId.Value,
+                origin = ObservationProjection.ProjectPosition(projectile.Origin),
+                destination = ObservationProjection.ProjectPosition(projectile.Destination),
+                impact_position = projectile.ImpactPosition is { } impact ? ObservationProjection.ProjectPosition(impact) : null,
+                projectile.FlightTicks, projectile.Blocked,
             },
             ProtagonistKitSelectedEventDetail selected => new
             {
@@ -865,11 +871,17 @@ internal static class ObservationProjection
                     hostile_ids = observation.Encounter.HostileIds.Select(id => id.Value),
                     barrier = observation.Encounter.Barrier is { } barrier ? new
                     {
-                        source_id = barrier.SourceId.Value, position = barrier.Position, facing = barrier.Facing,
+                        source_id = barrier.SourceId.Value, position = ProjectPosition(barrier.Position), facing = ProjectPosition(barrier.Facing),
                         remaining_ticks = barrier.RemainingTicks, total_ticks = barrier.TotalTicks,
                         width_meters = barrier.WidthMeters, height_meters = barrier.HeightMeters, deployed_at_tick = barrier.DeployedAtTick,
                     } : null,
-                    projectiles = observation.Encounter.Projectiles,
+                    projectiles = observation.Encounter.Projectiles?.Select(projectile => new
+                    {
+                        projectile.Id, source_id = projectile.SourceId.Value, target_id = projectile.TargetId.Value,
+                        attack_id = projectile.AttackId.Value,
+                        origin = ProjectPosition(projectile.Origin), destination = ProjectPosition(projectile.Destination),
+                        position = ProjectPosition(projectile.Position), projectile.ReleasedAtTick, projectile.FlightTicks,
+                    }).ToArray(),
                 },
         };
     }

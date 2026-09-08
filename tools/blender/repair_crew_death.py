@@ -120,13 +120,13 @@ def repair_death(rig, duration=2.1):
         frames.append({bone.name:bone.matrix_basis.copy() for bone in rig.pose.bones})
     for obj in imported: bpy.data.objects.remove(obj, do_unlink=True)
     if action.users == 0: bpy.data.actions.remove(action)
-    write_action(rig, 'anim.humanoid.down', frames, {
+    baked = write_action(rig, 'anim.humanoid.down', frames, {
         'source_provider':'Mixamo', 'source_clip':'Rifle Death',
         'retarget_method':'local deltas with explicit root rotation and evaluated mesh ground contact',
         'duration_seconds':duration, 'loop_candidate':False,
     })
     minimum = float('inf')
-    for frame in range(count + 1):
+    for frame in range(math.floor(baked.frame_range[0]), math.ceil(baked.frame_range[1]) + 1):
         bpy.context.scene.frame_set(frame); bpy.context.view_layer.update()
         minimum = min(minimum, mesh_minimum(meshes))
     hips = (rig.matrix_world @ rig.pose.bones[root_name].matrix).translation

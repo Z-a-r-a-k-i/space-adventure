@@ -134,9 +134,15 @@ public partial class GameHost
         else { target = new PositionAbilityTarget(ToCore(point)); }
         var acknowledgement = _session.Execute(new UseAbilityCommand(NextHumanCommandId("skill"), actor.Id, _targetAbilityId, target));
         if (!acknowledgement.Accepted)
-        { ShowBarrierRejection(acknowledgement.RejectionCode!.Value); return; }
+        {
+            var rejection = acknowledgement.RejectionCode!.Value;
+            if (_targetAbilityKind == AbilityTargetKind.Barrier) { ShowBarrierRejection(rejection); }
+            else { SetFeedback(rejection == CommandRejectionCode.AbilityTargetOutOfRange
+                ? "Outside ability range." : "Ability is not ready.", TacticalUi.Danger); }
+            return;
+        }
         CancelAbilityTargeting(); SynchronizePresentation();
-        SetFeedback(_session.IsPaused ? "Ability queued · deploys on resume." : "Ability activated.", TacticalUi.Cyan);
+        SetFeedback(_session.IsPaused ? "Ability queued · activates on resume." : "Ability activated.", TacticalUi.Cyan);
     }
 
     private void UpdateAbilityTargetPreview(GameObservation observation)

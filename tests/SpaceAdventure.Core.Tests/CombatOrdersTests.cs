@@ -87,11 +87,11 @@ public sealed partial class CombatSessionTests
         var first = Assert.Single(ShotTicks(session));
         Suppress(session);
         Assert.Equal(PrimaryActionKind.Ability, Observe(session).Protagonist.PendingAction!.Kind);
-        Assert.Equal(0, Observe(session).Protagonist.Combat!.Cooldowns.Single(value => value.AbilityId == SuppressiveFireId).RemainingTicks);
+        Assert.Equal(0, Observe(session).Protagonist.Combat!.Cooldowns.Single(value => value.AbilityId == InterruptId).RemainingTicks);
         session.AdvanceTicks(26);
         Assert.DoesNotContain(session.EventsSince(0), item => item.Type == GameplayEventType.AbilityReleased);
         session.AdvanceTicks(1);
-        Assert.Equal(240, Observe(session).Protagonist.Combat!.Cooldowns.Single(value => value.AbilityId == SuppressiveFireId).RemainingTicks);
+        Assert.Equal(240, Observe(session).Protagonist.Combat!.Cooldowns.Single(value => value.AbilityId == InterruptId).RemainingTicks);
         Assert.Equal(EnforcerId, Observe(session).Protagonist.Combat!.RememberedAttackTargetId);
         session.AdvanceTicks(33);
         Assert.Equal(new[] { first, first + 60 }, ShotTicks(session));
@@ -127,7 +127,7 @@ public sealed partial class CombatSessionTests
         session.AdvanceTicks(5);
         CancelAttack(session, stop: true);
         session.AdvanceTicks(30);
-        Assert.Equal(0, Observe(session).Protagonist.Combat!.Cooldowns.Single(value => value.AbilityId == SuppressiveFireId).RemainingTicks);
+        Assert.Equal(0, Observe(session).Protagonist.Combat!.Cooldowns.Single(value => value.AbilityId == InterruptId).RemainingTicks);
         Assert.DoesNotContain(session.EventsSince(0), item => item.Type == GameplayEventType.AbilityReleased);
     }
 
@@ -142,13 +142,13 @@ public sealed partial class CombatSessionTests
             new WorldPosition(origin.X, origin.Y, origin.Z + 5))).Accepted);
         Pause(session, true);
         Assert.True(session.Execute(new UseAbilityCommand(new CommandId("edge-of-range"), ProtagonistId,
-            SuppressiveFireId, new PositionAbilityTarget(new WorldPosition(origin.X, origin.Y, origin.Z - 9)))).Accepted);
+            InterruptId, new PositionAbilityTarget(new WorldPosition(origin.X, origin.Y, origin.Z - 9)))).Accepted);
         Pause(session, false);
         session.AdvanceTicks(21);
         var actor = Observe(session).Protagonist;
         Assert.Null(actor.PendingAction);
         Assert.Equal(PrimaryActionKind.Move, actor.CurrentAction!.Kind);
-        Assert.Equal(0, actor.Combat!.Cooldowns.Single(value => value.AbilityId == SuppressiveFireId).RemainingTicks);
+        Assert.Equal(0, actor.Combat!.Cooldowns.Single(value => value.AbilityId == InterruptId).RemainingTicks);
         Assert.Contains(session.EventsSince(0), item => item.Type == GameplayEventType.PrimaryActionFailed
             && item.RejectionCode == CommandRejectionCode.AbilityTargetOutOfRange);
     }
@@ -228,7 +228,7 @@ public sealed partial class CombatSessionTests
 
     private static void Suppress(GameSession session) =>
         Assert.True(session.Execute(new UseAbilityCommand(new CommandId("orders.suppress"), ProtagonistId,
-            SuppressiveFireId, new PositionAbilityTarget(Observe(session).Hostiles![0].Position))).Accepted);
+            InterruptId, new PositionAbilityTarget(Observe(session).Hostiles![0].Position))).Accepted);
 
     private static void Pause(GameSession session, bool value) =>
         Assert.True(session.Execute(new SetPauseCommand(new CommandId("orders.pause"), value)).Accepted);

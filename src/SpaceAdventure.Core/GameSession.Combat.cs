@@ -468,6 +468,8 @@ public sealed partial class GameSession
         if (action.Phase == PrimaryActionPhase.Moving)
         {
             var candidates = station.Actors.Values.Where(actor => actor.Health > 0);
+            // Sentries pressure the back line while melee closes on the nearest crew;
+            // Taunt overrides either preference until it expires.
             var target = hostile.TauntedBy is { } taunter ? station.Actors[taunter] : hostile.Behavior == HostileBehavior.Sentry
                 ? candidates.Where(actor => CanSentryHit(hostile, actor.Position, attack.RangeMeters))
                     .OrderByDescending(actor => actor.Position.DistanceTo(hostile.Position)).ThenBy(actor => actor.PartyOrder).FirstOrDefault()

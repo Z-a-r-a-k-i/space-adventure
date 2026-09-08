@@ -1189,13 +1189,16 @@ public sealed partial class GameSession
                 "Station route layout must define the configured solo-combat encounter placement.");
         }
 
+        // HostileIds[0] owns HostileSpawnPosition; the remaining IDs have explicit
+        // AdditionalHostiles placements. The solo and party melee IDs are distinct.
         if (layout.PartyEncounter is { } party &&
             (party.EncounterId != definition.Combat.PartyEncounter.Id
              || party.AdditionalHostiles is null
              || !party.AdditionalHostiles.Select(actor => actor.ActorId).ToHashSet()
                 .SetEquals(definition.Combat.PartyEncounter.HostileIds.Skip(1))))
         {
-            throw new InvalidDataException("Party encounter layout must match its hostile definitions.");
+            throw new InvalidDataException("Party encounter layout must match its encounter ID and hostile order: "
+                + "hostile_ids[0] uses HostileSpawnPosition; remaining IDs must match AdditionalHostiles.");
         }
         foreach (var interaction in definition.Interactions)
         {

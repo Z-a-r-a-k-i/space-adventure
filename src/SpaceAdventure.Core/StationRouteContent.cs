@@ -276,8 +276,8 @@ public static class StationRouteContent
                 new AbilityId(RequireText(value.ActiveAbilityId, "protagonist_kits[].active_ability_id", MaximumIdLength)),
                 RequireText(value.ActiveAbilityName, "protagonist_kits[].active_ability_name", MaximumTextLength),
                 ParseAbilityTargetKind(value.ActiveAbilityTargetKind),
-                new AbilityId(RequireText(value.SecondaryAbilityId, "secondary_ability_id", MaximumIdLength)),
-                RequireText(value.SecondaryAbilityName, "secondary_ability_name", MaximumTextLength),
+                new AbilityId(RequireText(value.SecondaryAbilityId, "protagonist_kits[].secondary_ability_id", MaximumIdLength)),
+                RequireText(value.SecondaryAbilityName, "protagonist_kits[].secondary_ability_name", MaximumTextLength),
                 ParseAbilityTargetKind(value.SecondaryAbilityTargetKind));
         }).ToArray();
 
@@ -350,8 +350,8 @@ public static class StationRouteContent
                     $"{field}.loadout.active_ability_name",
                     MaximumTextLength),
                 ParseAbilityTargetKind(actor.Loadout.ActiveAbilityTargetKind),
-                new AbilityId(RequireText(actor.Loadout.SecondaryAbilityId, "secondary_ability_id", MaximumIdLength)),
-                RequireText(actor.Loadout.SecondaryAbilityName, "secondary_ability_name", MaximumTextLength),
+                new AbilityId(RequireText(actor.Loadout.SecondaryAbilityId, $"{field}.loadout.secondary_ability_id", MaximumIdLength)),
+                RequireText(actor.Loadout.SecondaryAbilityName, $"{field}.loadout.secondary_ability_name", MaximumTextLength),
                 ParseAbilityTargetKind(actor.Loadout.SecondaryAbilityTargetKind));
         }
 
@@ -695,22 +695,29 @@ public static class StationRouteContent
         var hostileIds = hostiles.Select(hostile => hostile.Id).ToHashSet();
         var encounterHostiles = encounters.SelectMany(encounter => encounter.HostileIds).ToArray();
         var attackIds = attacks.Select(attack => attack.Id).ToHashSet();
-        if (hostileIds.Count != 3 || hostileIds.Contains(protagonistId) || hostileIds.Contains(companionId)
-            || encounters.Select(encounter => encounter.Id).Distinct().Count() != 2
-            || encounters.Count(encounter => encounter.RequiresCompanion) != 1
-            || encounterHostiles.Distinct().Count() != 3 || !hostileIds.SetEquals(encounterHostiles)
-            || hostiles.Any(hostile => !attackIds.Contains(hostile.BasicAttackId))
-            || !attackIds.Contains(kits.Single().BasicAttackId) || !attackIds.Contains(companionLoadout.BasicAttackId)
-            || kits.Single().ActiveAbilityId != ability.Id || ability.TargetKind != AbilityTargetKind.Position
-            || new[] { barrier.Id, ability.Id, burst.Id, taunt.Id }.Distinct().Count() != 4
-            || kits.Single().ActiveAbilityTargetKind != AbilityTargetKind.Position
-            || kits.Single().SecondaryAbilityId != burst.Id || kits.Single().SecondaryAbilityTargetKind != AbilityTargetKind.Entity
-            || companionLoadout.SecondaryAbilityId != taunt.Id || companionLoadout.SecondaryAbilityTargetKind != AbilityTargetKind.Self
-            || companionLoadout.ActiveAbilityId != barrier.Id
-            || companionLoadout.ActiveAbilityTargetKind != AbilityTargetKind.Barrier)
-        {
-            throw new InvalidDataException("Combat identifiers and loadout references must be unique and complete.");
-        }
+        if (hostileIds.Count != 3 || hostileIds.Contains(protagonistId) || hostileIds.Contains(companionId))
+        { throw new InvalidDataException("combat.hostiles[].id must be unique and distinct from crew IDs."); }
+        if (encounters.Select(encounter => encounter.Id).Distinct().Count() != 2)
+        { throw new InvalidDataException("combat.encounters[].id must be unique."); }
+        if (encounters.Count(encounter => encounter.RequiresCompanion) != 1)
+        { throw new InvalidDataException("combat.encounters requires one solo and one party encounter."); }
+        if (encounterHostiles.Distinct().Count() != 3 || !hostileIds.SetEquals(encounterHostiles))
+        { throw new InvalidDataException("combat.encounters[].hostile_ids must include every hostile exactly once."); }
+        if (hostiles.Any(hostile => !attackIds.Contains(hostile.BasicAttackId)))
+        { throw new InvalidDataException("combat.hostiles[].basic_attack_id must reference a defined attack."); }
+        if (!attackIds.Contains(kits.Single().BasicAttackId) || !attackIds.Contains(companionLoadout.BasicAttackId))
+        { throw new InvalidDataException("Crew loadout basic_attack_id must reference a defined attack."); }
+        if (new[] { barrier.Id, ability.Id, burst.Id, taunt.Id }.Distinct().Count() != 4)
+        { throw new InvalidDataException("Combat ability IDs must be distinct."); }
+        if (kits.Single().ActiveAbilityId != ability.Id || ability.TargetKind != AbilityTargetKind.Position
+            || kits.Single().ActiveAbilityTargetKind != AbilityTargetKind.Position)
+        { throw new InvalidDataException("Protagonist active ability must reference the position-targeted Interrupt."); }
+        if (kits.Single().SecondaryAbilityId != burst.Id || kits.Single().SecondaryAbilityTargetKind != AbilityTargetKind.Entity)
+        { throw new InvalidDataException("Protagonist secondary ability must reference the entity-targeted Burst."); }
+        if (companionLoadout.SecondaryAbilityId != taunt.Id || companionLoadout.SecondaryAbilityTargetKind != AbilityTargetKind.Self)
+        { throw new InvalidDataException("Companion secondary ability must reference the self-targeted Taunt."); }
+        if (companionLoadout.ActiveAbilityId != barrier.Id || companionLoadout.ActiveAbilityTargetKind != AbilityTargetKind.Barrier)
+        { throw new InvalidDataException("Companion active ability must reference the directional Barrier."); }
         var solo = encounters.Single(encounter => !encounter.RequiresCompanion);
         if (hostiles.Any(hostile => (hostile.Behavior == HostileBehavior.Sentry)
             != (attacks.Single(attack => attack.Id == hostile.BasicAttackId).ProjectileSpeedMetersPerSecond > 0)))

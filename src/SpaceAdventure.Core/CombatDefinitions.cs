@@ -73,7 +73,9 @@ public sealed record StationCombatDefinition(
     public HostileDefinition SoloHostile => GetHostile(SoloEncounter.HostileIds.Single());
 
     public int AbilityCooldownTicks(AbilityId id) => id == ProtagonistAbility.Id ? ProtagonistAbility.CooldownTicks
-        : id == Barrier.Id ? Barrier.CooldownTicks : id == Burst.Id ? Burst.CooldownTicks : Taunt.CooldownTicks;
+        : id == Barrier.Id ? Barrier.CooldownTicks : id == Burst.Id ? Burst.CooldownTicks
+        : id == Taunt.Id ? Taunt.CooldownTicks
+        : throw new ArgumentOutOfRangeException(nameof(id), $"Unknown ability '{id.Value}'.");
 
     public AttackDefinition GetAttack(AttackId id) =>
         Attacks.Single(attack => attack.Id == id);

@@ -18,7 +18,7 @@ public sealed class StationRouteSessionTests
     private static readonly DialogueResponseId ServicePowerResponseId = new("response.reroute_service_power");
 
     [Fact]
-    public void SchemaFiveContentParsesWithCombatAndStableIdentities()
+    public void CurrentContentParsesWithCombatAndStableIdentities()
     {
         var definition = LoadDefinition();
 
@@ -71,6 +71,13 @@ public sealed class StationRouteSessionTests
 
         Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(unsupported));
         Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(unmapped));
+    }
+
+    [Fact]
+    public void UnknownAbilityCannotSilentlyUseAnotherSkillsCooldown()
+    {
+        var combat = LoadDefinition().Combat;
+        Assert.Throws<ArgumentOutOfRangeException>(() => combat.AbilityCooldownTicks(new AbilityId("ability.unknown")));
     }
 
     [Theory]

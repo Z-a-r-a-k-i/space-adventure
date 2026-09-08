@@ -11,6 +11,8 @@ public partial class GameHost
 
     private void CachePartyCombatViews()
     {
+        // Every crew/hostile view exists before the session starts. Recruitment and
+        // encounter changes only toggle visibility; ValidateCombatViews checks coverage.
         foreach (var root in GetNode<Node3D>("Hostiles").GetChildren().OfType<Node3D>())
         {
             _enemyViews.Add(new EntityId(GetStableId(root)), new EnemyView(root,
@@ -30,6 +32,29 @@ public partial class GameHost
             actor.AddChild(target);
         }
         _protectorPartyPresentation.StrongRecoil = true;
+    }
+
+    private void ValidateCombatViews(StationRouteDefinition definition)
+    {
+        foreach (var id in new[] { definition.Protagonist.Id, definition.Companion.Id })
+        {
+            if (!_actorViews.ContainsKey(id.Value))
+            { throw new InvalidDataException($"The station scene has no crew view for '{id}'."); }
+        }
+        foreach (var hostile in definition.Combat.Hostiles)
+        {
+            if (!_enemyViews.ContainsKey(hostile.Id))
+            { throw new InvalidDataException($"The station scene has no hostile view for '{hostile.Id}'."); }
+        }
+    }
+
+    private void AttackWithSelectedCrew(EntityId targetId)
+    {
+        var actors = SelectedLivingActors(_session!.Observe().StationRoute!).ToArray();
+        if (actors.Length == 0)
+        { SetFeedback("Select a living crew member first.", TacticalUi.Danger); return; }
+        foreach (var actor in actors)
+        { Dispatch(new AssignBasicAttackTargetCommand(NextHumanCommandId("attack"), actor.Id, targetId)); }
     }
 
     private StationEncounterPlacement CreatePartyPlacement(StationRouteDefinition definition)
