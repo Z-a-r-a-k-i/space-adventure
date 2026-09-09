@@ -31,7 +31,7 @@ param(
     [ValidateRange(0.45, 1.15)]
     [double]$Pitch = 0.90,
 
-    [ValidateRange(-3.141593, 3.141593)]
+    [ValidateRange(-3.14, 3.14)]
     [double]$Yaw = 0.68,
 
     [ValidateSet("1280x720", "1920x1080")]
@@ -800,6 +800,10 @@ Options:
             Write-Output "SHA-256: $actualSha256"
         }
         "review" {
+            if (($PSBoundParameters.ContainsKey('Pitch') -or $PSBoundParameters.ContainsKey('Yaw')) -and
+                $Mode -notin @('capture', 'live')) {
+                throw "-Pitch and -Yaw are supported only with -Mode capture or -Mode live."
+            }
             if ($Mode -eq 'live' -and $Checkpoint -eq 'all') { $Checkpoint = 'armed' }
             if ($Mode -eq 'record') { $Resolution = '1920x1080' }
             if (-not $PSBoundParameters.ContainsKey('TimeoutSeconds')) { $TimeoutSeconds = 180 }

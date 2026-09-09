@@ -358,12 +358,12 @@ public partial class GameHost : Node3D
         _definition = StationRouteContent.ParseJson(contentJson);
         _vanguardPresentation.LocomotionPlaybackRate = (float)_definition.Protagonist.MovementSpeedMetersPerSecond / AnimationPacing.CrewStrideSpeed;
         _protectorPartyPresentation.LocomotionPlaybackRate = (float)_definition.Companion.MovementSpeedMetersPerSecond / AnimationPacing.CrewStrideSpeed;
+        ValidateCombatViews(_definition);
         foreach (var hostile in _definition.Combat.Hostiles)
         {
             if (_enemyViews[hostile.Id].Humanoid is { } humanoid)
                 humanoid.LocomotionPlaybackRate = (float)hostile.MovementSpeedMetersPerSecond / AnimationPacing.EnforcerStrideSpeed;
         }
-        ValidateCombatViews(_definition);
         CreateBarrierViews();
         _interactionDefinitions.Clear();
         _interactionDefinitionsByEffect.Clear();

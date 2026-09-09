@@ -45,7 +45,8 @@ public partial class GameHost
             if (ReviewArgument("review-yaw", "") is { Length: > 0 } yawText)
             {
                 _reviewYaw = float.Parse(yawText, CultureInfo.InvariantCulture);
-                if (!float.IsFinite(_reviewYaw.Value)) { throw new InvalidOperationException("Review yaw must be finite."); }
+                if (!float.IsFinite(_reviewYaw.Value) || _reviewYaw < -3.14f || _reviewYaw > 3.14f)
+                    throw new InvalidOperationException("Review yaw outside supported range.");
             }
             if ((_reviewPitch.HasValue || _reviewYaw.HasValue) && _reviewMode is not ("capture" or "live"))
                 throw new InvalidOperationException("Camera angle overrides are for capture/live review only.");
