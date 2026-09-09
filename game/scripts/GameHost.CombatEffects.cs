@@ -172,7 +172,7 @@ public partial class GameHost
             if (effect.Node is Label3D) { effect.Node.Position = effect.Origin + Vector3.Up * progress * 0.32f; }
             if (effect.Node is AudioStreamPlayer3D audio)
             {
-                var paused = _session!.IsPaused && !_reviewDrivesClock;
+                var paused = _session!.IsPaused && !_reviewDrivesClock && _defeatPresentationSeconds <= 0;
                 audio.StreamPaused = paused;
                 if (age >= 0 && age < effect.DurationSeconds && !paused && !audio.HasMeta("started"))
                 {

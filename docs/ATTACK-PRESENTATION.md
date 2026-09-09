@@ -85,6 +85,8 @@ do not inherit the animation multiplier.
   evaluated mesh contact with the floor. They start at the observed defeat tick. Ordinary pause freezes
   them; after total defeat, a bounded presentation-only clock lets the final
   fall finish while the core stays paused. Retry resets that clock and pose.
+  Hostile humanoids snap to their standing pose during encounter readying so
+  retry cannot retain a frozen blend from a previous fall.
 
 Crew projectile speed/trail/delay details belong in
 [CarbineProjectile.cs](../game/scripts/CarbineProjectile.cs) and
@@ -103,9 +105,10 @@ Carbine, shotgun, sentry, Burst, Interrupt, hit types, shield block, Barrier,
 and Taunt have separate recipes. Release cues start at the muzzle; hit cues
 start at visual contact with the same delay as effects and damage numbers.
 Shield block has its own metallic ring and never produces damage feedback.
-Spatial attenuation and bounded cue levels retain direction without drowning
-out simultaneous actions. A quiet periodic ventilation source locates the
-station's machinery. Tactical pause suspends it and active combat audio.
+Spatial attenuation and bounded cue levels limit simultaneous actions. A
+periodic ventilation source locates the station's machinery. Tactical pause
+suspends it and active combat audio; released hit cues finish with the bounded
+fall animation after total defeat.
 
 For local listening evidence, set `SPACE_ADVENTURE_AUDIO_REVIEW` to an ignored
 directory under `artifacts/` before a normal development launch. Godot writes

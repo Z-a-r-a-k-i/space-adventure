@@ -58,7 +58,7 @@ public partial class GameHost
         _abilityContext.Size = new Vector2(288, 0);
         var size = _abilityContext.GetCombinedMinimumSize().Max(new Vector2(288, 0));
         var viewport = GetViewport().GetVisibleRect().Grow(-12);
-        var pointer = GetViewport().GetMousePosition();
+        var pointer = PointerPosition;
         var origin = atPointer ? pointer : _actionPanel.GetGlobalRect().Position;
         var candidates = atPointer
             ? new[] { new Vector2(30, 32), new Vector2(-size.X - 30, 32), new Vector2(30, -size.Y - 32), new Vector2(-size.X - 30, -size.Y - 32) }

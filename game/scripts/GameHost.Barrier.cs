@@ -143,7 +143,8 @@ public partial class GameHost
         if (actor?.Combat?.IsDefeated != false || route.Encounter?.Phase is not (EncounterPhase.Readying or EncounterPhase.Active))
         { CancelAbilityTargeting(); return; }
         if (route.ActiveDialogue is not null || _controlsOverlay.Visible || _completionOverlay.Visible) { return; }
-        var pointer = GetViewport().GetMousePosition();
+        var pointer = PointerPosition;
+        if (!GetViewport().GetVisibleRect().HasPoint(pointer)) { return; }
         if (FieldHudBounds().Any(rect => rect.HasPoint(pointer))) { return; }
         var name = _targetAbilityKind == AbilityTargetKind.Barrier ? "BARRIER" : _targetAbilityKind == AbilityTargetKind.Entity ? "BURST" : "INTERRUPT";
         var title = $"{CrewNumber(route, actor.Id):00} {actor.DisplayName.ToUpperInvariant()} · {name}";

@@ -147,7 +147,9 @@ public partial class GameHost
             {
                 ArmedPresentation(attack.SourceId)?.NotifyShot(item.Tick);
             }
-            if (item.Detail is AbilityReleasedEventDetail ability)
+            if (item.Detail is AbilityReleasedEventDetail ability
+                && (ability.AbilityId == _definition!.Combat.ProtagonistAbility.Id
+                    || ability.AbilityId == _definition.Combat.Burst.Id))
             {
                 ArmedPresentation(ability.SourceId)?.NotifyShot(item.Tick);
             }

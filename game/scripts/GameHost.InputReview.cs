@@ -10,7 +10,7 @@ public partial class GameHost
 
     private void InputCheck(string name, bool passed)
     {
-        if (!passed) { throw new InvalidOperationException($"Graphical input check failed: {name}. Human commands: {_humanCommandSequence}; feedback: {_feedbackLabel.Text}"); }
+        if (!passed) { throw new InvalidOperationException($"Graphical input check failed: {name}. Human commands: {_humanCommandSequence}; feedback: {_feedbackLabel.Text}; aiming: {_abilityTargeting}; pointer: {GetViewport().GetMousePosition()}; context visible: {_abilityContext?.Visible}; context: {_abilityContextDetail?.Text}"); }
         _inputReviewChecks.Add(name);
     }
 
@@ -182,6 +182,8 @@ public partial class GameHost
         // ParseInputEvent enters at window coordinates; the viewport then applies
         // its stretch transform. Control/world projections above are local.
         var windowPosition = GetViewport().GetFinalTransform() * position;
+        // Move the pointer through the same viewport event path used by hover previews.
+        await InputPointerMotion(position);
         Input.ParseInputEvent(new InputEventMouseButton { Position = windowPosition, GlobalPosition = windowPosition, ButtonIndex = button, Pressed = true, ShiftPressed = Input.IsKeyPressed(Key.Shift), AltPressed = alt });
         Input.ParseInputEvent(new InputEventMouseButton { Position = windowPosition, GlobalPosition = windowPosition, ButtonIndex = button, Pressed = false, ShiftPressed = Input.IsKeyPressed(Key.Shift), AltPressed = alt });
         await InputFrame();
@@ -292,6 +294,7 @@ public partial class GameHost
             await InputClick(button.GetCenter(), MouseButton.Left);
             InputCheck("retry button creates a new attempt", ReviewState().Encounter!.Attempt == 2
                 && ReviewState().Protagonist.Combat!.Health == ReviewState().Protagonist.Combat!.MaximumHealth);
+            CheckRetryHumanoidPose();
             await ReviewTicks(_definition!.Combat.SoloEncounter.ReadyingTicks);
             await ReviewCapture("retry");
             FinishSoloReview();
@@ -315,22 +318,29 @@ public partial class GameHost
         for (var frame = 0; frame < 12; frame++) { await InputFrame(); }
         InputCheck("tactical pause freezes the projectile across rendered frames", _session.IsPaused
             && _session.Tick == projectileTick && projectile.Position.IsEqualApprox(projectilePosition));
+        InputCheck("tactical pause freezes combat audio", _combatPresentationEffects.Select(effect => effect.Node)
+            .OfType<AudioStreamPlayer3D>().All(player => !player.HasMeta("started") || !player.Playing || player.StreamPaused));
         _reviewDrivesClock = true;
         _reviewSampleTick = _session.Tick;
         await ReviewTicks(1);
         InputCheck("projectile advances with the presentation tick", projectile.Progress > 0
             && projectile.Position.DistanceTo(projectilePosition) > 0.01f);
         var delayedImpact = _combatPresentationEffects.Single(effect => effect.BornTick == projectileEffect.BornTick
-            && effect.Node is MeshInstance3D && effect.DelaySeconds > 0);
+            && effect.Node is CombatContactEffect && effect.DelaySeconds > 0);
         var delayedNumber = _combatPresentationEffects.Single(effect => effect.BornTick == projectileEffect.BornTick
             && effect.Node is Label3D);
         InputCheck("impact flash waits for projectile arrival", !delayedImpact.Node.Visible);
         InputCheck("damage number waits with the impact flash", !delayedNumber.Node.Visible
             && delayedNumber.DelaySeconds == delayedImpact.DelaySeconds);
+        var delayedSound = _combatPresentationEffects.Single(effect => effect.BornTick == projectileEffect.BornTick
+            && effect.Node is AudioStreamPlayer3D && effect.DelaySeconds > 0);
+        InputCheck("hit audio waits with the visible contact", delayedSound.DelaySeconds == delayedImpact.DelaySeconds
+            && !delayedSound.Node.HasMeta("started"));
         await ReviewTicks((int)Math.Ceiling(projectile.FlightSeconds * GameSession.TicksPerSecond));
         InputCheck("arrival removes the bolt and reveals the impact", !_combatPresentationEffects.Contains(projectileEffect)
             && delayedImpact.Node.Visible);
         InputCheck("arrival reveals the damage number", delayedNumber.Node.Visible);
+        InputCheck("arrival starts the hit sound", delayedSound.Node.HasMeta("started"));
         // Wait for a strike that can actually be interrupted after our remaining
         // offensive recovery, instead of accepting the final frame of any windup.
         await ReviewUntil(state => state.Hostiles![0].CurrentAction is { Phase: PrimaryActionPhase.Windup } strike

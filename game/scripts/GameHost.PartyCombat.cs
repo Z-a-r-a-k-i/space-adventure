@@ -119,7 +119,8 @@ public partial class GameHost
                     : action?.HasRemainingMovement == true ? HumanoidPresentationAction.Locomotion : HumanoidPresentationAction.Idle;
             view.Humanoid?.Synchronize(true, pose, observation.Paused, direction,
                 presentationTick: _presentationTick, clipSeconds: EnforcerClipSeconds(action),
-                cycle: action?.InstanceId ?? route.Encounter.Attempt, turnDeltaSeconds: _presentationDeltaSeconds);
+                cycle: action?.InstanceId ?? route.Encounter.Attempt, turnDeltaSeconds: _presentationDeltaSeconds,
+                snapToPose: route.Encounter.Phase == EncounterPhase.Readying);
             if (!hostile.Combat.IsDefeated && pose == HumanoidPresentationAction.MeleeStrike)
             { view.Humanoid?.FaceDirection(direction, _presentationDeltaSeconds); }
             view.Sentry?.Synchronize(hostile, targetPosition + Vector3.Up * 1.1f, _presentationTick, _presentationDeltaSeconds);

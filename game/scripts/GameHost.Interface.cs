@@ -374,7 +374,7 @@ public partial class GameHost
             HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         panel.AddChild(_manualScroll);
         var content = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        content.AddThemeConstantOverride("separation", 11);
+        content.AddThemeConstantOverride("separation", 8);
         _manualScroll.AddChild(content);
         content.AddChild(TacticalUi.Eyebrow("FIELD MANUAL  /  CREW COMMAND      ↑ / ↓ SCROLL", "8bddd9"));
         content.AddChild(TacticalUi.Label("Field operations", 26));
@@ -382,7 +382,7 @@ public partial class GameHost
         content.AddChild(TacticalUi.Rule(TacticalUi.Cyan.Darkened(.5f)));
         var grid = new GridContainer { Columns = 2 };
         grid.AddThemeConstantOverride("h_separation", 28);
-        grid.AddThemeConstantOverride("v_separation", 10);
+        grid.AddThemeConstantOverride("v_separation", 8);
         content.AddChild(grid);
         foreach (var (key, meaning) in new[]
         {

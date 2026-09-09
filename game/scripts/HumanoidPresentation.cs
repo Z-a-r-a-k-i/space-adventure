@@ -80,7 +80,8 @@ public partial class HumanoidPresentation : Node3D
         double presentationTick = double.NaN,
         double? clipSeconds = null,
         long cycle = 0,
-        float turnDeltaSeconds = 1.0f / 60.0f)
+        float turnDeltaSeconds = 1.0f / 60.0f,
+        bool snapToPose = false)
     {
         Visible = active;
         if (!active)
@@ -106,7 +107,7 @@ public partial class HumanoidPresentation : Node3D
             sampleSeconds = _animationPlayer.GetAnimation(name).Length;
         }
         _posePlayer.Sample(name, sampleSeconds, presentationTick / 30, cycle,
-            paused && seekToEndWhenPaused ? 0 : BlendSeconds / AnimationPacing.Rate);
+            snapToPose || paused && seekToEndWhenPaused ? 0 : BlendSeconds / AnimationPacing.Rate);
         CurrentAction = action;
 
         if (action != HumanoidPresentationAction.Locomotion)
@@ -133,7 +134,18 @@ public partial class HumanoidPresentation : Node3D
     public double ClipLength(HumanoidPresentationAction action) =>
         _animationPlayer.GetAnimation(new StringName(AnimationNameFor(action))).Length;
 
-    public object GetDiagnostics() => new { clip = _posePlayer.ClipName, clip_seconds = _posePlayer.ClipTime };
+    internal double? HeadHeightMeters
+    {
+        get
+        {
+            var skeleton = FindDescendant<Skeleton3D>(this)!;
+            var head = skeleton.FindBone("mixamorig_Head");
+            return head < 0 ? null : (skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(head)).Origin.Y - GlobalPosition.Y;
+        }
+    }
+
+    public object GetDiagnostics() => new
+    { clip = _posePlayer.ClipName, clip_seconds = _posePlayer.ClipTime, head_height_m = HeadHeightMeters };
 
     public bool HasConfiguredAnimation(HumanoidPresentationAction action)
     {

@@ -314,9 +314,11 @@ public partial class GameHost
         {
             _reviewDrivesClock = false;
             _reviewSampleTick = null;
-            _camera.InputEnabled = true;
+            _camera.InputEnabled = !_dialogueInputActive;
+            if (_dialogueInputActive) { _cameraInputBeforeDialogue = true; }
             _autoQuitSeconds = double.Parse(ReviewArgument("auto-quit-seconds", "0"), CultureInfo.InvariantCulture);
-            SetFeedback($"Review ready: {checkpoint}. Space resumes; X stops the selected actor.", new Color("8fe6ff"));
+            SetFeedback(_dialogueInputActive ? "Choose a response to continue."
+                : $"Review ready: {checkpoint}. Space resumes; X stops the selected actor.", new Color("8fe6ff"));
             WriteReviewManifest();
         }
         else

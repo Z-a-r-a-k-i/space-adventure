@@ -24,6 +24,6 @@ Dimmer framing, sparse utility lamps, and darker distant pipes/seams let the
 background recede. The station scene owns distant depth fog, which hides the
 far clipping edge at low camera pitch.
 
-Rebuild with the command above and `--replace`. Contextual Godot review of this
-composition revision at supported camera limits remains pending. Review evidence
-stays ignored under `artifacts/`.
+Rebuild with the command above and `--replace`. Agent Godot review passed at
+7.5, 14.5, and 20 m, including sampled pitch/yaw limits and 720p/1080p. Review
+evidence stays ignored under `artifacts/`.

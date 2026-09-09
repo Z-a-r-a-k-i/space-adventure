@@ -76,6 +76,9 @@ death playback, shotgun pellets, and HUD bounds. Injected mouse events use the
 viewport's final transform so 1080p exercises the same hit regions as 720p.
 Solo and party input reviews also check that F1 opens a bounded field manual,
 blocks gameplay input, and restores camera input when Escape closes it.
+They check session volume/mute against the audio bus and keyboard focus without
+letting Space close the manual or resume combat. Solo dialogue checks cover
+Tab/arrow response focus, number-key choice, and camera/command isolation.
 Field Ops checks cover dialogue bounds, the open world-input space between
 control groups, pending-order replacement and label bounds, shared target badges,
 and hiding world labels in the manual. The party `field-orders` checkpoint
@@ -84,6 +87,14 @@ Overhead health checks cover current/max health, active-encounter filtering,
 death/retry, mouse passthrough, paused camera tracking, and separation from order labels.
 Inspect live playback or the exact recording for every visual change; stills
 alone can miss accumulated offsets and transition defects.
+
+Use solo `-Checkpoint briefing` and party `-Checkpoint recruitment` for the
+authored dialogue and room landmarks. Ability previews show current affected
+targets; queued actions are revalidated on resume. Inspect their pointer card
+near crowded actors and confirm cooldown/range feedback remains legible.
+
+Use the [audio audition](ATTACK-PRESENTATION.md#audio) alongside ordinary play.
+Signal analysis and successful playback do not establish listening acceptance.
 
 MovieWriter always records 1080p at fixed 60 fps and may encode slower than real
 time. It cannot measure frame pacing. Performance mode instead measures

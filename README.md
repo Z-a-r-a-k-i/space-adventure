@@ -43,6 +43,7 @@ console executable; an editor plugin is optional. `help` lists all commands.
 | Page Up/Down; wheel | Pitch; zoom |
 | Home/R; F | Reset orientation; focus selected crew |
 | F1; Escape | Open the field manual; close it. Opening the manual pauses play; Space resumes after closing |
+| Within field manual: −/+; M | Change session sound volume; mute/unmute. Tab focuses controls; Enter confirms |
 
 Stop is unavailable during dialogue, defeat, and victory securing. Combat
 pauses when readying starts; resume to play the draw. Crew only attack assigned
@@ -52,8 +53,9 @@ Move, attack, and Stop apply to the selected living
 crew. Abilities belong to the focused portrait. The arena ends when every enemy or every crew
 member is down; retry restores the encounter while preserving route progress.
 
-The Field Ops HUD keeps crew selection at the lower left and focused abilities
-at the lower right. During tactical pause, labels beside the crew show their
+The Field Ops HUD links crew and focused abilities with matching numbers,
+portrait, and role accents. Inspect a skill tile or aim it to see targets,
+range, and what happens on resume. During tactical pause, labels beside the crew show their
 next orders; shared destinations use a combined crew-number badge. The crew
 cards retain pending orders when a world label cannot fit or its owner is offscreen.
 Health bars sit above living crew and enemies. Enemy attack countdowns and

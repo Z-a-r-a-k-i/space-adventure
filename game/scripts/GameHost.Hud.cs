@@ -324,7 +324,9 @@ public partial class GameHost
         else if (actor.PendingAction is { } pending) { _combatLabel.Text = $"NEXT · {PendingOrderText(route, pending)}"; }
         if (combat.IsDefeated) { _combatLabel.Text = "Select a living crew member"; }
         _objectiveLabel.Text = encounter.Phase == EncounterPhase.Securing ? "Threats neutralized"
-            : encounter.Id == _definition.Combat.PartyEncounter.Id && encounter.Phase == EncounterPhase.Victory ? "Transit hall secured" : route.Objective.Text;
+            : encounter.Id == _definition.Combat.PartyEncounter.Id && encounter.Phase == EncounterPhase.Victory ? "Transit hall secured"
+            : encounter.Id == _definition.Combat.PartyEncounter.Id && encounter.Phase is EncounterPhase.Readying or EncounterPhase.Active
+                ? "Defeat the station security units." : route.Objective.Text;
         _crewCluster.Visible = route.ActiveDialogue is null;
         _actionPanel.Visible = route.ActiveDialogue is null && encounter.Phase != EncounterPhase.Defeat;
         _pauseButton.Visible = _pauseLabel.Visible = route.ActiveDialogue is null;

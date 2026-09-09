@@ -16,7 +16,7 @@ Status: technically validated and integrated; owner visual approval pending
 | Godot-space bounds | `(-1.50, 0.00, -0.175)` to `(1.50, 2.65, 0.175)` |
 | Fresh Blender GLB reimport | Passed |
 | Godot 4.7.1 import and headless door traversal | Passed |
-| Contextual Godot inspection | Pending for the current material revision |
+| Contextual Godot inspection | Passed agent review of the closed entry door and open recruitment crossing at 14.5 m |
 
 The exact top-level meshes are `Frame`, `Lintel`, `Door_Left`, `Door_Right`,
 `Status_Strip`, and `Control_Panel`. The two door leaves are rigid parts. The
