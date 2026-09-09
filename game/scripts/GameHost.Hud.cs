@@ -17,6 +17,8 @@ public partial class GameHost
     private EntityId? _focusedActorId;
     private EntityId? _abilityOwnerId;
     private Label _abilityOwnerLabel = null!;
+    private TextureRect _abilityOwnerPortrait = null!;
+    private EntityId? _displayedAbilityOwner;
     private Label _sectorLabel = null!;
     private PanelContainer _outcomePanel = null!;
     private Label _outcomeTitle = null!;
@@ -111,8 +113,16 @@ public partial class GameHost
         var actionColumn = new VBoxContainer();
         actionColumn.AddThemeConstantOverride("separation", 7);
         _actionPanel.AddChild(actionColumn);
-        _abilityOwnerLabel = TacticalUi.Eyebrow("VANGUARD / ABILITY FOCUS", "a0efd8");
-        actionColumn.AddChild(_abilityOwnerLabel);
+        var focusHeading = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        focusHeading.AddThemeConstantOverride("separation", 9);
+        _abilityOwnerPortrait = new TextureRect { CustomMinimumSize = new Vector2(28, 32),
+            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered,
+            MouseFilter = Control.MouseFilterEnum.Ignore };
+        focusHeading.AddChild(_abilityOwnerPortrait);
+        _abilityOwnerLabel = TacticalUi.Label("01  VANGUARD / ABILITIES", 12, "a0efd8");
+        _abilityOwnerLabel.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+        focusHeading.AddChild(_abilityOwnerLabel);
+        actionColumn.AddChild(focusHeading);
         var actions = new HBoxContainer();
         actions.AddThemeConstantOverride("separation", 8);
         actionColumn.AddChild(actions);
@@ -121,7 +131,7 @@ public partial class GameHost
         _stopButton = Tile("X", "Stop", "stop", StopSelectedActors);
         _stopButton.TooltipText = "Stop the selected crew. While paused, this replaces their pending orders and takes effect on resume.";
         actions.AddChild(_abilityButton); actions.AddChild(_secondaryAbilityButton); actions.AddChild(_stopButton);
-        _combatLabel = HudLabel("", 11, "afc1c5");
+        _combatLabel = HudLabel("", 12, "afc1c5");
         _combatLabel.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
         _combatLabel.AutowrapMode = TextServer.AutowrapMode.Off;
         actionColumn.AddChild(_combatLabel);
@@ -157,6 +167,7 @@ public partial class GameHost
         _retryButton.Visible = false;
         outcome.AddChild(_retryButton);
         CreateFieldOrderOverlay(canvas);
+        CreateAbilityContext(canvas);
     }
     private ActorObservation FocusedActor(StationRouteObservation route) =>
         route.Party.FirstOrDefault(actor => actor.Id == _focusedActorId)
@@ -192,7 +203,7 @@ public partial class GameHost
             if (current == "Ready") { current = "Awaiting orders"; }
             _partyButtons[actor.Id.Value].Synchronize(actor, _selectedActorIds.Contains(actor.Id), actor.Id == _focusedActorId,
                 current, actor.PendingAction is null ? "" : PendingOrderText(route, actor.PendingAction),
-                AttackTargetName(route, actor.CurrentAction), TacticalUi.Cyan);
+                AttackTargetName(route, actor.CurrentAction), CrewAccent(route, actor), CrewNumber(route, actor.Id));
         }
     }
 
@@ -241,6 +252,12 @@ public partial class GameHost
     private static string AttackTargetName(StationRouteObservation route, PrimaryActionObservation? action) =>
         action?.CombatTargetId is not null ? route.Hostiles?.FirstOrDefault(hostile => hostile.Id == action.CombatTargetId)?.DisplayName ?? "" : "";
 
+    private static int CrewNumber(StationRouteObservation route, EntityId id) =>
+        route.Party.Select((actor, index) => (actor, index)).First(item => item.actor.Id == id).index + 1;
+
+    private static Color CrewAccent(StationRouteObservation route, ActorObservation actor) =>
+        actor.Id == route.Protagonist.Id ? TacticalUi.Cyan : TacticalUi.Protector;
+
     private string ShortAction(PrimaryActionObservation? action) => action?.Kind switch
     {
         PrimaryActionKind.Attack => action.Phase == PrimaryActionPhase.Moving ? "Closing range" : action.Phase == PrimaryActionPhase.Windup ? "Firing" : "Recovering",
@@ -256,8 +273,17 @@ public partial class GameHost
         var combat = actor.Combat!;
         var encounter = route.Encounter!;
         var active = encounter.Phase is EncounterPhase.Active or EncounterPhase.Readying;
-        _abilityOwnerLabel.Text = $"{actor.DisplayName.ToUpperInvariant()} / ABILITY FOCUS";
-        _abilityOwnerLabel.AddThemeColorOverride("font_color", TacticalUi.Cyan);
+        var accent = CrewAccent(route, actor);
+        _abilityOwnerLabel.Text = $"{CrewNumber(route, actor.Id):00}  {actor.DisplayName.ToUpperInvariant()} / ABILITIES";
+        _abilityOwnerLabel.AddThemeColorOverride("font_color", accent);
+        _abilityButton.SetAccent(accent);
+        _secondaryAbilityButton.SetAccent(accent);
+        if (_displayedAbilityOwner != actor.Id)
+        {
+            _abilityOwnerPortrait.Texture = ResourceLoader.Load<Texture2D>($"res://ui/portraits/{(actor.Id == route.Protagonist.Id ? "vanguard" : "protector")}.png");
+            _actionPanel.AddThemeStyleboxOverride("panel", TacticalUi.FieldPanel(accent, bottom: true));
+            _displayedAbilityOwner = actor.Id;
+        }
         _sectorLabel.Text = "FRONTIER STATION  /  " + (encounter.Id == _definition!.Combat.PartyEncounter.Id ? "TRANSIT HALL"
             : route.Party.Count > 1 ? "CREW ACCESS" : encounter.Phase == EncounterPhase.Dormant ? "ARRIVALS" : "SECURITY");
         _outcomePanel.Visible = encounter.Phase == EncounterPhase.Defeat || encounter.Phase == EncounterPhase.Victory
@@ -274,19 +300,13 @@ public partial class GameHost
         var ready = !combat.IsDefeated && active && route.ActiveDialogue is null;
         _abilityButton.Disabled = !ready || cooldown?.RemainingTicks > 0;
         _abilityButton.SetState(barrierAbility ? "Barrier" : "Interrupt", barrierAbility ? "guard" : "suppression",
-            combat.IsDefeated ? "Down" : cooldown?.RemainingTicks > 0 ? $"{cooldown.RemainingTicks / 30.0:0.0}s" : _abilityTargeting && _targetAbilityId == actor.Loadout?.ActiveAbilityId ? barrierAbility ? "Place barrier" : "Aim + confirm" : active ? "Ready" : "In combat",
+            combat.IsDefeated ? "Down" : cooldown?.RemainingTicks > 0 ? $"{cooldown.RemainingTicks / 30.0:0.0}s" : _abilityTargeting && _targetAbilityId == actor.Loadout?.ActiveAbilityId ? barrierAbility ? "Place barrier" : "Aim + confirm" : actor.PendingAction?.AbilityId == actor.Loadout?.ActiveAbilityId ? "Queued" : active ? "Ready" : "In combat",
             cooldown is { TotalTicks: > 0 } ? 1 - (double)cooldown.RemainingTicks / cooldown.TotalTicks : 1);
-        _abilityButton.TooltipText = barrierAbility
-            ? $"Barrier · click to place within {_definition!.Combat.Barrier.RangeMeters:0.#}m. Faces from Protector toward the placement point; uses his current facing at his feet. Stays fixed for {_definition.Combat.Barrier.DurationTicks / 30.0:0.#}s."
-            : "Interrupt · click the floor. Cancels enemy wind-ups inside the circle; deals light damage.";
         _secondaryAbilityButton.Disabled = !ready || secondaryCooldown?.RemainingTicks > 0;
         _secondaryAbilityButton.SetState(barrierAbility ? "Taunt" : "Burst", barrierAbility ? "taunt" : "burst",
             combat.IsDefeated ? "Down" : secondaryCooldown?.RemainingTicks > 0 ? $"{secondaryCooldown.RemainingTicks / 30.0:0.0}s"
-                : _abilityTargeting && _targetAbilityId == actor.Loadout?.SecondaryAbilityId ? "Pick enemy" : active ? "Ready" : "In combat",
+                : _abilityTargeting && _targetAbilityId == actor.Loadout?.SecondaryAbilityId ? "Pick enemy" : actor.PendingAction?.AbilityId == actor.Loadout?.SecondaryAbilityId ? "Queued" : active ? "Ready" : "In combat",
             secondaryCooldown is { TotalTicks: > 0 } ? 1 - (double)secondaryCooldown.RemainingTicks / secondaryCooldown.TotalTicks : 1);
-        _secondaryAbilityButton.TooltipText = barrierAbility
-            ? $"Taunt · nearby enemies focus Protector for {_definition!.Combat.Taunt.DurationTicks / 30.0:0.#}s. Radius {_definition.Combat.Taunt.RadiusMeters:0.#}m. Shots already in flight keep their target."
-            : $"Burst · choose an enemy within {_definition!.Combat.Burst.RangeMeters:0.#}m. Fires {_definition.Combat.Burst.ShotCount} rapid shots for {_definition.Combat.Burst.DamagePerShot} damage each.";
         _stopButton.Disabled = selectedLiving.Length == 0 || encounter.Phase is EncounterPhase.Defeat or EncounterPhase.Securing || route.ActiveDialogue is not null;
         _abilityButton.Visible = _secondaryAbilityButton.Visible = _stopButton.Visible = encounter.Phase != EncounterPhase.Defeat;
         _stopButton.SetState("Stop", "stop", selectedLiving.Length > 1 ? "Both crew" : selectedLiving.FirstOrDefault()?.DisplayName ?? "No crew", 1);
@@ -301,6 +321,7 @@ public partial class GameHost
         _combatLabel.Text = target is null ? "Awaiting target order" : $"Target · {target.DisplayName.Replace("Security ", "", StringComparison.Ordinal)}";
         if (barrierAbility && encounter.Barrier is { } barrier) { _combatLabel.Text = $"Barrier deployed · {barrier.RemainingTicks / 30.0:0.0}s"; }
         if (_abilityTargeting) { _combatLabel.Text = _targetAbilityKind == AbilityTargetKind.Entity ? "Choose an enemy · Esc cancels" : "Choose a ground position · Esc cancels"; }
+        else if (actor.PendingAction is { } pending) { _combatLabel.Text = $"NEXT · {PendingOrderText(route, pending)}"; }
         if (combat.IsDefeated) { _combatLabel.Text = "Select a living crew member"; }
         _objectiveLabel.Text = encounter.Phase == EncounterPhase.Securing ? "Threats neutralized"
             : encounter.Id == _definition.Combat.PartyEncounter.Id && encounter.Phase == EncounterPhase.Victory ? "Transit hall secured" : route.Objective.Text;

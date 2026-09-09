@@ -10,6 +10,7 @@ public partial class ActionTile : Button
     private TextureRect _icon = null!;
     private string? _iconPath;
     private bool? _targeting;
+    private Color _accent = TacticalUi.Cyan;
 
     public void Build(string key, string caption, string icon)
     {
@@ -30,7 +31,7 @@ public partial class ActionTile : Button
         _caption.SetAnchorsAndOffsetsPreset(LayoutPreset.TopWide);
         _caption.OffsetTop = 41;
         AddChild(_caption);
-        _state = TacticalUi.Label("Ready", 11, "8fa7b6");
+        _state = TacticalUi.Label("Ready", 12, "afc1c5");
         _state.HorizontalAlignment = HorizontalAlignment.Center;
         _state.SetAnchorsAndOffsetsPreset(LayoutPreset.TopWide);
         _state.OffsetTop = 60;
@@ -46,7 +47,7 @@ public partial class ActionTile : Button
     {
         _caption.Text = caption;
         _state.Text = state;
-        _state.AddThemeColorOverride("font_color", readiness < 1 ? TacticalUi.Amber : TacticalUi.Muted);
+        _state.AddThemeColorOverride("font_color", readiness < 1 || state == "Queued" ? TacticalUi.Amber : TacticalUi.Muted);
         _caption.Modulate = Disabled ? new Color("96a5ad") : Colors.White;
         _meter.Value = readiness * 100;
         var targeting = state is "Place barrier" or "Aim + confirm" or "Pick enemy";
@@ -60,6 +61,12 @@ public partial class ActionTile : Button
             _icon.Texture = ResourceLoader.Load<Texture2D>($"res://ui/icons/{icon}.svg");
             _iconPath = icon;
         }
-        _icon.Modulate = Disabled ? TacticalUi.Muted : TacticalUi.Cyan;
+        _icon.Modulate = Disabled ? TacticalUi.Muted : _accent;
+    }
+
+    public void SetAccent(Color accent)
+    {
+        _accent = accent;
+        ((StyleBoxFlat)_meter.GetThemeStylebox("fill")).BgColor = accent;
     }
 }

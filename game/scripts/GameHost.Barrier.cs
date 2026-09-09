@@ -51,6 +51,7 @@ public partial class GameHost
     {
         _abilityTargeting = false; _abilityTargetPreview.Visible = false;
         if (_barrierPreview is not null) { _barrierPreview.Visible = false; }
+        HideAbilityContext();
     }
 
     private void BeginAbilityTargeting(int slot = 0)
@@ -135,35 +136,69 @@ public partial class GameHost
     private void UpdateAbilityTargetPreview(GameObservation observation)
     {
         _abilityTargetPreview.Visible = false; _barrierPreview.Visible = false;
-        if (!_abilityTargeting || observation.StationRoute is not { } route) { return; }
+        HideAbilityContext();
+        if (observation.StationRoute is not { } route) { return; }
+        if (!_abilityTargeting) { ShowInspectedAbility(observation, route); return; }
         var actor = route.Party.FirstOrDefault(candidate => candidate.Id == _abilityOwnerId);
         if (actor?.Combat?.IsDefeated != false || route.Encounter?.Phase is not (EncounterPhase.Readying or EncounterPhase.Active))
         { CancelAbilityTargeting(); return; }
-        if (!TryPickFloor(GetViewport().GetMousePosition(), out var point)) { return; }
+        if (route.ActiveDialogue is not null || _controlsOverlay.Visible || _completionOverlay.Visible) { return; }
+        var pointer = GetViewport().GetMousePosition();
+        if (FieldHudBounds().Any(rect => rect.HasPoint(pointer))) { return; }
+        var name = _targetAbilityKind == AbilityTargetKind.Barrier ? "BARRIER" : _targetAbilityKind == AbilityTargetKind.Entity ? "BURST" : "INTERRUPT";
+        var title = $"{CrewNumber(route, actor.Id):00} {actor.DisplayName.ToUpperInvariant()} · {name}";
+        var timing = AbilityResumeText(observation, route, actor, _targetAbilityKind == AbilityTargetKind.Barrier);
+        if (_targetAbilityKind == AbilityTargetKind.Entity)
+        {
+            var hostile = route.Hostiles?.FirstOrDefault(enemy => enemy.Id == PickSkillEnemy(pointer) && !enemy.Combat.IsDefeated);
+            if (hostile is null)
+            { ShowAbilityContext(title, "Choose a living enemy.", "Left-click enemy · Esc / RMB cancels", TacticalUi.Amber, atPointer: true); return; }
+            var range = _definition!.Combat.Burst.RangeMeters;
+            var distance = hostile.Position.DistanceTo(actor.Position);
+            var valid = distance <= range;
+            ShowAbilityContext(title, valid
+                ? $"{hostile.DisplayName}: {_definition.Combat.Burst.ShotCount} shots × {_definition.Combat.Burst.DamagePerShot} damage."
+                : $"OUT OF RANGE · {distance:0.0}m / {range:0.#}m", valid ? timing : "Choose a closer enemy · Esc cancels",
+                valid ? CrewAccent(route, actor) : TacticalUi.Danger, atPointer: true);
+            if (valid) { ShowAffectedTargets(route, [hostile.Id]); }
+            return;
+        }
+        if (!TryPickFloor(pointer, out var point))
+        { ShowAbilityContext(title, "NO FLOOR · aim on the station walkway.", "Esc / RMB cancels", TacticalUi.Danger, atPointer: true); return; }
         if (_targetAbilityKind == AbilityTargetKind.Barrier)
         {
             var target = BarrierTargetAt(actor, point);
             var rejection = _session!.CheckBarrierPlacement(actor.Id, target);
             ShowGroundShield(_barrierPreview, point, ToGodot(target.Facing), 0, preview: true, valid: rejection is null);
+            ShowAbilityContext(title, rejection is { } reason ? BarrierRejectionText(reason)
+                : $"VALID · {_definition!.Combat.Barrier.WidthMeters:0.#}m shield, {_definition.Combat.Barrier.DurationTicks / 30.0:0.#}s. Protects the marked rear side.",
+                rejection is null ? timing + " One click fixes position and facing." : "Choose clear floor · Esc cancels",
+                rejection is null ? CrewAccent(route, actor) : TacticalUi.Danger, atPointer: true);
             return;
         }
-        _abilityTargetPreview.Scale = Vector3.One;
-        if (_targetAbilityKind == AbilityTargetKind.Entity)
-        {
-            var hostile = route.Hostiles?.FirstOrDefault(enemy => enemy.Id == PickSkillEnemy(GetViewport().GetMousePosition()));
-            if (hostile is null || hostile.Position.DistanceTo(actor.Position) > _definition!.Combat.Burst.RangeMeters) { return; }
-            point = ToGodot(hostile.Position); _abilityTargetPreview.Scale = new Vector3(.3f, 1, .3f);
-        }
+        var ability = _definition!.Combat.ProtagonistAbility;
+        var inRange = ToCore(point).DistanceTo(actor.Position) <= ability.RangeMeters;
+        var affected = route.Hostiles!.Where(enemy => !enemy.Combat.IsDefeated && enemy.Position.DistanceTo(ToCore(point)) <= ability.RadiusMeters).ToArray();
+        var windups = affected.Count(enemy => enemy.CurrentAction?.Phase == PrimaryActionPhase.Windup);
+        ShowAbilityContext(title, !inRange ? $"OUT OF RANGE · aim within {ability.RangeMeters:0.#}m."
+            : affected.Length == 0 ? $"EMPTY AREA · no enemies in {ability.RadiusMeters:0.#}m radius."
+            : $"{affected.Length} {(affected.Length == 1 ? "enemy" : "enemies")} · {ability.Damage} damage each. {windups} active wind-up{(windups == 1 ? "" : "s")} interrupted.",
+            inRange ? timing + " Targets are checked at release." : "Choose a closer position · Esc cancels",
+            !inRange ? TacticalUi.Danger : affected.Length == 0 ? TacticalUi.Amber : CrewAccent(route, actor), atPointer: true);
+        _abilityTargetPreview.Scale = new Vector3((float)ability.RadiusMeters / 2, 1, (float)ability.RadiusMeters / 2);
         _abilityTargetPreview.GlobalPosition = point + Vector3.Up * .035f;
-        _abilityTargetPreview.Visible = ToCore(point).DistanceTo(actor.Position) <= _definition!.Combat.ProtagonistAbility.RangeMeters;
+        _abilityTargetPreview.Visible = inRange;
+        if (inRange) { ShowAffectedTargets(route, affected.Select(enemy => enemy.Id)); }
     }
 
-    private void ShowBarrierRejection(CommandRejectionCode rejection) => SetFeedback(rejection switch
+    private static string BarrierRejectionText(CommandRejectionCode rejection) => rejection switch
     {
-        CommandRejectionCode.AbilityTargetOutOfRange => "Outside deployment range.",
-        CommandRejectionCode.InvalidAbilityTarget => "Place the whole barrier on clear floor.",
-        _ => "Ability is not ready.",
-    }, TacticalUi.Danger);
+        CommandRejectionCode.AbilityTargetOutOfRange => "OUT OF RANGE · choose a closer position.",
+        CommandRejectionCode.InvalidAbilityTarget => "BLOCKED · place the whole barrier on clear floor.",
+        _ => "UNAVAILABLE · ability is not ready.",
+    };
+
+    private void ShowBarrierRejection(CommandRejectionCode rejection) => SetFeedback(BarrierRejectionText(rejection), TacticalUi.Danger);
 
     private void PresentIncomingProjectile(ProjectileEventDetail projectile, long tick, GameplayEventType type)
     {

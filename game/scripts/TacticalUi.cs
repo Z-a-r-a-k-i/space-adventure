@@ -10,6 +10,7 @@ internal static class TacticalUi
     public static readonly Color Amber = new("e5bc7d");
     public static readonly Color Muted = new("afc1c5");
     public static readonly Color Danger = new("ee907d");
+    public static readonly Color Protector = new("e5bc7d");
 
     public static StyleBoxFlat Box(string background = "09131d", string border = "344651", int margin = 12) => new()
     {
@@ -54,7 +55,7 @@ internal static class TacticalUi
         {
             _tooltipTheme = new Theme();
             _tooltipTheme.SetStylebox("panel", "TooltipPanel", Box("132430", "486474", 8));
-            _tooltipTheme.SetFontSize("font_size", "TooltipLabel", 12);
+            _tooltipTheme.SetFontSize("font_size", "TooltipLabel", 14);
             _tooltipTheme.SetColor("font_color", "TooltipLabel", new Color("e1e8eb"));
         }
         button.Theme = _tooltipTheme;
