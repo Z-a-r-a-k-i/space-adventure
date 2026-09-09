@@ -18,7 +18,7 @@ public sealed partial class CombatSessionTests
     {
         var session = CreateAtPartyEncounter(); ResumeIntoActiveCombat(session);
         Assert.True(Burst(session).Accepted);
-        session.AdvanceTicks(6);
+        session.AdvanceTicks(CombatTuning.Burst.WindupTicks);
         var first = session.EventsSince(0).Single(e => e.Detail is AbilityReleasedEventDetail a && a.AbilityId == BurstId);
         var target = Observe(session).Hostiles!.Single(enemy => enemy.Id == SentryId);
         Assert.Equal(target.Combat.MaximumHealth - 18, target.Combat.Health);
@@ -26,19 +26,20 @@ public sealed partial class CombatSessionTests
         session.Execute(new SetPauseCommand(new CommandId("burst.pause"), true));
         Assert.Equal(0, session.AdvanceTicks(120));
         Assert.Equal(first.Tick, session.Tick);
-        session.Execute(new SetPauseCommand(new CommandId("burst.resume"), false)); session.AdvanceTicks(10);
+        session.Execute(new SetPauseCommand(new CommandId("burst.resume"), false)); session.AdvanceTicks(CombatTuning.Burst.ShotIntervalTicks * 2);
         var shots = session.EventsSince(0).Where(e => e.Detail is AbilityReleasedEventDetail a && a.AbilityId == BurstId).ToArray();
-        Assert.Equal(new[] { first.Tick, first.Tick + 5, first.Tick + 10 }, shots.Select(e => e.Tick));
+        Assert.Equal(new[] { first.Tick, first.Tick + CombatTuning.Burst.ShotIntervalTicks, first.Tick + CombatTuning.Burst.ShotIntervalTicks * 2 }, shots.Select(e => e.Tick));
         Assert.Equal(target.Combat.MaximumHealth - 54, Observe(session).Hostiles!.Single(enemy => enemy.Id == SentryId).Combat.Health);
         Assert.Equal(0, Observe(session).Protagonist.Combat!.Cooldowns.Single(cd => cd.AbilityId == InterruptId).RemainingTicks);
-        Assert.Equal(290, Observe(session).Protagonist.Combat!.Cooldowns.Single(cd => cd.AbilityId == BurstId).RemainingTicks);
+        Assert.Equal(CombatTuning.Burst.CooldownTicks - CombatTuning.Burst.ShotIntervalTicks * 2,
+            Observe(session).Protagonist.Combat!.Cooldowns.Single(cd => cd.AbilityId == BurstId).RemainingTicks);
     }
 
     [Fact]
     public void MovementCancelsTheRestOfBurstButKeepsReleasedRecoveryAndCost()
     {
         var session = CreateAtPartyEncounter(); ResumeIntoActiveCombat(session);
-        Assert.True(Burst(session).Accepted); session.AdvanceTicks(6);
+        Assert.True(Burst(session).Accepted); session.AdvanceTicks(CombatTuning.Burst.WindupTicks);
         var deadline = Observe(session).Protagonist.Combat!.OffensiveRecoveryUntilTick;
         Assert.True(session.Execute(new MoveActorCommand(new CommandId("burst.cancel"), ProtagonistId, Observe(session).Protagonist.Position)).Accepted);
         Assert.True(Attack(session, ProtagonistId, SentryId).Accepted);
@@ -77,7 +78,7 @@ public sealed partial class CombatSessionTests
     {
         var session = CreateAtPartyEncounter(); ResumeIntoActiveCombat(session); session.AdvanceTicks(1);
         Assert.Equal(ProtagonistId, Observe(session).Hostiles!.Single(h => h.Id == SentryId).CurrentAction!.CombatTargetId);
-        Assert.True(Taunt(session).Accepted); session.AdvanceTicks(6);
+        Assert.True(Taunt(session).Accepted); session.AdvanceTicks(CombatTuning.Taunt.WindupTicks);
         Assert.All(Observe(session).Hostiles!, h => { Assert.Equal(ProtectorId, h.Combat.TauntedBy); Assert.Equal(120, h.Combat.TauntRemainingTicks); });
         Assert.Equal(ProtectorId, Observe(session).Hostiles!.Single(h => h.Id == SentryId).CurrentAction!.CombatTargetId);
         session.Execute(new SetPauseCommand(new CommandId("taunt.pause"), true)); Assert.Equal(0, session.AdvanceTicks(100));
@@ -92,7 +93,7 @@ public sealed partial class CombatSessionTests
         var session = CreateAtPartyEncounter(); ResumeIntoActiveCombat(session);
         AdvanceUntil(session, state => state.Encounter!.Projectiles!.Count > 0, 90);
         var flying = Assert.Single(Observe(session).Encounter!.Projectiles!);
-        Assert.True(Taunt(session).Accepted); session.AdvanceTicks(6);
+        Assert.True(Taunt(session).Accepted); session.AdvanceTicks(CombatTuning.Taunt.WindupTicks);
         var after = Observe(session).Encounter!.Projectiles!.Single(p => p.Id == flying.Id);
         Assert.Equal(flying.TargetId, after.TargetId); Assert.Equal(flying.Destination, after.Destination);
     }
@@ -108,8 +109,8 @@ public sealed partial class CombatSessionTests
     [Fact]
     public void TauntAndBarrierBlockSentryFireWhileMeleeStillDamagesProtector()
     {
-        var session = CreateAtPartyEncounter(); Assert.True(Barrier(session).Accepted); ResumeIntoActiveCombat(session); session.AdvanceTicks(6);
-        Assert.True(Taunt(session).Accepted); session.AdvanceTicks(6);
+        var session = CreateAtPartyEncounter(); Assert.True(Barrier(session).Accepted); ResumeIntoActiveCombat(session); session.AdvanceTicks(CombatTuning.Barrier.WindupTicks);
+        Assert.True(Taunt(session).Accepted); session.AdvanceTicks(CombatTuning.Taunt.WindupTicks);
         var before = Observe(session).Party[1].Combat!.Health;
         var after = session.Observe().LatestEventSequence;
         AdvanceUntil(session, _ => session.EventsSince(0).Any(e => e.Type == GameplayEventType.ProjectileBlocked), 90);
@@ -125,7 +126,7 @@ public sealed partial class CombatSessionTests
     {
         var session = CreateAtPartyEncounter(CreatePartyPlacement() with
         { AdditionalHostiles = [new StationActorPlacement(SentryId, new WorldPosition(2.5, 0, 18))] });
-        Assert.True(Taunt(session).Accepted); ResumeIntoActiveCombat(session); session.AdvanceTicks(6);
+        Assert.True(Taunt(session).Accepted); ResumeIntoActiveCombat(session); session.AdvanceTicks(CombatTuning.Taunt.WindupTicks);
         Assert.Equal(ProtectorId, Observe(session).Hostiles!.Single(enemy => enemy.Id == MainEnforcerId).Combat.TauntedBy);
         Assert.Null(Observe(session).Hostiles!.Single(enemy => enemy.Id == SentryId).Combat.TauntedBy);
     }
@@ -136,13 +137,17 @@ public sealed partial class CombatSessionTests
         // Walking into the shot must not drag the deployed plane into its path.
         var session = CreateAtPartyEncounter(CreatePartyPlacement() with
         { CompanionRestartPosition = new WorldPosition(-.4, 0, 4.8833333333) });
-        Assert.True(Barrier(session).Accepted); ResumeIntoActiveCombat(session);
+        Assert.True(Barrier(session, position: new WorldPosition(-1.5, 0, 6)).Accepted); ResumeIntoActiveCombat(session);
         AdvanceUntil(session, state => state.Encounter!.Projectiles!.Count > 0, 90);
         var shot = Assert.Single(Observe(session).Encounter!.Projectiles!);
-        Assert.True(session.Execute(new MoveActorCommand(new CommandId("barrier.sweep"), ProtectorId, new WorldPosition(-.4, 0, 8))).Accepted);
-        session.AdvanceTicks(10);
+        var barrier = Observe(session).Encounter!.Barrier!;
+        Assert.True(session.Execute(new MoveActorCommand(new CommandId("barrier.sweep"), ProtectorId, new WorldPosition(1, 0, 8))).Accepted);
+        session.AdvanceTicks(shot.FlightTicks - 1);
+        Assert.Equal(barrier.Position, Observe(session).Encounter!.Barrier!.Position);
         Assert.DoesNotContain(session.EventsSince(0), item => item.Detail is ProjectileEventDetail p && p.Id == shot.Id && p.Blocked);
         Assert.Contains(Observe(session).Encounter!.Projectiles!, projectile => projectile.Id == shot.Id);
         Assert.DoesNotContain(session.EventsSince(0), item => item.Detail is DamageAppliedEventDetail d && d.SourceId == SentryId);
+        session.AdvanceTicks(1);
+        Assert.Contains(session.EventsSince(0), item => item.Detail is DamageAppliedEventDetail d && d.SourceId == SentryId);
     }
 }

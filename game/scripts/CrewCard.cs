@@ -7,67 +7,76 @@ public partial class CrewCard : Button
 {
     private Label _name = null!;
     private Label _vitals = null!;
-    private Label _action = null!;
-    private Label _pending = null!;
-    private Label _target = null!;
+    private Label _status = null!;
+    private Label _focusBadge = null!;
     private ProgressBar _health = null!;
     private TextureRect _portrait = null!;
+    private StyleBoxFlat _healthFill = null!;
     private bool? _selected;
     private bool? _focused;
 
     public void Build(string portraitPath)
     {
-        CustomMinimumSize = new Vector2(226, 110);
+        CustomMinimumSize = new Vector2(284, 78);
         TacticalUi.Style(this);
         _portrait = new TextureRect
         {
-            OffsetLeft = 6, OffsetTop = 6, OffsetRight = 82, OffsetBottom = 104,
+            OffsetLeft = 9, OffsetTop = 9, OffsetRight = 51, OffsetBottom = 69,
             ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered,
-            MouseFilter = MouseFilterEnum.Ignore,
-            Texture = ResourceLoader.Load<Texture2D>(portraitPath),
+            MouseFilter = MouseFilterEnum.Ignore, Texture = ResourceLoader.Load<Texture2D>(portraitPath),
         };
         AddChild(_portrait);
-        var column = new VBoxContainer { OffsetLeft = 92, OffsetTop = 9, OffsetRight = 215, OffsetBottom = 103,
-            MouseFilter = MouseFilterEnum.Ignore };
-        column.AddThemeConstantOverride("separation", 1);
-        AddChild(column);
         _name = TacticalUi.Label("", 14);
-        _vitals = TacticalUi.Label("", 12, "a4c4c9");
-        _health = TacticalUi.Bar(TacticalUi.Cyan, 5);
-        _action = TacticalUi.Label("", 12);
-        _pending = TacticalUi.Label("", 11, "e9bd76");
-        _target = TacticalUi.Label("", 11, "a4c4c9");
-        foreach (var label in new[] { _name, _vitals, _action, _pending, _target })
-        { label.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis; }
-        column.AddChild(_name);
-        column.AddChild(_vitals);
-        column.AddChild(_health);
-        column.AddChild(_action);
-        column.AddChild(_target);
-        column.AddChild(_pending);
+        _name.Position = new Vector2(61, 8);
+        AddChild(_name);
+        _focusBadge = TacticalUi.Label("", 10, "a0efd8");
+        _focusBadge.HorizontalAlignment = HorizontalAlignment.Right;
+        _focusBadge.Position = new Vector2(198, 10);
+        _focusBadge.Size = new Vector2(75, 14);
+        AddChild(_focusBadge);
+        _health = TacticalUi.Bar(TacticalUi.Cyan, 4);
+        _health.Position = new Vector2(61, 32);
+        _health.Size = new Vector2(127, 4);
+        _healthFill = (StyleBoxFlat)_health.GetThemeStylebox("fill");
+        AddChild(_health);
+        _vitals = TacticalUi.Label("", 11);
+        _vitals.HorizontalAlignment = HorizontalAlignment.Right;
+        _vitals.Position = new Vector2(195, 25);
+        _vitals.Size = new Vector2(78, 18);
+        AddChild(_vitals);
+        _status = TacticalUi.Label("", 11, "afc1c5");
+        _status.Position = new Vector2(61, 49);
+        _status.Size = new Vector2(212, 19);
+        _status.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
+        AddChild(_status);
     }
 
     public void Synchronize(ActorObservation actor, bool selected, bool focused, string current, string pending, string target, Color color)
     {
         if (selected != _selected || focused != _focused)
         {
-            var style = TacticalUi.Box(selected ? "172e3a" : "0e1c27", selected ? "72deeb" : "2d4353", 0);
-            style.BorderWidthLeft = focused ? 3 : 1;
+            var style = TacticalUi.FieldPanel(selected ? color : new Color("48615f"), margin: 0);
+            style.BgColor = new Color(focused ? "183538" : "101c22", .98f);
+            style.BorderWidthLeft = selected ? 3 : 1;
             AddThemeStyleboxOverride("normal", style);
             _selected = selected;
             _focused = focused;
         }
-        _name.Text = actor.DisplayName.ToUpperInvariant();
-        _name.Modulate = color;
-        _vitals.Text = actor.Combat is { } combat ? $"{combat.Health} / {combat.MaximumHealth}  HP" : "";
+        var down = actor.Combat?.IsDefeated == true;
+        _name.Text = actor.DisplayName;
+        _focusBadge.Text = down ? "DOWN" : focused ? "FOCUS" : selected ? "SELECTED" : "";
+        _focusBadge.Modulate = down ? TacticalUi.Danger : focused ? color : TacticalUi.Muted;
+        _vitals.Text = actor.Combat is { } combat ? $"{combat.Health}/{combat.MaximumHealth} HP" : "";
         _health.MaxValue = actor.Combat?.MaximumHealth ?? 100;
         _health.Value = actor.Combat?.Health ?? 100;
-        _portrait.Modulate = actor.Combat?.IsDefeated == true ? new Color("6d7d88") : Colors.White;
-        _action.Text = actor.Combat?.IsDefeated == true ? "DOWN" : current;
-        _pending.Text = pending;
-        _pending.Visible = pending.Length > 0;
-        _target.Text = target.Length > 0 ? $"→ {target.Replace("Security ", "", StringComparison.Ordinal)}" : "";
-        _target.Visible = _target.Text.Length > 0;
-        TooltipText = $"{actor.Loadout?.WeaponName}\n{current}{(target.Length > 0 ? $" → {target}" : "")}\n{pending}\nClick to select · Shift-click to group";
+        _healthFill.BgColor = _health.Value <= _health.MaxValue * .3 ? TacticalUi.Danger : color;
+        _portrait.Modulate = down ? new Color("657677") : Colors.White;
+        _status.Text = down ? "Crew member down" : pending.Length > 0 ? $"Next · {pending}" : target.Length > 0 ? $"{current} → {target}" : current;
+        _status.AddThemeColorOverride("font_color", down ? TacticalUi.Danger : pending.Length > 0 ? TacticalUi.Amber : TacticalUi.Muted);
+        var cooldowns = string.Join(" · ", actor.Combat?.Cooldowns.Select(value =>
+            $"{(value.AbilityId == actor.Loadout?.ActiveAbilityId ? actor.Loadout?.ActiveAbilityName : actor.Loadout?.SecondaryAbilityName)} {value.RemainingTicks / 30.0:0.0}s") ?? []);
+        TooltipText = $"{actor.DisplayName} · {actor.Loadout?.WeaponName}\n{current}{(target.Length > 0 ? $" → {target}" : "")}"
+            + (pending.Length > 0 ? $"\nNext: {pending}" : "") + (cooldowns.Length > 0 ? $"\n{cooldowns}" : "")
+            + "\nClick to select · Shift-click to group · Tab changes ability focus";
     }
 }

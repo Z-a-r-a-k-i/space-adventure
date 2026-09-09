@@ -68,21 +68,6 @@ public sealed record InteractCommand(
     EntityId ActorId,
     EntityId TargetId) : IGameCommand;
 
-public sealed record FaceActorsCommand : IGameCommand
-{
-    public FaceActorsCommand(CommandId commandId, IEnumerable<EntityId> actorIds, WorldPosition facing)
-    {
-        ArgumentNullException.ThrowIfNull(actorIds);
-        CommandId = commandId;
-        ActorIds = actorIds.ToArray();
-        Facing = facing;
-    }
-
-    public CommandId CommandId { get; }
-    public IReadOnlyList<EntityId> ActorIds { get; }
-    public WorldPosition Facing { get; }
-}
-
 public sealed record ChooseDialogueResponseCommand(
     CommandId CommandId,
     EntityId ActorId,
@@ -129,7 +114,6 @@ public enum CommandRejectionCode
     EmptyPartySelection,
     DuplicateActor,
     InvalidDestination,
-    InvalidFacing,
     DestinationUnreachable,
     UnknownInteraction,
     InteractionUnavailable,

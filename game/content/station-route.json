@@ -1,16 +1,16 @@
 {
   "schema_version": 9,
-  "content_revision": "station-route-v13",
+  "content_revision": "station-route-v14",
   "scenario_id": "scenario.station_route",
   "protagonist": {
     "id": "actor.protagonist",
     "display_name": "Unassigned protagonist",
-    "movement_speed_meters_per_second": 2.0
+    "movement_speed_meters_per_second": 2.4
   },
   "companion": {
     "id": "actor.companion.protector",
     "display_name": "Protector",
-    "movement_speed_meters_per_second": 2.0,
+    "movement_speed_meters_per_second": 2.4,
     "loadout": {
       "weapon_name": "Breach Shotgun",
       "basic_attack_id": "attack.crew.protector.shotgun",
@@ -75,30 +75,30 @@
         "id": "attack.crew.vanguard.carbine",
         "range_meters": 7.5,
         "damage": 10,
-        "windup_ticks": 9,
-        "recovery_ticks": 21
+        "windup_ticks": 8,
+        "recovery_ticks": 18
       },
       {
         "id": "attack.enemy.security_enforcer.body_strike",
         "range_meters": 1.5,
         "damage": 15,
-        "windup_ticks": 42,
-        "recovery_ticks": 36
+        "windup_ticks": 38,
+        "recovery_ticks": 30
       },
       {
         "id": "attack.crew.protector.shotgun",
         "range_meters": 4.5,
         "damage": 18,
-        "windup_ticks": 9,
-        "recovery_ticks": 36
+        "windup_ticks": 8,
+        "recovery_ticks": 30
       },
       {
         "id": "attack.enemy.gun_sentry.shot",
         "range_meters": 12.0,
         "damage": 24,
-        "windup_ticks": 36,
-        "recovery_ticks": 36,
-        "projectile_speed_meters_per_second": 15.0
+        "windup_ticks": 30,
+        "recovery_ticks": 30,
+        "projectile_speed_meters_per_second": 18.0
       }
     ],
     "protagonist_ability": {
@@ -107,8 +107,8 @@
       "range_meters": 9.0,
       "radius_meters": 2.0,
       "damage": 5,
-      "windup_ticks": 6,
-      "recovery_ticks": 24,
+      "windup_ticks": 5,
+      "recovery_ticks": 20,
       "cooldown_ticks": 240,
       "interrupts_windup": true
     },
@@ -116,7 +116,7 @@
       {
         "id": "actor.enemy.security_enforcer.solo",
         "display_name": "Security Enforcer",
-        "movement_speed_meters_per_second": 2.1,
+        "movement_speed_meters_per_second": 2.52,
         "maximum_health": 75,
         "basic_attack_id": "attack.enemy.security_enforcer.body_strike",
         "behavior": "melee"
@@ -124,7 +124,7 @@
       {
         "id": "actor.enemy.security_enforcer.main",
         "display_name": "Security Enforcer",
-        "movement_speed_meters_per_second": 2.1,
+        "movement_speed_meters_per_second": 2.52,
         "maximum_health": 135,
         "basic_attack_id": "attack.enemy.security_enforcer.body_strike",
         "behavior": "melee"
@@ -142,8 +142,8 @@
       {
         "id": "encounter.station.solo_tutorial",
         "protagonist_maximum_health": 100,
-        "readying_ticks": 24,
-        "securing_ticks": 54,
+        "readying_ticks": 20,
+        "securing_ticks": 45,
         "hostile_ids": [
           "actor.enemy.security_enforcer.solo"
         ],
@@ -152,8 +152,8 @@
       {
         "id": "encounter.station.party",
         "protagonist_maximum_health": 100,
-        "readying_ticks": 24,
-        "securing_ticks": 54,
+        "readying_ticks": 20,
+        "securing_ticks": 45,
         "hostile_ids": [
           "actor.enemy.security_enforcer.main",
           "actor.enemy.gun_sentry.main"
@@ -164,8 +164,8 @@
     "companion_maximum_health": 150,
     "barrier": {
       "id": "ability.crew.protector.barrier",
-      "windup_ticks": 6,
-      "recovery_ticks": 12,
+      "windup_ticks": 5,
+      "recovery_ticks": 10,
       "duration_ticks": 240,
       "cooldown_ticks": 360,
       "width_meters": 2.8,
@@ -178,17 +178,17 @@
       "range_meters": 7.5,
       "damage_per_shot": 18,
       "shot_count": 3,
-      "shot_interval_ticks": 5,
-      "windup_ticks": 6,
-      "recovery_ticks": 24,
+      "shot_interval_ticks": 4,
+      "windup_ticks": 5,
+      "recovery_ticks": 20,
       "cooldown_ticks": 300
     },
     "taunt": {
       "id": "ability.crew.protector.taunt",
       "radius_meters": 10,
       "duration_ticks": 120,
-      "windup_ticks": 6,
-      "recovery_ticks": 12,
+      "windup_ticks": 5,
+      "recovery_ticks": 10,
       "cooldown_ticks": 300
     }
   },

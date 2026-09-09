@@ -2,15 +2,16 @@
 
 ## Current state
 
-Phase 4 is active on `station-route-v13` (content schema 9). The owner accepted
+Phase 4 is active on `station-route-v14` (content schema 9). The owner accepted
 the solo fight and requested faster weapon draw. The local preview now joins
 recruitment to Vanguard/Protector versus an Enforcer and stationary sentry,
 with independent orders, two skills per crew member,
 party retry, and a compact tactical HUD. [Product](PRODUCT.md) owns the kits.
 Arena victory ends this slice; final airlock completion remains unavailable.
 
-**Next gate: review and merge the party combat slice.** The owner accepted the
-current preview on 2026-09-08. The fitted Protector and shotgun are included
+**Next gate: review the station presentation and pacing polish.** The party
+combat slice merged in PR 20 after the owner's 2026-09-08 preview acceptance.
+The fitted Protector and shotgun are included
 under `game/Assets/Published/`; running the game needs no local art staging.
 Rebuild instructions live with the [party presentation tool](../tools/blender/README.md).
 The workstation's display workaround is in [Testing](testing.md); the measured
@@ -20,7 +21,7 @@ frame-pacing result is in [history](archive/prototype-history.md).
 
 | Phase | Work | Exit |
 | --- | --- | --- |
-| 4 — Party combat | Review and merge the accepted party/UI slice. | Active pause helps coordinate both characters; victory, defeat, retry, and graphical checks pass; owner accepts the slice. |
+| 4 — Party combat | Review the environment, Field Ops HUD, overhead health, and faster pacing follow-up. | Active pause helps coordinate both characters; victory, defeat, retry, and graphical checks pass; owner accepts the polished slice. |
 | 5 — Complete station POC | Join both fights, recruitment, dialogue consequence, inspection, opening final airlock, and completion summary into the authored 8–12 minute flow. Add comprehension polish only. | Five consecutive blocker-free manual runs and the relevant automated checks pass. |
 | 6 — Hardening | Reproduce an accepted asset and a small authored encounter from a clean checkout; record useful startup/frame-time/memory/tooling baselines. | Another contributor can author and verify them using the documented workflow. |
 | 7 — Ship experiment | One separately gated escape-cutter battle under the approved [spec](future/ship-combat-poc.md). Prove deterministic greybox before final art. | Rule, CLI, Godot, graphical, and owner-operated checks pass; pause-based crew/power/target decisions are useful. |

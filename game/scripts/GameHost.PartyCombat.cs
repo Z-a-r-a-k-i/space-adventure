@@ -79,7 +79,6 @@ public partial class GameHost
 
     private Vector3 ActorFacing(StationRouteObservation route, ActorObservation actor)
     {
-        if (actor.FacingHeld && actor.CurrentAction?.CombatTargetId is null) { return SampleActorFacing(actor); }
         if (actor.CurrentAction?.HasRemainingMovement == true) { return TravelDirection(actor.Id); }
         if (route.Encounter?.Phase is not (EncounterPhase.Readying or EncounterPhase.Active or EncounterPhase.Securing))
         { return Vector3.Zero; }

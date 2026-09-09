@@ -1,4 +1,4 @@
-[gd_scene load_steps=34 format=3]
+[gd_scene load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://scripts/GameHost.cs" id="1_host"]
 [ext_resource type="Script" path="res://scripts/TacticalCameraController.cs" id="2_camera"]
@@ -17,14 +17,34 @@
 [ext_resource type="PackedScene" path="res://Assets/Published/weapon.crew.protector_shotgun.v1.glb" id="15_shotgun"]
 [ext_resource type="PackedScene" path="res://Assets/Published/machine.security.gun_sentry.v1.glb" id="16_sentry"]
 [ext_resource type="Script" path="res://scripts/SentryPresentation.cs" id="17_sentry_presentation"]
+[ext_resource type="PackedScene" path="res://Assets/Published/assembly.station.service_surround.v1.glb" id="18_surround"]
 
 [sub_resource type="Environment" id="Environment_station"]
 background_mode = 1
-background_color = Color(0.012, 0.018, 0.028, 1)
+background_color = Color(0.026, 0.040, 0.057, 1)
+fog_enabled = true
+fog_mode = 1
+fog_light_color = Color(0.14, 0.18, 0.23, 1)
+fog_light_energy = 1.0
+fog_sun_scatter = 0.0
+fog_density = 1.0
+fog_sky_affect = 1.0
+fog_depth_begin = 36.0
+fog_depth_end = 85.0
+fog_depth_curve = 1.6
 ambient_light_source = 3
-ambient_light_color = Color(0.36, 0.42, 0.49, 1)
-ambient_light_energy = 0.85
+ambient_light_color = Color(0.46, 0.52, 0.60, 1)
+ambient_light_energy = 0.55
 tonemap_mode = 2
+ssao_enabled = true
+ssao_radius = 0.65
+ssao_intensity = 1.35
+ssao_detail = 0.5
+glow_enabled = true
+glow_intensity = 0.45
+glow_strength = 0.7
+glow_bloom = 0.0
+glow_hdr_threshold = 1.6
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_route"]
 vertices = PackedVector3Array(-12.7, 0, 4.3, -12.7, 0, 9.7, -7.3, 0, 9.7, -7.3, 0, 4.3, -14.7, 0, -3.7, -14.7, 0, 3.7, -5.3, 0, 3.7, -5.3, 0, -3.7, -4.7, 0, -2.7, -4.7, 0, 3.3, 1.7, 0, 3.3, 1.7, 0, -2.7, -5.7, 0, 3.3, -5.7, 0, 12.7, 5.7, 0, 12.7, 5.7, 0, 3.3, 5.7, 0, 5.3, 5.7, 0, 10.7, 11.7, 0, 10.7, 11.7, 0, 5.3)
@@ -101,34 +121,34 @@ environment = SubResource("Environment_station")
 
 [node name="KeyLight" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-55, -35, 0)
-light_color = Color(0.78, 0.88, 1, 1)
-light_energy = 0.85
+light_color = Color(0.86, 0.91, 1, 1)
+light_energy = 0.70
 shadow_enabled = true
 
 [node name="StartRoomLight" type="OmniLight3D" parent="."]
 position = Vector3(-10, 3.2, 7)
-light_color = Color(0.25, 0.72, 1, 1)
-light_energy = 3.0
+light_color = Color(0.54, 0.76, 0.88, 1)
+light_energy = 1.8
 omni_range = 7.0
 shadow_enabled = true
 
 [node name="SoloArenaLight" type="OmniLight3D" parent="."]
 position = Vector3(-11.5, 4.0, -1.5)
-light_color = Color(0.82, 0.88, 1, 1)
-light_energy = 1.9
+light_color = Color(0.93, 0.88, 0.77, 1)
+light_energy = 2.1
 omni_range = 8.0
 shadow_enabled = false
 
 [node name="ProtectorRoomLight" type="OmniLight3D" parent="."]
 position = Vector3(-1.5, 3.2, 0)
-light_color = Color(0.30, 0.72, 1, 1)
-light_energy = 2.6
+light_color = Color(0.68, 0.80, 0.91, 1)
+light_energy = 1.8
 omni_range = 7.0
 
 [node name="MainArenaLight" type="OmniLight3D" parent="."]
 position = Vector3(0, 3.6, 8)
-light_color = Color(0.22, 0.62, 1, 1)
-light_energy = 3.2
+light_color = Color(0.73, 0.85, 0.94, 1)
+light_energy = 2.5
 omni_range = 10.0
 shadow_enabled = true
 
@@ -137,6 +157,30 @@ position = Vector3(9, 3.0, 8)
 light_color = Color(0.26, 1, 0.55, 1)
 light_energy = 0.65
 omni_range = 7.0
+
+[node name="ShelterAccent" type="OmniLight3D" parent="."]
+position = Vector3(-8.1, 2.1, 7.8)
+light_color = Color(1, 0.60, 0.27, 1)
+light_energy = 1.65
+omni_range = 3.5
+
+[node name="TerminalAccent" type="OmniLight3D" parent="."]
+position = Vector3(-11.5, 1.8, 6.2)
+light_color = Color(0.58, 0.43, 1, 1)
+light_energy = 0.85
+omni_range = 2.5
+
+[node name="SecurityAccent" type="OmniLight3D" parent="."]
+position = Vector3(-13.7, 2.1, -2.5)
+light_color = Color(1, 0.57, 0.24, 1)
+light_energy = 1.8
+omni_range = 4.0
+
+[node name="TransitAccent" type="OmniLight3D" parent="."]
+position = Vector3(4.7, 2.4, 11.8)
+light_color = Color(1, 0.64, 0.32, 1)
+light_energy = 1.8
+omni_range = 4.5
 
 [node name="NavigationRegion" type="NavigationRegion3D" parent="."]
 navigation_mesh = SubResource("NavigationMesh_route")
@@ -168,6 +212,55 @@ end_position = Vector3(6.2, 0, 8)
 [node name="Environment" type="Node3D" parent="."]
 
 [node name="ProductionStructure" parent="Environment" instance=ExtResource("3_structure")]
+
+[node name="ServiceSurround" parent="Environment" instance=ExtResource("18_surround")]
+
+[node name="Wayfinding" type="Node3D" parent="Environment"]
+
+[node name="Arrivals" type="Label3D" parent="Environment/Wayfinding"]
+position = Vector3(-11.25, 0.042, 8.6)
+rotation_degrees = Vector3(-90, 0, 0)
+pixel_size = 0.006
+modulate = Color(0.6, 0.70, 0.72, 0.5)
+text = "01 / ARRIVALS"
+font_size = 70
+outline_size = 0
+
+[node name="Security" type="Label3D" parent="Environment/Wayfinding"]
+position = Vector3(-12.3, 0.042, 2.4)
+rotation_degrees = Vector3(-90, 0, 0)
+pixel_size = 0.007
+modulate = Color(0.74, 0.64, 0.45, 0.5)
+text = "02 / SECURITY"
+font_size = 80
+outline_size = 0
+
+[node name="CrewAccess" type="Label3D" parent="Environment/Wayfinding"]
+position = Vector3(-1.6, 0.042, 1.5)
+rotation_degrees = Vector3(-90, 0, 0)
+pixel_size = 0.006
+modulate = Color(0.6, 0.70, 0.72, 0.5)
+text = "03 / CREW ACCESS"
+font_size = 70
+outline_size = 0
+
+[node name="TransitHall" type="Label3D" parent="Environment/Wayfinding"]
+position = Vector3(-2.5, 0.042, 10.8)
+rotation_degrees = Vector3(-90, 0, 0)
+pixel_size = 0.008
+modulate = Color(0.6, 0.70, 0.72, 0.5)
+text = "04 / TRANSIT\nKEEP CLEAR"
+font_size = 80
+outline_size = 0
+
+[node name="Evacuation" type="Label3D" parent="Environment/Wayfinding"]
+position = Vector3(9, 0.042, 9.5)
+rotation_degrees = Vector3(-90, 0, 0)
+pixel_size = 0.007
+modulate = Color(0.6, 0.70, 0.72, 0.5)
+text = "05 / EVACUATION"
+font_size = 70
+outline_size = 0
 
 [node name="Floors" type="Node3D" parent="Environment"]
 

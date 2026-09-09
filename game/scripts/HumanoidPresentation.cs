@@ -43,6 +43,8 @@ public partial class HumanoidPresentation : Node3D
 
     public HumanoidPresentationAction CurrentAction { get; private set; }
 
+    public float LocomotionPlaybackRate { get; set; } = 1;
+
     public bool PlaybackPaused => Mathf.IsZeroApprox(_animationPlayer.SpeedScale);
 
     public int SkeletonBoneCount => FindDescendant<Skeleton3D>(this)?.GetBoneCount() ?? 0;
@@ -94,15 +96,17 @@ public partial class HumanoidPresentation : Node3D
         }
         var name = new StringName(AnimationNameFor(action));
         if (action != CurrentAction) { _actionStartedTick = presentationTick; }
+        var rate = playbackSpeed * (action == HumanoidPresentationAction.Locomotion
+            ? LocomotionPlaybackRate : AnimationPacing.Rate);
         var sampleSeconds = clipSeconds ?? (action == HumanoidPresentationAction.Down
-            ? Math.Max(0, presentationTick - _actionStartedTick) / 30
-            : presentationTick / 30 * playbackSpeed);
+            ? Math.Max(0, presentationTick - _actionStartedTick) / 30 * rate
+            : presentationTick / 30 * rate);
         if (paused && seekToEndWhenPaused)
         {
             sampleSeconds = _animationPlayer.GetAnimation(name).Length;
         }
         _posePlayer.Sample(name, sampleSeconds, presentationTick / 30, cycle,
-            paused && seekToEndWhenPaused ? 0 : BlendSeconds);
+            paused && seekToEndWhenPaused ? 0 : BlendSeconds / AnimationPacing.Rate);
         CurrentAction = action;
 
         if (action != HumanoidPresentationAction.Locomotion)
@@ -123,7 +127,7 @@ public partial class HumanoidPresentation : Node3D
 
         planarDirection = planarDirection.Normalized();
         var targetYaw = Mathf.Atan2(planarDirection.X, planarDirection.Z);
-        Rotation = new Vector3(0.0f, Mathf.LerpAngle(Rotation.Y, targetYaw, 1 - Mathf.Exp(-16 * deltaSeconds)), 0.0f);
+        Rotation = new Vector3(0.0f, Mathf.LerpAngle(Rotation.Y, targetYaw, 1 - Mathf.Exp(-16 * AnimationPacing.Rate * deltaSeconds)), 0.0f);
     }
 
     public double ClipLength(HumanoidPresentationAction action) =>

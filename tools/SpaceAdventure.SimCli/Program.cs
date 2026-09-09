@@ -139,7 +139,7 @@ static int RunStationRoute(JsonLinesOutput output, bool party = false, bool defe
     output.Emit(new
     {
         kind = "run_metadata",
-        schema_version = 8,
+        schema_version = 9,
         scenario_id = party ? (defeat ? "station-party-defeat" : "station-party") : StationRouteScenarioId,
         content_scenario_id = definition.ScenarioId.Value,
         content_revision = definition.ContentRevision,
@@ -448,7 +448,7 @@ static void RunPartyContinuation(GameSession session, StationRouteDefinition def
     }
     else
     {
-        session.AdvanceTicks(9);
+        session.AdvanceTicks(definition.Combat.GetAttack(definition.Companion.Loadout!.BasicAttackId).WindupTicks);
         Order(new UseAbilityCommand(new CommandId("party.barrier"), protector, definition.Combat.Barrier.Id,
             new BarrierAbilityTarget(new WorldPosition(.55, 0, 5.3), new WorldPosition(0, 0, 1))));
         session.AdvanceTicks(definition.Combat.Barrier.WindupTicks);
@@ -909,7 +909,7 @@ internal static class ObservationProjection
             position = ProjectPosition(observation.Position),
             current_action = ProjectAction(observation.CurrentAction),
             pending_action = ProjectAction(observation.PendingAction),
-            facing = ProjectPosition(observation.Facing), facing_held = observation.FacingHeld,
+            facing = ProjectPosition(observation.Facing),
             combat = ProjectCombatant(observation.Combat),
         };
     }
@@ -962,7 +962,6 @@ internal static class ObservationProjection
                 interaction_target_id = observation.InteractionTargetId?.Value,
                 combat_target_id = observation.CombatTargetId?.Value,
                 ability_facing = observation.AbilityFacing is { } facing ? ProjectPosition(facing) : null,
-                facing = observation.Facing is { } heading ? ProjectPosition(heading) : null,
                 attack_id = observation.AttackId?.Value,
                 ability_id = observation.AbilityId?.Value,
                 phase = JsonLinesOutput.ToJsonName(observation.Phase),

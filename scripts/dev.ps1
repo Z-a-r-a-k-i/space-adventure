@@ -22,11 +22,17 @@ param(
     [ValidateSet("restrained", "strong")]
     [string]$Recoil = "restrained",
 
-    [ValidateSet("all", "ready", "draw", "armed", "armed-walk", "fire", "recoil", "anticipation", "contact", "barrier-queued", "barrier", "barrier-block", "facing", "taunt", "burst", "interrupt", "late-fire", "holster", "victory", "slice-complete", "defeat", "retry")]
+    [ValidateSet("all", "ready", "draw", "armed", "armed-walk", "fire", "recoil", "anticipation", "contact", "barrier-queued", "barrier", "barrier-block", "taunt", "burst", "interrupt", "late-fire", "holster", "victory", "slice-complete", "defeat", "retry")]
     [string]$Checkpoint = "all",
 
     [ValidateRange(7.5, 20.0)]
     [double]$Distance = 14.5,
+
+    [ValidateRange(0.45, 1.15)]
+    [double]$Pitch = 0.90,
+
+    [ValidateRange(-3.14, 3.14)]
+    [double]$Yaw = 0.68,
 
     [ValidateSet("1280x720", "1920x1080")]
     [string]$Resolution = "1920x1080",
@@ -397,6 +403,7 @@ SpaceAdventure development commands
                           -Mode live|capture|record|performance|input -Sequence victory|defeat
                           -Recoil restrained|strong (restrained is the game default)
                           -Checkpoint all|armed|fire|... -Distance 7.5..20
+                          -Pitch 0.45..1.15 -Yaw -3.14..3.14 (capture/live only)
                           -Resolution 1280x720|1920x1080 (record: 1080p/60 fps OGV)
   editor                  Open the Godot editor with the project
   run                     Launch the graphical bootstrap
@@ -793,6 +800,10 @@ Options:
             Write-Output "SHA-256: $actualSha256"
         }
         "review" {
+            if (($PSBoundParameters.ContainsKey('Pitch') -or $PSBoundParameters.ContainsKey('Yaw')) -and
+                $Mode -notin @('capture', 'live')) {
+                throw "-Pitch and -Yaw are supported only with -Mode capture or -Mode live."
+            }
             if ($Mode -eq 'live' -and $Checkpoint -eq 'all') { $Checkpoint = 'armed' }
             if ($Mode -eq 'record') { $Resolution = '1920x1080' }
             if (-not $PSBoundParameters.ContainsKey('TimeoutSeconds')) { $TimeoutSeconds = 180 }
@@ -812,6 +823,8 @@ Options:
                 "--review-recoil=$Recoil",
                 "--review-checkpoint=$Checkpoint",
                 ('--review-distance=' + $Distance.ToString([Globalization.CultureInfo]::InvariantCulture))
+            if ($PSBoundParameters.ContainsKey('Pitch')) { $arguments += '--review-pitch=' + $Pitch.ToString([Globalization.CultureInfo]::InvariantCulture) }
+            if ($PSBoundParameters.ContainsKey('Yaw')) { $arguments += '--review-yaw=' + $Yaw.ToString([Globalization.CultureInfo]::InvariantCulture) }
             if ($AutoQuitSeconds -gt 0) { $arguments += "--auto-quit-seconds=$AutoQuitSeconds" }
             Invoke-GodotAutomated -UserDataScope "$Encounter-review-$Mode-$Sequence" -Arguments $arguments
             if ($Mode -eq 'record') { Write-Output "Movie: $moviePath" }

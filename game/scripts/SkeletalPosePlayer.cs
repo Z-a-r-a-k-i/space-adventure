@@ -2,6 +2,15 @@ using Godot;
 
 namespace SpaceAdventure.Game;
 
+internal static class AnimationPacing
+{
+    public const float Rate = 1.2f;
+    // Source locomotion was fitted to these travel speeds. Match stride cadence
+    // to content movement speed instead of advancing a faster walk in place.
+    public const float CrewStrideSpeed = 2.0f;
+    public const float EnforcerStrideSpeed = 2.1f;
+}
+
 // Sampling is driven by presentation time, never by the AnimationPlayer's
 // process callback. Exact paused steps and ordinary rendered frames use this
 // same path, including the short transition between clips.

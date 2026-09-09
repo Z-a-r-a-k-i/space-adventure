@@ -26,7 +26,6 @@ public enum PrimaryActionKind
     Attack,
     Ability,
     Stop,
-    Face,
 }
 
 public enum ActionWaitingReason
@@ -115,8 +114,7 @@ public sealed record PrimaryActionObservation(
     long PhaseStartedTick = 0,
     ActionWaitingReason? WaitingReason = null,
     bool Interrupted = false,
-    WorldPosition? AbilityFacing = null,
-    WorldPosition? Facing = null);
+    WorldPosition? AbilityFacing = null);
 
 public sealed record CooldownObservation(AbilityId AbilityId, int RemainingTicks, int TotalTicks);
 
@@ -138,7 +136,6 @@ public sealed record ActorObservation(
     PartyMemberLoadoutObservation? Loadout,
     WorldPosition Position,
     WorldPosition Facing,
-    bool FacingHeld,
     PrimaryActionObservation? CurrentAction,
     PrimaryActionObservation? PendingAction,
     CombatantStateObservation? Combat = null);

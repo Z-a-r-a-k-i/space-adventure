@@ -37,20 +37,18 @@ public sealed partial class CombatSessionTests
     }
 
     [Fact]
-    public void BarrierFacingIsIndependentOfTheOwnersHeldDirection()
+    public void BarrierFacingIsIndependentOfAutomaticOwnerHeading()
     {
         var session = CreateAtPartyEncounter();
         ResumeIntoActiveCombat(session);
-        Assert.True(Face(session, new WorldPosition(-1, 0, 0), ProtectorId).Accepted);
         session.AdvanceTicks(12);
         var owner = Observe(session).Party[1];
         var ground = new WorldPosition(.55, 0, 6);
-        Assert.True(Barrier(session, position: ground).Accepted);
+        Assert.True(Barrier(session, new WorldPosition(1, 0, 0), position: ground).Accepted);
         session.AdvanceTicks(6);
         Assert.Equal(owner.Position, Observe(session).Party[1].Position);
-        Assert.Equal(owner.Facing, Observe(session).Party[1].Facing);
-        Assert.True(Observe(session).Party[1].FacingHeld);
-        Assert.Equal(new WorldPosition(0, 0, 1), Observe(session).Encounter!.Barrier!.Facing);
+        Assert.Equal(new WorldPosition(1, 0, 0), Observe(session).Encounter!.Barrier!.Facing);
+        Assert.NotEqual(owner.Facing, Observe(session).Encounter!.Barrier!.Facing);
         Assert.Equal(ground.X, Observe(session).Encounter!.Barrier!.Position.X);
         Assert.Equal(ground.Z, Observe(session).Encounter!.Barrier!.Position.Z);
     }

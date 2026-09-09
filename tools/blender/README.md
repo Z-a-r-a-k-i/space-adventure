@@ -23,6 +23,7 @@ root with Blender 5.2:
 
 ```text
 blender --background --factory-startup --python-exit-code 1 --python tools/blender/build_station_environment_v2.py -- --asset structure
+blender --background --factory-startup --python-exit-code 1 --python tools/blender/build_station_environment_v2.py -- --asset service-surround
 blender --background --factory-startup --python-exit-code 1 --python tools/blender/build_station_environment_v2.py -- --asset service-door
 blender --background --factory-startup --python-exit-code 1 --python tools/blender/build_station_environment_v2.py -- --asset terminal
 blender --background --factory-startup --python-exit-code 1 --python tools/blender/build_station_environment_v2.py -- --asset airlock

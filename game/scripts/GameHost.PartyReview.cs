@@ -47,24 +47,29 @@ public partial class GameHost
         await ReviewTicks(_definition.Combat.PartyEncounter.ReadyingTicks
             - _definition.Combat.PartyEncounter.ReadyingTicks / 2);
         CheckSentryMountAndCloseTargets();
+        if (_reviewMode == "input") { await CheckWorldHealthInput(); }
         if (await ReviewCapture("armed")) { return; }
         if (_reviewMode == "performance") { await RunRealtimePerformanceAsync(); return; }
         if (_reviewSequence == "defeat")
         {
             await ReviewUntil(state => state.Party.Any(actor => actor.Combat!.IsDefeated), 900, fast: true);
+            if (_reviewMode == "input")
+            {
+                await InputFrame();
+                await InputFrame();
+                CheckHudBounds("group with one crew member down");
+            }
             InputCheck("one crew member down keeps encounter active", ReviewState().Encounter!.Phase == EncounterPhase.Active);
             var fallen = ReviewState().Party.Single(member => member.Combat!.IsDefeated);
             var fallenPresentation = ArmedPresentation(fallen.Id)!;
             if (_reviewMode == "input")
             {
                 await InputClick(_partyButtons[fallen.Id.Value].GetGlobalRect().GetCenter(), MouseButton.Left);
+                CheckHudBounds("one crew member down");
                 var commands = _humanCommandSequence;
                 var hostile = ReviewState().Hostiles!.First(enemy => !enemy.Combat.IsDefeated);
                 await InputWorldClick(ToGodot(hostile.Position) + Vector3.Up);
                 InputCheck("a downed selection explains rejected world attack orders", _humanCommandSequence == commands
-                    && _feedbackLabel.Text == "Select a living crew member first.");
-                await InputClick(_threatRows[hostile.Id].Button.GetGlobalRect().GetCenter(), MouseButton.Left);
-                InputCheck("a downed selection explains rejected threat-card orders", _humanCommandSequence == commands
                     && _feedbackLabel.Text == "Select a living crew member first.");
                 await InputFrame();
                 var pausedTick = _session.Tick;
@@ -86,6 +91,7 @@ public partial class GameHost
             await ReviewUntil(state => state.Encounter!.Phase == EncounterPhase.Defeat, 1200, fast: true);
             await InputFrame();
             await CheckUnavailableStop("party defeat");
+            if (_reviewMode == "input") { CheckHudBounds("party defeat"); CheckWorldHealth("party defeat"); }
             await CheckCompletedDeathPresentation();
             if (await ReviewCapture("defeat")) { return; }
             if (_reviewMode == "input") { await InputClick(_retryButton.GetGlobalRect().GetCenter(), MouseButton.Left); }
@@ -94,6 +100,7 @@ public partial class GameHost
                 && ReviewState().Party.All(actor => actor.Combat!.Health == actor.Combat.MaximumHealth)
                 && ReviewState().Hostiles!.All(hostile => hostile.Combat.Health == hostile.Combat.MaximumHealth));
             if (await ReviewCapture("retry")) { return; }
+            if (_reviewMode == "input") { CheckWorldHealth("party retry"); }
             FinishSoloReview();
             return;
         }
@@ -104,7 +111,7 @@ public partial class GameHost
             ReviewOrder(new AssignBasicAttackTargetCommand(new CommandId("party.attack.vanguard"), protagonist, new EntityId("actor.enemy.gun_sentry.main")));
             ReviewOrder(new AssignBasicAttackTargetCommand(new CommandId("party.attack.protector"), protector, new EntityId("actor.enemy.security_enforcer.main")));
         }
-        await ReviewTicks(9);
+        await ReviewTicks(_definition.Combat.GetAttack(_definition.Companion.Loadout!.BasicAttackId).WindupTicks);
         await InputFrame();
         InputCheck("shotgun emits five visible pellets", _combatPresentationEffects.Select(effect => effect.Node)
             .OfType<CarbineProjectile>().Count(bolt => bolt.LaunchPosition.DistanceTo(_protectorPartyPresentation.MuzzlePosition) < .02f) == 5);
@@ -171,7 +178,7 @@ public partial class GameHost
         InputCheck("barrier produces a visible block and removes its flying bolt", _incomingBolts.Count == 0
             && _combatPresentationEffects.Any(effect => effect.Node is Label3D { Text: "BLOCKED" }));
         if (await ReviewCapture("barrier-block")) { return; }
-        if (await CheckPartyFacing()) { return; }
+        await CheckBarrierAfterMovement();
         for (var tick = 0; tick < 1200 && ReviewState().Encounter!.Phase == EncounterPhase.Active; tick++)
         {
             var route = ReviewState();
@@ -213,28 +220,26 @@ public partial class GameHost
         InputCheck("Shift-click adds a crew member", _selectedActorIds.SetEquals([protagonist, protector]));
         await CheckEdgeCameraInput();
         await CheckDragSelectionAndAbilityFocus();
-        await InputKey(Key.T);
-        InputCheck("T enters direction targeting for the group", _facingTargeting && !_abilityTargeting);
-        await InputWorldClick(new Vector3(2.5f, 0, 4.5f), MouseButton.Left);
-        InputCheck("facing queues a common heading without moving either crew member", ReviewState().Party.All(actor =>
-            actor.PendingAction?.Kind == PrimaryActionKind.Face && !actor.FacingHeld));
-        await InputClick(_faceButton.GetGlobalRect().GetCenter(), MouseButton.Left);
-        await InputKey(Key.Escape);
-        InputCheck("Escape cancels aiming while preserving the queued facing", !_facingTargeting
-            && ReviewState().Party.All(actor => actor.PendingAction?.Kind == PrimaryActionKind.Face));
         var commandsBefore = _humanCommandSequence;
         var tickBefore = _session!.Tick;
         var pendingBefore = ReviewState().Party.Select(actor => actor.PendingAction).ToArray();
+        await InputKey(Key.T);
         await InputKey(Key.H);
         await InputKey(Key.Key3);
-        InputCheck("removed auto-fire and aid shortcuts do not change paused orders", _humanCommandSequence == commandsBefore
+        InputCheck("removed facing, auto-fire and aid shortcuts do not change paused orders", _humanCommandSequence == commandsBefore
             && _session.Tick == tickBefore && pendingBefore.SequenceEqual(ReviewState().Party.Select(actor => actor.PendingAction)));
         await InputWorldClick(new Vector3(0, 0, 6));
         InputCheck("group floor click queues both moves", ReviewState().Party.All(actor => actor.PendingAction?.Kind == PrimaryActionKind.Move));
+        CheckFieldOrderLabels("group move");
         await InputWorldClick(_enemyViews[new EntityId("actor.enemy.security_enforcer.main")].Root.GlobalPosition + Vector3.Up);
         InputCheck("group target click queues both attacks", ReviewState().Party.All(actor => actor.PendingAction?.Kind == PrimaryActionKind.Attack));
+        CheckFieldOrderLabels("attack replaces move");
+        InputCheck("a shared attack destination uses one crew badge", _fieldOrders.Values.Count(view => view.Destination.Visible) == 1
+            && _fieldOrders.Values.Single(view => view.Destination.Visible).Destination.Text == "01 / 02");
+        await ReviewCapture("field-orders");
         await InputKey(Key.X);
         InputCheck("group Stop replaces both pending orders", ReviewState().Party.All(actor => actor.PendingAction?.Kind == PrimaryActionKind.Stop));
+        CheckFieldOrderLabels("Stop replaces attack");
         await InputWorldClick(_protagonistView.GlobalPosition + Vector3.Up, MouseButton.Left);
         InputCheck("world click selects the actor", _focusedActorId == protagonist);
         await InputWorldClick(_enemyViews[new EntityId("actor.enemy.gun_sentry.main")].Root.GlobalPosition + Vector3.Up);
@@ -242,8 +247,11 @@ public partial class GameHost
         await InputWorldClick(_enemyViews[new EntityId("actor.enemy.security_enforcer.main")].Root.GlobalPosition + Vector3.Up);
         InputCheck("each selected member receives its own target", ReviewState().Protagonist.PendingAction?.CombatTargetId?.Value == "actor.enemy.gun_sentry.main"
             && ReviewState().Party[1].PendingAction?.CombatTargetId?.Value == "actor.enemy.security_enforcer.main");
-        foreach (var control in _partyButtons.Values.Cast<Control>().Concat([_abilityButton, _secondaryAbilityButton, _stopButton, _pauseButton, _faceButton]))
+        foreach (var control in _partyButtons.Values.Cast<Control>().Concat([_abilityButton, _secondaryAbilityButton, _stopButton, _pauseButton]))
         { InputCheck("party HUD control fits viewport", GetViewport().GetVisibleRect().Encloses(control.GetGlobalRect())); }
+        CheckFieldOrderLabels("independent targets");
+        await CheckFieldHudWorldInput();
+        await CheckControlsOverlayInput();
     }
 
     private void CheckPartyHostilePlacementOrder()
@@ -266,11 +274,7 @@ public partial class GameHost
 
     private void CheckPartyAbilityEnvelope()
     {
-        var faceJson = JsonSerializer.Serialize(new { schema_version = 8, command_id = "party.adapter.face", type = "face_actors",
-            payload = new { actor_ids = new[] { _definition!.Companion.Id.Value }, facing = new { x = 1, y = 0, z = 0 } } });
-        InputCheck("adapter accepts the same typed facing order as input", IsAccepted(_automationBridge!.SubmitCommandJson(faceJson))
-            && ReviewState().Party[1].PendingAction?.Facing is { X: 1 });
-        string Command(object payload) => JsonSerializer.Serialize(new { schema_version = 8,
+        string Command(object payload) => JsonSerializer.Serialize(new { schema_version = 9,
             command_id = "party.adapter.barrier", type = "use_ability", payload });
         var actor = _definition!.Companion.Id.Value;
         var ability = _definition.Combat.Barrier.Id.Value;
@@ -289,9 +293,9 @@ public partial class GameHost
             InputCheck("incomplete or ambiguous barrier targets preserve pending order",
                 !IsAccepted(_automationBridge.SubmitCommandJson(Command(payload))) && ReviewState().Party[1].PendingAction == pending);
         }
-        foreach (var removed in new[] { "set_auto_attack", "use_item" })
+        foreach (var removed in new[] { "set_auto_attack", "use_item", "face_actors" })
         {
-            var json = JsonSerializer.Serialize(new { schema_version = 8, command_id = $"party.adapter.removed.{removed}",
+            var json = JsonSerializer.Serialize(new { schema_version = 9, command_id = $"party.adapter.removed.{removed}",
                 type = removed, payload = new { actor_id = actor } });
             using var result = JsonDocument.Parse(_automationBridge.SubmitCommandJson(json));
             InputCheck("removed commands reject without replacing orders", !result.RootElement.GetProperty("accepted").GetBoolean()
@@ -318,7 +322,7 @@ public partial class GameHost
             var aim = JsonSerializer.SerializeToElement(sentry.GetDiagnostics()).GetProperty("aim_degrees");
             InputCheck("close or crossing targets keep sentry aim finite and rate limited", float.IsFinite(aim[0].GetSingle())
                 && Math.Abs(aim[0].GetSingle()) <= 25.01f && Math.Abs(aim[1].GetSingle()) <= 60.01f
-                && Math.Abs(aim[1].GetSingle() - previous) <= 2.51f);
+                && Math.Abs(aim[1].GetSingle() - previous) <= SentryPresentation.TurnDegreesPerSecond / 60 + .01f);
         }
         sentry.Synchronize(hostile, ToGodot(ReviewState().Protagonist.Position) + Vector3.Up * 1.1f, tick, .25f);
     }
@@ -329,12 +333,12 @@ public partial class GameHost
         var actor = ReviewState().Party.MaxBy(member => member.Combat!.DefeatedAtTick)!;
         var presentation = ArmedPresentation(actor.Id)!;
         double ClipSeconds() => JsonSerializer.SerializeToElement(presentation.GetDiagnostics()).GetProperty("clip_seconds").GetDouble();
-        InputCheck("last crew death starts before the final pose", ClipSeconds() < presentation.DownDurationSeconds - .1);
+        InputCheck("last crew death starts before the final pose", ClipSeconds() < presentation.DownClipLengthSeconds - .1);
         var timer = System.Diagnostics.Stopwatch.StartNew();
         while (_defeatPresentationSeconds < presentation.DownDurationSeconds && timer.Elapsed.TotalSeconds < 10)
         { await InputFrame(); }
         InputCheck("death animation finishes while combat remains paused", _session.IsPaused && _session.Tick == tick
-            && Math.Abs(ClipSeconds() - presentation.DownDurationSeconds) < .04);
+            && Math.Abs(ClipSeconds() - presentation.DownClipLengthSeconds) < .04);
         foreach (var member in ReviewState().Party.Where(member => member.Combat!.IsDefeated))
         {
             var pose = JsonSerializer.SerializeToElement(ArmedPresentation(member.Id)!.GetDiagnostics()).GetProperty("death_pose");

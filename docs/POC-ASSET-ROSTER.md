@@ -15,6 +15,7 @@ hold unique design/budget requirements; source records/manifests hold provenance
 | `character.enemy.security_enforcer.v1` | Mobile humanoid melee in both fights | [Enforcer](../art/briefs/security-enforcer-character-v1.md) |
 | `machine.security.gun_sentry.v1` | Floor-bolted ranged hostile in the party arena | [Sentry](../art/briefs/security-gun-sentry-v1.md) |
 | `kit.station.structure.v2` | Five-area dimensional station kit; integrated | [Structure](../art/briefs/station-structure-kit-v2.md) |
+| `assembly.station.service_surround.v1` | Owner-requested recessed station surroundings | [Service surround](../art/briefs/station-service-surround-v1.md) |
 | `assembly.station.service_door.v1` | Two ordinary arena-boundary doors; integrated | [Service door](../art/briefs/station-service-door-v1.md) |
 | `prop.station.service_terminal.v1` | Optional inspection; integrated | [Terminal](../art/briefs/station-service-terminal-v1.md) |
 | `assembly.station.evacuation_airlock.v1` | Final destination; model integrated, completion gated | [Airlock](../art/briefs/station-evacuation-airlock-v1.md) |

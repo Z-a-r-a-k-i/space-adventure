@@ -21,7 +21,8 @@ public sealed partial class CombatSessionTests
             session.AdvanceTicks(1);
         }
 
-        Assert.Equal(Enumerable.Range(0, 8).Select(index => start + 9 + index * 30), ShotTicks(session));
+        var cycle = CarbineTuning.WindupTicks + CarbineTuning.RecoveryTicks;
+        Assert.Equal(Enumerable.Range(0, 8).Select(index => start + CarbineTuning.WindupTicks + index * cycle), ShotTicks(session));
         var hostile = Observe(session).Hostiles![0].Combat;
         Assert.Equal(Math.Max(0, hostile.MaximumHealth - 80), hostile.Health);
     }
@@ -40,21 +41,21 @@ public sealed partial class CombatSessionTests
         Assert.Null(Observe(session).Protagonist.Combat!.RememberedAttackTargetId);
 
         Attack(session, "fire.before.cancel");
-        session.AdvanceTicks(9);
+        session.AdvanceTicks(CarbineTuning.WindupTicks);
         var releasedTick = Assert.Single(ShotTicks(session));
         CancelAttack(session, stop);
         var cancelled = Observe(session).Protagonist;
-        Assert.Equal(releasedTick + 21, cancelled.Combat!.OffensiveRecoveryUntilTick);
+        Assert.Equal(releasedTick + CarbineTuning.RecoveryTicks, cancelled.Combat!.OffensiveRecoveryUntilTick);
         var previousPosition = cancelled.Position;
         session.AdvanceTicks(1);
         if (!stop) { Assert.NotEqual(previousPosition, Observe(session).Protagonist.Position); }
 
         Attack(session, "fire.after.cancel");
         Assert.Equal(ActionWaitingReason.OffensiveRecovery, Observe(session).Protagonist.PendingAction!.WaitingReason);
-        session.AdvanceTicks(28);
+        session.AdvanceTicks(CarbineTuning.WindupTicks + CarbineTuning.RecoveryTicks - 2);
         Assert.Single(ShotTicks(session));
         session.AdvanceTicks(1);
-        Assert.Equal(new[] { releasedTick, releasedTick + 30 }, ShotTicks(session));
+        Assert.Equal(new[] { releasedTick, releasedTick + CarbineTuning.WindupTicks + CarbineTuning.RecoveryTicks }, ShotTicks(session));
     }
 
     [Fact]
@@ -73,8 +74,8 @@ public sealed partial class CombatSessionTests
         Assert.Null(actor.PendingAction);
         Assert.Equal(original.InstanceId, actor.CurrentAction!.InstanceId);
         Assert.Equal(original.PhaseStartedTick, actor.CurrentAction.PhaseStartedTick);
-        Assert.Equal(4, actor.CurrentAction.PhaseTicksRemaining);
-        session.StepWhilePaused(4);
+        Assert.Equal(CarbineTuning.WindupTicks - 5, actor.CurrentAction.PhaseTicksRemaining);
+        session.StepWhilePaused(actor.CurrentAction.PhaseTicksRemaining);
         Assert.Single(ShotTicks(session));
     }
 
@@ -83,18 +84,19 @@ public sealed partial class CombatSessionTests
     {
         var session = ActiveSession();
         Attack(session);
-        session.AdvanceTicks(9);
+        session.AdvanceTicks(CarbineTuning.WindupTicks);
         var first = Assert.Single(ShotTicks(session));
         Suppress(session);
         Assert.Equal(PrimaryActionKind.Ability, Observe(session).Protagonist.PendingAction!.Kind);
         Assert.Equal(0, Observe(session).Protagonist.Combat!.Cooldowns.Single(value => value.AbilityId == InterruptId).RemainingTicks);
-        session.AdvanceTicks(26);
+        session.AdvanceTicks(CarbineTuning.RecoveryTicks + CombatTuning.ProtagonistAbility.WindupTicks - 1);
         Assert.DoesNotContain(session.EventsSince(0), item => item.Type == GameplayEventType.AbilityReleased);
         session.AdvanceTicks(1);
         Assert.Equal(240, Observe(session).Protagonist.Combat!.Cooldowns.Single(value => value.AbilityId == InterruptId).RemainingTicks);
         Assert.Equal(EnforcerId, Observe(session).Protagonist.Combat!.RememberedAttackTargetId);
-        session.AdvanceTicks(33);
-        Assert.Equal(new[] { first, first + 60 }, ShotTicks(session));
+        session.AdvanceTicks(CombatTuning.ProtagonistAbility.RecoveryTicks + CarbineTuning.WindupTicks);
+        Assert.Equal(new[] { first, first + CarbineTuning.RecoveryTicks + CombatTuning.ProtagonistAbility.WindupTicks
+            + CombatTuning.ProtagonistAbility.RecoveryTicks + CarbineTuning.WindupTicks }, ShotTicks(session));
     }
 
     [Fact]
@@ -102,12 +104,12 @@ public sealed partial class CombatSessionTests
     {
         var session = CreateAtPartyEncounter();
         Assert.True(Attack(session, ProtectorId, MainEnforcerId).Accepted);
-        ResumeIntoActiveCombat(session); session.AdvanceTicks(9);
+        ResumeIntoActiveCombat(session); session.AdvanceTicks(ShotgunTuning.WindupTicks);
         var recovery = Observe(session).Party[1].Combat!.OffensiveRecoveryUntilTick;
         Assert.True(Taunt(session).Accepted);
         Assert.Equal(PrimaryActionKind.Ability, Observe(session).Party[1].CurrentAction!.Kind);
         Assert.Equal(recovery, Observe(session).Party[1].Combat!.OffensiveRecoveryUntilTick);
-        session.AdvanceTicks(45);
+        session.AdvanceTicks(ShotgunTuning.RecoveryTicks + ShotgunTuning.WindupTicks);
         Assert.Equal(2, session.EventsSince(0).Count(item => item.Type == GameplayEventType.AttackReleased
             && item.Detail is AttackEventDetail attack && attack.SourceId == ProtectorId));
 
@@ -124,7 +126,7 @@ public sealed partial class CombatSessionTests
     {
         var session = ActiveSession();
         Suppress(session);
-        session.AdvanceTicks(5);
+        session.AdvanceTicks(CombatTuning.ProtagonistAbility.WindupTicks - 1);
         CancelAttack(session, stop: true);
         session.AdvanceTicks(30);
         Assert.Equal(0, Observe(session).Protagonist.Combat!.Cooldowns.Single(value => value.AbilityId == InterruptId).RemainingTicks);
@@ -136,7 +138,7 @@ public sealed partial class CombatSessionTests
     {
         var session = ActiveSession();
         Attack(session);
-        session.AdvanceTicks(9);
+        session.AdvanceTicks(CarbineTuning.WindupTicks);
         var origin = Observe(session).Protagonist.Position;
         Assert.True(session.Execute(new MoveActorCommand(new CommandId("back-away"), ProtagonistId,
             new WorldPosition(origin.X, origin.Y, origin.Z + 5))).Accepted);
@@ -144,7 +146,7 @@ public sealed partial class CombatSessionTests
         Assert.True(session.Execute(new UseAbilityCommand(new CommandId("edge-of-range"), ProtagonistId,
             InterruptId, new PositionAbilityTarget(new WorldPosition(origin.X, origin.Y, origin.Z - 9)))).Accepted);
         Pause(session, false);
-        session.AdvanceTicks(21);
+        session.AdvanceTicks(CarbineTuning.RecoveryTicks);
         var actor = Observe(session).Protagonist;
         Assert.Null(actor.PendingAction);
         Assert.Equal(PrimaryActionKind.Move, actor.CurrentAction!.Kind);
@@ -159,16 +161,16 @@ public sealed partial class CombatSessionTests
         var session = ActiveSession();
         AdvanceUntil(session, state => state.Hostiles![0].CurrentAction?.Phase == PrimaryActionPhase.Windup, 200);
         var windupTick = session.Tick;
-        session.AdvanceTicks(6);
+        session.AdvanceTicks(GameSession.TicksPerSecond / 2 - CarbineTuning.WindupTicks);
         Attack(session);
-        session.AdvanceTicks(9);
+        session.AdvanceTicks(CarbineTuning.WindupTicks);
         Suppress(session);
         Assert.Equal(windupTick + 15, session.Tick);
-        Assert.Equal(21, Observe(session).Protagonist.Combat!.OffensiveRecoveryUntilTick - session.Tick);
-        session.AdvanceTicks(27);
+        Assert.Equal(CarbineTuning.RecoveryTicks, Observe(session).Protagonist.Combat!.OffensiveRecoveryUntilTick - session.Tick);
+        session.AdvanceTicks(CarbineTuning.RecoveryTicks + CombatTuning.ProtagonistAbility.WindupTicks);
         Assert.Equal(100, Observe(session).Protagonist.Combat!.Health);
         Assert.Contains(session.EventsSince(0), item => item.Type == GameplayEventType.ActionInterrupted
-            && item.Tick == windupTick + 42);
+            && item.Tick == windupTick + GameSession.TicksPerSecond / 2 + CarbineTuning.RecoveryTicks + CombatTuning.ProtagonistAbility.WindupTicks);
     }
 
     [Fact]
@@ -196,10 +198,10 @@ public sealed partial class CombatSessionTests
         var session = ActiveSession();
         Attack(session);
         var first = Observe(session).Protagonist.CurrentAction!;
-        session.AdvanceTicks(30);
+        session.AdvanceTicks(CarbineTuning.WindupTicks + CarbineTuning.RecoveryTicks);
         var second = Observe(session).Protagonist.CurrentAction!;
         Assert.NotEqual(first.InstanceId, second.InstanceId);
-        Assert.Equal(first.PhaseStartedTick + 30, second.PhaseStartedTick);
+        Assert.Equal(first.PhaseStartedTick + CarbineTuning.WindupTicks + CarbineTuning.RecoveryTicks, second.PhaseStartedTick);
         CancelAttack(session, stop: true);
         AdvanceUntil(session, state => state.Encounter!.Phase == EncounterPhase.Defeat, 900);
         Assert.True(session.Execute(new RestartEncounterCommand(new CommandId("retry.identity"),

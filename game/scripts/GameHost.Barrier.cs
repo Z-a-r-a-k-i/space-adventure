@@ -49,7 +49,6 @@ public partial class GameHost
 
     private void CancelAbilityTargeting()
     {
-        _facingTargeting = false;
         _abilityTargeting = false; _abilityTargetPreview.Visible = false;
         if (_barrierPreview is not null) { _barrierPreview.Visible = false; }
     }
@@ -114,7 +113,7 @@ public partial class GameHost
         if (_targetAbilityKind == AbilityTargetKind.Entity)
         {
             if (PickSkillEnemy(screenPosition) is { } enemy) { ConfirmEnemyAbility(enemy); }
-            else { SetFeedback("Choose an enemy or its threat card.", TacticalUi.Danger); }
+            else { SetFeedback("Choose an enemy.", TacticalUi.Danger); }
             return;
         }
         if (!TryPickFloor(screenPosition, out var point)) { return; }
