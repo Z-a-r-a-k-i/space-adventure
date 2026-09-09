@@ -194,11 +194,22 @@ public partial class GameHost
         InputCheck("survivor right click creates human order", ReviewState().Protagonist.PendingAction?.CommandId.Value.StartsWith("input.", StringComparison.Ordinal) == true);
         await ReviewUntil(state => state.ActiveDialogue is not null, 300, fast: true);
         await CheckUnavailableStop("dialogue");
+        var dialogueSequence = _humanCommandSequence;
+        var dialoguePaused = _session.IsPaused;
+        var dialogueSelection = _focusedActorId;
+        await InputKey(Key.Space);
+        await InputKey(Key.Tab);
+        InputCheck("dialogue isolates pause and crew focus", _session.IsPaused == dialoguePaused
+            && _humanCommandSequence == dialogueSequence && _focusedActorId == dialogueSelection && !_camera.InputEnabled);
+        InputCheck("dialogue Tab selects the second response", _dialogueResponses.GetChild<Button>(1).HasFocus());
+        await InputKey(Key.Up);
+        InputCheck("dialogue arrows return to first response", _dialogueResponses.GetChild<Button>(0).HasFocus());
         InputCheck("dialogue fits the viewport", GetViewport().GetVisibleRect().Encloses(
             _dialogueOverlay.GetChild<PanelContainer>(0).GetGlobalRect()));
         await ReviewCapture("dialogue");
         await InputKey(Key.Key1);
         InputCheck("dialogue number key selects route", ReviewState().ActiveDialogue is null);
+        InputCheck("closing dialogue restores camera input", _camera.InputEnabled);
         await InputInteraction("interaction.service_door.entry");
         await ReviewUntil(state => state.Interactions.Single(item => item.Id.Value == "interaction.service_door.entry").State
             == InteractionState.Completed, 300, fast: true);

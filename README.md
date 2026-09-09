@@ -36,7 +36,7 @@ console executable; an editor plugin is optional. `help` lists all commands.
 | 1, then left-click | Vanguard: aim Interrupt on the floor. Protector: place Barrier with one click, facing from him toward the placement point. Escape/right-click cancels |
 | 2 | Vanguard: click an enemy for Burst. Protector: Taunt nearby enemies |
 | X or Stop | Cancel orders; follows pause/readying rules |
-| Dialogue 1/2, Enter, or buttons | Choose a response; Enter chooses the first |
+| Dialogue 1/2, Tab/arrows, Enter, or buttons | Choose a response; Tab/arrows change focus, Enter confirms it (first response initially) |
 | Defeat Enter/keypad Enter or Retry | Restart the fight, preserving route progress |
 | Mouse at window edge; WASD/arrows | Camera-relative pan; edge scrolling stops over HUD, during selection drags, or outside the active game window |
 | Q/E or middle drag | Yaw; vertical middle drag changes pitch |

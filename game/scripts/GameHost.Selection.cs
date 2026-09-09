@@ -41,6 +41,7 @@ public partial class GameHost
     public override void _Input(InputEvent @event)
     {
         if (HandleControlsInput(@event)) { return; }
+        if (HandleDialogueInput(@event)) { return; }
         if (_selectionStart is null) { return; }
         switch (@event)
         {

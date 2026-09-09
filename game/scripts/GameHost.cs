@@ -152,6 +152,7 @@ public partial class GameHost : Node3D
         CreateDestinationMarker();
         CreateAbilityTargetPreview();
         CreateHud();
+        CreateOnboardingHint();
         try
         {
             CacheInteractionViews();
@@ -249,6 +250,11 @@ public partial class GameHost : Node3D
         if (_controlsOverlay?.Visible == true) { GetViewport().SetInputAsHandled(); return; }
         if (_session is null || _visualCaptureRequested)
         {
+            return;
+        }
+        if (_session.Observe().StationRoute?.ActiveDialogue is not null)
+        {
+            GetViewport().SetInputAsHandled();
             return;
         }
 
@@ -694,6 +700,12 @@ public partial class GameHost : Node3D
             selectedActors.Average(actor => (float)actor.Position.X),
             selectedActors.Average(actor => (float)actor.Position.Y),
             selectedActors.Average(actor => (float)actor.Position.Z));
+        _camera.ClearOcclusionSubjects();
+        foreach (var actor in route.Party.Where(actor => actor.Combat?.IsDefeated != true))
+            _camera.IncludeOcclusionSubject(_actorViews[actor.Id.Value].GlobalPosition);
+        foreach (var hostile in route.Hostiles ?? [])
+            if (!hostile.Combat.IsDefeated)
+                _camera.IncludeOcclusionSubject(_enemyViews[hostile.Id].Root.GlobalPosition);
 
         var actionActor = selectedActors.FirstOrDefault(actor =>
             actor.PendingAction is not null || actor.CurrentAction is not null);
@@ -736,6 +748,7 @@ public partial class GameHost : Node3D
         }
 
         UpdateTacticalHud(observation, route, FocusedActor(route));
+        UpdateOnboarding(observation, route);
         UpdateAbilityTargetPreview(observation);
 
         var objectiveTargetId = GetObjectiveTargetId(route.Objective.Id);
@@ -872,8 +885,10 @@ public partial class GameHost : Node3D
                     var button = HudButton($"{index + 1}   {response.Text}", () => _ = ChooseVisibleDialogueResponse(responseIndex));
                     button.CustomMinimumSize = new Vector2(0, 48);
                     button.Alignment = HorizontalAlignment.Left;
+                    button.FocusMode = Control.FocusModeEnum.All;
                     _dialogueResponses.AddChild(button);
                 }
+                _dialogueResponses.GetChildren().OfType<Button>().FirstOrDefault()?.GrabFocus();
             }
             _visibleDialogueInteractionId = dialogue.InteractionId.Value;
             _visibleDialogueResponseSignature = responseSignature;
@@ -886,6 +901,7 @@ public partial class GameHost : Node3D
         }
 
         _completionOverlay.Visible = route.Phase == ScenarioPhase.Completed;
+        UpdateDialogueInput(route.ActiveDialogue is not null);
         SynchronizeServiceDoorAuthority(route);
         SetAirlockOpen(route.Phase == ScenarioPhase.Completed);
         UpdateWorldHealth(route);

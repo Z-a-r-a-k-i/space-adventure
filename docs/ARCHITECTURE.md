@@ -103,7 +103,8 @@ those facts to determine what happened; use graphical play to judge readability.
 Animation, movement interpolation, and combat effects share a simulation
 tick/fraction clock. Pause freezes it; exact stepping samples it deterministically.
 Camera occlusion stays presentational: static wall AABBs drive opaque base
-cutaway; separate lintel bounds drive fading with hysteresis. Neither changes
+cutaway for the selected focus and visible living combatants; separate lintel
+bounds drive fading with hysteresis. Neither changes
 navigation, collision, or rules. Rotated or complex future geometry needs a
 revisited occlusion approach.
 
