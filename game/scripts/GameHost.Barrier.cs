@@ -8,8 +8,6 @@ public partial class GameHost
     private BarrierPresentation _barrierView = null!;
     private BarrierPresentation _barrierPreview = null!;
     private BarrierPresentation _barrierQueued = null!;
-    private Vector3 _barrierFacing = Vector3.Forward;
-    private Vector3? _barrierGroundPosition;
     private AbilityId _targetAbilityId;
     private AbilityTargetKind _targetAbilityKind;
     private readonly Dictionary<long, CarbineProjectile> _incomingBolts = [];
@@ -25,10 +23,10 @@ public partial class GameHost
     }
 
     private void ShowGroundShield(BarrierPresentation view, Vector3 groundPosition, Vector3 facing, long deployedAt,
-        bool preview = false, bool valid = true, bool queued = false, bool aiming = false)
+        bool preview = false, bool valid = true, bool queued = false)
     {
         var center = ToGodot(_definition!.Combat.Barrier.CenterAt(ToCore(groundPosition)));
-        view.ShowShield(center, facing, groundPosition, _presentationTick, deployedAt, preview, valid, queued, aiming);
+        view.ShowShield(center, facing, groundPosition, _presentationTick, deployedAt, preview, valid, queued);
     }
 
     private void SynchronizeBarrier(StationRouteObservation route)
@@ -52,7 +50,6 @@ public partial class GameHost
     private void CancelAbilityTargeting()
     {
         _facingTargeting = false;
-        _barrierGroundPosition = null;
         _abilityTargeting = false; _abilityTargetPreview.Visible = false;
         if (_barrierPreview is not null) { _barrierPreview.Visible = false; }
     }
@@ -71,7 +68,7 @@ public partial class GameHost
         _abilityTargeting = true;
         SetFeedback(_targetAbilityKind switch
         {
-            AbilityTargetKind.Barrier => "Barrier · click a ground position, then aim its facing. Esc cancels.",
+            AbilityTargetKind.Barrier => "Barrier · click to place. Faces from Protector toward the pointer. Esc cancels.",
             AbilityTargetKind.Entity => "Burst · choose an enemy for three rapid shots. Esc cancels.",
             _ => "Interrupt · click the floor to interrupt enemies in the circle. Esc cancels.",
         }, TacticalUi.Cyan);
@@ -83,6 +80,13 @@ public partial class GameHost
         var hit = CastRay(origin, origin + _camera.ProjectRayNormal(screen) * 200, FloorCollisionLayer);
         point = hit.Count == 0 ? default : WithGroundHeight(hit["position"].AsVector3());
         return hit.Count > 0;
+    }
+
+    private static BarrierAbilityTarget BarrierTargetAt(ActorObservation actor, Vector3 point)
+    {
+        var facing = point - ToGodot(actor.Position); facing.Y = 0;
+        return new BarrierAbilityTarget(ToCore(point), facing.LengthSquared() > .01f
+            ? ToCore(facing.Normalized()) : actor.Facing);
     }
 
     private EntityId? PickSkillEnemy(Vector2 screen)
@@ -114,24 +118,8 @@ public partial class GameHost
             return;
         }
         if (!TryPickFloor(screenPosition, out var point)) { return; }
-        AbilityTarget target;
-        if (_targetAbilityKind == AbilityTargetKind.Barrier)
-        {
-            if (_barrierGroundPosition is null)
-            {
-                var suggested = point - ToGodot(actor.Position); suggested.Y = 0;
-                if (suggested.LengthSquared() > .01f) { _barrierFacing = suggested.Normalized(); }
-                var rejection = _session.CheckBarrierPlacement(actor.Id, new BarrierAbilityTarget(ToCore(point), ToCore(_barrierFacing)));
-                if (rejection is not null) { ShowBarrierRejection(rejection.Value); return; }
-                _barrierGroundPosition = point;
-                SetFeedback("Barrier · face incoming fire, then click to deploy. Esc cancels.", TacticalUi.Cyan);
-                return;
-            }
-            var facing = point - _barrierGroundPosition.Value; facing.Y = 0;
-            if (facing.LengthSquared() < .01f) { SetFeedback("Aim away from the barrier's base.", TacticalUi.Danger); return; }
-            target = new BarrierAbilityTarget(ToCore(_barrierGroundPosition.Value), ToCore(facing.Normalized()));
-        }
-        else { target = new PositionAbilityTarget(ToCore(point)); }
+        AbilityTarget target = _targetAbilityKind == AbilityTargetKind.Barrier
+            ? BarrierTargetAt(actor, point) : new PositionAbilityTarget(ToCore(point));
         var acknowledgement = _session.Execute(new UseAbilityCommand(NextHumanCommandId("skill"), actor.Id, _targetAbilityId, target));
         if (!acknowledgement.Accepted)
         {
@@ -155,11 +143,9 @@ public partial class GameHost
         if (!TryPickFloor(GetViewport().GetMousePosition(), out var point)) { return; }
         if (_targetAbilityKind == AbilityTargetKind.Barrier)
         {
-            var ground = _barrierGroundPosition ?? point;
-            var facing = point - (_barrierGroundPosition ?? ToGodot(actor.Position)); facing.Y = 0;
-            if (facing.LengthSquared() > .01f) { _barrierFacing = facing.Normalized(); }
-            var rejection = _session!.CheckBarrierPlacement(actor.Id, new BarrierAbilityTarget(ToCore(ground), ToCore(_barrierFacing)));
-            ShowGroundShield(_barrierPreview, ground, _barrierFacing, 0, preview: true, valid: rejection is null, aiming: _barrierGroundPosition is not null);
+            var target = BarrierTargetAt(actor, point);
+            var rejection = _session!.CheckBarrierPlacement(actor.Id, target);
+            ShowGroundShield(_barrierPreview, point, ToGodot(target.Facing), 0, preview: true, valid: rejection is null);
             return;
         }
         _abilityTargetPreview.Scale = Vector3.One;

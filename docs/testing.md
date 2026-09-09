@@ -67,7 +67,7 @@ Stop, projectile pause/travel/arrival, and victory/recruitment or defeat/retry.
 Party input also checks world/portrait/drag selection, Shift-drag, Tab ability
 focus within a group, drag cancellation/HUD exclusion, edge panning and its
 focus/drag/HUD stops, independent orders,
-two-click barrier placement/cancellation/interception, independent T/click and
+single-click barrier placement/cancellation/interception, independent T/click and
 Alt/right-click facing and movement after deployment, group facing, Taunt targeting, separate Burst releases
 and pause, both skill cooldowns, rejection of removed commands/shortcuts, sentry aim limits, complete
 death playback, shotgun pellets, and HUD bounds. Injected mouse events use the
@@ -127,8 +127,8 @@ input injection is separate evidence. The [roadmap](ROADMAP.md) owns gate status
 5. Win, cross the far door, recruit Protector, and lead both crew into the
    main arena. Drag around both crew, order a group move/attack, and use Tab to
    switch abilities while keeping the group selected. Use portraits or Shift-click
-   for independent orders; assign different enemies, place Protector's Barrier and aim it toward
-   the sentry, then Taunt. Check that nearby enemies focus him, front-side shots
+   for independent orders; assign different enemies, place Protector's Barrier with one click
+   between him and the sentry, then Taunt. Check that nearby enemies focus him, front-side shots
    are blocked, and melee still hits. Move and turn Protector: the barrier must
    keep its deployed position and direction until expiry.
    Check per-member health, orders, cooldowns, and incoming-hit countdowns.

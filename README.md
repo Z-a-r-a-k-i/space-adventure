@@ -33,7 +33,7 @@ console executable; an editor plugin is optional. `help` lists all commands.
 | Tab / Shift + Tab | Cycle ability focus forward/backward within the group; with one selected, cycle living crew |
 | Shift + left-click crew / portrait | Add or remove a character from the selection |
 | Space | Tactical pause; newest pending order replaces the previous one |
-| 1, then left-click | Vanguard: aim Interrupt on the floor. Protector: place Barrier on the floor, then click again to face incoming fire. Escape/right-click cancels |
+| 1, then left-click | Vanguard: aim Interrupt on the floor. Protector: place Barrier with one click, facing from him toward the placement point. Escape/right-click cancels |
 | 2 | Vanguard: click an enemy for Burst. Protector: Taunt nearby enemies |
 | X or Stop | Cancel orders; follows pause/readying rules |
 | T, then left-click; Alt + right-click | Turn selected crew in place |

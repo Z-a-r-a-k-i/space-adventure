@@ -72,7 +72,7 @@ public partial class BarrierPresentation : Node3D
     }
 
     public void ShowShield(Vector3 center, Vector3 facing, Vector3 ground, double tick, double deployedTick,
-        bool preview = false, bool valid = true, bool queued = false, bool aiming = false)
+        bool preview = false, bool valid = true, bool queued = false)
     {
         Visible = true; GlobalPosition = center;
         Rotation = new Vector3(0, Mathf.Atan2(-facing.X, -facing.Z), 0);
@@ -83,7 +83,7 @@ public partial class BarrierPresentation : Node3D
             material.EmissionEnergyMultiplier = tick - _hitTick is >= 0 and < 6 ? 2 : .5f;
         }
         _guide.Visible = preview || queued;
-        _label.Text = !valid ? "INVALID PLACEMENT" : queued ? "BARRIER QUEUED" : aiming ? "2 · FACE INCOMING FIRE" : "1 · PLACE BARRIER";
+        _label.Text = !valid ? "INVALID PLACEMENT" : queued ? "BARRIER QUEUED" : "CLICK TO PLACE";
         _label.Modulate = tint;
         var progress = preview || queued ? 1 : (float)Math.Clamp((tick - deployedTick) / _deploymentTicks, .04, 1);
         var expanded = Mathf.SmoothStep(0, 1, progress);

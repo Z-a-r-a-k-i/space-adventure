@@ -49,8 +49,8 @@ World movement remains core-owned; combat animation is in-place.
   Sentry bolts instead follow core launch/block/arrival events. A barrier hit
   removes the bolt and flashes the shield without a damage number.
 - Barrier expands upward from its placed ground base. Its clipped outline
-  matches the core hit plane. The two-click preview shows placement, incoming-fire
-  direction, and the protected side; the queued tint preserves that fixed pose.
+  matches the core hit plane. The preview faces from Protector toward the pointer
+  and shows the protected side; one click fixes that pose, preserved by the queued tint.
   Ground chevrons show the crew's separate current/queued headings.
   Burst presents each release from the carbine muzzle. Taunt uses a
   radius pulse and threat countdowns. Crew cards and target lines show attack state.

@@ -233,10 +233,10 @@ public partial class GameHost
         var ready = !combat.IsDefeated && active && route.ActiveDialogue is null;
         _abilityButton.Disabled = !ready || cooldown?.RemainingTicks > 0;
         _abilityButton.SetState(barrierAbility ? "Barrier" : "Interrupt", barrierAbility ? "guard" : "suppression",
-            combat.IsDefeated ? "Down" : cooldown?.RemainingTicks > 0 ? $"{cooldown.RemainingTicks / 30.0:0.0}s" : _abilityTargeting && _targetAbilityId == actor.Loadout?.ActiveAbilityId ? "Aim + confirm" : active ? "Ready" : "In combat",
+            combat.IsDefeated ? "Down" : cooldown?.RemainingTicks > 0 ? $"{cooldown.RemainingTicks / 30.0:0.0}s" : _abilityTargeting && _targetAbilityId == actor.Loadout?.ActiveAbilityId ? barrierAbility ? "Place barrier" : "Aim + confirm" : active ? "Ready" : "In combat",
             cooldown is { TotalTicks: > 0 } ? 1 - (double)cooldown.RemainingTicks / cooldown.TotalTicks : 1);
         _abilityButton.TooltipText = barrierAbility
-            ? $"Barrier · place within {_definition!.Combat.Barrier.RangeMeters:0.#}m, then aim toward incoming fire. Stays at that position and facing for {_definition.Combat.Barrier.DurationTicks / 30.0:0.#}s."
+            ? $"Barrier · click to place within {_definition!.Combat.Barrier.RangeMeters:0.#}m. Faces from Protector toward the placement point; uses his current facing at his feet. Stays fixed for {_definition.Combat.Barrier.DurationTicks / 30.0:0.#}s."
             : "Interrupt · click the floor. Cancels enemy wind-ups inside the circle; deals light damage.";
         _secondaryAbilityButton.Disabled = !ready || secondaryCooldown?.RemainingTicks > 0;
         _secondaryAbilityButton.SetState(barrierAbility ? "Taunt" : "Burst", barrierAbility ? "taunt" : "burst",

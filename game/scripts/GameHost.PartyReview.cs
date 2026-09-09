@@ -131,17 +131,32 @@ public partial class GameHost
             await InputKey(Key.Key1);
             InputCheck("Protector enters barrier placement", _abilityTargeting && _abilityOwnerId == protector);
             var previousOrder = ReviewState().Party[1].PendingAction;
-            await InputWorldClick(barrierPosition, MouseButton.Left);
-            InputCheck("placing the base keeps aiming active without spending cooldown", _abilityTargeting && _barrierGroundPosition is not null
-                && ReviewState().Party[1].Combat!.Cooldowns.Single(cd => cd.AbilityId == _definition.Combat.Barrier.Id).RemainingTicks == 0);
             await InputKey(Key.Escape);
-            InputCheck("cancelling facing discards the placement without changing the previous order", !_abilityTargeting
-                && _barrierGroundPosition is null && ReviewState().Party[1].PendingAction == previousOrder
+            InputCheck("cancelling placement keeps the previous order and cooldown", !_abilityTargeting
+                && ReviewState().Party[1].PendingAction == previousOrder
                 && ReviewState().Party[1].Combat!.Cooldowns.Single(cd => cd.AbilityId == _definition.Combat.Barrier.Id).RemainingTicks == 0);
             await InputKey(Key.Key1);
+            var owner = ReviewState().Party[1];
+            var distantFloor = ToGodot(owner.Position) + Vector3.Back * (float)(_definition.Combat.Barrier.RangeMeters + 1);
+            await InputWorldClick(distantFloor, MouseButton.Left);
+            InputCheck("invalid first click keeps placement active without changing the order or cooldown", _abilityTargeting
+                && _feedbackLabel.Text == "Outside deployment range." && ReviewState().Party[1].PendingAction == previousOrder
+                && ReviewState().Party[1].Combat!.Cooldowns.Single(cd => cd.AbilityId == _definition.Combat.Barrier.Id).RemainingTicks == 0);
+            await InputWorldClick(ToGodot(owner.Position), MouseButton.Left);
+            InputCheck("one click at Protector's feet uses his current facing", !_abilityTargeting
+                && ReviewState().Party[1].PendingAction?.AbilityFacing is { } atFeetFacing
+                && atFeetFacing.DistanceTo(owner.Facing) < .001);
+            await InputKey(Key.Key1);
             await InputWorldClick(barrierPosition, MouseButton.Left);
-            await InputWorldClick(barrierPosition + Vector3.Back * 2, MouseButton.Left);
-            InputCheck("second click queues the fixed barrier placement", !_abilityTargeting && ReviewState().Party[1].PendingAction?.AbilityFacing is { Z: > .9 });
+            var placed = ReviewState().Party[1].PendingAction;
+            InputCheck("first click queues the fixed barrier facing from Protector toward placement", !_abilityTargeting
+                && placed?.AbilityFacing is { Z: > .999 } && placed.Destination.DistanceTo(ToCore(barrierPosition)) < .01
+                && _barrierQueued.Visible && !_barrierPreview.Visible);
+            await InputPointerMotion(_camera.UnprojectPosition(barrierPosition + Vector3.Right * 2));
+            InputCheck("pointer movement after placement cannot move or turn the queued barrier", ReviewState().Party[1].PendingAction == placed
+                && _barrierQueued.GlobalPosition.DistanceTo(ToGodot(_definition.Combat.Barrier.CenterAt(placed!.Destination))) < .01
+                && -_barrierQueued.GlobalBasis.Z.Normalized().Dot(ToGodot(placed.AbilityFacing!.Value)) > .999);
+            await ReviewCapture("barrier-queued");
         }
         else { ReviewOrder(new UseAbilityCommand(new CommandId("party.barrier"), protector, _definition.Combat.Barrier.Id,
             new BarrierAbilityTarget(ToCore(barrierPosition), new WorldPosition(0, 0, 1)))); }
