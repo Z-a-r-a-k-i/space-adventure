@@ -19,6 +19,7 @@ import hashlib
 import json
 import math
 import os
+import struct
 import sys
 import tempfile
 import time
@@ -161,10 +162,31 @@ def material(
     principled.inputs["Base Color"].default_value = color
     principled.inputs["Metallic"].default_value = metallic
     principled.inputs["Roughness"].default_value = roughness
+    vertex_color = result.node_tree.nodes.new("ShaderNodeVertexColor")
+    vertex_color.layer_name = "COLOR_0"
+    multiply = result.node_tree.nodes.new("ShaderNodeMix")
+    multiply.data_type = "RGBA"
+    multiply.blend_type = "MULTIPLY"
+    multiply.inputs[0].default_value = 1.0
+    multiply.inputs[6].default_value = color
+    result.node_tree.links.new(vertex_color.outputs["Color"], multiply.inputs[7])
+    result.node_tree.links.new(multiply.outputs[2], principled.inputs["Base Color"])
     if emission > 0:
         principled.inputs["Emission Color"].default_value = color
         principled.inputs["Emission Strength"].default_value = emission
     return result
+
+
+def tint_mesh(obj: bpy.types.Object, tint: tuple[float, float, float, float]) -> bpy.types.Object:
+    # Match the exported channel name so Blender 5.2 retains the same color
+    # attribute across every material slot of a joined mesh.
+    colors = obj.data.color_attributes.get("COLOR_0")
+    if colors is None:
+        colors = obj.data.color_attributes.new(name="COLOR_0", type="BYTE_COLOR", domain="CORNER")
+    for color in colors.data:
+        color.color = tint
+    obj.data.update()
+    return obj
 
 
 def reset_scene() -> None:
@@ -189,6 +211,7 @@ def add_box(
     bevel: float = 0.035,
     bevel_segments: int = 2,
     rotation: tuple[float, float, float] = (0.0, 0.0, 0.0),
+    tint: tuple[float, float, float, float] = (1, 1, 1, 1),
 ) -> bpy.types.Object:
     # Authoring arguments use the Godot/glTF contract (+Y up, -Z front).
     blender_location = (location[0], -location[2], location[1])
@@ -208,7 +231,7 @@ def add_box(
         bpy.ops.object.modifier_apply(modifier=modifier.name)
     for polygon in obj.data.polygons:
         polygon.use_smooth = False
-    return obj
+    return tint_mesh(obj, tint)
 
 
 def join(name: str, objects: list[bpy.types.Object]) -> bpy.types.Object:
@@ -258,9 +281,20 @@ def wall(
         along = -length / 2 + (index + 0.5) * step
         def detail(suffix, elevation, span, thickness, surface, bevel=0.012):
             for side in (-1, 1):
+                if (name == "Wall_Protector_South" and side == 1 and index in (1, 2)
+                    or name == "Wall_Main_SouthEast" and side == 1):
+                    continue
                 location = (x + side * (width / 2 + thickness / 2), elevation, z + along) if vertical else (x + along, elevation, z + side * (depth / 2 + thickness / 2))
                 size = (thickness, 0.70, span) if vertical else (span, 0.70, thickness)
-                pieces.append(add_box(f"{name}.{suffix}_{index}_{side}", location, size, surface, bevel=bevel, bevel_segments=1))
+                tint = (1, 1, 1, 1)
+                if name.startswith("Wall_Protector") and suffix == "panel_upper":
+                    surface, tint = armor, (0.70, 0.50, 0.29, 1)
+                elif name in ("Wall_Solo_South", "Wall_Solo_West") and suffix == "panel_lower":
+                    surface, tint = armor, (0.47, 0.44, 0.34, 1)
+                elif name.startswith("Wall_Final") and suffix == "panel_upper":
+                    surface, tint = armor, (0.45, 0.62, 0.54, 1)
+                pieces.append(add_box(f"{name}.{suffix}_{index}_{side}", location, size, surface,
+                    bevel=bevel, bevel_segments=1, tint=tint))
         detail("panel_lower", 0.90, step - 0.20, 0.035, deck)
         detail("panel_upper", 1.77, step - 0.20, 0.035, deck)
         # Short luminaires punctuate the base instead of washing entire walls.
@@ -269,11 +303,47 @@ def wall(
                 location = (x + side * (width / 2 + 0.026), 0.43, z + along) if vertical else (x + along, 0.43, z + side * (depth / 2 + 0.026))
                 size = (0.025, 0.065, min(0.68, step - 0.3)) if vertical else (min(0.68, step - 0.3), 0.065, 0.025)
                 pieces.append(add_box(f"{name}.light_{index}_{side}", location, size, cyan, bevel=0))
-        if index > 0:
+        if index > 0 and not (name == "Wall_Protector_South" and index == 2
+                             or name == "Wall_Main_SouthEast"):
             offset = -length / 2 + index * step
             location = (x, 1.30, z + offset) if vertical else (x + offset, 1.30, z)
             size = (width + 0.10, 2.18, 0.12) if vertical else (0.12, 2.18, depth + 0.10)
             pieces.append(add_box(f"{name}.rib_{index}", location, size, armor, bevel=0.018, bevel_segments=1))
+    # Large inset assemblies identify rooms, while remaining in the wall's
+    # existing cutaway mesh and outside the navigable deck.
+    if name == "Wall_Protector_South":
+        for index, locker_x in enumerate((-2.65, -1.5, -0.35)):
+            pieces.append(add_box(f"crew_locker_{index}", (locker_x, 1.23, -3.165),
+                (1.02, 2.12, 0.362), armor, bevel=0.06, bevel_segments=1,
+                tint=(0.90, 0.53, 0.27, 1)))
+            pieces.append(add_box(f"crew_locker_inset_{index}", (locker_x, 1.37, -2.974),
+                (0.70, 1.22, 0.012), dark, bevel=0.035, bevel_segments=1))
+            pieces.append(add_box(f"crew_locker_handle_{index}", (locker_x + 0.22, 1.14, -2.957),
+                (0.07, 0.38, 0.012), armor, bevel=0.008, bevel_segments=1))
+            pieces.append(add_box(f"crew_locker_vent_{index}", (locker_x, 2.07, -2.975),
+                (0.58, 0.13, 0.02), armor, bevel=0, tint=(0.32, 0.38, 0.40, 1)))
+        pieces.append(add_box("crew_locker_header", (-1.5, 2.47, -2.957),
+            (3.9, 0.25, 0.012), armor, bevel=0.035, bevel_segments=1,
+            tint=(0.90, 0.53, 0.27, 1)))
+    elif name == "Wall_Main_SouthEast":
+        pieces.append(add_box("transit_power_backplate", (4, 1.28, 2.835),
+            (3.7, 2.2, 0.362), armor, bevel=0.08, bevel_segments=1,
+            tint=(0.37, 0.65, 0.66, 1)))
+        for index, fan_x in enumerate((3.15, 4.85)):
+            bpy.ops.mesh.primitive_cylinder_add(vertices=12, radius=0.67, depth=0.022,
+                location=(fan_x, -3.031, 1.36), rotation=(math.pi / 2, 0, 0))
+            fan = bpy.context.object
+            fan.name = f"transit_extractor_{index}"
+            fan.data.materials.append(dark)
+            pieces.append(tint_mesh(fan, (1, 1, 1, 1)))
+            for angle in (0, math.pi / 3, 2 * math.pi / 3):
+                pieces.append(add_box(f"transit_extractor_grille_{index}_{angle:.2f}",
+                    (fan_x, 1.36, 3.047), (1.16, 0.10, 0.004), armor,
+                    bevel=0.012, bevel_segments=1, rotation=(0, angle, 0),
+                    tint=(0.48, 0.58, 0.59, 1)))
+        pieces.append(add_box("transit_power_header", (4, 2.53, 3.043),
+            (3.90, 0.25, 0.012), armor, bevel=0.04, bevel_segments=1,
+            tint=(0.37, 0.65, 0.66, 1)))
     result = join(name, pieces)
     result["camera_occluder"] = True
     result["occluder_id"] = occluder_id
@@ -291,7 +361,8 @@ def floor_panel(
     x, y, z = center
     width, height, depth = dimensions
     pieces = [add_box(f"{name}.base", center, dimensions, dark, bevel=0.045)]
-    columns, rows = max(1, round(width / 2)), max(1, round(depth / 2))
+    panel_span = 3 if name in ("Floor_SoloCombatArena", "Floor_MainPartyArena") else 2
+    columns, rows = max(1, round(width / panel_span)), max(1, round(depth / panel_span))
     for column in range(columns):
         for row in range(rows):
             panel_x = x - width / 2 + (column + 0.5) * width / columns
@@ -308,14 +379,29 @@ def floor_panel(
             (0.16, 0.024, depth - 0.10), armor, bevel=0.012))
         pieces.append(add_box(f"{name}.edge_z_{side}", (x, 0.020, z + side * (depth / 2 - 0.11)),
             (width - 0.10, 0.024, 0.16), armor, bevel=0.012))
+    thresholds = {
+        "Floor_StartRoom": (-10, 4.35, False),
+        "Floor_SoloCombatArena": (-5.35, 0, True),
+        "Floor_ProtectorRoom": (0, 2.67, False),
+        "Floor_FinalAirlockApproach": (11.55, 8, True),
+    }
+    if name in thresholds:
+        tx, tz, vertical = thresholds[name]
+        pieces.append(add_box(f"{name}.threshold", (tx, 0.030, tz),
+            (0.34, 0.010, 2.42) if vertical else (2.42, 0.010, 0.34), armor,
+            bevel=0, tint=(0.54, 0.50, 0.40, 1)))
+        for index, (across, length) in enumerate(((-0.87, 0.23), (-0.35, 0.35), (0.4, 0.19), (0.87, 0.3))):
+            location = (tx, 0.037, tz + across) if vertical else (tx + across, 0.037, tz)
+            size = (0.22, 0.004, length) if vertical else (length, 0.004, 0.22)
+            pieces.append(add_box(f"{name}.threshold_wear_{index}", location, size, deck, bevel=0))
     return join(name, pieces)
 
 
 def build_structure() -> tuple[str, str, list[str], int, int]:
     asset_id = "kit.station.structure.v2"
-    dark = material("mat.station.structure.dark", (0.026, 0.045, 0.070, 1), metallic=0.42, roughness=0.58)
-    armor = material("mat.station.structure.armor", (0.24, 0.26, 0.27, 1), metallic=0.48, roughness=0.58)
-    deck = material("mat.station.structure.deck", (0.038, 0.055, 0.073, 1), metallic=0.30, roughness=0.72)
+    dark = material("mat.station.structure.dark", (0.036, 0.046, 0.057, 1), metallic=0.32, roughness=0.76)
+    armor = material("mat.station.structure.armor", (0.30, 0.29, 0.27, 1), metallic=0.48, roughness=0.62)
+    deck = material("mat.station.structure.deck", (0.050, 0.057, 0.064, 1), metallic=0.14, roughness=0.86)
     cyan = material("mat.station.structure.route_cyan", (0.035, 0.26, 0.30, 1), metallic=0.16, roughness=0.50, emission=1.2)
 
     objects: list[bpy.types.Object] = [
@@ -387,21 +473,22 @@ def build_service_surround() -> tuple[str, str, list[str], int, int]:
     asset_id = "assembly.station.service_surround.v1"
     # A small baked fill keeps the service recesses legible beneath cast shadows.
     shell = material("mat.station.surround.shell", (0.012, 0.021, 0.031, 1), metallic=0.25, roughness=0.86, emission=0.22)
-    frame = material("mat.station.surround.frame", (0.040, 0.063, 0.081, 1), metallic=0.40, roughness=0.72, emission=0.10)
-    equipment = material("mat.station.surround.equipment", (0.075, 0.091, 0.10, 1), metallic=0.48, roughness=0.65, emission=0.07)
-    lamp = material("mat.station.surround.utility_amber", (0.38, 0.15, 0.045, 1), metallic=0.0, roughness=0.70, emission=0.7)
+    frame = material("mat.station.surround.frame", (0.028, 0.040, 0.049, 1), metallic=0.30, roughness=0.84, emission=0.05)
+    equipment = material("mat.station.surround.equipment", (0.070, 0.078, 0.081, 1), metallic=0.42, roughness=0.78, emission=0.025)
+    lamp = material("mat.station.surround.utility_amber", (0.27, 0.105, 0.032, 1), metallic=0.0, roughness=0.70, emission=0.45)
     groups: dict[str, list[bpy.types.Object]] = {name: [] for name in
         ("Surround_Foundations", "Surround_ServiceBed", "Surround_Machinery", "Surround_UtilityLights")}
 
-    def box(group, name, location, size, surface, bevel=0.0):
-        groups[group].append(add_box(name, location, size, surface, bevel=bevel, bevel_segments=1))
+    def box(group, name, location, size, surface, bevel=0.0, tint=(1, 1, 1, 1)):
+        groups[group].append(add_box(name, location, size, surface, bevel=bevel, bevel_segments=1, tint=tint))
 
     # Deep continuous backing covers camera orbit/zoom, with large-scale seams
     # instead of the small floor tiles reserved for the playable route.
     box("Surround_ServiceBed", "service_basin", (0, -5.1, 0), (256, 0.3, 256), shell)
     for offset in range(-120, 121, 12):
-        box("Surround_ServiceBed", f"longitudinal_{offset}", (offset, -4.9, 0), (0.32, 0.26, 256), frame)
-        box("Surround_ServiceBed", f"transverse_{offset}", (0, -4.9, offset), (256, 0.26, 0.32), frame)
+        surface = frame if abs(offset) <= 24 else shell
+        box("Surround_ServiceBed", f"longitudinal_{offset}", (offset, -4.9, 0), (0.32, 0.26, 256), surface)
+        box("Surround_ServiceBed", f"transverse_{offset}", (0, -4.9, offset), (256, 0.26, 0.32), surface)
 
     # Five separate deck foundations match the authored rooms, all below y=-.20.
     rooms = [(-10, 7, 6, 6), (-10, 0, 10, 8), (-1.5, 0, 7, 6), (0, 8, 12, 10), (9, 8, 6, 6)]
@@ -420,23 +507,35 @@ def build_service_surround() -> tuple[str, str, list[str], int, int]:
              (11, 15, 1), (16, 7, 0), (8, 0, 1), (-1, -7, 1), (-10, -8, 1),
              (-23, -9, 0), (22, -7, 0), (-18, 22, 1), (15, 25, 1)]
     for index, (x, z, across) in enumerate(banks):
-        if index in (2, 6, 8, 11):
+        if index in (2, 6, 8, 11, 10, 12, 13):
             continue  # These locations have cylindrical coolant reservoirs below.
+        breadth, length, height_scale = {
+            0: (0.85, 0.72, 0.62), 1: (0.72, 1.0, 0.85),
+            3: (1.18, 0.74, 1.25), 4: (1.18, 1.15, 1.75),
+            5: (0.75, 0.70, 0.72), 7: (0.82, 0.68, 0.70),
+            9: (1.08, 0.84, 1.1),
+        }[index]
         def part(name, dx, y, dz, width, height, depth, surface, bevel=0):
-            location = (x + (dz if across else dx), y, z + (dx if across else dz))
-            size = (depth, height, width) if across else (width, height, depth)
-            box("Surround_Machinery", f"bank_{index}_{name}", location, size, surface, bevel)
+            dx, dz = dx * breadth, dz * length
+            scale_y = height_scale
+            elevation = -4.8 + (y + 4.8) * scale_y
+            location = (x + (dz if across else dx), elevation, z + (dx if across else dz))
+            size = (depth * length, height * scale_y, width * breadth) if across else (width * breadth, height * scale_y, depth * length)
+            tint = (0.78, 0.85, 0.88, 1) if index == 4 else (0.66, 0.63, 0.57, 1)
+            box("Surround_Machinery", f"bank_{index}_{name}", location, size, surface, bevel, tint)
         part("plinth", 0, -4.45, 0, 3.3, 0.65, 6.8, frame, 0.12)
         part("housing", 0, -3.5, 0, 2.8, 1.4, 6.2, shell, 0.18)
         part("recess", 0, -2.77, 0, 2.3, 0.10, 5.5, shell)
         for side in (-1, 1):
             part(f"rail_{side}", side * 1.30, -2.67, 0, 0.22, 0.30, 6.0, equipment, 0.04)
-        for rib in range(9):
-            part(f"louver_{rib}", 0, -2.67, (rib - 4) * 0.57, 2.3, 0.22, 0.20, frame)
+        for rib in range(5):
+            part(f"louver_{rib}", 0, -2.67, (rib - 2) * 1.05, 2.3, 0.22, 0.30, frame)
         # Only one end is lit; no route-like continuous luminous lines.
-        light_at = (x + (2.95 if across else 0), -2.69, z + (0 if across else 2.95))
+        lamp_height = -4.8 + (-2.69 + 4.8) * height_scale
+        light_at = (x + (2.95 * length if across else 0), lamp_height, z + (0 if across else 2.95 * length))
         light_size = (0.12, 0.06, 0.70) if across else (0.70, 0.06, 0.12)
-        box("Surround_UtilityLights", f"bank_light_{index}", light_at, light_size, lamp)
+        if index in (3, 4, 7):
+            box("Surround_UtilityLights", f"bank_light_{index}", light_at, light_size, lamp)
 
     # Bundled octagonal coolant pipes, with supports and collars at a readable scale.
     def pipe(name, start, end, radius, surface):
@@ -448,9 +547,10 @@ def build_service_surround() -> tuple[str, str, list[str], int, int]:
         obj.rotation_euler = direction.to_track_quat("Z", "Y").to_euler()
         obj.data.materials.append(surface)
         bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
-        groups["Surround_Machinery"].append(obj)
+        distance_tint = (0.45, 0.48, 0.50, 1) if max(abs(start[0]), abs(start[2])) > 20 else (0.75, 0.78, 0.76, 1)
+        groups["Surround_Machinery"].append(tint_mesh(obj, distance_tint))
 
-    for index in (2, 6, 8, 11):
+    for index in (2, 6, 8):
         x, z, across = banks[index]
         def tank_point(cross, along, height=-3.25):
             return (x + (along if across else cross), height, z + (cross if across else along))
@@ -543,13 +643,13 @@ def build_service_door() -> tuple[str, str, list[str], int, int]:
             "mat.station.service_door.dark",
             (0.025, 0.042, 0.065, 1),
             metallic=0.46,
-            roughness=0.50,
+            roughness=0.78,
         ),
         "armor": material(
             "mat.station.service_door.armor",
-            (0.25, 0.29, 0.32, 1),
-            metallic=0.62,
-            roughness=0.38,
+            (0.33, 0.31, 0.27, 1),
+            metallic=0.50,
+            roughness=0.58,
         ),
         "status": material(
             "mat.station.service_door.status_amber",
@@ -583,6 +683,23 @@ def build_service_door() -> tuple[str, str, list[str], int, int]:
             ("control.status", (1.355, 1.36, -0.165), (0.10, 0.13, 0.02), "status", 0.008),
         ),
     }
+    for side_name, x in (("Left", -0.625), ("Right", 0.625)):
+        key = f"Door_{side_name}"
+        extra: list[BoxSpec] = []
+        for front in (-1, 1):
+            if front == 1:
+                extra.append((f"{side_name}.rear_panel", (x, 1.28, 0.105),
+                    (0.94, 1.66, 0.03), "armor", 0.025))
+            extra.append((f"{side_name}.band_{front}", (x, 1.42, front * 0.124),
+                (0.90, 0.20, 0.008), "dark", 0))
+            for index, (offset, width) in enumerate(((-0.19, 0.23), (0.13, 0.38), (0.30, 0.12))):
+                extra.append((f"{side_name}.wear_{front}_{index}",
+                    (x + offset, 0.49 + index * 0.09, front * 0.124),
+                    (width, 0.018, 0.008), "dark", 0))
+        part_specs[key] += tuple(extra)
+    for side in (-1, 1):
+        part_specs["Frame"] += ((f"frame.threshold_edge_{side}",
+            (0, 0.154, side * 0.135), (2.40, 0.008, 0.06), "armor", 0),)
     status_spec: BoxSpec = (
         "Status_Strip",
         (0, 2.515, -0.16),
@@ -753,6 +870,12 @@ def save_export_and_validate(
                 f"{asset_id} has {len(materials)} materials; budget is {material_budget}"
             )
         source_bounds = mesh_bounds_godot()
+        expected_colors = {name: tuple(bpy.data.materials[name].diffuse_color) for name in materials}
+        expected_vertex_colors = {
+            obj.name: {tuple(round(channel, 3) for channel in sample.color[:3])
+                       for sample in obj.data.color_attributes["COLOR_0"].data}
+            for obj in mesh_objects
+        }
         expected_occluders = {
             obj.name: str(obj["occluder_id"])
             for obj in mesh_objects
@@ -760,6 +883,7 @@ def save_export_and_validate(
         }
 
         bpy.ops.wm.save_as_mainfile(filepath=str(staged_source), check_existing=False)
+        bpy.context.view_layer.update()
         bpy.ops.export_scene.gltf(
             filepath=str(staged_publication),
             export_format="GLB",
@@ -768,7 +892,23 @@ def save_export_and_validate(
             export_extras=True,
             export_cameras=False,
             export_lights=False,
+            export_vertex_color="ACTIVE",
+            export_all_vertex_colors=False,
         )
+
+        with staged_publication.open("rb") as exported:
+            exported.seek(12)
+            json_length, chunk_kind = struct.unpack("<II", exported.read(8))
+            if chunk_kind != 0x4E4F534A:
+                raise RuntimeError("Published GLB has no leading JSON chunk")
+            payload = json.loads(exported.read(json_length))
+        for exported_material in payload["materials"]:
+            color = exported_material.get("pbrMetallicRoughness", {}).get("baseColorFactor", (1, 1, 1, 1))
+            if any(abs(actual - expected) > 0.0001 for actual, expected in
+                   zip(color, expected_colors[exported_material["name"]], strict=True)):
+                raise RuntimeError(f"Published GLB lost the base color for {exported_material['name']}")
+        if any("COLOR_0" not in primitive["attributes"] for mesh in payload["meshes"] for primitive in mesh["primitives"]):
+            raise RuntimeError("Published GLB lost an authored vertex-color layer")
 
         reset_scene()
         bpy.ops.import_scene.gltf(filepath=str(staged_publication))
@@ -776,6 +916,11 @@ def save_export_and_validate(
             obj for obj in bpy.context.scene.objects if obj.type == "MESH"
         ]
         imported_names = sorted(obj.name for obj in imported_meshes)
+        for obj in imported_meshes:
+            imported_colors = {tuple(round(channel, 3) for channel in sample.color[:3])
+                               for sample in obj.data.color_attributes[0].data}
+            if imported_colors != expected_vertex_colors[obj.name]:
+                raise RuntimeError(f"Fresh GLB reimport changed vertex colors for {obj.name}")
         expected_sorted_names = sorted(expected_names)
         if imported_names != expected_sorted_names:
             missing_names = sorted(set(expected_sorted_names) - set(imported_names))

@@ -10,7 +10,7 @@ public partial class GameHost
 
     private void InputCheck(string name, bool passed)
     {
-        if (!passed) { throw new InvalidOperationException($"Graphical input check failed: {name}. Human commands: {_humanCommandSequence}; feedback: {_feedbackLabel.Text}"); }
+        if (!passed) { throw new InvalidOperationException($"Graphical input check failed: {name}. Human commands: {_humanCommandSequence}; feedback: {_feedbackLabel.Text}; aiming: {_abilityTargeting}; pointer: {GetViewport().GetMousePosition()}; context visible: {_abilityContext?.Visible}; context: {_abilityContextDetail?.Text}"); }
         _inputReviewChecks.Add(name);
     }
 
@@ -52,10 +52,26 @@ public partial class GameHost
         InputCheck("field manual fits viewport", GetViewport().GetVisibleRect().Encloses(
             _controlsOverlay.GetChild<PanelContainer>(0).GetGlobalRect()));
         var commands = _humanCommandSequence;
+        var audioBus = AudioServer.GetBusIndex("Master");
+        var volume = _masterVolume.Value;
+        var muted = AudioServer.IsBusMute(audioBus);
+        await InputKey(Key.Minus);
+        InputCheck("manual volume changes the audio bus", _masterVolume.Value == Math.Max(0, volume - 5)
+            && AudioServer.GetBusVolumeDb(audioBus) < 0);
+        await InputKey(Key.Equal);
+        await InputKey(Key.M);
+        InputCheck("manual mute reaches audio bus", AudioServer.IsBusMute(audioBus) != muted);
+        await InputKey(Key.M);
+        InputCheck("manual unmute restores audio state", AudioServer.IsBusMute(audioBus) == muted
+            && _masterVolume.Value == volume);
+        await InputKey(Key.Tab);
+        InputCheck("manual Tab focuses volume", _masterVolume.HasFocus());
+        await InputKey(Key.Tab, shift: true);
         await InputKey(Key.Space);
         await InputKey(Key.Key1);
         await InputClick(new Vector2(20, 300), MouseButton.Right);
-        InputCheck("field manual blocks gameplay input", _session!.IsPaused && _humanCommandSequence == commands && !_abilityTargeting);
+        InputCheck("field manual blocks gameplay input", _controlsOverlay.Visible && _session!.IsPaused
+            && _humanCommandSequence == commands && !_abilityTargeting);
         await InputKey(Key.Escape);
         InputCheck("field manual closes and restores camera input", !_controlsOverlay.Visible && !_controlsScrim.Visible
             && _camera.InputEnabled == cameraEnabled);
@@ -166,6 +182,8 @@ public partial class GameHost
         // ParseInputEvent enters at window coordinates; the viewport then applies
         // its stretch transform. Control/world projections above are local.
         var windowPosition = GetViewport().GetFinalTransform() * position;
+        // Move the pointer through the same viewport event path used by hover previews.
+        await InputPointerMotion(position);
         Input.ParseInputEvent(new InputEventMouseButton { Position = windowPosition, GlobalPosition = windowPosition, ButtonIndex = button, Pressed = true, ShiftPressed = Input.IsKeyPressed(Key.Shift), AltPressed = alt });
         Input.ParseInputEvent(new InputEventMouseButton { Position = windowPosition, GlobalPosition = windowPosition, ButtonIndex = button, Pressed = false, ShiftPressed = Input.IsKeyPressed(Key.Shift), AltPressed = alt });
         await InputFrame();
@@ -194,11 +212,22 @@ public partial class GameHost
         InputCheck("survivor right click creates human order", ReviewState().Protagonist.PendingAction?.CommandId.Value.StartsWith("input.", StringComparison.Ordinal) == true);
         await ReviewUntil(state => state.ActiveDialogue is not null, 300, fast: true);
         await CheckUnavailableStop("dialogue");
+        var dialogueSequence = _humanCommandSequence;
+        var dialoguePaused = _session.IsPaused;
+        var dialogueSelection = _focusedActorId;
+        await InputKey(Key.Space);
+        await InputKey(Key.Tab);
+        InputCheck("dialogue isolates pause and crew focus", _session.IsPaused == dialoguePaused
+            && _humanCommandSequence == dialogueSequence && _focusedActorId == dialogueSelection && !_camera.InputEnabled);
+        InputCheck("dialogue Tab selects the second response", _dialogueResponses.GetChild<Button>(1).HasFocus());
+        await InputKey(Key.Up);
+        InputCheck("dialogue arrows return to first response", _dialogueResponses.GetChild<Button>(0).HasFocus());
         InputCheck("dialogue fits the viewport", GetViewport().GetVisibleRect().Encloses(
             _dialogueOverlay.GetChild<PanelContainer>(0).GetGlobalRect()));
         await ReviewCapture("dialogue");
         await InputKey(Key.Key1);
         InputCheck("dialogue number key selects route", ReviewState().ActiveDialogue is null);
+        InputCheck("closing dialogue restores camera input", _camera.InputEnabled);
         await InputInteraction("interaction.service_door.entry");
         await ReviewUntil(state => state.Interactions.Single(item => item.Id.Value == "interaction.service_door.entry").State
             == InteractionState.Completed, 300, fast: true);
@@ -265,9 +294,10 @@ public partial class GameHost
             await InputClick(button.GetCenter(), MouseButton.Left);
             InputCheck("retry button creates a new attempt", ReviewState().Encounter!.Attempt == 2
                 && ReviewState().Protagonist.Combat!.Health == ReviewState().Protagonist.Combat!.MaximumHealth);
+            CheckRetryHumanoidPose();
             await ReviewTicks(_definition!.Combat.SoloEncounter.ReadyingTicks);
             await ReviewCapture("retry");
-            FinishSoloReview();
+            await FinishSoloReview();
             return;
         }
 
@@ -288,22 +318,29 @@ public partial class GameHost
         for (var frame = 0; frame < 12; frame++) { await InputFrame(); }
         InputCheck("tactical pause freezes the projectile across rendered frames", _session.IsPaused
             && _session.Tick == projectileTick && projectile.Position.IsEqualApprox(projectilePosition));
+        InputCheck("tactical pause freezes combat audio", _combatPresentationEffects.Select(effect => effect.Node)
+            .OfType<AudioStreamPlayer3D>().All(player => !player.HasMeta("started") || !player.Playing || player.StreamPaused));
         _reviewDrivesClock = true;
         _reviewSampleTick = _session.Tick;
         await ReviewTicks(1);
         InputCheck("projectile advances with the presentation tick", projectile.Progress > 0
             && projectile.Position.DistanceTo(projectilePosition) > 0.01f);
         var delayedImpact = _combatPresentationEffects.Single(effect => effect.BornTick == projectileEffect.BornTick
-            && effect.Node is MeshInstance3D && effect.DelaySeconds > 0);
+            && effect.Node is CombatContactEffect && effect.DelaySeconds > 0);
         var delayedNumber = _combatPresentationEffects.Single(effect => effect.BornTick == projectileEffect.BornTick
             && effect.Node is Label3D);
         InputCheck("impact flash waits for projectile arrival", !delayedImpact.Node.Visible);
         InputCheck("damage number waits with the impact flash", !delayedNumber.Node.Visible
             && delayedNumber.DelaySeconds == delayedImpact.DelaySeconds);
+        var delayedSound = _combatPresentationEffects.Single(effect => effect.BornTick == projectileEffect.BornTick
+            && effect.Node is AudioStreamPlayer3D && effect.DelaySeconds > 0);
+        InputCheck("hit audio waits with the visible contact", delayedSound.DelaySeconds == delayedImpact.DelaySeconds
+            && !delayedSound.Node.HasMeta("started"));
         await ReviewTicks((int)Math.Ceiling(projectile.FlightSeconds * GameSession.TicksPerSecond));
         InputCheck("arrival removes the bolt and reveals the impact", !_combatPresentationEffects.Contains(projectileEffect)
             && delayedImpact.Node.Visible);
         InputCheck("arrival reveals the damage number", delayedNumber.Node.Visible);
+        InputCheck("arrival starts the hit sound", delayedSound.Node.HasMeta("started"));
         // Wait for a strike that can actually be interrupted after our remaining
         // offensive recovery, instead of accepting the final frame of any windup.
         await ReviewUntil(state => state.Hostiles![0].CurrentAction is { Phase: PrimaryActionPhase.Windup } strike
@@ -348,6 +385,6 @@ public partial class GameHost
             && ReviewState().Interactions.Single(item => item.Id.Value == "interaction.evacuation_airlock").State == InteractionState.Unavailable);
         await InputKey(Key.F);
         await ReviewCapture("slice-complete");
-        FinishSoloReview();
+        await FinishSoloReview();
     }
 }

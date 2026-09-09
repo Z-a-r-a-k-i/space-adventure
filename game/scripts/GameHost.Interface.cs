@@ -9,12 +9,17 @@ public partial class GameHost
     private ColorRect _controlsScrim = null!;
     private CenterContainer _controlsOverlay = null!;
     private bool _cameraInputBeforeHelp;
+    private HSlider _masterVolume = null!;
+    private Label _masterVolumeLabel = null!;
+    private Button _muteButton = null!;
+    private ScrollContainer _manualScroll = null!;
+    private Button _manualCloseButton = null!;
     private Control _fieldOrderOverlay = null!;
     private readonly Dictionary<EntityId, FieldOrderView> _fieldOrders = [];
     private Control _worldHealthOverlay = null!;
     private readonly Dictionary<EntityId, WorldHealthView> _worldHealth = [];
 
-    private sealed record WorldHealthView(Control Root, ProgressBar Bar, Label Name, Label Status, StyleBoxFlat Fill);
+    private sealed record WorldHealthView(Control Root, ProgressBar Bar, Label Name, Label Status, StyleBoxFlat Fill, Line2D Leader);
 
     private sealed record FieldOrderView(PanelContainer Panel, Label Owner, Label Order, Line2D Leader,
         Label Destination, Line2D DestinationRing)
@@ -58,7 +63,7 @@ public partial class GameHost
         _dialogueResponses = new VBoxContainer();
         _dialogueResponses.AddThemeConstantOverride("separation", 7);
         dialogue.AddChild(_dialogueResponses);
-        dialogue.AddChild(TacticalUi.Eyebrow("1 / 2  Respond     ENTER  First response", "afc1c5"));
+        dialogue.AddChild(TacticalUi.Eyebrow("1 / 2  Respond     TAB / ARROWS  Focus     ENTER  Confirm", "afc1c5"));
     }
 
     private void CreateFieldOrderOverlay(CanvasLayer canvas)
@@ -75,8 +80,8 @@ public partial class GameHost
     {
         if (_worldHealth.TryGetValue(id, out var existing)) { return existing; }
         var root = new Control { MouseFilter = Control.MouseFilterEnum.Ignore, Visible = false };
-        var name = TacticalUi.Label("", 10, "ee907d");
-        var status = TacticalUi.Label("", 11, "e5bc7d");
+        var name = TacticalUi.Label("", 12, "ee907d");
+        var status = TacticalUi.Label("", 12, "e5bc7d");
         foreach (var label in new[] { name, status })
         {
             label.HorizontalAlignment = HorizontalAlignment.Center;
@@ -93,8 +98,11 @@ public partial class GameHost
             ShadowColor = new Color(0, 0, 0, .7f), ShadowSize = 2 };
         bar.AddThemeStyleboxOverride("background", background);
         root.AddChild(bar);
+        var leader = new Line2D { Width = 1.2f, DefaultColor = new Color(TacticalUi.Muted, .75f), Antialiased = true,
+            Visible = false };
+        _worldHealthOverlay.AddChild(leader);
         _worldHealthOverlay.AddChild(root);
-        var view = new WorldHealthView(root, bar, name, status, (StyleBoxFlat)bar.GetThemeStylebox("fill"));
+        var view = new WorldHealthView(root, bar, name, status, (StyleBoxFlat)bar.GetThemeStylebox("fill"), leader);
         _worldHealth.Add(id, view);
         return view;
     }
@@ -105,22 +113,31 @@ public partial class GameHost
 
     private void UpdateWorldHealth(StationRouteObservation route)
     {
-        foreach (var view in _worldHealth.Values) { view.Root.Visible = false; }
+        foreach (var view in _worldHealth.Values) { view.Root.Visible = view.Leader.Visible = false; }
         if (route.ActiveDialogue is not null || _controlsOverlay.Visible || _completionOverlay.Visible) { return; }
         var occupied = FieldHudBounds().ToList();
-        foreach (var actor in route.Party)
+        var hostiles = route.Hostiles ?? [];
+        foreach (var hostile in hostiles.Where(enemy => enemy.CurrentAction?.Phase == PrimaryActionPhase.Windup))
+        { ShowHostile(hostile); }
+        foreach (var actor in route.Party.OrderByDescending(actor => actor.Combat is { } combat && combat.Health <= combat.MaximumHealth * .3)
+            .ThenByDescending(actor => actor.Id == _focusedActorId))
         {
             if (actor.Combat is not { } combat) { continue; }
+            var name = $"{CrewNumber(route, actor.Id):00} {actor.DisplayName}" + (actor.Id == _focusedActorId ? " ▸" : "");
             ShowWorldHealth(actor.Id, _actorViews[actor.Id.Value], combat.Health, combat.MaximumHealth,
-                false, "", "", 1.8f, occupied);
+                false, name, combat.Health <= combat.MaximumHealth * .3 ? "LOW HEALTH" : "", 1.8f, occupied,
+                CrewAccent(route, actor));
         }
-        foreach (var hostile in route.Hostiles ?? [])
+        foreach (var hostile in hostiles.Where(enemy => enemy.CurrentAction?.Phase != PrimaryActionPhase.Windup))
+        { ShowHostile(hostile); }
+
+        void ShowHostile(HostileObservation hostile)
         {
             var action = hostile.CurrentAction;
             var target = route.Party.FirstOrDefault(actor => actor.Id == action?.CombatTargetId);
-            var attack = _enemyViews[hostile.Id].Sentry is null ? "hit" : "fires";
+            var attack = _enemyViews[hostile.Id].Sentry is null ? "STRIKE" : "SHOT";
             var status = action?.Phase == PrimaryActionPhase.Windup
-                ? $"{target?.DisplayName} · {attack} in {action.PhaseTicksRemaining / 30.0:0.0}s" : "";
+                ? $"{attack} → {target?.DisplayName} · {action.PhaseTicksRemaining / 30.0:0.0}s" : "";
             if (hostile.Combat.TauntedBy is not null)
             {
                 status = $"TAUNTED {hostile.Combat.TauntRemainingTicks / 30.0:0.0}s"
@@ -134,43 +151,50 @@ public partial class GameHost
     }
 
     private void ShowWorldHealth(EntityId id, Node3D actor, int health, int maximum, bool hostile,
-        string name, string status, float height, List<Rect2> occupied)
+        string name, string status, float height, List<Rect2> occupied, Color? crewAccent = null)
     {
         var view = WorldHealthFor(id, hostile);
         view.Bar.MaxValue = maximum;
         view.Bar.Value = health;
-        view.Fill.BgColor = hostile ? TacticalUi.Danger : health <= maximum * .3 ? TacticalUi.Amber : TacticalUi.Cyan;
+        var accent = hostile ? TacticalUi.Danger : crewAccent ?? TacticalUi.Cyan;
+        view.Fill.BgColor = health <= maximum * .3 ? TacticalUi.Amber : accent;
+        view.Name.AddThemeColorOverride("font_color", accent);
+        view.Leader.DefaultColor = new Color(accent, .7f);
         view.Name.Text = name;
-        view.Name.Visible = hostile;
         view.Status.Text = status;
         view.Status.Visible = status.Length > 0;
         if (health <= 0 || !actor.IsVisibleInTree()) { return; }
         var world = actor.GlobalPosition + Vector3.Up * height;
         if (_camera.IsPositionBehind(world)) { return; }
         var anchor = _camera.UnprojectPosition(world);
-        var textWidth = hostile ? Math.Max(
-            view.Name.GetThemeFont("font").GetStringSize(name, fontSize: 10).X,
-            view.Status.GetThemeFont("font").GetStringSize(status, fontSize: 11).X) + 4 : 0;
-        var fullSize = new Vector2(Math.Max(74, textWidth), hostile ? status.Length > 0 ? 44 : 25 : 8);
+        var textWidth = Math.Max(view.Name.GetThemeFont("font").GetStringSize(name, fontSize: 12).X,
+            view.Status.GetThemeFont("font").GetStringSize(status, fontSize: 12).X) + 8;
+        var fullSize = new Vector2(Math.Clamp(textWidth, 84, 250), status.Length > 0 ? 44 : 27);
         var viewport = GetViewport().GetVisibleRect().Grow(-4);
-        // Health takes precedence when a nearby crew bar or HUD leaves no room for the full name/status plate.
-        foreach (var size in hostile ? new[] { fullSize, new Vector2(74, 8) } : new[] { fullSize })
+        // Preserve an imminent threat or low-health warning before dropping to health alone.
+        var sizes = status.Length > 0 ? new[] { fullSize, new Vector2(fullSize.X, 27), new Vector2(84, 8) }
+            : new[] { fullSize, new Vector2(84, 8) };
+        foreach (var size in sizes)
         {
             view.Root.Size = size;
-            view.Name.Visible = hostile && size.Y > 8;
+            view.Name.Visible = size.Y > 8 && (status.Length == 0 || size.Y == fullSize.Y);
             view.Status.Visible = status.Length > 0 && size.Y > 8;
-            view.Name.Position = new Vector2(0, status.Length > 0 ? 18 : 0);
-            view.Name.Size = new Vector2(size.X, 14);
-            view.Status.Size = new Vector2(size.X, 16);
-            view.Bar.Position = new Vector2((size.X - 74) / 2, size.Y - 8);
-            view.Bar.Size = new Vector2(74, 8);
+            view.Name.Position = new Vector2(0, status.Length > 0 ? 17 : 0);
+            view.Name.Size = new Vector2(size.X, 17);
+            view.Status.Size = new Vector2(size.X, 17);
+            view.Bar.Position = new Vector2((size.X - 84) / 2, size.Y - 8);
+            view.Bar.Size = new Vector2(84, 8);
             var position = anchor - new Vector2(size.X / 2, size.Y + 6);
-            for (var attempt = 0; attempt < 3; attempt++)
+            var offsets = new Vector2[] { Vector2.Zero, new(0, -size.Y - 7), new(-size.X - 12, -10),
+                new(size.X + 12, -10), new(0, -2 * (size.Y + 7)), new(-size.X / 2 - 8, -size.Y - 20), new(size.X / 2 + 8, -size.Y - 20) };
+            foreach (var offset in offsets)
             {
-                var bounds = new Rect2(position - new Vector2(0, attempt * (size.Y + 4)), size);
+                var bounds = new Rect2(position + offset, size);
                 if (!viewport.Encloses(bounds) || occupied.Any(rect => rect.Intersects(bounds))) { continue; }
                 view.Root.Position = bounds.Position;
                 view.Root.Visible = true;
+                view.Leader.Visible = offset.LengthSquared() > 1;
+                view.Leader.Points = [anchor, new Vector2(Mathf.Clamp(anchor.X, bounds.Position.X, bounds.End.X), bounds.End.Y + 2)];
                 occupied.Add(bounds.Grow(3));
                 return;
             }
@@ -264,6 +288,12 @@ public partial class GameHost
             if (!viewport.HasPoint(anchor)) { continue; }
             var view = FieldOrderFor(actor.Id);
             view.Owner.Text = $"{index + 1:00}  {actor.DisplayName.ToUpperInvariant()} / NEXT";
+            var accent = CrewAccent(route, actor);
+            view.Owner.AddThemeColorOverride("font_color", accent);
+            ((StyleBoxFlat)view.Panel.GetThemeStylebox("panel")).BorderColor = accent;
+            view.Leader.DefaultColor = new Color(accent, .65f);
+            view.DestinationRing.DefaultColor = accent;
+            view.Destination.AddThemeColorOverride("font_color", accent);
             view.Order.Text = PendingOrderText(route, pending);
             var hasDestination = pending.Kind is PrimaryActionKind.Move or PrimaryActionKind.Interact or PrimaryActionKind.Attack
                 || pending.Kind == PrimaryActionKind.Ability && pending.AbilityId != _definition!.Combat.Taunt.Id;
@@ -340,16 +370,19 @@ public partial class GameHost
         panel.CustomMinimumSize = new Vector2(680, 0);
         panel.AddThemeStyleboxOverride("panel", TacticalUi.FieldPanel(TacticalUi.Cyan, bottom: true, margin: 28));
         _controlsOverlay.AddChild(panel);
-        var content = new VBoxContainer();
-        content.AddThemeConstantOverride("separation", 14);
-        panel.AddChild(content);
-        content.AddChild(TacticalUi.Eyebrow("FIELD MANUAL  /  CREW COMMAND", "8bddd9"));
+        _manualScroll = new ScrollContainer { CustomMinimumSize = new Vector2(680, 560),
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+        panel.AddChild(_manualScroll);
+        var content = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        content.AddThemeConstantOverride("separation", 8);
+        _manualScroll.AddChild(content);
+        content.AddChild(TacticalUi.Eyebrow("FIELD MANUAL  /  CREW COMMAND      ↑ / ↓ SCROLL", "8bddd9"));
         content.AddChild(TacticalUi.Label("Field operations", 26));
         content.AddChild(HudLabel("Pause with Space to plan. Each crew member keeps one queued order; a new order replaces it.", 14, "bdccd1"));
         content.AddChild(TacticalUi.Rule(TacticalUi.Cyan.Darkened(.5f)));
         var grid = new GridContainer { Columns = 2 };
         grid.AddThemeConstantOverride("h_separation", 28);
-        grid.AddThemeConstantOverride("v_separation", 10);
+        grid.AddThemeConstantOverride("v_separation", 8);
         content.AddChild(grid);
         foreach (var (key, meaning) in new[]
         {
@@ -369,8 +402,47 @@ public partial class GameHost
         }
         content.AddChild(TacticalUi.Rule(new Color("344651")));
         content.AddChild(TacticalUi.Label("Crew fire only at assigned targets. Escape cancels targeting.", 13, "e5bc7d"));
-        var close = HudButton("ESC   Return to station", ToggleControls);
-        content.AddChild(close);
+        content.AddChild(TacticalUi.Label("Interrupt stops wind-ups. Barrier blocks shots; Taunt draws nearby threats.", 13));
+        content.AddChild(TacticalUi.Label("Numbers identify crew. The portrait marked 1 / 2 owns the ability keys.", 13));
+        var audio = new HBoxContainer();
+        audio.AddThemeConstantOverride("separation", 14);
+        content.AddChild(audio);
+        _masterVolumeLabel = TacticalUi.Label("Sound 100%", 13);
+        _masterVolumeLabel.CustomMinimumSize = new Vector2(100, 0);
+        _masterVolumeLabel.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+        audio.AddChild(_masterVolumeLabel);
+        _masterVolume = new HSlider { MinValue = 0, MaxValue = 100, Step = 5, Value = 100,
+            CustomMinimumSize = new Vector2(220, 30), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            FocusMode = Control.FocusModeEnum.All };
+        audio.AddChild(_masterVolume);
+        _masterVolume.ValueChanged += _ => UpdateMasterVolume();
+        _muteButton = HudButton("M   Mute", ToggleMasterMute);
+        _muteButton.CustomMinimumSize = new Vector2(120, 32);
+        _muteButton.FocusMode = Control.FocusModeEnum.All;
+        audio.AddChild(_muteButton);
+        content.AddChild(TacticalUi.Label("− / +  Volume    M  Mute    TAB  Focus · Applies to this session", 12, "afc1c5"));
+        _manualCloseButton = HudButton("ESC   Return to station", ToggleControls);
+        _manualCloseButton.FocusMode = Control.FocusModeEnum.All;
+        content.AddChild(_manualCloseButton);
+        content.AddChild(TacticalUi.Label("Play stays paused after closing. Press Space when ready.", 12, "afc1c5"));
+    }
+
+    private void UpdateMasterVolume()
+    {
+        var bus = AudioServer.GetBusIndex("Master");
+        if (bus < 0) { return; }
+        AudioServer.SetBusVolumeDb(bus, _masterVolume.Value <= 0 ? -80 : Mathf.LinearToDb((float)_masterVolume.Value / 100));
+        var muted = AudioServer.IsBusMute(bus);
+        _masterVolumeLabel.Text = muted ? "Sound muted" : $"Sound {_masterVolume.Value:0}%";
+        _muteButton.Text = muted ? "M   Unmute" : "M   Mute";
+    }
+
+    private void ToggleMasterMute()
+    {
+        var bus = AudioServer.GetBusIndex("Master");
+        if (bus < 0) { return; }
+        AudioServer.SetBusMute(bus, !AudioServer.IsBusMute(bus));
+        UpdateMasterVolume();
     }
 
     private void ToggleControls()
@@ -387,7 +459,9 @@ public partial class GameHost
         if (!_session.IsPaused) { Dispatch(new SetPauseCommand(NextHumanCommandId("help.pause"), true)); }
         _cameraInputBeforeHelp = _camera.InputEnabled;
         _camera.InputEnabled = false;
+        _manualScroll.ScrollVertical = 0;
         _controlsOverlay.Visible = _controlsScrim.Visible = true;
+        _manualCloseButton.GrabFocus();
     }
 
     private bool HandleControlsInput(InputEvent @event)
@@ -400,8 +474,30 @@ public partial class GameHost
             GetViewport().SetInputAsHandled();
             return true;
         }
-        else if (_controlsOverlay.Visible && @event is InputEventKey)
+        else if (_controlsOverlay.Visible && @event is InputEventKey audioKey)
         {
+            if (audioKey.Pressed)
+            {
+                if (IsKey(audioKey, Key.Tab) && !audioKey.Echo)
+                {
+                    var controls = new Control[] { _masterVolume, _muteButton, _manualCloseButton };
+                    var index = Array.FindIndex(controls, control => control.HasFocus());
+                    var next = controls[(index + (audioKey.ShiftPressed ? controls.Length - 1 : 1)) % controls.Length];
+                    next.GrabFocus();
+                    _manualScroll.EnsureControlVisible(next);
+                }
+                else if ((IsKey(audioKey, Key.Enter) || IsKey(audioKey, Key.KpEnter)) && !audioKey.Echo)
+                { if (_muteButton.HasFocus()) { ToggleMasterMute(); } else if (!_masterVolume.HasFocus()) { ToggleControls(); } }
+                else if (IsKey(audioKey, Key.M) && !audioKey.Echo) { ToggleMasterMute(); }
+                else if (IsKey(audioKey, Key.Minus) || IsKey(audioKey, Key.KpSubtract)) { _masterVolume.Value -= 5; }
+                else if (IsKey(audioKey, Key.Equal) || IsKey(audioKey, Key.Plus) || IsKey(audioKey, Key.KpAdd)) { _masterVolume.Value += 5; }
+                else if (IsKey(audioKey, Key.Left) && _masterVolume.HasFocus()) { _masterVolume.Value -= 5; }
+                else if (IsKey(audioKey, Key.Right) && _masterVolume.HasFocus()) { _masterVolume.Value += 5; }
+                else if (IsKey(audioKey, Key.Up)) { _manualScroll.ScrollVertical -= 32; }
+                else if (IsKey(audioKey, Key.Down)) { _manualScroll.ScrollVertical += 32; }
+                else if (IsKey(audioKey, Key.Pageup)) { _manualScroll.ScrollVertical -= 200; }
+                else if (IsKey(audioKey, Key.Pagedown)) { _manualScroll.ScrollVertical += 200; }
+            }
             GetViewport().SetInputAsHandled();
             return true;
         }

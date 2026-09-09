@@ -8,6 +8,7 @@ public partial class GameHost
     private const uint CrewCollisionLayer = 16;
     private readonly Dictionary<EntityId, EnemyView> _enemyViews = [];
     private readonly Dictionary<EntityId, (MeshInstance3D Line, MeshInstance3D Ring)> _attackLinks = [];
+    private readonly Dictionary<EntityId, EnemyIntentCue> _enemyIntentCues = [];
 
     private void CachePartyCombatViews()
     {
@@ -19,6 +20,9 @@ public partial class GameHost
                 root.GetNode<CollisionObject3D>("TargetBody"), root.GetNode<MeshInstance3D>("ThreatRing"),
                 root.GetNodeOrNull<HumanoidPresentation>("Presentation"),
                 root.GetNodeOrNull<SentryPresentation>("Presentation")));
+            var cue = new EnemyIntentCue(); AddChild(cue);
+            cue.Build(root.GetNodeOrNull<SentryPresentation>("Presentation") is not null);
+            _enemyIntentCues.Add(new EntityId(GetStableId(root)), cue);
         }
         foreach (var actor in _actorViews.Values)
         {
@@ -100,6 +104,7 @@ public partial class GameHost
             var active = hostile is not null && route.Encounter?.Phase != EncounterPhase.Dormant;
             view.Root.Visible = active;
             view.Target.CollisionLayer = active && !hostile!.Combat.IsDefeated ? HostileCollisionLayer : 0;
+            _enemyIntentCues[id].Visible = false;
             if (!active) { continue; }
             view.Root.GlobalPosition = SamplePosition(id, hostile!.Position, observation.Tick, route.Encounter!.Attempt);
             var action = hostile.CurrentAction;
@@ -114,9 +119,18 @@ public partial class GameHost
                     : action?.HasRemainingMovement == true ? HumanoidPresentationAction.Locomotion : HumanoidPresentationAction.Idle;
             view.Humanoid?.Synchronize(true, pose, observation.Paused, direction,
                 presentationTick: _presentationTick, clipSeconds: EnforcerClipSeconds(action),
-                cycle: action?.InstanceId ?? route.Encounter.Attempt, turnDeltaSeconds: _presentationDeltaSeconds);
+                cycle: action?.InstanceId ?? route.Encounter.Attempt, turnDeltaSeconds: _presentationDeltaSeconds,
+                snapToPose: route.Encounter.Phase == EncounterPhase.Readying);
+            if (!hostile.Combat.IsDefeated && pose == HumanoidPresentationAction.MeleeStrike)
+            { view.Humanoid?.FaceDirection(direction, _presentationDeltaSeconds); }
             view.Sentry?.Synchronize(hostile, targetPosition + Vector3.Up * 1.1f, _presentationTick, _presentationDeltaSeconds);
-            view.Threat.Visible = !hostile.Combat.IsDefeated && action?.Phase == PrimaryActionPhase.Windup;
+            view.Threat.Visible = false;
+            var winding = !hostile.Combat.IsDefeated && target?.Combat?.IsDefeated == false
+                && action is { Phase: PrimaryActionPhase.Windup, Interrupted: false }
+                && route.Encounter.Phase == EncounterPhase.Active;
+            _enemyIntentCues[id].Sample(winding, view.Root.GlobalPosition,
+                target is null ? targetPosition : _actorViews[target.Id.Value].GlobalPosition,
+                action is null ? 0 : (float)Math.Clamp((_presentationTick - action.PhaseStartedTick) / Math.Max(1, action.PhaseTicksTotal), 0, 1));
             if (view.Root.GetNodeOrNull<Label3D>("Label") is Label3D label) { label.Visible = false; }
         }
         SynchronizeBarrier(route);

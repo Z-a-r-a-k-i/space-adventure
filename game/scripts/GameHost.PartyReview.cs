@@ -30,6 +30,12 @@ public partial class GameHost
         await ReviewWaitForPath(ReviewState().Interactions.Single(item => item.Id.Value == "interaction.protector").ApproachPosition);
         ReviewOrder(new InteractCommand(new CommandId("party.setup.protector"), protagonist, new EntityId("interaction.protector")));
         await ReviewUntil(state => state.ActiveDialogue is not null, 300, fast: true);
+        if (_reviewCheckpoint == "recruitment")
+        {
+            _camera.DistanceMeters = float.Parse(ReviewArgument("review-distance", "14.5"), System.Globalization.CultureInfo.InvariantCulture);
+            _camera.FocusOn(ToGodot(ReviewState().Protagonist.Position));
+            if (await ReviewCapture("recruitment")) { return; }
+        }
         ReviewOrder(new ChooseDialogueResponseCommand(new CommandId("party.setup.recruit"), protagonist,
             new EntityId("interaction.protector"), new DialogueResponseId("response.recruit_protector")));
         await ReviewWaitForPath(new WorldPosition(0, 0, 5));
@@ -99,9 +105,10 @@ public partial class GameHost
             InputCheck("retry restores both members and hostiles", ReviewState().Encounter!.Attempt == 2
                 && ReviewState().Party.All(actor => actor.Combat!.Health == actor.Combat.MaximumHealth)
                 && ReviewState().Hostiles!.All(hostile => hostile.Combat.Health == hostile.Combat.MaximumHealth));
+            CheckRetryHumanoidPose();
             if (await ReviewCapture("retry")) { return; }
             if (_reviewMode == "input") { CheckWorldHealth("party retry"); }
-            FinishSoloReview();
+            await FinishSoloReview();
             return;
         }
 
@@ -148,7 +155,9 @@ public partial class GameHost
             var distantFloor = ToGodot(owner.Position) + Vector3.Back * (float)(_definition.Combat.Barrier.RangeMeters + 1);
             await InputWorldClick(distantFloor, MouseButton.Left);
             InputCheck("invalid first click keeps placement active without changing the order or cooldown", _abilityTargeting
-                && _feedbackLabel.Text == "Outside deployment range." && ReviewState().Party[1].PendingAction == previousOrder
+                && _feedbackLabel.Text.StartsWith("OUT OF RANGE", StringComparison.Ordinal)
+                && _abilityContext.Visible && _abilityContextDetail.Text.StartsWith("OUT OF RANGE", StringComparison.Ordinal)
+                && ReviewState().Party[1].PendingAction == previousOrder
                 && ReviewState().Party[1].Combat!.Cooldowns.Single(cd => cd.AbilityId == _definition.Combat.Barrier.Id).RemainingTicks == 0);
             await InputWorldClick(ToGodot(owner.Position), MouseButton.Left);
             InputCheck("one click at Protector's feet uses his current facing", !_abilityTargeting
@@ -201,7 +210,7 @@ public partial class GameHost
             && ReviewState().Interactions.Single(item => item.Id.Value == "interaction.evacuation_airlock").State == InteractionState.Unavailable);
         if (await ReviewCapture("victory")) { return; }
         if (await ReviewCapture("slice-complete")) { return; }
-        FinishSoloReview();
+        await FinishSoloReview();
     }
 
     private async Task CheckPartySelectionAndOrders()
@@ -327,6 +336,16 @@ public partial class GameHost
         sentry.Synchronize(hostile, ToGodot(ReviewState().Protagonist.Position) + Vector3.Up * 1.1f, tick, .25f);
     }
 
+    private void CheckRetryHumanoidPose()
+    {
+        foreach (var enemy in ReviewState().Hostiles!)
+        {
+            if (_enemyViews[enemy.Id].Humanoid is { } humanoid)
+                InputCheck($"retry restores upright enemy pose before resume (head={humanoid.HeadHeightMeters:0.00}m)",
+                    _session!.IsPaused && humanoid.HeadHeightMeters is > 1.2);
+        }
+    }
+
     private async Task CheckCompletedDeathPresentation()
     {
         var tick = _session!.Tick;
@@ -334,6 +353,20 @@ public partial class GameHost
         var presentation = ArmedPresentation(actor.Id)!;
         double ClipSeconds() => JsonSerializer.SerializeToElement(presentation.GetDiagnostics()).GetProperty("clip_seconds").GetDouble();
         InputCheck("last crew death starts before the final pose", ClipSeconds() < presentation.DownClipLengthSeconds - .1);
+        if (_reviewMode == "input")
+        {
+            _reviewDrivesClock = false;
+            _reviewSampleTick = null;
+            await InputFrame();
+            var releasedAudio = _combatPresentationEffects.Where(effect => effect.Node is AudioStreamPlayer3D
+                && effect.RemainingSeconds > 0 && (_presentationTick - effect.BornTick) / GameSession.TicksPerSecond >= effect.DelaySeconds)
+                .Select(effect => (AudioStreamPlayer3D)effect.Node).ToArray();
+            InputCheck("lethal hit audio settles while rules remain paused", releasedAudio.Length > 0
+                && releasedAudio.All(player => !player.StreamPaused && player.HasMeta("started"))
+                && _session.IsPaused && _session.Tick == tick);
+            _reviewDrivesClock = true;
+            _reviewSampleTick = _session.Tick;
+        }
         var timer = System.Diagnostics.Stopwatch.StartNew();
         while (_defeatPresentationSeconds < presentation.DownDurationSeconds && timer.Elapsed.TotalSeconds < 10)
         { await InputFrame(); }

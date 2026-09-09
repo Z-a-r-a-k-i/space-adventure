@@ -52,9 +52,15 @@ do not inherit the animation multiplier.
   world transform. Review checks each weapon's metric length and at most 3 cm
   armed palm-proxy-to-grip error. Restore the authored bone pose before applying
   procedural corrections so repeated sampling cannot accumulate offsets.
-- Enforcer samples the full Right Hook: source 0–0.10 s during the first 75%
-  of wind-up, 0.10–0.30 s during the final 25%, then remaining follow-through
-  during recovery. This presents the authoritative contact tick.
+  If locomotion carries the foregrip beyond support-arm reach, fold the weapon
+  arm inward before support IK, preserving wrist orientation and segment lengths.
+- Enforcer samples the full Right Hook: source 0–0.17 s during the first 35%
+  of wind-up, sustains the loaded shoulder through source 0.17–0.19 s until
+  75%, then commits through 0.19–0.30 s during the final quarter. Recovery
+  presents the remaining follow-through. The authoritative reaction window
+  and contact tick are unchanged. Dashed ground links point from each winding
+  hostile to its target; a contracting ring gains four corner marks in the final
+  quarter. Sentry uses an angular target ring to distinguish ranged threat.
 - Sentry aim turns around the gun mount with bounded yaw/pitch and turn speed;
   close or rear targets cannot flip the head. Its adapter corrects the retained
   GLB's floor-level empty pivots and reconstructs the barrel-tip muzzle.
@@ -70,14 +76,45 @@ do not inherit the animation multiplier.
   radius pulse and threat countdowns. Crew cards and target lines show attack state.
   Damage uses health, values, and effects. Shared projectile resources and
   cues warm at startup.
+- Contact effects use short radial sparks for carbine, a wider pellet fan for
+  shotgun, three heavy streaks for melee, and a hexagonal shield ripple for
+  blocks. Interrupt uses an area pulse and a separate interrupted-target cross;
+  Burst marks each release. Barrier deployment and Taunt expand from their
+  observed placement/radius. Their transient shapes fade while sustained state
+  remains in the barrier silhouette and overhead status. All geometry samples
+  the shared presentation clock with resources warmed before combat.
+  Taunt releases a body-centered pulse without weapon recoil.
 - Crew down clips retain the Rifle Death donor's pelvis rotation and bake
   evaluated mesh contact with the floor. They start at the observed defeat tick. Ordinary pause freezes
   them; after total defeat, a bounded presentation-only clock lets the final
   fall finish while the core stays paused. Retry resets that clock and pose.
+  Hostile humanoids snap to their standing pose during encounter readying so
+  retry cannot retain a frozen blend from a previous fall.
 
 Crew projectile speed/trail/delay details belong in
 [CarbineProjectile.cs](../game/scripts/CarbineProjectile.cs) and
-[GameHost.cs](../game/scripts/GameHost.cs), rather than another tuning table.
+[GameHost.CombatEffects.cs](../game/scripts/GameHost.CombatEffects.cs), rather than another tuning table.
 Review full-speed draw, repeated fire, contact, recovery, and retry using
 [Testing](testing.md). Recordings establish motion; real-time profiles measure
 frame pacing. Asset production and publication follow [Art pipeline](ART-PIPELINE.md).
+
+## Audio
+
+[CombatAudio.cs](../game/scripts/CombatAudio.cs) synthesizes original PCM in
+memory from oscillator/noise recipes; no third-party recordings, samples,
+licenses, or generated asset files are required. Four deterministic variants
+per cue avoid identical repeats without touching simulation randomness.
+Carbine, shotgun, sentry, Burst, Interrupt, hit types, shield block, Barrier,
+and Taunt have separate recipes. Release cues start at the muzzle; hit cues
+start at visual contact with the same delay as effects and damage numbers.
+Shield block has its own metallic ring and never produces damage feedback.
+Spatial attenuation and bounded cue levels limit simultaneous actions. A
+periodic ventilation source locates the station's machinery. Tactical pause
+suspends it and active combat audio; released hit cues finish with the bounded
+fall animation after total defeat.
+
+For local listening evidence, set `SPACE_ADVENTURE_AUDIO_REVIEW` to an ignored
+directory under `artifacts/` before a normal development launch. Godot writes
+`combat-cues.wav`, `station-ambience.wav`, and `timing.json` from the exact
+runtime streams. The montage is dry, with intended in-game levels recorded in
+the timing manifest; judge the final spatial mix during live gameplay too.

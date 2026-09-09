@@ -11,6 +11,8 @@ public partial class GameHost
     private EntityId? _selectionClickActor;
     private bool _selectionAdditive;
     private bool _selectionDragging;
+    private Vector2? _inputPointerPosition;
+    private Vector2 PointerPosition => _inputPointerPosition ?? GetViewport().GetMousePosition();
 
     private void CreateSelectionBox(CanvasLayer canvas)
     {
@@ -24,6 +26,7 @@ public partial class GameHost
         canvas.AddChild(_selectionBox);
         GetWindow().FocusExited += CancelSelectionGesture;
         GetWindow().MouseExited += CancelSelectionGesture;
+        GetWindow().MouseExited += () => _inputPointerPosition = null;
     }
 
     private void BeginSelectionGesture(InputEventMouseButton click)
@@ -40,7 +43,9 @@ public partial class GameHost
     // Receive the end of a world drag before GUI controls can swallow its release.
     public override void _Input(InputEvent @event)
     {
+        if (@event is InputEventMouse pointer) { _inputPointerPosition = pointer.Position; }
         if (HandleControlsInput(@event)) { return; }
+        if (HandleDialogueInput(@event)) { return; }
         if (_selectionStart is null) { return; }
         switch (@event)
         {

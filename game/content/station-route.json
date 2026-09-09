@@ -1,6 +1,6 @@
 {
   "schema_version": 9,
-  "content_revision": "station-route-v14",
+  "content_revision": "station-route-v15",
   "scenario_id": "scenario.station_route",
   "protagonist": {
     "id": "actor.protagonist",
@@ -47,7 +47,7 @@
   },
   "combat_threshold_objective": {
     "id": "objective.reach_first_combat",
-    "text": "Enter the security arena and assess the active security frame."
+    "text": "Enter security. Watch the Enforcer's strike warning."
   },
   "combat_objective": {
     "id": "objective.defeat_security_enforcer",
@@ -201,7 +201,7 @@
       "effect": "begin_survivor_dialogue",
       "dialogue": {
         "speaker": "Survivor",
-        "line": "The reserve cell cannot hold both systems. We can power the service corridor, or keep the shelter seals stable.",
+        "line": "One reserve cell, two systems. Corridor power gives you steady lights; shelter power keeps the seals stable. The security frame beyond the door is still active. Watch its wind-up and interrupt the strike.",
         "responses": [
           {
             "id": "response.reroute_service_power",
@@ -240,7 +240,7 @@
       "effect": "begin_recruitment_dialogue",
       "dialogue": {
         "speaker": "Protector",
-        "line": "That airlock needs two people to cycle safely. I can cover your approach.",
+        "line": "The transit hall has a close-range Enforcer and a sentry. I'll block the sentry's shots with my Barrier and draw their attention. You interrupt the Enforcer. We move together.",
         "responses": [
           {
             "id": "response.recruit_protector",

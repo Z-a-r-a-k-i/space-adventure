@@ -33,7 +33,7 @@ fog_depth_begin = 36.0
 fog_depth_end = 85.0
 fog_depth_curve = 1.6
 ambient_light_source = 3
-ambient_light_color = Color(0.46, 0.52, 0.60, 1)
+ambient_light_color = Color(0.51, 0.53, 0.56, 1)
 ambient_light_energy = 0.55
 tonemap_mode = 2
 ssao_enabled = true
@@ -121,7 +121,7 @@ environment = SubResource("Environment_station")
 
 [node name="KeyLight" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-55, -35, 0)
-light_color = Color(0.86, 0.91, 1, 1)
+light_color = Color(0.94, 0.94, 1, 1)
 light_energy = 0.70
 shadow_enabled = true
 
@@ -141,14 +141,14 @@ shadow_enabled = false
 
 [node name="ProtectorRoomLight" type="OmniLight3D" parent="."]
 position = Vector3(-1.5, 3.2, 0)
-light_color = Color(0.68, 0.80, 0.91, 1)
-light_energy = 1.8
+light_color = Color(0.94, 0.79, 0.60, 1)
+light_energy = 1.9
 omni_range = 7.0
 
 [node name="MainArenaLight" type="OmniLight3D" parent="."]
 position = Vector3(0, 3.6, 8)
-light_color = Color(0.73, 0.85, 0.94, 1)
-light_energy = 2.5
+light_color = Color(0.82, 0.88, 0.91, 1)
+light_energy = 2.4
 omni_range = 10.0
 shadow_enabled = true
 
@@ -177,10 +177,16 @@ light_energy = 1.8
 omni_range = 4.0
 
 [node name="TransitAccent" type="OmniLight3D" parent="."]
-position = Vector3(4.7, 2.4, 11.8)
+position = Vector3(4, 2.35, 3.85)
+light_color = Color(0.32, 0.74, 0.72, 1)
+light_energy = 1.35
+omni_range = 3.6
+
+[node name="RecruitmentAccent" type="OmniLight3D" parent="."]
+position = Vector3(-1.5, 2.1, -2.35)
 light_color = Color(1, 0.64, 0.32, 1)
-light_energy = 1.8
-omni_range = 4.5
+light_energy = 0.85
+omni_range = 3.0
 
 [node name="NavigationRegion" type="NavigationRegion3D" parent="."]
 navigation_mesh = SubResource("NavigationMesh_route")
@@ -239,8 +245,8 @@ outline_size = 0
 position = Vector3(-1.6, 0.042, 1.5)
 rotation_degrees = Vector3(-90, 0, 0)
 pixel_size = 0.006
-modulate = Color(0.6, 0.70, 0.72, 0.5)
-text = "03 / CREW ACCESS"
+modulate = Color(0.78, 0.70, 0.54, 0.5)
+text = "03 / CREW SHELTER"
 font_size = 70
 outline_size = 0
 

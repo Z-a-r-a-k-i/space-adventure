@@ -14,6 +14,9 @@ public partial class GameHost
         InputCheck("Taunt queues independently of Barrier cooldown", ReviewState().Party[1].PendingAction?.AbilityId == combat.Taunt.Id);
         await ReviewTicks(combat.Taunt.WindupTicks);
         InputCheck("nearby threats visibly focus Protector", ReviewState().Hostiles!.All(enemy => enemy.Combat.TauntedBy == _definition.Companion.Id));
+        var tauntRelease = _session!.EventsSince(0).Last(item => item.Detail is AbilityReleasedEventDetail release
+            && release.AbilityId == combat.Taunt.Id);
+        InputCheck("Taunt does not recoil the shotgun", _protectorPartyPresentation.LastShotTick < tauntRelease.Tick);
         if (await ReviewCapture("taunt")) { return true; }
         var sentry = ReviewState().Hostiles!.Single(enemy => _enemyViews[enemy.Id].Sentry is not null);
         if (_reviewMode == "input")
@@ -31,9 +34,21 @@ public partial class GameHost
             && ReviewState().Protagonist.PendingAction?.CombatTargetId == sentry.Id);
         var after = _session!.Observe().LatestEventSequence;
         int ShotCount() => _session.EventsSince(after).Count(item => item.Detail is AbilityReleasedEventDetail release && release.AbilityId == combat.Burst.Id);
+        if (_reviewMode == "input")
+        {
+            await ReviewUntil(state => state.Protagonist.CurrentAction is { Phase: PrimaryActionPhase.Windup } action
+                && action.AbilityId == combat.Burst.Id, 80);
+            await InputKey(Key.Key2);
+            InputCheck("Burst can be inspected before its pending release", _abilityTargeting);
+        }
         await ReviewUntil(_ => ShotCount() == 1, 80);
         if (_reviewMode == "input")
         {
+            await InputFrame();
+            InputCheck("aiming updates when the skill enters cooldown", _abilityContext.Visible
+                && _abilityContextDetail.Text.StartsWith("ON COOLDOWN", StringComparison.Ordinal)
+                && _affectedTargetRings.Values.All(ring => !ring.Visible));
+            await InputKey(Key.Escape);
             var tick = _session.Tick;
             _reviewSampleTick = null; _reviewDrivesClock = false;
             for (var frame = 0; frame < 8; frame++) { await InputFrame(); }

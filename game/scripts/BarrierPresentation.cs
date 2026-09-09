@@ -10,7 +10,6 @@ public partial class BarrierPresentation : Node3D
     private readonly StandardMaterial3D _grid = Material(.25f);
     private Node3D _shield = null!;
     private Node3D _guide = null!;
-    private Label3D _label = null!;
     private double _hitTick = -100;
     private int _deploymentTicks;
 
@@ -66,9 +65,7 @@ public partial class BarrierPresentation : Node3D
         AddMesh(_guide, arrow.Commit(), _edge);
         var protectedSide = AddMesh(_guide, new PlaneMesh { Size = new Vector2(width, 1.2f) }, _surface);
         protectedSide.Position = new Vector3(0, -height / 2 + .03f, .65f);
-        _label = new Label3D { Position = new Vector3(0, height / 2 + .3f, 0), FontSize = 24, OutlineSize = 7,
-            PixelSize = .004f, Billboard = BaseMaterial3D.BillboardModeEnum.Enabled };
-        _guide.AddChild(_label); Visible = false;
+        Visible = false;
     }
 
     public void ShowShield(Vector3 center, Vector3 facing, Vector3 ground, double tick, double deployedTick,
@@ -83,8 +80,6 @@ public partial class BarrierPresentation : Node3D
             material.EmissionEnergyMultiplier = tick - _hitTick is >= 0 and < 6 ? 2 : .5f;
         }
         _guide.Visible = preview || queued;
-        _label.Text = !valid ? "INVALID PLACEMENT" : queued ? "BARRIER QUEUED" : "CLICK TO PLACE";
-        _label.Modulate = tint;
         var progress = preview || queued ? 1 : (float)Math.Clamp((tick - deployedTick) / _deploymentTicks, .04, 1);
         var expanded = Mathf.SmoothStep(0, 1, progress);
         _shield.Scale = new Vector3(expanded, expanded, 1);

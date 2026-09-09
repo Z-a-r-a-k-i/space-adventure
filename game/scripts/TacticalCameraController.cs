@@ -21,7 +21,7 @@ public sealed record CameraOcclusionObservation(
 
 public partial class TacticalCameraController : Camera3D
 {
-    private const string OcclusionAlgorithm = "expanded_world_aabb_segment_v1";
+    private const string OcclusionAlgorithm = "expanded_world_aabb_subjects_v2";
     private const float MinimumPitch = 0.45f;
     private const float MaximumPitch = 1.15f;
     private const float MinimumDistance = 7.5f;
@@ -42,6 +42,7 @@ public partial class TacticalCameraController : Camera3D
 
     private readonly List<OccludingWall> _occludingWalls = [];
     private readonly List<OccludingLintel> _occludingLintels = [];
+    private readonly List<Vector3> _occlusionSubjects = new(4);
 
     private Vector3 _focus = InitialFocus;
     private Vector3 _followTarget;
@@ -56,6 +57,15 @@ public partial class TacticalCameraController : Camera3D
 
     public bool EdgePanBlocked { get; set; }
     internal Vector2 EdgePanDirection { get; private set; }
+
+    internal void ClearOcclusionSubjects() => _occlusionSubjects.Clear();
+
+    internal void IncludeOcclusionSubject(Vector3 position)
+    {
+        var chest = position + Vector3.Up * OcclusionTargetHeight;
+        if (!IsPositionBehind(chest) && GetViewport().GetVisibleRect().Grow(32).HasPoint(UnprojectPosition(chest)))
+            _occlusionSubjects.Add(position);
+    }
 
     public bool InputEnabled
     {
@@ -250,9 +260,7 @@ public partial class TacticalCameraController : Camera3D
         foreach (var item in _occludingLintels)
         {
             var bounds = item.Bounds.Grow(item.Desired ? 0.45f : 0.30f);
-            item.Desired = _hasFollowTarget && (bounds.IntersectsSegment(GlobalPosition, GetOcclusionTarget())
-                || bounds.IntersectsSegment(GlobalPosition, _followTarget + Vector3.Up * 0.2f)
-                || bounds.IntersectsSegment(GlobalPosition, _followTarget + Vector3.Up * 1.6f));
+            item.Desired = _hasFollowTarget && OccludesSubject(bounds);
             var transparency = Mathf.MoveToward(item.Mesh.Transparency, item.Desired ? 0.94f : 0, seconds / CutawayTransitionSeconds);
             item.Mesh.Transparency = transparency;
             item.Status.Transparency = transparency;
@@ -436,14 +444,23 @@ public partial class TacticalCameraController : Camera3D
             return;
         }
 
-        var target = GetOcclusionTarget();
         foreach (var wall in _occludingWalls)
         {
             var radius = wall.Desired ? OcclusionReleaseRadius : OcclusionEntryRadius;
-            wall.Desired = wall.FullWorldBounds
-                .Grow(radius)
-                .IntersectsSegment(GlobalPosition, target);
+            wall.Desired = OccludesSubject(wall.FullWorldBounds.Grow(radius));
         }
+    }
+
+    private bool OccludesSubject(Aabb bounds)
+    {
+        if (bounds.IntersectsSegment(GlobalPosition, GetOcclusionTarget())) { return true; }
+        // A group's midpoint can be clear while a wall hides either actual combatant.
+        foreach (var subject in _occlusionSubjects)
+        {
+            if (bounds.IntersectsSegment(GlobalPosition, subject + Vector3.Up * .2f)
+                || bounds.IntersectsSegment(GlobalPosition, subject + Vector3.Up * 1.6f)) { return true; }
+        }
+        return false;
     }
 
     private void AdvanceCutawayAnimation(float seconds)

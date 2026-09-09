@@ -2,15 +2,19 @@
 
 ## Current state
 
-Phase 4 is active on `station-route-v14` (content schema 9). The owner accepted
+Phase 4 is active on `station-route-v15` (content schema 9). The owner accepted
 the solo fight and requested faster weapon draw. The local preview now joins
 recruitment to Vanguard/Protector versus an Enforcer and stationary sentry,
 with independent orders, two skills per crew member,
 party retry, and a compact tactical HUD. [Product](PRODUCT.md) owns the kits.
 Arena victory ends this slice; final airlock completion remains unavailable.
 
-**Next gate: review the station presentation and pacing polish.** The party
-combat slice merged in PR 20 after the owner's 2026-09-08 preview acceptance.
+**Next gate: owner review of the completed station polish pass.** The party
+combat slice merged in PR 20 after the owner's 2026-09-08 preview acceptance;
+the environment, Field Ops, and faster handling baseline merged in PR 21.
+The follow-up adds zone identity, threat/contact cues, contextual skill previews,
+staged guidance, and session sound controls. Agent verification remains separate
+from owner handling and listening acceptance.
 The fitted Protector and shotgun are included
 under `game/Assets/Published/`; running the game needs no local art staging.
 Rebuild instructions live with the [party presentation tool](../tools/blender/README.md).

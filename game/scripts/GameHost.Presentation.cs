@@ -14,6 +14,8 @@ public partial class GameHost
     private int _framedEncounterAttempt;
     private EncounterId? _framedEncounterId;
     private double _defeatPresentationSeconds;
+    private AudioStreamPlayer3D? _stationAmbience;
+    private readonly Dictionary<string, int> _audioVariants = [];
 
     private void AdvanceDefeatPresentation(GameObservation observation, double delta)
     {
@@ -44,7 +46,26 @@ public partial class GameHost
             projectile.Sample(0.5f);
             warmup.AddChild(projectile);
         }
-        foreach (var cue in new[] { "carbine", "shotgun", "sentry", "guard", "impact", "interrupt" }) { _ = CombatAudio.Get(cue); }
+        foreach (var signature in Enum.GetValues<CombatSignature>())
+        {
+            var effect = new CombatContactEffect();
+            effect.Configure(signature, Vector3.Zero, Vector3.Forward);
+            warmup.AddChild(effect);
+        }
+        CombatAudio.Warmup();
+        var audition = System.Environment.GetEnvironmentVariable("SPACE_ADVENTURE_AUDIO_REVIEW");
+        if (!string.IsNullOrWhiteSpace(audition)) { CombatAudio.WriteAudition(audition); }
+        if (DisplayServer.GetName() != "headless" && _reviewMode != "capture")
+        {
+            _stationAmbience = new AudioStreamPlayer3D
+            {
+                Name = "StationVentilation", Stream = CombatAudio.Get("ambience"), VolumeDb = -12,
+                UnitSize = 14, MaxDistance = 60, MaxDb = -12,
+                Position = GetNode<Marker3D>("Markers/PartyEncounterTrigger").GlobalPosition + Vector3.Up * 3,
+            };
+            AddChild(_stationAmbience);
+            _stationAmbience.Play();
+        }
     }
 
     private Vector3 SamplePosition(EntityId id, WorldPosition position, long tick, int attempt)
@@ -92,9 +113,11 @@ public partial class GameHost
         const double contactSeconds = 0.3; // Authored Right Hook contact at frame 10.
         if (action.Phase == PrimaryActionPhase.Windup)
         {
-            return progress < 0.75f
-                ? 0.1 * Mathf.SmoothStep(0, 1, progress / 0.75f)
-                : 0.1 + 0.2 * Mathf.SmoothStep(0, 1, (progress - 0.75f) / 0.25f);
+            // Show the loaded shoulder early, sustain it while the player can react,
+            // then commit through the final quarter to the unchanged contact tick.
+            if (progress < .35f) { return .17 * Mathf.SmoothStep(0, 1, progress / .35f); }
+            if (progress < .75f) { return .17 + .02 * Mathf.SmoothStep(0, 1, (progress - .35f) / .4f); }
+            return .19 + .11 * Mathf.SmoothStep(0, 1, (progress - .75f) / .25f);
         }
         return contactSeconds + progress * (_securityEnforcerPresentation.ClipLength(HumanoidPresentationAction.MeleeStrike) - contactSeconds);
     }
@@ -124,7 +147,9 @@ public partial class GameHost
             {
                 ArmedPresentation(attack.SourceId)?.NotifyShot(item.Tick);
             }
-            if (item.Detail is AbilityReleasedEventDetail ability)
+            if (item.Detail is AbilityReleasedEventDetail ability
+                && (ability.AbilityId == _definition!.Combat.ProtagonistAbility.Id
+                    || ability.AbilityId == _definition.Combat.Burst.Id))
             {
                 ArmedPresentation(ability.SourceId)?.NotifyShot(item.Tick);
             }
@@ -134,21 +159,23 @@ public partial class GameHost
         AdvanceCombatPresentationClock();
     }
 
-    private void PlayCombatCue(string cue, Vector3 position)
+    private void PlayCombatCue(string cue, Vector3 position, float delaySeconds = 0)
     {
         if (_reviewMode == "capture" || DisplayServer.GetName() == "headless") { return; }
+        _audioVariants.TryGetValue(cue, out var variant);
+        _audioVariants[cue] = (variant + 1) % 4;
         var player = new AudioStreamPlayer3D
         {
-            Stream = CombatAudio.Get(cue), Position = position, VolumeDb = -7,
-            UnitSize = 10, MaxDistance = 35,
+            Stream = CombatAudio.Get(cue, variant), Position = position,
+            VolumeDb = CombatAudio.VolumeDb(cue), MaxDb = CombatAudio.VolumeDb(cue),
+            UnitSize = 10, MaxDistance = 38,
         };
         AddChild(player);
-        player.Finished += player.QueueFree;
-        player.Play();
-        _combatPresentationEffects.Add(new TimedPresentationEffect(player, 0.32f, _effectEventTick));
+        _combatPresentationEffects.Add(new TimedPresentationEffect(player,
+            (float)player.Stream.GetLength(), _effectEventTick, delaySeconds));
     }
 
-    private void SpawnInterruptCue(Vector3 position)
+    private void SpawnInterruptCue(Vector3 position, float delaySeconds = 0)
     {
         var label = new Label3D
         {
@@ -156,8 +183,7 @@ public partial class GameHost
             Modulate = new Color("f2c879"), Billboard = BaseMaterial3D.BillboardModeEnum.Enabled, NoDepthTest = true,
         };
         AddChild(label);
-        _combatPresentationEffects.Add(new TimedPresentationEffect(label, 0.60f, _effectEventTick));
-        PlayCombatCue("interrupt", position);
+        _combatPresentationEffects.Add(new TimedPresentationEffect(label, 0.60f, _effectEventTick, delaySeconds));
     }
 
     public string GetPresentationDiagnosticsJson() => JsonSerializer.Serialize(new
@@ -176,6 +202,9 @@ public partial class GameHost
         lintels = _camera.ObserveLintels(),
         projectiles = _combatPresentationEffects.Select(effect => effect.Node)
             .OfType<CarbineProjectile>().Select(projectile => projectile.GetDiagnostics()),
+        contact_effects = _combatPresentationEffects.Select(effect => effect.Node)
+            .OfType<CombatContactEffect>().Select(effect => effect.GetDiagnostics()),
+        enemy_intent = _enemyIntentCues.Select(pair => new { actor_id = pair.Key.Value, cue = pair.Value.GetDiagnostics() }),
         effects = _combatPresentationEffects.Select(effect => new
         {
             born_tick = effect.BornTick,
