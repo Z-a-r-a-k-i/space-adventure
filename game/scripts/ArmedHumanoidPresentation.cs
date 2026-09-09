@@ -34,6 +34,10 @@ public partial class ArmedHumanoidPresentation : Node3D
     private BoneAttachment3D[] _boneAttachments = [];
     private int _rightHand;
     private int _leftHand;
+    private int _rightArm;
+    private int _rightForeArm;
+    private int _leftArm;
+    private int _leftForeArm;
     private int _spine;
     private float _rightPalmOffset;
     private float _leftPalmOffset;
@@ -44,6 +48,8 @@ public partial class ArmedHumanoidPresentation : Node3D
     private EncounterId? _encounterId;
 
     public bool StrongRecoil { get; set; }
+
+    internal double LastShotTick => _lastShotTick;
 
     public float LocomotionPlaybackRate { get; set; } = 1;
 
@@ -191,6 +197,11 @@ public partial class ArmedHumanoidPresentation : Node3D
         }
         foreach (var attachment in _boneAttachments) { attachment.OnSkeletonUpdate(); }
         AttachWeapon(weaponInHand);
+        if (FitSupportReach(SupportInfluence(defeated ? null : encounter, presentationTick)))
+        {
+            foreach (var attachment in _boneAttachments) { attachment.OnSkeletonUpdate(); }
+            AttachWeapon(weaponInHand);
+        }
         SynchronizeSupportHand(defeated ? null : encounter, presentationTick);
     }
 
@@ -210,6 +221,10 @@ public partial class ArmedHumanoidPresentation : Node3D
     {
         _rightHand = _skeleton.FindBone("mixamorig_RightHand");
         _leftHand = _skeleton.FindBone("mixamorig_LeftHand");
+        _rightArm = _skeleton.FindBone("mixamorig_RightArm");
+        _rightForeArm = _skeleton.FindBone("mixamorig_RightForeArm");
+        _leftArm = _skeleton.FindBone("mixamorig_LeftArm");
+        _leftForeArm = _skeleton.FindBone("mixamorig_LeftForeArm");
         _spine = _skeleton.FindBone("mixamorig_Spine2");
         var rig = FindDescendants<Node3D>(this).First(node => node.HasMeta("extras")
             && node.GetMeta("extras").VariantType == Variant.Type.Dictionary
@@ -237,15 +252,17 @@ public partial class ArmedHumanoidPresentation : Node3D
 
     private Transform3D HandWorld(int bone) => _skeleton.GlobalTransform * _skeleton.GetBoneGlobalPose(bone);
 
-    private void SynchronizeSupportHand(EncounterObservation? encounter, double tick)
-    {
-        var amount = encounter?.Phase switch
+    private static float SupportInfluence(EncounterObservation? encounter, double tick) => encounter?.Phase switch
         {
             EncounterPhase.Active => 1.0f,
             EncounterPhase.Readying => Mathf.SmoothStep(0, 1, (TransitionProgress(encounter, tick) - 0.60f) / 0.30f),
             EncounterPhase.Securing => 1 - Mathf.SmoothStep(0, 1, (TransitionProgress(encounter, tick) - 0.10f) / 0.30f),
             _ => 0,
         };
+
+    private void SynchronizeSupportHand(EncounterObservation? encounter, double tick)
+    {
+        var amount = SupportInfluence(encounter, tick);
         _supportIk.Active = amount > 0;
         _supportOrientation.Active = amount > 0;
         _supportIk.Influence = amount;
@@ -254,6 +271,51 @@ public partial class ArmedHumanoidPresentation : Node3D
         _supportOrientation.WorldRotation = handRotation;
         _supportTarget.GlobalPosition = _supportGrip.GlobalPosition - handRotation.Y * _leftPalmOffset;
         _supportPole.GlobalPosition = GlobalTransform * new Vector3(0.6f, 1.12f, 0.22f);
+    }
+
+    private bool FitSupportReach(float influence)
+    {
+        if (influence <= 0) { return false; }
+        var leftShoulder = HandWorld(_leftArm).Origin;
+        var leftElbow = HandWorld(_leftForeArm).Origin;
+        var leftWrist = HandWorld(_leftHand);
+        var target = _supportGrip.GlobalPosition - leftWrist.Basis.Orthonormalized().Y * _leftPalmOffset;
+        // Armed locomotion can carry the foregrip beyond the support arm's reach.
+        // Bring the weapon hand inward, retaining its authored orientation and
+        // both arm segment lengths, before solving the support arm. A small bend
+        // reserve avoids the locked-elbow singularity; no glove or weapon scales.
+        var reach = leftShoulder.DistanceTo(leftElbow) + leftElbow.DistanceTo(leftWrist.Origin) - .015f;
+        var distance = leftShoulder.DistanceTo(target);
+        if (distance <= reach) { return false; }
+        var wrist = HandWorld(_rightHand);
+        var desiredWrist = wrist.Origin + target.DirectionTo(leftShoulder) * Math.Min(.12f, distance - reach) * influence;
+        var root = HandWorld(_rightArm).Origin;
+        var middle = HandWorld(_rightForeArm).Origin;
+        var upperLength = root.DistanceTo(middle);
+        var lowerLength = middle.DistanceTo(wrist.Origin);
+        var axis = root.DirectionTo(desiredWrist);
+        var span = Math.Clamp(root.DistanceTo(desiredWrist), Math.Abs(upperLength - lowerLength) + .001f,
+            upperLength + lowerLength - .001f);
+        var pole = middle - root - axis * (middle - root).Dot(axis);
+        if (pole.LengthSquared() < .000001f) { return false; }
+        var along = (upperLength * upperLength - lowerLength * lowerLength + span * span) / (2 * span);
+        var bend = Mathf.Sqrt(Math.Max(0, upperLength * upperLength - along * along));
+        var desiredElbow = root + axis * along + pole.Normalized() * bend;
+        RotateBoneToward(_rightArm, middle - root, desiredElbow - root);
+        var movedElbow = HandWorld(_rightForeArm).Origin;
+        RotateBoneToward(_rightForeArm, HandWorld(_rightHand).Origin - movedElbow,
+            root + axis * span - movedElbow);
+        var hand = HandWorld(_rightHand);
+        hand.Basis = wrist.Basis;
+        _skeleton.SetBoneGlobalPose(_rightHand, _skeleton.GlobalTransform.AffineInverse() * hand);
+        return true;
+    }
+
+    private void RotateBoneToward(int bone, Vector3 from, Vector3 to)
+    {
+        var world = HandWorld(bone);
+        world.Basis = new Basis(new Quaternion(from.Normalized(), to.Normalized())) * world.Basis;
+        _skeleton.SetBoneGlobalPose(bone, _skeleton.GlobalTransform.AffineInverse() * world);
     }
 
     private void MeasureGripErrors()
