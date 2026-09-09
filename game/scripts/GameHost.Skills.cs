@@ -43,7 +43,7 @@ public partial class GameHost
     {
         var when = observation.Paused ? "On resume" : "On confirmation";
         if (route.Encounter?.Phase == EncounterPhase.Readying) { when += ", after weapon draw"; }
-        else if (!duringRecovery && actor.CurrentAction?.Phase == PrimaryActionPhase.Recovery) { when += ", after recovery"; }
+        else if (!duringRecovery && actor.Combat?.OffensiveRecoveryUntilTick > observation.Tick) { when += ", after recovery"; }
         return when + (actor.PendingAction is null ? "." : ". Replaces this crew member's next order.");
     }
 

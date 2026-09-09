@@ -63,7 +63,7 @@ public partial class GameHost
         _dialogueResponses = new VBoxContainer();
         _dialogueResponses.AddThemeConstantOverride("separation", 7);
         dialogue.AddChild(_dialogueResponses);
-        dialogue.AddChild(TacticalUi.Eyebrow("1 / 2  Respond     ENTER  First response", "afc1c5"));
+        dialogue.AddChild(TacticalUi.Eyebrow("1 / 2  Respond     TAB / ARROWS  Focus     ENTER  Confirm", "afc1c5"));
     }
 
     private void CreateFieldOrderOverlay(CanvasLayer canvas)

@@ -147,6 +147,14 @@ public partial class GameHost
         if (FieldHudBounds().Any(rect => rect.HasPoint(pointer))) { return; }
         var name = _targetAbilityKind == AbilityTargetKind.Barrier ? "BARRIER" : _targetAbilityKind == AbilityTargetKind.Entity ? "BURST" : "INTERRUPT";
         var title = $"{CrewNumber(route, actor.Id):00} {actor.DisplayName.ToUpperInvariant()} · {name}";
+        var cooldown = actor.Combat.Cooldowns.FirstOrDefault(value => value.AbilityId == _targetAbilityId)?.RemainingTicks ?? 0;
+        if (cooldown > 0)
+        {
+            ShowAbilityContext(title, $"ON COOLDOWN · ready in {cooldown / 30.0:0.0}s of live combat.",
+                observation.Paused ? "Resume to recover · Esc / RMB cancels" : "Wait for the skill to recover · Esc / RMB cancels",
+                TacticalUi.Amber, atPointer: true);
+            return;
+        }
         var timing = AbilityResumeText(observation, route, actor, _targetAbilityKind == AbilityTargetKind.Barrier);
         if (_targetAbilityKind == AbilityTargetKind.Entity)
         {
