@@ -108,7 +108,7 @@ public partial class GameHost
             CheckRetryHumanoidPose();
             if (await ReviewCapture("retry")) { return; }
             if (_reviewMode == "input") { CheckWorldHealth("party retry"); }
-            FinishSoloReview();
+            await FinishSoloReview();
             return;
         }
 
@@ -210,7 +210,7 @@ public partial class GameHost
             && ReviewState().Interactions.Single(item => item.Id.Value == "interaction.evacuation_airlock").State == InteractionState.Unavailable);
         if (await ReviewCapture("victory")) { return; }
         if (await ReviewCapture("slice-complete")) { return; }
-        FinishSoloReview();
+        await FinishSoloReview();
     }
 
     private async Task CheckPartySelectionAndOrders()

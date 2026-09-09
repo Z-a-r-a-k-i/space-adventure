@@ -105,7 +105,7 @@ public partial class GameHost
                 ReviewOrder(new RestartEncounterCommand(new CommandId("review.retry"), _definition.Combat.SoloEncounter.Id));
                 await ReviewTicks(_definition.Combat.SoloEncounter.ReadyingTicks);
                 if (await ReviewCapture("retry")) { return; }
-                FinishSoloReview();
+                await FinishSoloReview();
                 return;
             }
 
@@ -157,7 +157,7 @@ public partial class GameHost
                 new EntityId("interaction.protector"), new DialogueResponseId("response.recruit_protector")));
             _camera.FocusOn(ToGodot(ReviewState().Protagonist.Position));
             if (await ReviewCapture("slice-complete")) { return; }
-            FinishSoloReview();
+            await FinishSoloReview();
         }
         catch (Exception exception)
         {
@@ -323,7 +323,7 @@ public partial class GameHost
         }
         else
         {
-            FinishSoloReview();
+            await FinishSoloReview();
         }
         return true;
     }
@@ -347,13 +347,24 @@ public partial class GameHost
         File.WriteAllText(Path.Combine(_reviewOutput, "review.json"), JsonSerializer.Serialize(report, CaptureManifestJsonOptions));
     }
 
-    private void FinishSoloReview()
+    private async Task FinishSoloReview()
     {
         if (_reviewCheckpoint != "all" && !_requestedCheckpointReached)
         {
             throw new InvalidOperationException("The requested checkpoint was not reached.");
         }
         WriteReviewManifest();
+        if (_reviewMode == "record")
+        {
+            // Drain MovieWriter's final audio mix before freeing looping playback.
+            if (_stationAmbience is not null) { _stationAmbience.Stop(); _stationAmbience.Stream = null; }
+            foreach (var effect in _combatPresentationEffects)
+            {
+                if (effect.Node is AudioStreamPlayer3D audio) { audio.Stop(); audio.Stream = null; }
+            }
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        }
         GD.Print(JsonSerializer.Serialize(new { solo_review_passed = true, output = _reviewOutput }, CaptureLogJsonOptions));
         GetTree().Quit();
     }

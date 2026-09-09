@@ -297,7 +297,7 @@ public partial class GameHost
             CheckRetryHumanoidPose();
             await ReviewTicks(_definition!.Combat.SoloEncounter.ReadyingTicks);
             await ReviewCapture("retry");
-            FinishSoloReview();
+            await FinishSoloReview();
             return;
         }
 
@@ -385,6 +385,6 @@ public partial class GameHost
             && ReviewState().Interactions.Single(item => item.Id.Value == "interaction.evacuation_airlock").State == InteractionState.Unavailable);
         await InputKey(Key.F);
         await ReviewCapture("slice-complete");
-        FinishSoloReview();
+        await FinishSoloReview();
     }
 }

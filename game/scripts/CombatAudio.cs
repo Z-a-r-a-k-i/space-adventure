@@ -112,7 +112,7 @@ public static class CombatAudio
             montage.Write(stream.Data);
             montage.Write(new byte[(int)(Rate * .24) * 2]);
         }
-        var output = new AudioStreamWav
+        using var output = new AudioStreamWav
         { Format = AudioStreamWav.FormatEnum.Format16Bits, MixRate = Rate, Stereo = false, Data = montage.ToArray() };
         if (output.SaveToWav(Path.Combine(directory, "combat-cues.wav")) != Error.Ok
             || Get("ambience").SaveToWav(Path.Combine(directory, "station-ambience.wav")) != Error.Ok)

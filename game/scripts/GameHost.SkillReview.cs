@@ -14,6 +14,9 @@ public partial class GameHost
         InputCheck("Taunt queues independently of Barrier cooldown", ReviewState().Party[1].PendingAction?.AbilityId == combat.Taunt.Id);
         await ReviewTicks(combat.Taunt.WindupTicks);
         InputCheck("nearby threats visibly focus Protector", ReviewState().Hostiles!.All(enemy => enemy.Combat.TauntedBy == _definition.Companion.Id));
+        var tauntRelease = _session!.EventsSince(0).Last(item => item.Detail is AbilityReleasedEventDetail release
+            && release.AbilityId == combat.Taunt.Id);
+        InputCheck("Taunt does not recoil the shotgun", _protectorPartyPresentation.LastShotTick < tauntRelease.Tick);
         if (await ReviewCapture("taunt")) { return true; }
         var sentry = ReviewState().Hostiles!.Single(enemy => _enemyViews[enemy.Id].Sentry is not null);
         if (_reviewMode == "input")

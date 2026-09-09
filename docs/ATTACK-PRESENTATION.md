@@ -52,6 +52,8 @@ do not inherit the animation multiplier.
   world transform. Review checks each weapon's metric length and at most 3 cm
   armed palm-proxy-to-grip error. Restore the authored bone pose before applying
   procedural corrections so repeated sampling cannot accumulate offsets.
+  If locomotion carries the foregrip beyond support-arm reach, fold the weapon
+  arm inward before support IK, preserving wrist orientation and segment lengths.
 - Enforcer samples the full Right Hook: source 0–0.17 s during the first 35%
   of wind-up, sustains the loaded shoulder through source 0.17–0.19 s until
   75%, then commits through 0.19–0.30 s during the final quarter. Recovery
@@ -81,6 +83,7 @@ do not inherit the animation multiplier.
   observed placement/radius. Their transient shapes fade while sustained state
   remains in the barrier silhouette and overhead status. All geometry samples
   the shared presentation clock with resources warmed before combat.
+  Taunt releases a body-centered pulse without weapon recoil.
 - Crew down clips retain the Rifle Death donor's pelvis rotation and bake
   evaluated mesh contact with the floor. They start at the observed defeat tick. Ordinary pause freezes
   them; after total defeat, a bounded presentation-only clock lets the final
