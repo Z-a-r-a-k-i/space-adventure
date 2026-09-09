@@ -22,7 +22,7 @@ param(
     [ValidateSet("restrained", "strong")]
     [string]$Recoil = "restrained",
 
-    [ValidateSet("all", "ready", "draw", "armed", "armed-walk", "fire", "recoil", "anticipation", "contact", "barrier", "barrier-block", "facing", "taunt", "burst", "interrupt", "late-fire", "holster", "victory", "slice-complete", "defeat", "retry")]
+    [ValidateSet("all", "ready", "draw", "armed", "armed-walk", "fire", "recoil", "anticipation", "contact", "barrier-queued", "barrier", "barrier-block", "facing", "taunt", "burst", "interrupt", "late-fire", "holster", "victory", "slice-complete", "defeat", "retry")]
     [string]$Checkpoint = "all",
 
     [ValidateRange(7.5, 20.0)]

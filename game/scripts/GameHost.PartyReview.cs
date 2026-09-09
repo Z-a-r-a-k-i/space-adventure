@@ -14,6 +14,7 @@ public partial class GameHost
         _camera.InputEnabled = false;
         var protagonist = _definition!.Protagonist.Id;
         var protector = _definition.Companion.Id;
+        if (_reviewMode == "smoke") { CheckPartyHostilePlacementOrder(); }
         ReviewOrder(new SetPauseCommand(new CommandId("party.setup.pause"), true));
         ReviewOrder(new InteractCommand(new CommandId("party.setup.survivor"), protagonist, new EntityId("interaction.survivor")));
         await ReviewUntil(state => state.ActiveDialogue is not null, 300, fast: true);
@@ -156,10 +157,10 @@ public partial class GameHost
             InputCheck("pointer movement after placement cannot move or turn the queued barrier", ReviewState().Party[1].PendingAction == placed
                 && _barrierQueued.GlobalPosition.DistanceTo(ToGodot(_definition.Combat.Barrier.CenterAt(placed!.Destination))) < .01
                 && -_barrierQueued.GlobalBasis.Z.Normalized().Dot(ToGodot(placed.AbilityFacing!.Value)) > .999);
-            await ReviewCapture("barrier-queued");
         }
         else { ReviewOrder(new UseAbilityCommand(new CommandId("party.barrier"), protector, _definition.Combat.Barrier.Id,
             new BarrierAbilityTarget(ToCore(barrierPosition), new WorldPosition(0, 0, 1)))); }
+        if (await ReviewCapture("barrier-queued")) { return; }
         await ReviewTicks(_definition.Combat.Barrier.WindupTicks);
         InputCheck("barrier deploys without erasing attack intent", ReviewState().Encounter!.Barrier is not null
             && ReviewState().Party[1].Combat!.RememberedAttackTargetId is not null);
@@ -243,6 +244,24 @@ public partial class GameHost
             && ReviewState().Party[1].PendingAction?.CombatTargetId?.Value == "actor.enemy.security_enforcer.main");
         foreach (var control in _partyButtons.Values.Cast<Control>().Concat([_abilityButton, _secondaryAbilityButton, _stopButton, _pauseButton, _faceButton]))
         { InputCheck("party HUD control fits viewport", GetViewport().GetVisibleRect().Encloses(control.GetGlobalRect())); }
+    }
+
+    private void CheckPartyHostilePlacementOrder()
+    {
+        var content = System.Text.Json.Nodes.JsonNode.Parse(Godot.FileAccess.GetFileAsString("res://content/station-route.json"))!;
+        var encounter = content["combat"]!["encounters"]!.AsArray().Single(item => item!["requires_companion"]!.GetValue<bool>())!;
+        var ids = encounter["hostile_ids"]!.AsArray().Select(item => item!.GetValue<string>()).Reverse().ToArray();
+        encounter["hostile_ids"] = JsonSerializer.SerializeToNode(ids);
+        var definition = StationRouteContent.ParseJson(content.ToJsonString());
+        var layout = CreateLayout(definition);
+        _ = GameSession.CreateStationRoute(definition, layout, new GodotSpatialPathfinder(GetWorld3D().NavigationMap));
+        foreach (var id in definition.Combat.PartyEncounter.HostileIds)
+        {
+            var marker = GetNode<Node3D>("Markers").GetChildren().OfType<Marker3D>().Single(node => GetStableId(node) == id.Value);
+            var position = id == definition.Combat.PartyEncounter.HostileIds[0] ? layout.PartyEncounter!.HostileSpawnPosition
+                : layout.PartyEncounter!.AdditionalHostiles!.Single(actor => actor.ActorId == id).Position;
+            InputCheck($"reordered party content starts and keeps {id} at its authored marker", position == ToCore(marker.GlobalPosition));
+        }
     }
 
     private void CheckPartyAbilityEnvelope()

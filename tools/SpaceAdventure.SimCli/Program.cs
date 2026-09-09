@@ -1035,6 +1035,15 @@ internal static class StationRouteFixture
     {
         ArgumentNullException.ThrowIfNull(definition);
 
+        var partyPositions = new Dictionary<EntityId, WorldPosition>
+        {
+            [new EntityId("actor.enemy.security_enforcer.main")] = new(-2, 0, 8),
+            [new EntityId("actor.enemy.gun_sentry.main")] = new(2.5, 0, 10.5),
+        };
+        var partyHostiles = definition.Combat.PartyEncounter.HostileIds
+            .Select(id => partyPositions.TryGetValue(id, out var position)
+                ? new StationActorPlacement(id, position)
+                : throw new InvalidDataException($"The deterministic station-route fixture has no hostile placement for '{id}'.")).ToArray();
         var placements = definition.Interactions.Select(interaction =>
         {
             if (!InteractionPlacements.TryGetValue(interaction.Id.Value, out var placement))
@@ -1059,8 +1068,8 @@ internal static class StationRouteFixture
                 new WorldPosition(-10, 0, 2.35),
                 new WorldPosition(-10, 0, -1.4)),
             new StationEncounterPlacement(definition.Combat.PartyEncounter.Id, new WorldPosition(0, 0, 5), 2,
-                new WorldPosition(-.55, 0, 4.5), new WorldPosition(-2, 0, 8), new WorldPosition(.55, 0, 4.5),
-                [new StationActorPlacement(new EntityId("actor.enemy.gun_sentry.main"), new WorldPosition(2.5, 0, 10.5))], new WorldPosition(0, 0, -1)));
+                new WorldPosition(-.55, 0, 4.5), partyHostiles[0].Position, new WorldPosition(.55, 0, 4.5),
+                partyHostiles.Skip(1).ToArray(), new WorldPosition(0, 0, -1)));
     }
 }
 

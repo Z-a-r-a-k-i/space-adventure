@@ -63,16 +63,17 @@ public partial class GameHost
         var enforcer = GetNode<Marker3D>("Markers/MainEnforcerSpawn");
         var sentry = GetNode<Marker3D>("Markers/SentrySpawn");
         ValidateStableId(trigger, definition.Combat.PartyEncounter.Id.Value);
-        var sentryId = new EntityId(GetStableId(sentry));
-        if (!definition.Combat.PartyEncounter.HostileIds.Contains(sentryId)
-            || !definition.Combat.PartyEncounter.HostileIds.Contains(new EntityId(GetStableId(enforcer))))
+        var markers = new[] { enforcer, sentry }.ToDictionary(marker => new EntityId(GetStableId(marker)));
+        if (!markers.Keys.ToHashSet().SetEquals(definition.Combat.PartyEncounter.HostileIds))
         { throw new InvalidDataException("Party hostile markers do not match content."); }
+        var hostiles = definition.Combat.PartyEncounter.HostileIds
+            .Select(id => new StationActorPlacement(id, ToCore(markers[id].GlobalPosition))).ToArray();
         return new StationEncounterPlacement(definition.Combat.PartyEncounter.Id,
             ToCore(trigger.GlobalPosition), trigger.GetMeta("trigger_radius_meters").AsDouble(),
             ToCore(GetNode<Marker3D>("Markers/PartyVanguardRestart").GlobalPosition),
-            ToCore(enforcer.GlobalPosition),
+            hostiles[0].Position,
             ToCore(GetNode<Marker3D>("Markers/PartyProtectorRestart").GlobalPosition),
-            [new StationActorPlacement(sentryId, ToCore(sentry.GlobalPosition))],
+            hostiles.Skip(1).ToArray(),
             ToCore(-sentry.GlobalBasis.Z.Normalized()));
     }
 
