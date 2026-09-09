@@ -12,7 +12,7 @@ public static class CombatAudio
     {
         if (Streams.TryGetValue(cue, out var stream)) { return stream; }
         const int rate = 44100;
-        var duration = cue == "aid" ? 0.28 : cue == "interrupt" ? 0.19 : 0.14;
+        var duration = cue == "guard" ? 0.28 : cue == "shotgun" ? 0.23 : cue == "interrupt" ? 0.19 : 0.14;
         var samples = (int)(duration * rate);
         var data = new byte[samples * 2];
         var random = new Random(427);
@@ -23,9 +23,11 @@ public static class CombatAudio
             var noise = random.NextDouble() * 2 - 1;
             var signal = cue switch
             {
-                "aid" => Math.Sin(2 * Math.PI * (640 * time + 620 * time * time)) * 0.35,
                 "interrupt" => Math.Sin(2 * Math.PI * (1200 * time - 1600 * time * time)) * 0.35 + noise * 0.10,
                 "impact" => Math.Sin(2 * Math.PI * 110 * time) * 0.4 + noise * 0.25,
+                "shotgun" => noise * .55 * Math.Exp(-time * 18) + Math.Sin(2 * Math.PI * 70 * time) * .45,
+                "sentry" => noise * .2 + Math.Sin(2 * Math.PI * (430 * time - 900 * time * time)) * .45,
+                "guard" => (Math.Sin(2 * Math.PI * 330 * time) + Math.Sin(2 * Math.PI * 495 * time)) * .2,
                 _ => noise * 0.6 * Math.Exp(-time * 45) + Math.Sin(2 * Math.PI * (180 * time - 400 * time * time)) * 0.4,
             };
             var sample = (short)Math.Clamp(signal * envelope * 28000, short.MinValue, short.MaxValue);

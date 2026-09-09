@@ -1,8 +1,7 @@
 # Asset brief - Protector shotgun v1
 
-Status: accepted for bounded Tripo generation and offline source production;
-final visual approval, final assembly dimensions, and gameplay attack binding
-pending
+Status: integrated in party combat; current acceptance and fitted dimensions
+live in the [production record](../source/weapon.crew.protector_shotgun.v1/production.md).
 
 ## Identity and role
 
@@ -13,11 +12,11 @@ pending
 | Owning phase | Phase 3 art |
 | Compatible character | `character.crew.protector.v1` |
 | Attack source | `handheld` |
-| Gameplay attack reference | Pending Phase 3/4 gameplay definition; do not invent |
+| Gameplay attack reference | Defined by the Protector loadout in `game/content/station-route.json` |
 | Approved reference | `art/reference-sheets/frontier-station-v1/poc-models/protector-shotgun-turnaround-v1.png` |
 | Reference SHA-256 | `89C5555855DCCB07B46D5EB2A7A642FFF2C02B78F963F89A777A1C0DA5B101CE` |
 
-## Acceptance record
+## Initial generation authorization
 
 - Approval date: 2026-07-24.
 - Approver: project owner through the Phase 3 production authorization.
@@ -72,8 +71,7 @@ pending
 - Validate the exact Protector hand spacing, trigger clearance,
   support-hand reach, shoulder placement, recoil clearance, back-mount fit,
   draw path, and wide-muzzle readability.
-- Markers are presentation frames, never hitboxes. Final attack timing remains
-  pending.
+- Markers are presentation frames, never hitboxes. Gameplay content owns attack timing.
 
 ## Provider plan
 
@@ -97,5 +95,5 @@ hashed.
 Reject carbine or rifle identity, a long thin barrel, closed or unreadable
 muzzle, missing or impossible pump grip, impossible hand spacing, missing
 surfaces, paper-thin parts, fused human geometry, any shield, dominant cyan,
-or a silhouette that cannot fit the approved back mount. Selection and final
-dimensions remain provisional pending owner visual review.
+or a silhouette that cannot fit the approved back mount. Future replacements
+require assembled visual review.

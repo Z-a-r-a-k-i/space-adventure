@@ -2,16 +2,17 @@ namespace SpaceAdventure.Core;
 
 public sealed partial class GameSession
 {
-    private static void InitializeProtagonistCombatState(StationRouteRuntime station)
+    private static void InitializeProtagonistCombatState(StationRouteRuntime station) =>
+        InitializeActorCombatState(station, station.Protagonist);
+
+    private static void InitializeActorCombatState(StationRouteRuntime station, ActorRuntime actor)
     {
-        var actor = station.Protagonist;
-        actor.MaximumHealth = station.Definition.Combat.Encounter.ProtagonistMaximumHealth;
+        var combat = station.Definition.Combat;
+        var protagonist = actor.Id == station.Protagonist.Id;
+        actor.MaximumHealth = protagonist ? combat.SoloEncounter.ProtagonistMaximumHealth : combat.CompanionMaximumHealth;
         actor.Health = actor.MaximumHealth;
-        actor.Cooldowns[station.Definition.Combat.ProtagonistAbility.Id] = 0;
-        actor.CooldownTotals[station.Definition.Combat.ProtagonistAbility.Id] =
-            station.Definition.Combat.ProtagonistAbility.CooldownTicks;
-        actor.ItemCharges[station.Definition.Combat.HealingItem.Id] =
-            station.Definition.Combat.HealingItem.InitialCharges;
+        foreach (var abilityId in new[] { actor.Loadout!.ActiveAbilityId, actor.Loadout.SecondaryAbilityId })
+        { actor.Cooldowns[abilityId] = 0; actor.CooldownTotals[abilityId] = combat.AbilityCooldownTicks(abilityId); }
     }
 
     private CommandAcknowledgement Execute(AssignBasicAttackTargetCommand command)
@@ -21,8 +22,7 @@ public sealed partial class GameSession
             return Reject(command.CommandId, rejection);
         }
 
-        var hostile = station.Combat.Hostile;
-        if (command.TargetId != hostile.Id)
+        if (!station.Combat.Hostiles.TryGetValue(command.TargetId, out var hostile))
         {
             return Reject(command.CommandId, CommandRejectionCode.UnknownCombatTarget);
         }
@@ -62,6 +62,12 @@ public sealed partial class GameSession
             return Reject(command.CommandId, rejection);
         }
 
+        if (command.AbilityId == station.Definition.Combat.Barrier.Id)
+        {
+            return ExecuteBarrier(command, station, actor);
+        }
+        if (command.AbilityId == station.Definition.Combat.Burst.Id || command.AbilityId == station.Definition.Combat.Taunt.Id)
+        { return ExecuteSecondaryAbility(command, station, actor); }
         var ability = station.Definition.Combat.ProtagonistAbility;
         if (command.AbilityId != ability.Id || actor.Loadout!.ActiveAbilityId != ability.Id)
         {
@@ -103,52 +109,6 @@ public sealed partial class GameSession
         return Accept(command.CommandId);
     }
 
-    private CommandAcknowledgement Execute(UseItemCommand command)
-    {
-        if (!TryValidateCombatOrder(command.ActorId, out var station, out var actor, out var rejection))
-        {
-            return Reject(command.CommandId, rejection);
-        }
-
-        var item = station.Definition.Combat.HealingItem;
-        if (command.ItemId != item.Id)
-        {
-            return Reject(command.CommandId, CommandRejectionCode.UnknownItem);
-        }
-
-        if (command.TargetActorId != actor.Id)
-        {
-            return Reject(command.CommandId, CommandRejectionCode.InvalidItemTarget);
-        }
-
-        if (actor.ItemCharges.GetValueOrDefault(item.Id) <= 0)
-        {
-            return Reject(command.CommandId, CommandRejectionCode.ItemUnavailable);
-        }
-
-        if (actor.Health >= actor.MaximumHealth)
-        {
-            return Reject(command.CommandId, CommandRejectionCode.NoHealingRequired);
-        }
-
-        AssignPrimaryAction(
-            actor,
-            new PrimaryActionRuntime(
-                command.CommandId,
-                PrimaryActionKind.Item,
-                actor.Position,
-                interactionTargetId: null,
-                waypoints: [])
-            {
-                CombatTargetId = actor.Id,
-                ItemId = item.Id,
-                Phase = PrimaryActionPhase.Windup,
-                PhaseTicksRemaining = item.WindupTicks,
-                PhaseTicksTotal = item.WindupTicks,
-            });
-        return Accept(command.CommandId);
-    }
-
     private CommandAcknowledgement Execute(RestartEncounterCommand command)
     {
         if (_stationRoute is null)
@@ -158,7 +118,7 @@ public sealed partial class GameSession
 
         var station = _stationRoute;
         var combat = station.Combat;
-        if (command.EncounterId != station.Definition.Combat.Encounter.Id)
+        if (command.EncounterId != combat.Definition.Id)
         {
             return Reject(command.CommandId, CommandRejectionCode.UnknownEncounter);
         }
@@ -212,55 +172,65 @@ public sealed partial class GameSession
     private void TryStartEncounter(StationRouteRuntime station)
     {
         var combat = station.Combat;
-        if (station.CurrentObjective.Id != station.Definition.CombatThresholdObjective.Id
-            || station.Protagonist.Position.DistanceTo(combat.Placement.TriggerCenter)
-                > combat.Placement.TriggerRadiusMeters)
+        if (combat.Phase == EncounterPhase.Victory && !combat.Definition.RequiresCompanion
+            && station.CurrentObjective.Id == station.Definition.MainCombatObjective.Id
+            && station.PartyCombat is { } party
+            && station.Actors.Count == 2
+            && station.Actors.Values.All(actor => actor.Position.DistanceTo(party.Placement.TriggerCenter) <= party.Placement.TriggerRadiusMeters))
+        {
+            station.Combat = combat = party;
+        }
+        else if (combat.Phase != EncounterPhase.Dormant
+            || station.CurrentObjective.Id != station.Definition.CombatThresholdObjective.Id
+            || station.Protagonist.Position.DistanceTo(combat.Placement.TriggerCenter) > combat.Placement.TriggerRadiusMeters)
         {
             return;
         }
 
         combat.Attempt = 1;
         ResetEncounterAttempt(station);
-        var systemCommand = new CommandId("system.encounter.solo_tutorial.start");
-        ChangeObjective(station, systemCommand, station.Definition.CombatObjective);
+        var commandId = new CommandId($"system.{combat.Definition.Id}.start");
+        if (!combat.Definition.RequiresCompanion) { ChangeObjective(station, commandId, station.Definition.CombatObjective); }
         IsPaused = true;
         _accumulatedSeconds = 0;
-        Record(
-            GameplayEventType.EncounterStarted,
-            detail: new EncounterEventDetail(combat.Definition.Id, combat.Attempt));
+        Record(GameplayEventType.EncounterStarted, detail: new EncounterEventDetail(combat.Definition.Id, combat.Attempt));
         Record(GameplayEventType.PauseChanged, paused: true);
     }
 
     private void ResetEncounterAttempt(StationRouteRuntime station)
     {
         var combat = station.Combat;
-        var restarting = combat.Phase == EncounterPhase.Defeat;
-        combat.Attempt = Math.Max(1, combat.Attempt + (restarting ? 1 : 0));
+        combat.Attempt = Math.Max(1, combat.Attempt + (combat.Phase == EncounterPhase.Defeat ? 1 : 0));
+        EndBarrier(station, BarrierEndReason.EncounterEnded);
+        combat.Projectiles.Clear();
         combat.Phase = EncounterPhase.Readying;
         combat.PhaseStartedTick = Tick;
         combat.TransitionTicksTotal = combat.Definition.ReadyingTicks;
         combat.TransitionTicksRemaining = combat.TransitionTicksTotal;
-        station.Protagonist.Position = combat.Placement.ProtagonistRestartPosition;
-        station.Protagonist.Health = station.Protagonist.MaximumHealth;
-        station.Protagonist.CurrentAction = null;
-        station.Protagonist.PendingAction = null;
-        ClearAttackIntent(station.Protagonist);
-        station.Protagonist.OffensiveRecoveryUntilTick = 0;
-        foreach (var abilityId in station.Protagonist.Cooldowns.Keys.ToArray())
+        foreach (var actor in station.Actors.Values)
         {
-            station.Protagonist.Cooldowns[abilityId] = 0;
+            actor.Position = actor.Id == station.Protagonist.Id
+                ? combat.Placement.ProtagonistRestartPosition : combat.Placement.CompanionRestartPosition!.Value;
+            actor.MaximumHealth = actor.Id == station.Protagonist.Id
+                ? combat.Definition.ProtagonistMaximumHealth : station.Definition.Combat.CompanionMaximumHealth;
+            actor.Health = actor.MaximumHealth;
+            actor.DefeatedAtTick = null;
+            actor.HeldFacing = null;
+            actor.Facing = DirectionTo(actor.Position, combat.Placement.HostileSpawnPosition) ?? new WorldPosition(0, 0, 1);
+            actor.CurrentAction = null;
+            actor.PendingAction = null;
+            ClearAttackIntent(actor);
+            actor.OffensiveRecoveryUntilTick = 0;
+            foreach (var abilityId in actor.Cooldowns.Keys.ToArray()) { actor.Cooldowns[abilityId] = 0; }
         }
-
-        station.Protagonist.ItemCharges[station.Definition.Combat.HealingItem.Id] =
-            station.Definition.Combat.HealingItem.InitialCharges;
-        combat.Hostile.Position = combat.Placement.HostileSpawnPosition;
-        combat.Hostile.Health = combat.Hostile.MaximumHealth;
-        combat.Hostile.CurrentAction = null;
-        combat.Hostile.Waypoints = [];
-        combat.Hostile.WaypointIndex = 0;
-        if (restarting)
+        foreach (var hostile in combat.Hostiles.Values)
         {
-            station.CurrentObjective = station.Definition.CombatObjective;
+            hostile.TauntedBy = null; hostile.TauntedUntilTick = 0;
+            hostile.Position = hostile.SpawnPosition;
+            hostile.Health = hostile.MaximumHealth;
+            hostile.CurrentAction = null;
+            hostile.Waypoints = [];
+            hostile.WaypointIndex = 0;
         }
     }
 
@@ -289,8 +259,8 @@ public sealed partial class GameSession
         {
             combat.Phase = EncounterPhase.Victory;
             combat.PhaseStartedTick = Tick;
-            var systemCommand = new CommandId("system.encounter.solo_tutorial.victory");
-            ChangeObjective(station, systemCommand, station.Definition.SoloExitDoorObjective);
+            var systemCommand = new CommandId($"system.{combat.Definition.Id}.victory");
+            if (!combat.Definition.RequiresCompanion) { ChangeObjective(station, systemCommand, station.Definition.SoloExitDoorObjective); }
             Record(
                 GameplayEventType.EncounterWon,
                 detail: new EncounterEventDetail(combat.Definition.Id, combat.Attempt));
@@ -301,10 +271,10 @@ public sealed partial class GameSession
 
     private static void AdvanceCombatCooldowns(StationRouteRuntime station)
     {
-        foreach (var abilityId in station.Protagonist.Cooldowns.Keys.ToArray())
+        foreach (var actor in station.Actors.Values)
+        foreach (var abilityId in actor.Cooldowns.Keys.ToArray())
         {
-            station.Protagonist.Cooldowns[abilityId] =
-                Math.Max(0, station.Protagonist.Cooldowns[abilityId] - 1);
+            actor.Cooldowns[abilityId] = Math.Max(0, actor.Cooldowns[abilityId] - 1);
         }
     }
 
@@ -326,9 +296,6 @@ public sealed partial class GameSession
             case PrimaryActionKind.Ability:
                 AdvancePartyAbility(station, actor, action);
                 break;
-            case PrimaryActionKind.Item:
-                AdvancePartyItem(station, actor, action);
-                break;
         }
     }
 
@@ -337,8 +304,9 @@ public sealed partial class GameSession
         ActorRuntime actor,
         PrimaryActionRuntime action)
     {
-        var hostile = station.Combat.Hostile;
-        if (action.CombatTargetId != hostile.Id || hostile.Health <= 0 || action.AttackId is not AttackId attackId)
+        if (action.CombatTargetId is not EntityId targetId
+            || !station.Combat.Hostiles.TryGetValue(targetId, out var hostile)
+            || hostile.Health <= 0 || action.AttackId is not AttackId attackId)
         {
             actor.CurrentAction = null;
             ClearAttackIntent(actor);
@@ -380,7 +348,7 @@ public sealed partial class GameSession
                 detail: new AttackEventDetail(actor.Id, hostile.Id, attack.Id, hit));
             if (hit)
             {
-                DamageHostile(station, actor.Id, attack.Damage, attack.Id, abilityId: null);
+                DamageHostile(station, hostile, actor.Id, attack.Damage, attack.Id, abilityId: null);
             }
 
             if (station.Combat.Phase == EncounterPhase.Securing)
@@ -407,6 +375,13 @@ public sealed partial class GameSession
         ActorRuntime actor,
         PrimaryActionRuntime action)
     {
+        if (action.AbilityId == station.Definition.Combat.Barrier.Id)
+        {
+            AdvanceBarrierAction(station, actor, action);
+            return;
+        }
+        if (action.AbilityId == station.Definition.Combat.Burst.Id || action.AbilityId == station.Definition.Combat.Taunt.Id)
+        { AdvanceSecondaryAbility(station, actor, action); return; }
         var ability = station.Definition.Combat.ProtagonistAbility;
         if (action.AbilityId != ability.Id)
         {
@@ -422,11 +397,14 @@ public sealed partial class GameSession
                 return;
             }
 
+            var rejection = ValidatePendingAction(station, actor, action);
+            if (rejection is { } reason)
+            { actor.CurrentAction = null; RecordPrimaryActionFailure(actor, action, reason); ResumeRememberedAttack(station, actor); return; }
             actor.Cooldowns[ability.Id] = ability.CooldownTicks;
             actor.OffensiveRecoveryUntilTick = Tick + ability.RecoveryTicks;
-            var hostile = station.Combat.Hostile;
-            var hit = hostile.Health > 0
-                && hostile.Position.DistanceTo(action.AbilityTargetPosition) <= ability.RadiusMeters;
+            var hits = station.Combat.Hostiles.Values.Where(hostile => hostile.Health > 0
+                && hostile.Position.DistanceTo(action.AbilityTargetPosition) <= ability.RadiusMeters).ToArray();
+            var hit = hits.Length > 0;
             Record(
                 GameplayEventType.AbilityReleased,
                 action.CommandId,
@@ -435,10 +413,10 @@ public sealed partial class GameSession
                     action.AbilityTargetPosition,
                     ability.Id,
                     hit));
-            if (hit)
+            foreach (var hostile in hits)
             {
-                DamageHostile(station, actor.Id, ability.Damage, attackId: null, ability.Id);
-                if (ability.InterruptsWindup
+                DamageHostile(station, hostile, actor.Id, ability.Damage, attackId: null, ability.Id);
+                if (ability.InterruptsWindup && hostile.Health > 0
                     && station.Combat.Phase == EncounterPhase.Active
                     && hostile.CurrentAction?.Phase == PrimaryActionPhase.Windup)
                 {
@@ -472,124 +450,81 @@ public sealed partial class GameSession
         }
     }
 
-    private void AdvancePartyItem(
-        StationRouteRuntime station,
-        ActorRuntime actor,
-        PrimaryActionRuntime action)
+    private void AdvanceHostileCombat(StationRouteRuntime station)
     {
-        var item = station.Definition.Combat.HealingItem;
-        if (action.ItemId != item.Id)
+        foreach (var hostile in station.Combat.Hostiles.Values.OrderBy(hostile => hostile.Id.Value, StringComparer.Ordinal))
         {
-            actor.CurrentAction = null;
-            return;
-        }
-
-        if (action.Phase == PrimaryActionPhase.Windup)
-        {
-            UpdatePhaseRemaining(action);
-            if (action.PhaseTicksRemaining > 0)
-            {
-                return;
-            }
-
-            var previousHealth = actor.Health;
-            actor.Health = Math.Min(actor.MaximumHealth, actor.Health + item.Healing);
-            actor.ItemCharges[item.Id]--;
-            Record(
-                GameplayEventType.HealingApplied,
-                action.CommandId,
-                detail: new HealingAppliedEventDetail(
-                    actor.Id,
-                    actor.Id,
-                    item.Id,
-                    actor.Health - previousHealth,
-                    actor.Health));
-            BeginRecovery(action, item.RecoveryTicks);
-            return;
-        }
-
-        UpdatePhaseRemaining(action);
-        if (action.PhaseTicksRemaining <= 0)
-        {
-            actor.CurrentAction = null;
-            ResumeRememberedAttack(station, actor);
+            if (station.Combat.Phase != EncounterPhase.Active) { break; }
+            AdvanceHostile(station, hostile);
         }
     }
 
-    private void AdvanceHostileCombat(StationRouteRuntime station)
+    private void AdvanceHostile(StationRouteRuntime station, HostileRuntime hostile)
     {
-        var hostile = station.Combat.Hostile;
-        var target = station.Protagonist;
-        if (hostile.Health <= 0 || target.Health <= 0)
-        {
-            return;
-        }
-
+        if (hostile.Health <= 0) { return; }
         var attack = station.Definition.Combat.GetAttack(hostile.BasicAttackId);
-        hostile.CurrentAction ??= new HostileAttackRuntime
-        {
-            Phase = PrimaryActionPhase.Moving,
-            InstanceId = ++_actionSequence,
-            PhaseStartedTick = Tick,
-        };
+        hostile.CurrentAction ??= new HostileAttackRuntime { Phase = PrimaryActionPhase.Moving, PhaseStartedTick = Tick };
         var action = hostile.CurrentAction;
         if (action.Phase == PrimaryActionPhase.Moving)
         {
+            var candidates = station.Actors.Values.Where(actor => actor.Health > 0);
+            // Sentries pressure the back line while melee closes on the nearest crew;
+            // Taunt overrides either preference until it expires.
+            var target = hostile.TauntedBy is { } taunter ? station.Actors[taunter] : hostile.Behavior == HostileBehavior.Sentry
+                ? candidates.Where(actor => CanSentryHit(hostile, actor.Position, attack.RangeMeters))
+                    .OrderByDescending(actor => actor.Position.DistanceTo(hostile.Position)).ThenBy(actor => actor.PartyOrder).FirstOrDefault()
+                : candidates.OrderBy(actor => actor.Position.DistanceTo(hostile.Position)).ThenBy(actor => actor.PartyOrder).FirstOrDefault();
+            if (target is null) { action.TargetId = null; return; }
+            action.TargetId = target.Id;
+            if (hostile.Behavior == HostileBehavior.Sentry && !CanSentryHit(hostile, target.Position, attack.RangeMeters)) { return; }
             if (hostile.Position.DistanceTo(target.Position) > attack.RangeMeters)
             {
                 AdvanceHostileToward(hostile, target.Position);
                 return;
             }
-
             action.Phase = PrimaryActionPhase.Windup;
-            action.PhaseTicksRemaining = attack.WindupTicks;
-            action.PhaseTicksTotal = attack.WindupTicks;
+            action.PhaseTicksRemaining = action.PhaseTicksTotal = attack.WindupTicks;
             action.PhaseStartedTick = Tick;
             action.InstanceId = ++_actionSequence;
             action.Interrupted = false;
-            Record(
-                GameplayEventType.AttackWindupStarted,
-                detail: new AttackEventDetail(hostile.Id, target.Id, attack.Id, Hit: false));
-            return;
-        }
-
-        if (action.Phase == PrimaryActionPhase.Windup)
-        {
-            action.PhaseTicksRemaining = (int)Math.Max(0, action.PhaseStartedTick + action.PhaseTicksTotal - Tick);
-            if (action.PhaseTicksRemaining > 0)
-            {
-                return;
-            }
-
-            var hit = hostile.Position.DistanceTo(target.Position) <= attack.RangeMeters;
-            Record(
-                GameplayEventType.AttackReleased,
-                detail: new AttackEventDetail(hostile.Id, target.Id, attack.Id, hit));
-            if (hit)
-            {
-                DamageProtagonist(station, hostile.Id, attack.Damage, attack.Id);
-            }
-
-            if (station.Combat.Phase == EncounterPhase.Defeat)
-            {
-                return;
-            }
-
-            action.Phase = PrimaryActionPhase.Recovery;
-            action.PhaseTicksRemaining = attack.RecoveryTicks;
-            action.PhaseTicksTotal = attack.RecoveryTicks;
-            action.PhaseStartedTick = Tick;
+            Record(GameplayEventType.AttackWindupStarted, detail: new AttackEventDetail(hostile.Id, target.Id, attack.Id, false));
             return;
         }
 
         action.PhaseTicksRemaining = (int)Math.Max(0, action.PhaseStartedTick + action.PhaseTicksTotal - Tick);
-        if (action.PhaseTicksRemaining <= 0)
+        if (action.PhaseTicksRemaining > 0) { return; }
+        if (action.Phase == PrimaryActionPhase.Windup && action.TargetId is EntityId targetId)
+        {
+            var target = station.Actors[targetId];
+            var hit = target.Health > 0 && (hostile.Behavior == HostileBehavior.Sentry
+                ? CanSentryHit(hostile, target.Position, attack.RangeMeters)
+                : hostile.Position.DistanceTo(target.Position) <= attack.RangeMeters);
+            Record(GameplayEventType.AttackReleased, detail: new AttackEventDetail(hostile.Id, target.Id, attack.Id, hit));
+            if (hit)
+            {
+                if (hostile.Behavior == HostileBehavior.Sentry) { LaunchSentryProjectile(station, hostile, target, attack); }
+                else { DamagePartyActor(station, target, hostile.Id, attack.Damage, attack.Id); }
+            }
+            if (station.Combat.Phase != EncounterPhase.Active) { return; }
+            action.Phase = PrimaryActionPhase.Recovery;
+            action.PhaseTicksRemaining = action.PhaseTicksTotal = attack.RecoveryTicks;
+            action.PhaseStartedTick = Tick;
+        }
+        else
         {
             action.Phase = PrimaryActionPhase.Moving;
-            action.PhaseTicksRemaining = 0;
-            action.PhaseTicksTotal = 0;
-            AdvanceHostileCombat(station);
+            action.PhaseTicksRemaining = action.PhaseTicksTotal = 0;
+            AdvanceHostile(station, hostile);
         }
+    }
+
+    private static bool CanSentryHit(HostileRuntime hostile, WorldPosition target, double range)
+    {
+        if (hostile.Position.DistanceTo(target) > range) { return false; }
+        var x = target.X - hostile.Position.X;
+        var z = target.Z - hostile.Position.Z;
+        var distance = Math.Sqrt(x * x + z * z);
+        return distance > 0.01 && (x * hostile.Forward.X + z * hostile.Forward.Z) / distance >= 0.5;
     }
 
     private void BeginAttackWindup(
@@ -739,12 +674,12 @@ public sealed partial class GameSession
 
     private void DamageHostile(
         StationRouteRuntime station,
+        HostileRuntime hostile,
         EntityId sourceId,
         int amount,
         AttackId? attackId,
         AbilityId? abilityId)
     {
-        var hostile = station.Combat.Hostile;
         hostile.Health = Math.Max(0, hostile.Health - amount);
         Record(
             GameplayEventType.DamageApplied,
@@ -757,46 +692,32 @@ public sealed partial class GameSession
                 abilityId));
         if (hostile.Health == 0)
         {
+            hostile.TauntedBy = null; hostile.TauntedUntilTick = 0;
             Record(
                 GameplayEventType.CombatantDefeated,
                 detail: new CombatantDefeatedEventDetail(hostile.Id, sourceId));
-            BeginSecuring(station);
+            hostile.CurrentAction = null;
+            foreach (var actor in station.Actors.Values.Where(actor => actor.RememberedAttackTargetId == hostile.Id))
+            {
+                ClearAttackIntent(actor);
+                if (actor.CurrentAction?.Kind == PrimaryActionKind.Attack) { actor.CurrentAction = null; }
+            }
+            if (station.Combat.Hostiles.Values.All(enemy => enemy.Health <= 0)) { BeginSecuring(station); }
         }
     }
 
-    private void DamageProtagonist(
-        StationRouteRuntime station,
-        EntityId sourceId,
-        int amount,
-        AttackId attackId)
+    private void DamagePartyActor(StationRouteRuntime station, ActorRuntime actor, EntityId sourceId, int amount, AttackId attackId)
     {
-        var actor = station.Protagonist;
-        actor.Health = Math.Max(0, actor.Health - amount);
-        Record(
-            GameplayEventType.DamageApplied,
-            detail: new DamageAppliedEventDetail(
-                sourceId,
-                actor.Id,
-                amount,
-                actor.Health,
-                attackId,
-                AbilityId: null));
-        if (actor.Health == 0)
+        ApplyActorDamage(actor, sourceId, amount, attackId);
+        ValidateBarrierLifetime(station); ValidateTaunts(station);
+        if (station.Actors.Values.All(member => member.Health <= 0))
         {
-            actor.CurrentAction = null;
-            actor.PendingAction = null;
-            ClearAttackIntent(actor);
             station.Combat.Phase = EncounterPhase.Defeat;
             station.Combat.PhaseStartedTick = Tick;
-            station.Combat.Hostile.CurrentAction = null;
-            Record(
-                GameplayEventType.CombatantDefeated,
-                detail: new CombatantDefeatedEventDetail(actor.Id, sourceId));
-            Record(
-                GameplayEventType.EncounterDefeated,
-                detail: new EncounterEventDetail(
-                    station.Combat.Definition.Id,
-                    station.Combat.Attempt));
+            EndBarrier(station, BarrierEndReason.EncounterEnded);
+            station.Combat.Projectiles.Clear();
+            foreach (var hostile in station.Combat.Hostiles.Values) { hostile.CurrentAction = null; }
+            Record(GameplayEventType.EncounterDefeated, detail: new EncounterEventDetail(station.Combat.Definition.Id, station.Combat.Attempt));
             if (!IsPaused)
             {
                 IsPaused = true;
@@ -806,17 +727,36 @@ public sealed partial class GameSession
         }
     }
 
+    private void ApplyActorDamage(ActorRuntime actor, EntityId sourceId, int amount, AttackId attackId)
+    {
+        if (actor.Health <= 0 || amount <= 0) { return; }
+        actor.Health = Math.Max(0, actor.Health - amount);
+        Record(GameplayEventType.DamageApplied,
+            detail: new DamageAppliedEventDetail(sourceId, actor.Id, amount, actor.Health, attackId, null));
+        if (actor.Health == 0)
+        {
+            actor.DefeatedAtTick = Tick;
+            actor.CurrentAction = actor.PendingAction = null;
+            ClearAttackIntent(actor);
+            Record(GameplayEventType.CombatantDefeated, detail: new CombatantDefeatedEventDetail(actor.Id, sourceId));
+        }
+    }
+
     private void BeginSecuring(StationRouteRuntime station)
     {
+        EndBarrier(station, BarrierEndReason.EncounterEnded);
+        station.Combat.Projectiles.Clear();
         station.Combat.Phase = EncounterPhase.Securing;
         station.Combat.PhaseStartedTick = Tick;
         station.Combat.TransitionTicksTotal = station.Combat.Definition.SecuringTicks;
         station.Combat.TransitionTicksRemaining = station.Combat.TransitionTicksTotal;
-        station.Combat.Hostile.CurrentAction = null;
-        station.Protagonist.CurrentAction = null;
-        station.Protagonist.PendingAction = null;
-        ClearAttackIntent(station.Protagonist);
-        station.Protagonist.OffensiveRecoveryUntilTick = 0;
+        foreach (var hostile in station.Combat.Hostiles.Values) { hostile.CurrentAction = null; }
+        foreach (var actor in station.Actors.Values)
+        {
+            actor.CurrentAction = actor.PendingAction = null;
+            ClearAttackIntent(actor);
+            actor.OffensiveRecoveryUntilTick = 0;
+        }
     }
 
     private void RecordPrimaryActionFailure(
@@ -831,19 +771,19 @@ public sealed partial class GameSession
             detail: new PrimaryActionFailedEventDetail(action.CommandId, actor.Id, reason));
     }
 
-    private static HostileObservation ObserveHostile(StationRouteRuntime station)
+    private HostileObservation ObserveHostile(StationRouteRuntime station, HostileRuntime hostile)
     {
-        var hostile = station.Combat.Hostile;
         var action = hostile.CurrentAction;
+        var targetPosition = action?.TargetId is EntityId targetId ? station.Actors[targetId].Position : hostile.Position;
         PrimaryActionObservation? observedAction = action is null
             ? null
             : new PrimaryActionObservation(
-                new CommandId("system.enemy.security_enforcer.attack"),
+                new CommandId($"system.{hostile.Id}.attack"),
                 PrimaryActionKind.Attack,
-                station.Protagonist.Position,
+                targetPosition,
                 action.Phase == PrimaryActionPhase.Moving,
                 InteractionTargetId: null,
-                CombatTargetId: station.Protagonist.Id,
+                CombatTargetId: action.TargetId,
                 AttackId: hostile.BasicAttackId,
                 Phase: action.Phase,
                 PhaseTicksRemaining: action.PhaseTicksRemaining,
@@ -862,66 +802,61 @@ public sealed partial class GameSession
                 hostile.Health <= 0,
                 hostile.BasicAttackId,
                 Cooldowns: [],
-                Items: []),
+                TauntedBy: hostile.TauntedBy,
+                TauntRemainingTicks: (int)Math.Max(0, hostile.TauntedUntilTick - Tick)),
             observedAction);
     }
 
-    private sealed class CombatEncounterRuntime(
-        StationCombatDefinition combat,
-        StationEncounterPlacement placement)
+    private sealed class CombatEncounterRuntime
     {
-        public EncounterDefinition Definition { get; } = combat.Encounter;
-
-        public StationEncounterPlacement Placement { get; } = placement;
-
-        public HostileRuntime Hostile { get; } = new(combat.Hostile, placement.HostileSpawnPosition);
-
+        public CombatEncounterRuntime(StationCombatDefinition combat, EncounterDefinition definition, StationEncounterPlacement placement)
+        {
+            Definition = definition;
+            Placement = placement;
+            Hostiles = definition.HostileIds.ToDictionary(id => id, id => new HostileRuntime(combat.GetHostile(id),
+                id == definition.HostileIds[0] ? placement.HostileSpawnPosition
+                    : placement.AdditionalHostiles!.Single(actor => actor.ActorId == id).Position,
+                placement.SentryForward ?? new WorldPosition(0, 0, -1)));
+        }
+        public EncounterDefinition Definition { get; }
+        public StationEncounterPlacement Placement { get; }
+        public Dictionary<EntityId, HostileRuntime> Hostiles { get; }
+        public BarrierRuntime? Barrier { get; set; }
+        public List<ProjectileRuntime> Projectiles { get; } = [];
         public EncounterPhase Phase { get; set; } = EncounterPhase.Dormant;
-
         public int Attempt { get; set; }
-
         public int TransitionTicksRemaining { get; set; }
-
         public int TransitionTicksTotal { get; set; }
-
         public long PhaseStartedTick { get; set; }
     }
 
-    private sealed class HostileRuntime(HostileDefinition definition, WorldPosition position)
+    private sealed class HostileRuntime(HostileDefinition definition, WorldPosition position, WorldPosition forward)
     {
         public EntityId Id { get; } = definition.Id;
-
         public string DisplayName { get; } = definition.DisplayName;
-
         public double MovementSpeedMetersPerSecond { get; } = definition.MovementSpeedMetersPerSecond;
-
         public int MaximumHealth { get; } = definition.MaximumHealth;
-
         public int Health { get; set; } = definition.MaximumHealth;
-
         public AttackId BasicAttackId { get; } = definition.BasicAttackId;
-
+        public HostileBehavior Behavior { get; } = definition.Behavior;
         public WorldPosition Position { get; set; } = position;
-
+        public WorldPosition SpawnPosition { get; } = position;
+        public WorldPosition Forward { get; } = forward;
+        public EntityId? TauntedBy { get; set; }
+        public long TauntedUntilTick { get; set; }
         public HostileAttackRuntime? CurrentAction { get; set; }
-
         public IReadOnlyList<WorldPosition> Waypoints { get; set; } = [];
-
         public int WaypointIndex { get; set; }
     }
 
     private sealed class HostileAttackRuntime
     {
         public long InstanceId { get; set; }
-
         public long PhaseStartedTick { get; set; }
-
         public bool Interrupted { get; set; }
-
+        public EntityId? TargetId { get; set; }
         public PrimaryActionPhase Phase { get; set; }
-
         public int PhaseTicksRemaining { get; set; }
-
         public int PhaseTicksTotal { get; set; }
     }
 }

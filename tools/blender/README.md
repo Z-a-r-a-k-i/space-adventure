@@ -61,3 +61,30 @@ the accepted inputs and follow the publication and direct Godot review gates
 in [ART-PIPELINE.md](../../docs/ART-PIPELINE.md). Current provenance and repair
 details live in the [Vanguard production record](../../art/source/character.crew.vanguard.v1/production.md)
 and [carbine production record](../../art/source/weapon.crew.vanguard_carbine.v1/production.md).
+
+For the local party/UI preview:
+
+```text
+blender --background --factory-startup --python-exit-code 1 --python tools/blender/build_party_presentation.py
+blender --background --factory-startup --python-exit-code 1 --python tools/blender/render_crew_portraits.py
+```
+
+The party builder edits Protector and shotgun sources and exports to ignored
+`game/Assets/LocalBaseline/party/`. It needs the retained cleaned shotgun and
+accepted character sources. After reviewing a rebuild, copy `protector.glb` to
+`game/Assets/Published/character.crew.protector.v1.glb` and `shotgun.glb` to
+`game/Assets/Published/weapon.crew.protector_shotgun.v1.glb`, then import and run
+the party review. [Current acceptance](../../art/source/weapon.crew.protector_shotgun.v1/production.md).
+The portrait tool writes the two HUD PNGs from the accepted character rigs.
+
+For the crew death clips only:
+
+```text
+blender --background --python-exit-code 1 --python tools/blender/repair_crew_death.py
+blender --background --python-exit-code 1 --python tools/blender/repair_crew_death.py -- --verify-only
+```
+
+The first command edits both crew sources and overwrites both published crew
+GLBs after fresh-import checks of floor contact and the
+final poses. It needs the retained Rifle Death donor in Vanguard's raw cache.
+`--verify-only` checks those existing GLBs without editing assets.

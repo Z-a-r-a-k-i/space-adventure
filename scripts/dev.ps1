@@ -13,13 +13,16 @@ param(
     [ValidateSet("live", "capture", "record", "performance", "input")]
     [string]$Mode = "capture",
 
+    [ValidateSet("solo", "party")]
+    [string]$Encounter = "solo",
+
     [ValidateSet("victory", "defeat")]
     [string]$Sequence = "victory",
 
     [ValidateSet("restrained", "strong")]
     [string]$Recoil = "restrained",
 
-    [ValidateSet("all", "ready", "draw", "armed", "armed-walk", "fire", "recoil", "anticipation", "contact", "heal", "interrupt", "late-fire", "holster", "victory", "slice-complete", "defeat", "retry")]
+    [ValidateSet("all", "ready", "draw", "armed", "armed-walk", "fire", "recoil", "anticipation", "contact", "barrier-queued", "barrier", "barrier-block", "facing", "taunt", "burst", "interrupt", "late-fire", "holster", "victory", "slice-complete", "defeat", "retry")]
     [string]$Checkpoint = "all",
 
     [ValidateRange(7.5, 20.0)]
@@ -386,9 +389,11 @@ SpaceAdventure development commands
   scenario [-Name name]   Run a deterministic core scenario as JSON Lines
   plugin-link             Create the ignored local Godot AI Control junction
   import                  Import the Godot project headlessly
-  headless [-Name name]   Run a bounded Godot smoke (bootstrap, station-route, station-combat-defeat, humanoid-gallery, or hostile-gallery)
+  headless [-Name name]   Run a bounded Godot smoke (bootstrap, station-route, station-combat-defeat,
+                          station-party, station-party-defeat, humanoid-gallery, hostile-gallery)
   capture -Name name      Create and verify a deterministic graphical capture (wall-cutaway)
-  review                  Bounded solo-combat review through ordinary typed commands
+  review                  Bounded combat review through ordinary typed commands
+                          -Encounter solo|party
                           -Mode live|capture|record|performance|input -Sequence victory|defeat
                           -Recoil restrained|strong (restrained is the game default)
                           -Checkpoint all|armed|fire|... -Distance 7.5..20
@@ -498,6 +503,8 @@ Options:
                 "bootstrap" { @{ Argument = "--bootstrap-smoke"; Scene = $null } }
                 "station-route" { @{ Argument = "--station-route-smoke"; Scene = $null } }
                 "station-combat-defeat" { @{ Argument = "--station-combat-defeat-smoke"; Scene = $null } }
+                "station-party" { @{ Argument = @("--solo-review=smoke", "--review-encounter=party", "--review-sequence=victory"); Scene = $null } }
+                "station-party-defeat" { @{ Argument = @("--solo-review=smoke", "--review-encounter=party", "--review-sequence=defeat"); Scene = $null } }
                 "humanoid-gallery" {
                     @{
                         Argument = "--humanoid-gallery-smoke"
@@ -510,13 +517,14 @@ Options:
                         Scene = "res://scenes/hostile_gallery.tscn"
                     }
                 }
-                default { throw "Unknown Godot headless scenario '$Name'. Expected 'bootstrap', 'station-route', 'station-combat-defeat', 'humanoid-gallery', or 'hostile-gallery'." }
+                default { throw "Unknown Godot headless scenario '$Name'. Expected 'bootstrap', 'station-route', 'station-combat-defeat', 'station-party', 'station-party-defeat', 'humanoid-gallery', or 'hostile-gallery'." }
             }
             $arguments = @("--headless", "--path", $gameProject)
             if ($null -ne $smoke.Scene) {
                 $arguments += $smoke.Scene
             }
-            $arguments += "--", $smoke.Argument
+            $arguments += "--"
+            $arguments += @($smoke.Argument)
             Invoke-GodotAutomated -Arguments $arguments
         }
         "capture" {
@@ -790,21 +798,22 @@ Options:
             if (-not $PSBoundParameters.ContainsKey('TimeoutSeconds')) { $TimeoutSeconds = 180 }
             $arguments = @('--path', $gameProject, '--windowed', '--resolution', $Resolution)
             if ($Mode -eq 'record') {
-                $movieRoot = Join-Path $repoRoot 'artifacts/solo-review'
+                $movieRoot = Join-Path $repoRoot "artifacts/$Encounter-review"
                 Assert-NotReparsePoint -Path (Join-Path $repoRoot 'artifacts') -Description 'Review root'
                 Assert-NotReparsePoint -Path $movieRoot -Description 'Review output'
                 New-Item -ItemType Directory -Force -Path $movieRoot | Out-Null
                 $distanceText = $Distance.ToString('0.0', [Globalization.CultureInfo]::InvariantCulture)
-                $moviePath = Join-Path $movieRoot "solo-$Sequence-$Recoil-$distanceText.ogv"
+                $moviePath = Join-Path $movieRoot "$Encounter-$Sequence-$Recoil-$distanceText.ogv"
                 Assert-NotReparsePoint -Path $moviePath -Description 'Review movie'
-                $arguments += '--write-movie', $moviePath, '--fixed-fps', '60'
+                # MovieWriter owns frame time; waiting for monitor VSync only slows encoding.
+                $arguments += '--write-movie', $moviePath, '--fixed-fps', '60', '--disable-vsync'
             }
-            $arguments += '--', "--solo-review=$Mode", "--review-sequence=$Sequence",
+            $arguments += '--', "--solo-review=$Mode", "--review-sequence=$Sequence", "--review-encounter=$Encounter",
                 "--review-recoil=$Recoil",
                 "--review-checkpoint=$Checkpoint",
                 ('--review-distance=' + $Distance.ToString([Globalization.CultureInfo]::InvariantCulture))
             if ($AutoQuitSeconds -gt 0) { $arguments += "--auto-quit-seconds=$AutoQuitSeconds" }
-            Invoke-GodotAutomated -UserDataScope "solo-review-$Mode-$Sequence" -Arguments $arguments
+            Invoke-GodotAutomated -UserDataScope "$Encounter-review-$Mode-$Sequence" -Arguments $arguments
             if ($Mode -eq 'record') { Write-Output "Movie: $moviePath" }
         }
         "editor" {

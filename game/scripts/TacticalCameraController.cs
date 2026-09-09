@@ -34,6 +34,7 @@ public partial class TacticalCameraController : Camera3D
     private const float OcclusionTargetHeight = 0.90f;
     private const float CutawayStubHeight = 0.45f;
     private const float CutawayTransitionSeconds = 0.15f;
+    private const float EdgePanMargin = 24;
 
     private static readonly StringName CameraOccluderGroup = new("camera_occluder");
     private static readonly StringName OccluderIdMetadata = new("occluder_id");
@@ -50,6 +51,11 @@ public partial class TacticalCameraController : Camera3D
     private bool _hasFollowTarget;
     private bool _inputEnabled = true;
     private bool _rotating;
+    private bool _pointerInsideWindow;
+    private Vector2 _pointerPosition;
+
+    public bool EdgePanBlocked { get; set; }
+    internal Vector2 EdgePanDirection { get; private set; }
 
     public bool InputEnabled
     {
@@ -60,6 +66,7 @@ public partial class TacticalCameraController : Camera3D
             if (!value)
             {
                 _rotating = false;
+                EdgePanDirection = Vector2.Zero;
             }
         }
     }
@@ -121,10 +128,32 @@ public partial class TacticalCameraController : Camera3D
 
     public override void _Ready()
     {
+        GetWindow().MouseEntered += OnPointerEntered;
+        GetWindow().MouseExited += OnPointerExited;
+        GetWindow().FocusExited += OnCameraFocusExited;
         ProcessPriority = 10;
         CacheOccludingWalls();
         Current = true;
         UpdateTransform();
+    }
+
+    private void OnPointerEntered()
+    {
+        _pointerInsideWindow = true;
+        _pointerPosition = GetViewport().GetMousePosition();
+    }
+    private void OnPointerExited() { _pointerInsideWindow = false; EdgePanDirection = Vector2.Zero; }
+    private void OnCameraFocusExited() { OnPointerExited(); _rotating = false; }
+
+    public override void _Input(InputEvent @event)
+    {
+        if (@event is InputEventMouseMotion motion)
+        {
+            _pointerPosition = motion.Position;
+            _pointerInsideWindow = GetViewport().GetVisibleRect().HasPoint(motion.Position);
+        }
+        if (@event is InputEventMouseButton { ButtonIndex: MouseButton.Middle, Pressed: false })
+        { _rotating = false; }
     }
 
     public override void _Process(double delta)
@@ -170,11 +199,12 @@ public partial class TacticalCameraController : Camera3D
                 GetViewport().SetInputAsHandled();
                 break;
             case InputEventKey { Pressed: true, Echo: false } key
-                when key.PhysicalKeycode is Key.Home or Key.R:
+                when key.PhysicalKeycode is Key.Home or Key.R || key.Keycode is Key.Home or Key.R:
                 ResetOrientation();
                 GetViewport().SetInputAsHandled();
                 break;
-            case InputEventKey { Pressed: true, Echo: false, PhysicalKeycode: Key.F }:
+            case InputEventKey { Pressed: true, Echo: false } focusKey
+                when focusKey.PhysicalKeycode == Key.F || focusKey.Keycode == Key.F:
                 FocusOn(_followTarget);
                 GetViewport().SetInputAsHandled();
                 break;
@@ -273,6 +303,8 @@ public partial class TacticalCameraController : Camera3D
 
     private void ProcessCameraInput(float seconds)
     {
+        EdgePanDirection = Vector2.Zero;
+        if (!GetWindow().HasFocus()) { return; }
         var (forward, right) = GetPanBasis();
         var movement = Vector3.Zero;
 
@@ -293,9 +325,24 @@ public partial class TacticalCameraController : Camera3D
             movement -= right;
         }
 
+        var viewport = GetViewport();
+        // Native and injected motion both supply viewport coordinates.
+        var pointer = _pointerPosition;
+        var bounds = viewport.GetVisibleRect();
+        if (_pointerInsideWindow && bounds.HasPoint(pointer) && !EdgePanBlocked && !_rotating
+            && !Input.IsMouseButtonPressed(MouseButton.Left) && Input.MouseMode == Input.MouseModeEnum.Visible
+            && viewport.GuiGetHoveredControl() is null)
+        {
+            static float Edge(float point, float length) => point < EdgePanMargin ? -(EdgePanMargin - point) / EdgePanMargin
+                : point > length - EdgePanMargin ? (point - length + EdgePanMargin) / EdgePanMargin : 0;
+            var local = pointer - bounds.Position;
+            EdgePanDirection = new Vector2(Edge(local.X, bounds.Size.X), Edge(local.Y, bounds.Size.Y)).LimitLength();
+            movement += right * EdgePanDirection.X - forward * EdgePanDirection.Y;
+        }
+
         if (!movement.IsZeroApprox())
         {
-            _focus += movement.Normalized() * (5.5f + (_distance * 0.2f)) * seconds;
+            _focus += movement.LimitLength() * (5.5f + (_distance * 0.2f)) * seconds;
         }
 
         var rotationDirection = 0.0f;

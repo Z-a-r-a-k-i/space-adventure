@@ -26,7 +26,7 @@ public partial class GameHost
             _reviewMode = ReviewArgument("solo-review", "capture");
             _reviewSequence = ReviewArgument("review-sequence", "victory");
             _reviewCheckpoint = ReviewArgument("review-checkpoint", _reviewMode == "live" ? "armed" : "all");
-            if (_reviewMode is not ("capture" or "record" or "live" or "performance" or "input")
+            if (_reviewMode is not ("capture" or "record" or "live" or "performance" or "input" or "smoke")
                 || _reviewSequence is not ("victory" or "defeat"))
             {
                 throw new InvalidOperationException("Unknown solo review profile.");
@@ -38,13 +38,14 @@ public partial class GameHost
             var size = GetWindow().Size;
             var recoil = ReviewArgument("review-recoil", "restrained");
             _vanguardPresentation.StrongRecoil = recoil == "strong";
-            _reviewOutput = Path.Combine(repositoryRoot, "artifacts", "solo-review",
+            _reviewOutput = Path.Combine(repositoryRoot, "artifacts", IsPartyReview ? "party-review" : "solo-review",
                 FormattableString.Invariant($"{_reviewMode}-{_reviewSequence}-{size.X:0}x{size.Y:0}-{distance:0.0}-{recoil}"));
             EnsureSafeCaptureDirectory(repositoryRoot, _reviewOutput);
             File.WriteAllText(Path.Combine(_reviewOutput, "review.json"), JsonSerializer.Serialize(new
             {
                 schema_version = 1, passed = false, status = "running", mode = _reviewMode, sequence = _reviewSequence,
             }, CaptureManifestJsonOptions));
+            if (IsPartyReview) { await RunPartyReviewAsync(); return; }
             if (_reviewMode == "input") { await RunGraphicalInputReviewAsync(); return; }
             _reviewDrivesClock = true;
             _camera.InputEnabled = false;
@@ -62,9 +63,9 @@ public partial class GameHost
             _camera.DistanceMeters = distance;
             _camera.SnapOcclusionToDesiredState();
             if (await ReviewCapture("ready")) { return; }
-            await ReviewTicks(27);
+            await ReviewTicks(_definition.Combat.SoloEncounter.ReadyingTicks / 2);
             if (await ReviewCapture("draw")) { return; }
-            await ReviewTicks(27);
+            await ReviewTicks(_definition.Combat.SoloEncounter.ReadyingTicks / 2);
             await ReviewTicks(6);
             if (await ReviewCapture("armed")) { return; }
             if (_reviewMode == "performance") { await RunRealtimePerformanceAsync(); return; }
@@ -75,9 +76,10 @@ public partial class GameHost
                 await ReviewTicks(42);
                 if (await ReviewCapture("contact")) { return; }
                 await ReviewUntil(state => state.Encounter!.Phase == EncounterPhase.Defeat, 900, fast: true);
+                await CheckCompletedDeathPresentation();
                 if (await ReviewCapture("defeat")) { return; }
-                ReviewOrder(new RestartEncounterCommand(new CommandId("review.retry"), _definition.Combat.Encounter.Id));
-                await ReviewTicks(54);
+                ReviewOrder(new RestartEncounterCommand(new CommandId("review.retry"), _definition.Combat.SoloEncounter.Id));
+                await ReviewTicks(_definition.Combat.SoloEncounter.ReadyingTicks);
                 if (await ReviewCapture("retry")) { return; }
                 FinishSoloReview();
                 return;
@@ -101,12 +103,8 @@ public partial class GameHost
             await ReviewTicks(21);
             if (await ReviewCapture("contact")) { return; }
 
-            ReviewAttack("review.resume.before.heal");
+            ReviewAttack("review.resume.attack");
             await ReviewTicks(9);
-            ReviewOrder(new UseItemCommand(new CommandId("review.heal"), _definition.Protagonist.Id,
-                _definition.Combat.HealingItem.Id, _definition.Protagonist.Id));
-            await ReviewTicks(15);
-            if (await ReviewCapture("heal")) { return; }
             await ReviewUntil(state => state.Hostiles![0].CurrentAction?.Phase == PrimaryActionPhase.Windup, 200);
             var beforeInterrupt = _session!.Observe().LatestEventSequence;
             ReviewOrder(new UseAbilityCommand(new CommandId("review.suppress"), _definition.Protagonist.Id,
@@ -138,6 +136,15 @@ public partial class GameHost
         }
         catch (Exception exception)
         {
+            if (!string.IsNullOrEmpty(_reviewOutput) && Directory.Exists(_reviewOutput))
+            {
+                File.WriteAllText(Path.Combine(_reviewOutput, "review.json"), JsonSerializer.Serialize(new
+                {
+                    schema_version = 1, passed = false, status = "failed", error = exception.Message,
+                    mode = _reviewMode, sequence = _reviewSequence, checkpoints = _reviewCheckpoints,
+                    input_checks = _inputReviewChecks, last_observation = _session?.Observe(),
+                }, CaptureManifestJsonOptions));
+            }
             GD.PushError($"Solo review failed: {exception}");
             GD.Print(JsonSerializer.Serialize(new { solo_review_passed = false, error = exception.Message }, CaptureLogJsonOptions));
             GetTree().Quit(1);
@@ -173,7 +180,7 @@ public partial class GameHost
     }
 
     private void ReviewAttack(string id) => ReviewOrder(new AssignBasicAttackTargetCommand(
-        new CommandId(id), _definition!.Protagonist.Id, _definition.Combat.Hostile.Id));
+        new CommandId(id), _definition!.Protagonist.Id, _definition.Combat.SoloHostile.Id));
 
     private async Task ReviewTicks(int ticks, bool fast = false)
     {
@@ -210,6 +217,7 @@ public partial class GameHost
 
     private async Task<bool> ReviewCapture(string checkpoint)
     {
+        if (_reviewMode == "smoke") { return false; }
         _reviewSampleTick = _session!.Tick;
         SynchronizePresentation();
         _camera.SnapOcclusionToDesiredState();
@@ -222,7 +230,7 @@ public partial class GameHost
             throw new InvalidOperationException($"Weapon length at {checkpoint} is {length:0.0000} m; expected 0.82 m ±2%.");
         }
         var vanguard = diagnostics.GetProperty("vanguard");
-        if (ReviewState().Encounter!.Phase == EncounterPhase.Active
+        if (ReviewState().Encounter!.Phase == EncounterPhase.Active && !ReviewState().Protagonist.Combat!.IsDefeated
             && (vanguard.GetProperty("primary_grip_error_m").GetDouble() > 0.03
                 || vanguard.GetProperty("support_grip_error_m").GetDouble() > 0.03))
         {
@@ -234,7 +242,8 @@ public partial class GameHost
         {
             throw new InvalidOperationException("Retry retained effects from the previous attempt.");
         }
-        if (checkpoint is "fire" or "recoil" or "late-fire")
+        if (IsPartyReview) { ValidatePartyPresentation(checkpoint, diagnostics); }
+        if (!IsPartyReview && checkpoint is "fire" or "recoil" or "late-fire")
         {
             static Vector3 Vector(JsonElement array) => new(array[0].GetSingle(), array[1].GetSingle(), array[2].GetSingle());
             var muzzle = Vector(vanguard.GetProperty("muzzle_world"));
@@ -277,7 +286,7 @@ public partial class GameHost
             _reviewDrivesClock = false;
             _reviewSampleTick = null;
             _camera.InputEnabled = true;
-            _autoQuitSeconds = double.Parse(ReviewArgument("auto-quit-seconds", "60"), CultureInfo.InvariantCulture);
+            _autoQuitSeconds = double.Parse(ReviewArgument("auto-quit-seconds", "0"), CultureInfo.InvariantCulture);
             SetFeedback($"Review ready: {checkpoint}. Space resumes; X stops the selected actor.", new Color("8fe6ff"));
             WriteReviewManifest();
         }
@@ -297,6 +306,9 @@ public partial class GameHost
             mode = _reviewMode,
             sequence = _reviewSequence,
             requested_checkpoint = _reviewCheckpoint,
+            evidence_scope = _reviewMode == "performance"
+                ? "Measurement completion; assess frame pacing in performance.json."
+                : "Gameplay and presentation checks; owner visual acceptance is separate.",
             timing = "30 Hz simulation; presentation sampled at tick/fraction; record has fixed 60 fps deltas",
             checkpoints = _reviewCheckpoints,
             input_checks = _inputReviewChecks,

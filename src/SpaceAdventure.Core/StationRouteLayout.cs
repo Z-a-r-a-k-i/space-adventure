@@ -16,7 +16,10 @@ public sealed record StationEncounterPlacement(
     WorldPosition TriggerCenter,
     double TriggerRadiusMeters,
     WorldPosition ProtagonistRestartPosition,
-    WorldPosition HostileSpawnPosition);
+    WorldPosition HostileSpawnPosition,
+    WorldPosition? CompanionRestartPosition = null,
+    IReadOnlyList<StationActorPlacement>? AdditionalHostiles = null,
+    WorldPosition? SentryForward = null);
 
 public sealed class StationRouteLayout
 {
@@ -29,7 +32,8 @@ public sealed class StationRouteLayout
         WorldPosition protagonistStart,
         IEnumerable<StationActorPlacement> actors,
         IEnumerable<StationInteractionPlacement> interactions,
-        StationEncounterPlacement? encounter = null)
+        StationEncounterPlacement? encounter = null,
+        StationEncounterPlacement? partyEncounter = null)
     {
         ArgumentNullException.ThrowIfNull(actors);
         ArgumentNullException.ThrowIfNull(interactions);
@@ -97,6 +101,22 @@ public sealed class StationRouteLayout
         }
 
         Encounter = encounter;
+        if (partyEncounter is not null &&
+            (!partyEncounter.TriggerCenter.IsFinite || !partyEncounter.ProtagonistRestartPosition.IsFinite
+             || !partyEncounter.HostileSpawnPosition.IsFinite
+             || partyEncounter.CompanionRestartPosition is not { IsFinite: true }
+             || !double.IsFinite(partyEncounter.TriggerRadiusMeters)
+             || partyEncounter.TriggerRadiusMeters <= 0 || partyEncounter.TriggerRadiusMeters > 20
+             || partyEncounter.AdditionalHostiles is null
+             || partyEncounter.AdditionalHostiles.Any(actor => !actor.Position.IsFinite)
+             || partyEncounter.AdditionalHostiles.Select(actor => actor.ActorId).Distinct().Count() != partyEncounter.AdditionalHostiles.Count
+             || partyEncounter.SentryForward is not { IsFinite: true } forward
+             || forward.Y != 0
+             || Math.Abs(forward.X * forward.X + forward.Z * forward.Z - 1) > 0.001))
+        {
+            throw new ArgumentOutOfRangeException(nameof(partyEncounter), "Party encounter placements and facing must be finite and valid.");
+        }
+        PartyEncounter = partyEncounter;
     }
 
     public WorldPosition ProtagonistStart { get; }
@@ -106,6 +126,8 @@ public sealed class StationRouteLayout
     public IReadOnlyCollection<StationInteractionPlacement> Interactions => _interactionList;
 
     public StationEncounterPlacement? Encounter { get; }
+
+    public StationEncounterPlacement? PartyEncounter { get; }
 
     public bool TryGetActor(EntityId actorId, out StationActorPlacement placement)
     {

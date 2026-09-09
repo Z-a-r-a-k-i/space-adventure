@@ -54,9 +54,8 @@ public partial class GameHost : Node3D
         _interactionDefinitionsByEffect = [];
     private readonly HashSet<string> _reportedCompletedInteractions = new(StringComparer.Ordinal);
     private readonly HashSet<EntityId> _selectedActorIds = [];
-    private readonly Dictionary<string, Button> _partyButtons = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, CrewCard> _partyButtons = new(StringComparer.Ordinal);
     private readonly List<TimedPresentationEffect> _combatPresentationEffects = [];
-    private int _fieldAidPresentationCount;
 
     private GameSession? _session;
     private StationRouteDefinition? _definition;
@@ -71,9 +70,9 @@ public partial class GameHost : Node3D
     private Node3D? _airlockCenterLock;
     private StandardMaterial3D _serviceDoorLockedMaterial = null!;
     private StandardMaterial3D _serviceDoorOpenMaterial = null!;
-    private VanguardPresentation _vanguardPresentation = null!;
+    private ArmedHumanoidPresentation _vanguardPresentation = null!;
     private HumanoidPresentation _survivorPresentation = null!;
-    private HumanoidPresentation _protectorPartyPresentation = null!;
+    private ArmedHumanoidPresentation _protectorPartyPresentation = null!;
     private HumanoidPresentation _protectorWaitingPresentation = null!;
     private Node3D _securityEnforcerView = null!;
     private HumanoidPresentation _securityEnforcerPresentation = null!;
@@ -87,7 +86,7 @@ public partial class GameHost : Node3D
     private Label _feedbackLabel = null!;
     private Label _combatLabel = null!;
     private Button _retryButton = null!;
-    private VBoxContainer _partyList = null!;
+    private HBoxContainer _partyList = null!;
     private CenterContainer _dialogueOverlay = null!;
     private Label _dialogueSpeaker = null!;
     private Label _dialogueLine = null!;
@@ -101,6 +100,7 @@ public partial class GameHost : Node3D
     private long _humanCommandSequence;
     private int _navigationInitializationFrames;
     private double _autoQuitSeconds;
+    private double _feedbackSeconds;
     private bool _visualCaptureRequested;
     private bool? _airlockOpenState;
     private string? _environmentInitializationError;
@@ -130,11 +130,11 @@ public partial class GameHost : Node3D
         _airlockLight = GetNode<OmniLight3D>("AirlockLight");
         _protagonistView = GetNode<Node3D>("Actors/Protagonist");
         _camera.FocusOn(_protagonistView.GlobalPosition);
-        _vanguardPresentation = GetNode<VanguardPresentation>(
+        _vanguardPresentation = GetNode<ArmedHumanoidPresentation>(
             "Actors/Protagonist/VanguardPresentation");
         _survivorPresentation = GetNode<HumanoidPresentation>(
             "Interactions/Survivor/SurvivorPresentation");
-        _protectorPartyPresentation = GetNode<HumanoidPresentation>(
+        _protectorPartyPresentation = GetNode<ArmedHumanoidPresentation>(
             "Actors/Protector/ProtectorPresentation");
         _protectorWaitingPresentation = GetNode<HumanoidPresentation>(
             "Interactions/Protector/ProtectorPresentation");
@@ -149,6 +149,7 @@ public partial class GameHost : Node3D
         {
             _actorViews.Add(GetStableId(actorView), actorView);
         }
+        CachePartyCombatViews();
         CreateDestinationMarker();
         CreateAbilityTargetPreview();
         CreateHud();
@@ -217,10 +218,15 @@ public partial class GameHost : Node3D
         if (!_reviewDrivesClock) { _session.Advance(TimeSpan.FromSeconds(delta)); }
         var simulationFinished = System.Diagnostics.Stopwatch.GetTimestamp();
         var observation = _session.Observe();
+        AdvanceDefeatPresentation(observation, delta);
         UpdateHoveredInteraction(observation);
         SynchronizePresentation();
-        UpdateAbilityTargetPreview(observation);
         AdvanceServiceDoorPresentation((float)delta);
+        if (_feedbackSeconds > 0)
+        {
+            _feedbackSeconds = Math.Max(0, _feedbackSeconds - delta);
+            _feedbackLabel.Visible = _feedbackSeconds > 0;
+        }
         if (_performanceRunning)
         {
             _simulationCosts.Add(Milliseconds(processStarted, simulationFinished));
@@ -256,11 +262,10 @@ public partial class GameHost : Node3D
                 return;
             }
 
-            if (IsKey(key, Key.Escape) && _abilityTargeting)
+            if (IsKey(key, Key.Escape) && (_abilityTargeting || _facingTargeting))
             {
-                _abilityTargeting = false;
-                _abilityTargetPreview.Visible = false;
-                SetFeedback("Suppressive Fire targeting cancelled.", new Color("9eb6ce"));
+                CancelAbilityTargeting();
+                SetFeedback("Targeting cancelled.", new Color("9eb6ce"));
                 GetViewport().SetInputAsHandled();
                 return;
             }
@@ -273,6 +278,16 @@ public partial class GameHost : Node3D
                 GetViewport().SetInputAsHandled();
                 return;
             }
+
+            if (IsKey(key, Key.Tab))
+            {
+                CycleActorSelection(key.ShiftPressed);
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+
+            if (IsKey(key, Key.T))
+            { BeginFacingTargeting(); GetViewport().SetInputAsHandled(); return; }
 
             if (IsKey(key, Key.X) && _stopButton.Visible && !_stopButton.Disabled)
             {
@@ -300,7 +315,7 @@ public partial class GameHost : Node3D
                     GetViewport().SetInputAsHandled();
                     return;
                 }
-                UseFieldAid();
+                BeginAbilityTargeting(1);
                 GetViewport().SetInputAsHandled();
                 return;
             }
@@ -319,13 +334,24 @@ public partial class GameHost : Node3D
             return;
         }
 
+        if (@event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left } crewClick)
+        {
+            if (_facingTargeting)
+            { ConfirmFacing(crewClick.Position); GetViewport().SetInputAsHandled(); return; }
+            BeginSelectionGesture(crewClick);
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
         if (@event is InputEventMouseButton
             {
                 Pressed: true,
                 ButtonIndex: MouseButton.Right,
             } mouseButton)
         {
-            HandleContextClick(mouseButton.Position);
+            if (mouseButton.AltPressed) { ConfirmFacing(mouseButton.Position); }
+            else if (_abilityTargeting || _facingTargeting) { CancelAbilityTargeting(); }
+            else { HandleContextClick(mouseButton.Position); }
             GetViewport().SetInputAsHandled();
         }
     }
@@ -336,6 +362,8 @@ public partial class GameHost : Node3D
         GD.Print($"SPACEADVENTURE_NAV_READY iteration={NavigationServer3D.MapGetIterationId(navigationMap)} regions={NavigationServer3D.MapGetRegions(navigationMap).Count} vertices={navigationRegion.NavigationMesh?.GetVertices().Length ?? 0} polygons={navigationRegion.NavigationMesh?.GetPolygonCount() ?? 0}");
         var contentJson = Godot.FileAccess.GetFileAsString("res://content/station-route.json");
         _definition = StationRouteContent.ParseJson(contentJson);
+        ValidateCombatViews(_definition);
+        CreateBarrierViews();
         _interactionDefinitions.Clear();
         _interactionDefinitionsByEffect.Clear();
         foreach (var interaction in _definition.Interactions)
@@ -413,8 +441,8 @@ public partial class GameHost : Node3D
         var triggerMarker = GetNode<Marker3D>("Markers/SoloEncounterTrigger");
         var restartMarker = GetNode<Marker3D>("Markers/SoloEncounterRestart");
         var hostileMarker = GetNode<Marker3D>("Markers/SecurityEnforcerSpawn");
-        ValidateStableId(triggerMarker, definition.Combat.Encounter.Id.Value);
-        ValidateStableId(hostileMarker, definition.Combat.Hostile.Id.Value);
+        ValidateStableId(triggerMarker, definition.Combat.SoloEncounter.Id.Value);
+        ValidateStableId(hostileMarker, definition.Combat.SoloHostile.Id.Value);
         var triggerRadius = triggerMarker.GetMeta("trigger_radius_meters").AsDouble();
 
         return new StationRouteLayout(
@@ -424,11 +452,12 @@ public partial class GameHost : Node3D
                 ToCore(WithGroundHeight(companionMarker.GlobalPosition)))],
             placements,
             new StationEncounterPlacement(
-                definition.Combat.Encounter.Id,
+                definition.Combat.SoloEncounter.Id,
                 ToCore(WithGroundHeight(triggerMarker.GlobalPosition)),
                 triggerRadius,
                 ToCore(WithGroundHeight(restartMarker.GlobalPosition)),
-                ToCore(WithGroundHeight(hostileMarker.GlobalPosition))));
+                ToCore(WithGroundHeight(hostileMarker.GlobalPosition))),
+            CreatePartyPlacement(definition));
     }
 
     private void CacheInteractionViews()
@@ -597,6 +626,7 @@ public partial class GameHost : Node3D
         AddChild(canvas);
 
         CreateTacticalHud(canvas);
+        CreateSelectionBox(canvas);
 
         _dialogueOverlay = new CenterContainer
         {
@@ -605,10 +635,11 @@ public partial class GameHost : Node3D
             AnchorBottom = 1,
             MouseFilter = Control.MouseFilterEnum.Stop,
             Visible = false,
-            ZIndex = 5,
+            ZIndex = 20,
         };
         canvas.AddChild(_dialogueOverlay);
-        var dialoguePanel = new PanelContainer { CustomMinimumSize = new Vector2(680, 0) };
+        var dialoguePanel = HudPanel();
+        dialoguePanel.CustomMinimumSize = new Vector2(640, 0);
         _dialogueOverlay.AddChild(dialoguePanel);
         var dialogueContent = new VBoxContainer();
         dialogueContent.AddThemeConstantOverride("separation", 12);
@@ -634,10 +665,11 @@ public partial class GameHost : Node3D
             AnchorBottom = 1,
             MouseFilter = Control.MouseFilterEnum.Stop,
             Visible = false,
-            ZIndex = 5,
+            ZIndex = 20,
         };
         canvas.AddChild(_completionOverlay);
-        var completionPanel = new PanelContainer { CustomMinimumSize = new Vector2(650, 0) };
+        var completionPanel = HudPanel();
+        completionPanel.CustomMinimumSize = new Vector2(650, 0);
         _completionOverlay.AddChild(completionPanel);
         var completion = new Label
         {
@@ -648,80 +680,9 @@ public partial class GameHost : Node3D
         completionPanel.AddChild(completion);
     }
 
-    private void RefreshPartyUi(StationRouteObservation route)
-    {
-        _selectedActorIds.RemoveWhere(actorId => route.Party.All(actor => actor.Id != actorId));
-        foreach (var actor in route.Party)
-        {
-            if (_partyButtons.ContainsKey(actor.Id.Value))
-            {
-                continue;
-            }
-
-            var actorId = actor.Id;
-            var button = new Button
-            {
-                FocusMode = Control.FocusModeEnum.None,
-                CustomMinimumSize = new Vector2(184, 44),
-            };
-            button.Pressed += () => ToggleActorSelection(actorId);
-            button.AddThemeFontSizeOverride("font_size", 13);
-            _partyButtons.Add(actor.Id.Value, button);
-            _partyList.AddChild(button);
-            if (route.Phase == ScenarioPhase.InProgress)
-            {
-                _selectedActorIds.Add(actor.Id);
-            }
-        }
-
-        foreach (var obsoleteId in _partyButtons.Keys
-            .Where(actorId => route.Party.All(actor => actor.Id.Value != actorId))
-            .ToArray())
-        {
-            _partyButtons[obsoleteId].QueueFree();
-            _partyButtons.Remove(obsoleteId);
-        }
-
-        if (route.Phase == ScenarioPhase.InProgress && _selectedActorIds.Count == 0)
-        {
-            _selectedActorIds.Add(route.Protagonist.Id);
-        }
-
-        foreach (var actor in route.Party)
-        {
-            var selected = _selectedActorIds.Contains(actor.Id);
-            var loadout = actor.Loadout is null
-                ? "Kit not selected"
-                : $"{actor.Loadout.WeaponName}  •  {actor.Loadout.ActiveAbilityName}";
-            var combat = actor.Combat is null
-                ? string.Empty
-                : $"\nHP {actor.Combat.Health}/{actor.Combat.MaximumHealth}";
-            _partyButtons[actor.Id.Value].Text = $"{(selected ? "●" : "○")} {actor.DisplayName}{combat}";
-            _partyButtons[actor.Id.Value].TooltipText = loadout;
-            _partyButtons[actor.Id.Value].Modulate = selected
-                ? Colors.White
-                : new Color("8090a0");
-        }
-    }
-
-    private void ToggleActorSelection(EntityId actorId)
-    {
-        if (!_selectedActorIds.Remove(actorId))
-        {
-            _selectedActorIds.Add(actorId);
-        }
-
-        if (_selectedActorIds.Count == 0)
-        {
-            _selectedActorIds.Add(actorId);
-        }
-
-        RenderObservation(_session!.Observe());
-    }
-
     private void RenderObservation(GameObservation observation, bool timeAlreadyUpdated = false)
     {
-        if (!timeAlreadyUpdated) { UpdatePresentationTime(); }
+        if (!timeAlreadyUpdated) { AdvanceDefeatPresentation(observation, 0); UpdatePresentationTime(); }
         if (observation.StationRoute is not StationRouteObservation route)
         {
             return;
@@ -735,6 +696,7 @@ public partial class GameHost : Node3D
         {
             var actor = route.Party.SingleOrDefault(candidate => candidate.Id.Value == actorView.Key);
             actorView.Value.Visible = actor is not null;
+            actorView.Value.GetNode<CollisionObject3D>("CrewTarget").CollisionLayer = actor is null ? 0u : CrewCollisionLayer;
             if (actor is not null)
             {
                 actorView.Value.GlobalPosition = SamplePosition(actor.Id, actor.Position, observation.Tick, route.Encounter?.Attempt ?? 0);
@@ -749,9 +711,7 @@ public partial class GameHost : Node3D
         SynchronizeProductionHumanoids(observation, route, definition);
         SynchronizeCombatPresentation(observation, route);
 
-        var selectedActors = route.Party
-            .Where(actor => _selectedActorIds.Contains(actor.Id))
-            .ToArray();
+        var selectedActors = SelectedLivingActors(route).ToArray();
         if (selectedActors.Length == 0)
         {
             selectedActors = [route.Protagonist];
@@ -776,9 +736,6 @@ public partial class GameHost : Node3D
             ? new Color("72f2a8")
             : new Color("f2dc72");
 
-        _pauseLabel.Text = observation.Paused
-            ? "TACTICAL PAUSE"
-            : "RUNNING";
         _pauseLabel.Modulate = observation.Paused
             ? new Color("ffc45c")
             : new Color("72f2a8");
@@ -804,7 +761,9 @@ public partial class GameHost : Node3D
             _retryButton.Visible = false;
         }
 
-        UpdateTacticalHud(observation, route, actionActor ?? selectedActors[0]);
+        UpdateTacticalHud(observation, route, FocusedActor(route));
+        UpdateAbilityTargetPreview(observation);
+        SynchronizeFacing(route);
 
         var objectiveTargetId = GetObjectiveTargetId(route.Objective.Id);
         var combatSuppressesInteractionLabels = route.Encounter?.Phase is
@@ -937,12 +896,8 @@ public partial class GameHost : Node3D
                 {
                     var responseIndex = index;
                     var response = dialogue.Responses[index];
-                    var button = new Button
-                    {
-                        Text = $"{index + 1} — {response.Text}",
-                        FocusMode = Control.FocusModeEnum.None,
-                    };
-                    button.Pressed += () => _ = ChooseVisibleDialogueResponse(responseIndex);
+                    var button = HudButton($"{index + 1}   {response.Text}", () => _ = ChooseVisibleDialogueResponse(responseIndex));
+                    button.CustomMinimumSize = new Vector2(600, 46);
                     _dialogueResponses.AddChild(button);
                 }
             }
@@ -961,68 +916,6 @@ public partial class GameHost : Node3D
         SetAirlockOpen(route.Phase == ScenarioPhase.Completed);
     }
 
-    private void SynchronizeCombatPresentation(
-        GameObservation observation,
-        StationRouteObservation route)
-    {
-        var encounter = route.Encounter;
-        var hostile = route.Hostiles?.SingleOrDefault();
-        var active = encounter is not null
-            && hostile is not null
-            && encounter.Phase != EncounterPhase.Dormant;
-        _securityEnforcerView.Visible = active;
-        _securityEnforcerTarget.CollisionLayer = active && hostile!.Combat.Health > 0
-            ? HostileCollisionLayer
-            : 0u;
-        if (!active)
-        {
-            return;
-        }
-
-        _securityEnforcerView.GlobalPosition = SamplePosition(hostile!.Id, hostile.Position, observation.Tick, encounter!.Attempt);
-        var action = hostile.CurrentAction;
-        var direction = action?.HasRemainingMovement == true
-            ? TravelDirection(hostile.Id)
-            : _protagonistView.GlobalPosition - _securityEnforcerView.GlobalPosition;
-        var presentationAction = hostile.Combat.IsDefeated
-            ? HumanoidPresentationAction.Down
-            : action is
-                {
-                    Kind: PrimaryActionKind.Attack,
-                    Phase: PrimaryActionPhase.Windup or PrimaryActionPhase.Recovery,
-                    Interrupted: false,
-                }
-                    ? HumanoidPresentationAction.MeleeStrike
-                    : action?.HasRemainingMovement == true
-                    ? HumanoidPresentationAction.Locomotion
-                    : HumanoidPresentationAction.Idle;
-        _securityEnforcerPresentation.Synchronize(
-            true,
-            presentationAction,
-            observation.Paused,
-            direction,
-            playbackSpeed: 1.0f,
-            seekToEndWhenPaused: false,
-            presentationTick: _presentationTick,
-            clipSeconds: EnforcerClipSeconds(action),
-            cycle: action?.InstanceId ?? encounter!.Attempt,
-            turnDeltaSeconds: _presentationDeltaSeconds);
-        if (action?.HasRemainingMovement != true)
-        {
-            _securityEnforcerPresentation.FaceDirection(direction, _presentationDeltaSeconds);
-        }
-
-        _securityEnforcerThreatRing.Visible = action is
-        {
-            Kind: PrimaryActionKind.Attack,
-            Phase: PrimaryActionPhase.Windup,
-        };
-        if (_securityEnforcerView.GetNodeOrNull<Label3D>("Label") is Label3D label)
-        {
-            label.Visible = false; // The compact threat panel carries health and strike timing.
-        }
-    }
-
     private void ProcessCombatPresentationEvents(GameObservation observation)
     {
         if (_session is null || observation.StationRoute is not StationRouteObservation route)
@@ -1035,26 +928,52 @@ public partial class GameHost : Node3D
         {
             if (gameEvent.Tick > _presentationTick) { break; }
             _effectEventTick = gameEvent.Tick;
-            if (gameEvent.Type == GameplayEventType.EncounterRestarted)
+            if (gameEvent.Type is GameplayEventType.EncounterRestarted or GameplayEventType.EncounterStarted)
             {
                 foreach (var effect in _combatPresentationEffects)
                 {
                     if (GodotObject.IsInstanceValid(effect.Node)) { effect.Node.QueueFree(); }
                 }
                 _combatPresentationEffects.Clear();
+                _incomingBolts.Clear();
             }
             switch (gameEvent.Detail)
             {
                 case AttackEventDetail attack when gameEvent.Type == GameplayEventType.AttackReleased:
-                    if (attack.SourceId == route.Protagonist.Id
-                        && TryGetCombatantPosition(route, attack.TargetId, out var target))
+                    if (TryGetCombatantPosition(route, attack.TargetId, out var target))
                     {
-                        _vanguardPresentation.NotifyShot(gameEvent.Tick);
-                        var flightSeconds = SpawnProjectile(
-                            _vanguardPresentation.MuzzlePosition,
-                            CombatImpactPosition(target, _vanguardPresentation.MuzzlePosition),
-                            new Color("57ddff"));
-                        releasedProjectile = (gameEvent.Tick, attack.SourceId, flightSeconds);
+                        if (ArmedPresentation(attack.SourceId) is { } armed)
+                        {
+                            armed.NotifyShot(gameEvent.Tick);
+                            var shotgun = attack.SourceId == _definition!.Companion.Id;
+                            var destination = attack.Hit ? CombatImpactPosition(target, armed.MuzzlePosition)
+                                : armed.MuzzlePosition + armed.MuzzleDirection * (float)_definition.Combat.GetAttack(attack.AttackId).RangeMeters;
+                            var color = new Color(shotgun ? "f2c879" : "57ddff");
+                            var flight = SpawnProjectile(armed.MuzzlePosition, destination, color,
+                                armed.MuzzleDirection, shotgun ? "shotgun" : "carbine");
+                            if (shotgun)
+                            {
+                                var right = armed.MuzzleDirection.Cross(Vector3.Up).Normalized();
+                                for (var pellet = -2; pellet <= 2; pellet++)
+                                {
+                                    if (pellet == 0) { continue; }
+                                    var bolt = new CarbineProjectile();
+                                    bolt.Configure(armed.MuzzlePosition, destination + right * pellet * .085f
+                                        + Vector3.Up * (pellet % 2 == 0 ? .07f : -.07f), color);
+                                    AddChild(bolt);
+                                    _combatPresentationEffects.Add(new TimedPresentationEffect(bolt, bolt.FlightSeconds, _effectEventTick));
+                                }
+                            }
+                            releasedProjectile = (gameEvent.Tick, attack.SourceId, flight);
+                        }
+                        else if (!attack.Hit && _enemyViews.TryGetValue(attack.SourceId, out var view) && view.Sentry is { } sentry)
+                        {
+                            var destination = attack.Hit ? CombatImpactPosition(target, sentry.MuzzlePosition)
+                                : sentry.MuzzlePosition + sentry.MuzzleDirection * (float)_definition!.Combat.GetAttack(attack.AttackId).RangeMeters;
+                            var flight = SpawnProjectile(sentry.MuzzlePosition, destination,
+                                new Color("ff7659"), sentry.MuzzleDirection, "sentry");
+                            releasedProjectile = (gameEvent.Tick, attack.SourceId, flight);
+                        }
                     }
                     break;
                 case AbilityReleasedEventDetail ability when ability.SourceId == route.Protagonist.Id:
@@ -1062,22 +981,26 @@ public partial class GameHost : Node3D
                     var abilityFlightSeconds = SpawnProjectile(
                         _vanguardPresentation.MuzzlePosition,
                         ToGodot(ability.TargetPosition) + new Vector3(0.0f, 0.65f, 0.0f),
-                        new Color("66f5ff"));
+                        new Color("66f5ff"), _vanguardPresentation.MuzzleDirection);
                     releasedProjectile = (gameEvent.Tick, ability.SourceId, abilityFlightSeconds);
-                    SpawnSuppressionPulse(
-                        ToGodot(ability.TargetPosition) + new Vector3(0.0f, 0.06f, 0.0f), abilityFlightSeconds);
+                    if (ability.AbilityId == _definition!.Combat.ProtagonistAbility.Id)
+                    { SpawnSuppressionPulse(ToGodot(ability.TargetPosition) + new Vector3(0, .06f, 0), abilityFlightSeconds); }
+                    break;
+                case AbilityReleasedEventDetail ability when ability.AbilityId == _definition!.Combat.Taunt.Id:
+                    PresentTaunt(ability, gameEvent.Tick);
                     break;
                 case DamageAppliedEventDetail damage:
                     if (TryGetCombatantPosition(route, damage.TargetId, out var impact))
                     {
-                        var color = damage.TargetId == route.Protagonist.Id
+                        var partyHit = route.Party.Any(actor => actor.Id == damage.TargetId);
+                        var color = partyHit
                             ? new Color("ff654f")
                             : new Color("75eeff");
                         var impactDelay = releasedProjectile is { } release && release.Tick == gameEvent.Tick
                             && release.Source == damage.SourceId ? release.FlightSeconds : 0;
                         SpawnImpact(
-                            damage.SourceId == route.Protagonist.Id
-                                ? CombatImpactPosition(impact, _vanguardPresentation.MuzzlePosition)
+                            ArmedPresentation(damage.SourceId) is { } source
+                                ? CombatImpactPosition(impact, source.MuzzlePosition)
                                 : impact + new Vector3(0.0f, 1.05f, 0.0f),
                             color,
                             impactDelay);
@@ -1086,15 +1009,7 @@ public partial class GameHost : Node3D
                             damage.Amount,
                             color,
                             impactDelay);
-                        if (damage.TargetId == route.Protagonist.Id) { PlayCombatCue("impact", impact); }
-                    }
-                    break;
-                case HealingAppliedEventDetail healing:
-                    if (TryGetCombatantPosition(route, healing.TargetId, out var healedPosition))
-                    {
-                        SpawnFieldAidPresentation(healedPosition, healing.Amount);
-                        PlayCombatCue("aid", healedPosition);
-                        _fieldAidPresentationCount++;
+                        if (partyHit) { PlayCombatCue("impact", impact); }
                     }
                     break;
                 case ActionInterruptedEventDetail interrupted:
@@ -1102,6 +1017,12 @@ public partial class GameHost : Node3D
                     {
                         SpawnInterruptCue(interruptedPosition);
                     }
+                    break;
+                case BarrierEventDetail barrier when gameEvent.Type == GameplayEventType.BarrierDeployed:
+                    PlayCombatCue("guard", ToGodot(barrier.Position));
+                    break;
+                case ProjectileEventDetail projectile:
+                    PresentIncomingProjectile(projectile, gameEvent.Tick, gameEvent.Type);
                     break;
             }
 
@@ -1167,7 +1088,7 @@ public partial class GameHost : Node3D
         return torso + torso.DirectionTo(source) * 0.22f;
     }
 
-    private float SpawnProjectile(Vector3 origin, Vector3 destination, Color color)
+    private float SpawnProjectile(Vector3 origin, Vector3 destination, Color color, Vector3 muzzleDirection, string cue = "carbine")
     {
         var node = new CarbineProjectile();
         node.Configure(origin, destination, color);
@@ -1180,12 +1101,12 @@ public partial class GameHost : Node3D
                 TopRadius = 0.008f, BottomRadius = 0.035f, Height = 0.13f, RadialSegments = 8,
                 Material = CreateCombatEffectMaterial(new Color("d8f5ff")),
             },
-            Transform = new Transform3D(new Basis(new Quaternion(Vector3.Up, _vanguardPresentation.MuzzleDirection)),
-                origin + _vanguardPresentation.MuzzleDirection * 0.05f),
+            Transform = new Transform3D(new Basis(new Quaternion(Vector3.Up, muzzleDirection)),
+                origin + muzzleDirection * 0.05f),
         };
         AddChild(flash);
         _combatPresentationEffects.Add(new TimedPresentationEffect(flash, 0.07f, _effectEventTick));
-        PlayCombatCue("carbine", origin);
+        PlayCombatCue(cue, origin);
         return node.FlightSeconds;
     }
 
@@ -1221,40 +1142,6 @@ public partial class GameHost : Node3D
         };
         AddChild(node);
         _combatPresentationEffects.Add(new TimedPresentationEffect(node, 0.70f, _effectEventTick, delaySeconds));
-    }
-
-    private void SpawnFieldAidPresentation(Vector3 position, int amount)
-    {
-        var color = new Color("72f2a8");
-        var root = new Node3D
-        {
-            Name = "FieldAidPresentation",
-            Position = position,
-        };
-        root.AddChild(new MeshInstance3D
-        {
-            Position = new Vector3(0.0f, 0.08f, 0.0f),
-            Mesh = new TorusMesh
-            {
-                InnerRadius = 0.58f,
-                OuterRadius = 0.72f,
-                Rings = 8,
-                RingSegments = 32,
-                Material = CreateCombatEffectMaterial(color),
-            },
-        });
-        root.AddChild(new Label3D
-        {
-            Position = new Vector3(0.0f, 1.48f, 0.0f),
-            Text = $"+{amount}",
-            FontSize = 52,
-            OutlineSize = 12,
-            Modulate = color,
-            Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
-            NoDepthTest = true,
-        });
-        AddChild(root);
-        _combatPresentationEffects.Add(new TimedPresentationEffect(root, 0.70f, _effectEventTick));
     }
 
     private void SpawnSuppressionPulse(Vector3 position, float delaySeconds = 0)
@@ -1351,13 +1238,7 @@ public partial class GameHost : Node3D
         }
 
         var action = route.Protagonist.CurrentAction;
-        var hostile = route.Hostiles?.SingleOrDefault();
-        var direction = action?.HasRemainingMovement == true
-            ? TravelDirection(route.Protagonist.Id)
-            : hostile is not null && route.Encounter?.Phase is
-                EncounterPhase.Readying or EncounterPhase.Active or EncounterPhase.Securing
-                ? ToGodot(hostile.Position) - ToGodot(route.Protagonist.Position)
-                : Vector3.Zero;
+        var direction = ActorFacing(route, route.Protagonist);
         _vanguardPresentation.Synchronize(
             useVanguard,
             action?.HasRemainingMovement == true,
@@ -1366,7 +1247,10 @@ public partial class GameHost : Node3D
             route.Encounter,
             action,
             _presentationTick,
-            _presentationDeltaSeconds);
+            _presentationDeltaSeconds,
+            route.Protagonist.Combat?.IsDefeated == true,
+            route.Protagonist.Combat?.DefeatedAtTick,
+            bodyFacing: SampleActorFacing(route.Protagonist));
     }
 
     private void SynchronizeProductionHumanoids(
@@ -1390,19 +1274,12 @@ public partial class GameHost : Node3D
             turnDeltaSeconds: _presentationDeltaSeconds);
 
         var protector = route.Party.SingleOrDefault(actor => actor.Id == definition.Companion.Id);
-        var protectorAction = protector?.CurrentAction;
-        var protectorDirection = protectorAction is null || protector is null
-            ? Vector3.Zero
-            : TravelDirection(protector.Id);
         _protectorPartyPresentation.Synchronize(
-            protector is not null,
-            protectorAction?.HasRemainingMovement == true
-                ? HumanoidPresentationAction.Locomotion
-                : HumanoidPresentationAction.Idle,
-            observation.Paused,
-            protectorDirection,
-            presentationTick: _presentationTick,
-            turnDeltaSeconds: _presentationDeltaSeconds);
+            protector is not null, protector?.CurrentAction?.HasRemainingMovement == true,
+            observation.Paused, protector is null ? Vector3.Zero : ActorFacing(route, protector),
+            route.Encounter, protector?.CurrentAction, _presentationTick, _presentationDeltaSeconds,
+            protector?.Combat?.IsDefeated == true, protector?.Combat?.DefeatedAtTick,
+            bodyFacing: protector is null ? null : SampleActorFacing(protector));
         _protectorWaitingPresentation.Synchronize(
             protector is null,
             HumanoidPresentationAction.Idle,
@@ -1611,17 +1488,13 @@ public partial class GameHost : Node3D
             && hostileHit["collider"].AsGodotObject() is Node hostileCollider
             && hostileCollider.HasMeta("stable_id"))
         {
-            Dispatch(new AssignBasicAttackTargetCommand(
-                NextHumanCommandId("attack"),
-                route.Protagonist.Id,
-                new EntityId(hostileCollider.GetMeta("stable_id").AsString())));
+            var targetId = new EntityId(hostileCollider.GetMeta("stable_id").AsString());
+            AttackWithSelectedCrew(targetId);
             return;
         }
 
         var interactionHit = CastRay(rayOrigin, rayEnd, InteractionCollisionLayer);
-        var selectedActors = route.Party
-            .Where(actor => _selectedActorIds.Contains(actor.Id))
-            .ToArray();
+        var selectedActors = SelectedLivingActors(route).ToArray();
         if (interactionHit.Count > 0
             && interactionHit["collider"].AsGodotObject() is Node collider
             && collider.HasMeta("stable_id"))
@@ -1642,93 +1515,20 @@ public partial class GameHost : Node3D
         }
 
         var hitPosition = floorHit["position"].AsVector3();
+        if (selectedActors.Length == 0)
+        { SetFeedback("Select a living crew member first.", TacticalUi.Danger); return; }
         Dispatch(new MovePartyCommand(
             NextHumanCommandId("move-party"),
-            selectedActors.Length == 0
-                ? [route.Protagonist.Id]
-                : selectedActors.Select(actor => actor.Id),
+            selectedActors.Select(actor => actor.Id),
             ToCore(WithGroundHeight(hitPosition))));
-    }
-
-    private void BeginAbilityTargeting()
-    {
-        var route = _session!.Observe().StationRoute!;
-        if (route.Encounter?.Phase is not (EncounterPhase.Readying or EncounterPhase.Active))
-        {
-            SetFeedback("Suppressive Fire is available only during the encounter.", new Color("ff8b8b"));
-            return;
-        }
-
-        _abilityTargeting = true;
-        SetFeedback("Suppressive Fire: left-click a point inside the cyan radius. Esc cancels.", new Color("8fe6ff"));
-    }
-
-    private void ConfirmAbilityTarget(Vector2 screenPosition)
-    {
-        var rayOrigin = _camera.ProjectRayOrigin(screenPosition);
-        var rayEnd = rayOrigin + (_camera.ProjectRayNormal(screenPosition) * 200.0f);
-        var floorHit = CastRay(rayOrigin, rayEnd, FloorCollisionLayer);
-        if (floorHit.Count == 0)
-        {
-            SetFeedback("Suppressive Fire needs a station-floor target.", new Color("ff8b8b"));
-            return;
-        }
-
-        var route = _session!.Observe().StationRoute!;
-        var target = ToCore(WithGroundHeight(floorHit["position"].AsVector3()));
-        _abilityTargeting = false;
-        _abilityTargetPreview.Visible = false;
-        Dispatch(new UseAbilityCommand(
-            NextHumanCommandId("suppressive-fire"),
-            route.Protagonist.Id,
-            _definition!.Combat.ProtagonistAbility.Id,
-            new PositionAbilityTarget(target)));
-    }
-
-    private void UseFieldAid()
-    {
-        var route = _session!.Observe().StationRoute!;
-        Dispatch(new UseItemCommand(
-            NextHumanCommandId("field-aid"),
-            route.Protagonist.Id,
-            _definition!.Combat.HealingItem.Id,
-            route.Protagonist.Id));
     }
 
     private void RestartEncounter()
     {
-        _abilityTargeting = false;
-        _abilityTargetPreview.Visible = false;
+        CancelAbilityTargeting();
         Dispatch(new RestartEncounterCommand(
             NextHumanCommandId("restart-encounter"),
-            _definition!.Combat.Encounter.Id));
-    }
-
-    private void UpdateAbilityTargetPreview(GameObservation observation)
-    {
-        if (!_abilityTargeting
-            || observation.StationRoute is not StationRouteObservation route
-            || route.Encounter?.Phase is not (EncounterPhase.Readying or EncounterPhase.Active))
-        {
-            _abilityTargetPreview.Visible = false;
-            return;
-        }
-
-        var mouse = GetViewport().GetMousePosition();
-        var rayOrigin = _camera.ProjectRayOrigin(mouse);
-        var rayEnd = rayOrigin + (_camera.ProjectRayNormal(mouse) * 200.0f);
-        var floorHit = CastRay(rayOrigin, rayEnd, FloorCollisionLayer);
-        if (floorHit.Count == 0)
-        {
-            _abilityTargetPreview.Visible = false;
-            return;
-        }
-
-        var hit = WithGroundHeight(floorHit["position"].AsVector3());
-        _abilityTargetPreview.GlobalPosition = hit + new Vector3(0, 0.035f, 0);
-        var inRange = ToCore(hit).DistanceTo(route.Protagonist.Position)
-            <= _definition!.Combat.ProtagonistAbility.RangeMeters;
-        _abilityTargetPreview.Visible = inRange;
+            _session!.Observe().StationRoute!.Encounter!.Id));
     }
 
     private Godot.Collections.Dictionary CastRay(Vector3 origin, Vector3 destination, uint collisionMask)
@@ -1766,14 +1566,13 @@ public partial class GameHost : Node3D
             {
                 MoveActorCommand => "Move order accepted.",
                 MovePartyCommand moveParty => $"Move order accepted for {moveParty.ActorIds.Count} crew member(s).",
-                StopActorsCommand => "Selected crew stopped; attack targets cleared.",
+                StopActorsCommand => "Selected crew orders cancelled.",
                 InteractCommand interact => $"Order accepted — {GetInteractionPrompt(interact.TargetId)}.",
                 ChooseDialogueResponseCommand => "Dialogue choice recorded.",
                 ChooseProtagonistKitCommand => "Protagonist kit locked. The station route is active.",
                 SetPauseCommand pause => pause.Paused ? "Tactical pause engaged." : "Simulation resumed.",
-                AssignBasicAttackTargetCommand => "Repeating carbine attack assigned.",
-                UseAbilityCommand => "Suppressive Fire queued.",
-                UseItemCommand => "Field Aid queued.",
+                AssignBasicAttackTargetCommand => "Attack target assigned.",
+                UseAbilityCommand => "Ability queued.",
                 RestartEncounterCommand => "Encounter reset. Review orders, then resume.",
                 _ => "Order accepted.",
             };
@@ -1811,7 +1610,7 @@ public partial class GameHost : Node3D
                 : null;
     }
 
-    private static string DescribeAction(StationRouteObservation route, PrimaryActionObservation action)
+    private string DescribeAction(StationRouteObservation route, PrimaryActionObservation action)
     {
         if (action.InteractionTargetId is EntityId targetId)
         {
@@ -1820,9 +1619,8 @@ public partial class GameHost : Node3D
 
         return action.Kind switch
         {
-            PrimaryActionKind.Attack => "Engage the Security Enforcer with repeating carbine fire",
-            PrimaryActionKind.Ability => "Suppressive Fire at the selected position",
-            PrimaryActionKind.Item => "Use Field Aid",
+            PrimaryActionKind.Attack => "Repeat basic attacks against the selected enemy",
+            PrimaryActionKind.Ability => ShortAction(action),
             _ => "Move to the selected destination",
         };
     }
@@ -2506,7 +2304,7 @@ public partial class GameHost : Node3D
     {
         var result = _automationBridge!.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 3,
+            schema_version = 8,
             command_id = "godot.bootstrap.pause",
             type = "set_pause",
             payload = new { paused = true },
@@ -2518,7 +2316,7 @@ public partial class GameHost : Node3D
             GameSession.MaximumDirectTickAdvance + 1);
         var oversizedMove = _automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 3,
+            schema_version = 8,
             command_id = "godot.bootstrap.oversized-move",
             type = "move_actor",
             payload = new
@@ -2597,7 +2395,7 @@ public partial class GameHost : Node3D
             && !GetNode<Node3D>("Actors/Protector").Visible;
         var response = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 3,
+            schema_version = 8,
             command_id = "godot.route.response",
             type = "choose_dialogue_response",
             payload = new
@@ -2653,7 +2451,7 @@ public partial class GameHost : Node3D
         var arenaSequence = _session.Observe().LatestEventSequence;
         var arenaMove = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 3,
+            schema_version = 8,
             command_id = "godot.route.enter-solo-arena",
             type = "move_actor",
             payload = new
@@ -2693,10 +2491,10 @@ public partial class GameHost : Node3D
         var exitLock = SubmitInteraction("godot.route.solo-exit-lock", actorId, soloExit.Id.Value);
 
         var readinessAdvance = automationBridge.AdvanceExactTicks(
-            definition.Combat.Encounter.ReadyingTicks);
+            definition.Combat.SoloEncounter.ReadyingTicks);
         var ability = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 3,
+            schema_version = 8,
             command_id = "godot.route.suppress-enforcer",
             type = "use_ability",
             payload = new
@@ -2708,8 +2506,6 @@ public partial class GameHost : Node3D
         }));
         var combatResume = automationBridge.SetPaused(false);
         var attackAccepted = false;
-        var healAccepted = false;
-        var fieldAidPresentationCountBeforeCombat = _fieldAidPresentationCount;
         for (var tick = 0; tick < 1200; tick++)
         {
             var combatRoute = _session.Observe().StationRoute!;
@@ -2724,35 +2520,16 @@ public partial class GameHost : Node3D
             {
                 var attack = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
                 {
-                    schema_version = 3,
+                    schema_version = 8,
                     command_id = "godot.route.attack-enforcer",
                     type = "assign_basic_attack_target",
                     payload = new
                     {
                         actor_id = actorId,
-                        target_id = definition.Combat.Hostile.Id.Value,
+                        target_id = definition.Combat.SoloHostile.Id.Value,
                     },
                 }));
                 attackAccepted = IsAccepted(attack);
-            }
-
-            if (!healAccepted
-                && combatRoute.Protagonist.Combat!.Health <= 85
-                && combatRoute.Protagonist.Combat.Items.Single().Charges > 0)
-            {
-                var heal = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
-                {
-                    schema_version = 3,
-                    command_id = "godot.route.use-field-aid",
-                    type = "use_item",
-                    payload = new
-                    {
-                        actor_id = actorId,
-                        item_id = definition.Combat.HealingItem.Id.Value,
-                        target_actor_id = actorId,
-                    },
-                }));
-                healAccepted = IsAccepted(heal);
             }
 
             _session.AdvanceTicks(1);
@@ -2760,14 +2537,12 @@ public partial class GameHost : Node3D
 
         if (_session.Observe().StationRoute!.Encounter?.Phase == EncounterPhase.Securing)
         {
-            _session.AdvanceTicks(definition.Combat.Encounter.SecuringTicks);
+            _session.AdvanceTicks(definition.Combat.SoloEncounter.SecuringTicks);
         }
         RenderObservation(_session.Observe());
         await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         var victory = _session.Observe().StationRoute!;
-        var fieldAidPresented = _fieldAidPresentationCount
-            == fieldAidPresentationCountBeforeCombat + 1;
         var combatPresentationSynchronized = _securityEnforcerView.Visible
             && _securityEnforcerTarget.CollisionLayer == 0
             && _securityEnforcerPresentation.CurrentAction == HumanoidPresentationAction.Down
@@ -2809,8 +2584,7 @@ public partial class GameHost : Node3D
             && IsAccepted(readinessAdvance)
             && IsAccepted(ability)
             && IsAccepted(combatResume)
-            && healAccepted
-            && fieldAidPresented
+            && attackAccepted
             && victory.Encounter?.Phase == EncounterPhase.Victory
             && victory.Hostiles!.Single().Combat.Health == 0
             && combatPresentationSynchronized
@@ -2852,8 +2626,6 @@ public partial class GameHost : Node3D
             tactical_pause_freezes_humanoids = tacticalPauseFreezesHumanoids,
             waiting_protector_visible_party_hidden = waitingProtectorPresentation,
             combat_won = final.Encounter?.Phase == EncounterPhase.Victory,
-            field_aid_used = healAccepted,
-            field_aid_presented = fieldAidPresented,
             combat_presentation_synchronized = combatPresentationSynchronized,
             solo_exit_open = final.Interactions.Single(
                 interaction => interaction.Id == soloExit.Id).State == InteractionState.Completed,
@@ -2905,7 +2677,7 @@ public partial class GameHost : Node3D
     {
         return _automationBridge!.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 3,
+            schema_version = 8,
             command_id = commandId,
             type = "interact",
             payload = new { actor_id = actorId, target_id = targetId },
@@ -2949,6 +2721,8 @@ public partial class GameHost : Node3D
 
     private void SetFeedback(string text, Color color)
     {
+        _feedbackSeconds = 5;
+        _feedbackLabel.Visible = true;
         _feedbackLabel.Text = text;
         _feedbackLabel.Modulate = color;
     }
@@ -3056,7 +2830,7 @@ public partial class GameHost : Node3D
         var arenaSequence = session.Observe().LatestEventSequence;
         var arenaMove = bridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 3,
+            schema_version = 8,
             command_id = "defeat.enter-arena",
             type = "move_actor",
             payload = new
@@ -3109,9 +2883,9 @@ public partial class GameHost : Node3D
             && retried.Encounter?.Phase == EncounterPhase.Readying
             && retried.Encounter.Attempt == 2
             && retried.Protagonist.Combat?.Health
-                == definition.Combat.Encounter.ProtagonistMaximumHealth
+                == definition.Combat.SoloEncounter.ProtagonistMaximumHealth
             && retried.Hostiles!.Single().Combat.Health
-                == definition.Combat.Hostile.MaximumHealth
+                == definition.Combat.SoloHostile.MaximumHealth
             && retried.Interactions.Single(interaction => interaction.Id == entryDoor.Id).State
                 == InteractionState.Completed
             && !retried.Interactions.Single(interaction => interaction.Id == soloExit.Id).CanInteract

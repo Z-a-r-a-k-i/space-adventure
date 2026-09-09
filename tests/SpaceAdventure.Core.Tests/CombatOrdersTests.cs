@@ -17,12 +17,13 @@ public sealed partial class CombatSessionTests
         var start = session.Tick;
         for (var tick = 0; tick < 240; tick++)
         {
-            if (tick % interval == 0) { Attack(session, $"repeat.{tick}"); }
+            if (tick % interval == 0 && !Observe(session).Hostiles![0].Combat.IsDefeated) { Attack(session, $"repeat.{tick}"); }
             session.AdvanceTicks(1);
         }
 
         Assert.Equal(Enumerable.Range(0, 8).Select(index => start + 9 + index * 30), ShotTicks(session));
-        Assert.Equal(20, Observe(session).Hostiles![0].Combat.Health);
+        var hostile = Observe(session).Hostiles![0].Combat;
+        Assert.Equal(Math.Max(0, hostile.MaximumHealth - 80), hostile.Health);
     }
 
     [Theory]
@@ -86,57 +87,48 @@ public sealed partial class CombatSessionTests
         var first = Assert.Single(ShotTicks(session));
         Suppress(session);
         Assert.Equal(PrimaryActionKind.Ability, Observe(session).Protagonist.PendingAction!.Kind);
-        Assert.Equal(0, Observe(session).Protagonist.Combat!.Cooldowns.Single().RemainingTicks);
+        Assert.Equal(0, Observe(session).Protagonist.Combat!.Cooldowns.Single(value => value.AbilityId == InterruptId).RemainingTicks);
         session.AdvanceTicks(26);
         Assert.DoesNotContain(session.EventsSince(0), item => item.Type == GameplayEventType.AbilityReleased);
         session.AdvanceTicks(1);
-        Assert.Equal(240, Observe(session).Protagonist.Combat!.Cooldowns.Single().RemainingTicks);
+        Assert.Equal(240, Observe(session).Protagonist.Combat!.Cooldowns.Single(value => value.AbilityId == InterruptId).RemainingTicks);
         Assert.Equal(EnforcerId, Observe(session).Protagonist.Combat!.RememberedAttackTargetId);
         session.AdvanceTicks(33);
         Assert.Equal(new[] { first, first + 60 }, ShotTicks(session));
     }
 
     [Fact]
-    public void HealingCanStartDuringOffensiveRecoveryAndResumesOnlyAnExplicitTarget()
+    public void TauntCanStartDuringOffensiveRecoveryAndResumesOnlyAnExplicitTarget()
     {
-        var session = ActiveSession();
-        AdvanceUntil(session, state => state.Protagonist.Combat!.Health == 85, 200);
-        Attack(session);
-        session.AdvanceTicks(9);
-        var recovery = Observe(session).Protagonist.Combat!.OffensiveRecoveryUntilTick;
-        Heal(session);
-        Assert.Equal(PrimaryActionKind.Item, Observe(session).Protagonist.CurrentAction!.Kind);
-        Assert.Equal(recovery, Observe(session).Protagonist.Combat!.OffensiveRecoveryUntilTick);
-        session.AdvanceTicks(15);
-        Assert.Equal(0, Observe(session).Protagonist.Combat!.Items.Single().Charges);
-        session.AdvanceTicks(24);
-        Assert.Equal(2, ShotTicks(session).Length);
+        var session = CreateAtPartyEncounter();
+        Assert.True(Attack(session, ProtectorId, MainEnforcerId).Accepted);
+        ResumeIntoActiveCombat(session); session.AdvanceTicks(9);
+        var recovery = Observe(session).Party[1].Combat!.OffensiveRecoveryUntilTick;
+        Assert.True(Taunt(session).Accepted);
+        Assert.Equal(PrimaryActionKind.Ability, Observe(session).Party[1].CurrentAction!.Kind);
+        Assert.Equal(recovery, Observe(session).Party[1].Combat!.OffensiveRecoveryUntilTick);
+        session.AdvanceTicks(45);
+        Assert.Equal(2, session.EventsSince(0).Count(item => item.Type == GameplayEventType.AttackReleased
+            && item.Detail is AttackEventDetail attack && attack.SourceId == ProtectorId));
 
-        var withoutTarget = ActiveSession();
-        AdvanceUntil(withoutTarget, state => state.Protagonist.Combat!.Health == 85, 200);
-        Heal(withoutTarget);
-        withoutTarget.AdvanceTicks(40);
-        Assert.Null(Observe(withoutTarget).Protagonist.CurrentAction);
-        Assert.Empty(ShotTicks(withoutTarget));
+        var withoutTarget = CreateAtPartyEncounter();
+        Assert.True(Taunt(withoutTarget).Accepted);
+        ResumeIntoActiveCombat(withoutTarget); withoutTarget.AdvanceTicks(60);
+        Assert.Null(Observe(withoutTarget).Party[1].CurrentAction);
+        Assert.DoesNotContain(withoutTarget.EventsSince(0), item => item.Type == GameplayEventType.AttackReleased
+            && item.Detail is AttackEventDetail attack && attack.SourceId == ProtectorId);
     }
 
     [Fact]
-    public void CancellingAbilityOrHealBeforeReleaseSpendsNothing()
+    public void CancellingAbilityBeforeReleaseSpendsNothing()
     {
         var session = ActiveSession();
         Suppress(session);
         session.AdvanceTicks(5);
         CancelAttack(session, stop: true);
         session.AdvanceTicks(30);
-        Assert.Equal(0, Observe(session).Protagonist.Combat!.Cooldowns.Single().RemainingTicks);
+        Assert.Equal(0, Observe(session).Protagonist.Combat!.Cooldowns.Single(value => value.AbilityId == InterruptId).RemainingTicks);
         Assert.DoesNotContain(session.EventsSince(0), item => item.Type == GameplayEventType.AbilityReleased);
-        AdvanceUntil(session, state => state.Protagonist.Combat!.Health == 85, 200);
-        Heal(session);
-        session.AdvanceTicks(14);
-        CancelAttack(session, stop: true);
-        session.AdvanceTicks(20);
-        Assert.Equal(1, Observe(session).Protagonist.Combat!.Items.Single().Charges);
-        Assert.DoesNotContain(session.EventsSince(0), item => item.Type == GameplayEventType.HealingApplied);
     }
 
     [Fact]
@@ -150,13 +142,13 @@ public sealed partial class CombatSessionTests
             new WorldPosition(origin.X, origin.Y, origin.Z + 5))).Accepted);
         Pause(session, true);
         Assert.True(session.Execute(new UseAbilityCommand(new CommandId("edge-of-range"), ProtagonistId,
-            SuppressiveFireId, new PositionAbilityTarget(new WorldPosition(origin.X, origin.Y, origin.Z - 9)))).Accepted);
+            InterruptId, new PositionAbilityTarget(new WorldPosition(origin.X, origin.Y, origin.Z - 9)))).Accepted);
         Pause(session, false);
         session.AdvanceTicks(21);
         var actor = Observe(session).Protagonist;
         Assert.Null(actor.PendingAction);
         Assert.Equal(PrimaryActionKind.Move, actor.CurrentAction!.Kind);
-        Assert.Equal(0, actor.Combat!.Cooldowns.Single().RemainingTicks);
+        Assert.Equal(0, actor.Combat!.Cooldowns.Single(value => value.AbilityId == InterruptId).RemainingTicks);
         Assert.Contains(session.EventsSince(0), item => item.Type == GameplayEventType.PrimaryActionFailed
             && item.RejectionCode == CommandRejectionCode.AbilityTargetOutOfRange);
     }
@@ -236,11 +228,7 @@ public sealed partial class CombatSessionTests
 
     private static void Suppress(GameSession session) =>
         Assert.True(session.Execute(new UseAbilityCommand(new CommandId("orders.suppress"), ProtagonistId,
-            SuppressiveFireId, new PositionAbilityTarget(Observe(session).Hostiles![0].Position))).Accepted);
-
-    private static void Heal(GameSession session) =>
-        Assert.True(session.Execute(new UseItemCommand(new CommandId("orders.heal"), ProtagonistId,
-            FieldAidId, ProtagonistId)).Accepted);
+            InterruptId, new PositionAbilityTarget(Observe(session).Hostiles![0].Position))).Accepted);
 
     private static void Pause(GameSession session, bool value) =>
         Assert.True(session.Execute(new SetPauseCommand(new CommandId("orders.pause"), value)).Accepted);

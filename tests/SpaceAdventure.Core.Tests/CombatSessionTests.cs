@@ -9,8 +9,7 @@ public sealed partial class CombatSessionTests
     private static readonly EntityId EnforcerId = new("actor.enemy.security_enforcer.solo");
     private static readonly EntityId SoloExitDoorId = new("interaction.service_door.solo_exit");
     private static readonly EntityId ProtectorInteractionId = new("interaction.protector");
-    private static readonly AbilityId SuppressiveFireId = new("ability.crew.vanguard.suppressive_fire");
-    private static readonly ItemId FieldAidId = new("item.healing.field_aid.v1");
+    private static readonly AbilityId InterruptId = new("ability.crew.vanguard.interrupt");
 
     [Fact]
     public void EncounterAutoPausesOnceAndPromotesThePendingAttackAfterReadying()
@@ -35,7 +34,7 @@ public sealed partial class CombatSessionTests
         Assert.True(session.Execute(new SetPauseCommand(
             new CommandId("combat.resume"),
             Paused: false)).Accepted);
-        Assert.Equal(54, session.AdvanceTicks(54));
+        Assert.Equal(24, session.AdvanceTicks(24));
         Assert.Equal(EncounterPhase.Active, Observe(session).Encounter!.Phase);
         session.AdvanceTicks(1);
         Assert.Equal(PrimaryActionKind.Attack, Observe(session).Protagonist.CurrentAction!.Kind);
@@ -59,7 +58,7 @@ public sealed partial class CombatSessionTests
         Assert.True(session.Execute(new UseAbilityCommand(
             new CommandId("combat.suppress"),
             ProtagonistId,
-            SuppressiveFireId,
+            InterruptId,
             new PositionAbilityTarget(hostilePosition))).Accepted);
         Assert.True(session.Execute(new SetPauseCommand(
             new CommandId("combat.resume.suppress"),
@@ -68,31 +67,12 @@ public sealed partial class CombatSessionTests
 
         Assert.Contains(session.EventsSince(0), gameEvent =>
             gameEvent.Type == GameplayEventType.ActionInterrupted);
-        Assert.Equal(70, Observe(session).Hostiles![0].Combat.Health);
-        Assert.Equal(240, Assert.Single(Observe(session).Protagonist.Combat!.Cooldowns).RemainingTicks);
+        var wounded = Observe(session).Hostiles![0].Combat;
+        Assert.Equal(wounded.MaximumHealth - 5, wounded.Health);
+        Assert.Equal(240, Observe(session).Protagonist.Combat!.Cooldowns.Single(value => value.AbilityId == InterruptId).RemainingTicks);
 
         Assert.True(session.Execute(new AssignBasicAttackTargetCommand(
             new CommandId("combat.attack.finish"),
-            ProtagonistId,
-            EnforcerId)).Accepted);
-        AdvanceUntil(
-            session,
-            observation => observation.Protagonist.Combat!.Health <= 85,
-            600);
-        Assert.True(session.Execute(new SetPauseCommand(
-            new CommandId("combat.pause.finish-heal"),
-            Paused: true)).Accepted);
-        Assert.True(session.Execute(new UseItemCommand(
-            new CommandId("combat.finish-heal"),
-            ProtagonistId,
-            FieldAidId,
-            ProtagonistId)).Accepted);
-        Assert.True(session.Execute(new SetPauseCommand(
-            new CommandId("combat.resume.finish-heal"),
-            Paused: false)).Accepted);
-        session.AdvanceTicks(30);
-        Assert.True(session.Execute(new AssignBasicAttackTargetCommand(
-            new CommandId("combat.attack.finish-after-heal"),
             ProtagonistId,
             EnforcerId)).Accepted);
         AdvanceUntil(
@@ -151,36 +131,16 @@ public sealed partial class CombatSessionTests
             300);
 
         var observation = Observe(session);
-        Assert.Equal(80, observation.Hostiles![0].Combat.Health);
+        Assert.Equal(observation.Hostiles![0].Combat.MaximumHealth - 20, observation.Hostiles[0].Combat.Health);
         Assert.Equal(commandId, observation.Protagonist.CurrentAction!.CommandId);
         Assert.Equal(PrimaryActionKind.Attack, observation.Protagonist.CurrentAction.Kind);
     }
 
     [Fact]
-    public void FieldAidConsumesOneChargeAndDefeatRetryRestoresOnlyCombatState()
+    public void DefeatRetryRestoresOnlyCombatState()
     {
         var session = CreateAtEncounter();
         ResumeIntoActiveCombat(session);
-        AdvanceUntil(session, observation => observation.Protagonist.Combat!.Health <= 60, 600);
-        Assert.True(session.Execute(new SetPauseCommand(
-            new CommandId("combat.pause.heal"),
-            Paused: true)).Accepted);
-        Assert.True(session.Execute(new UseItemCommand(
-            new CommandId("combat.heal"),
-            ProtagonistId,
-            FieldAidId,
-            ProtagonistId)).Accepted);
-        Assert.True(session.Execute(new SetPauseCommand(
-            new CommandId("combat.resume.heal"),
-            Paused: false)).Accepted);
-        session.AdvanceTicks(15);
-
-        var healed = Observe(session).Protagonist.Combat!;
-        Assert.True(healed.Health > 60);
-        Assert.Equal(0, Assert.Single(healed.Items).Charges);
-        Assert.Contains(session.EventsSince(0), gameEvent =>
-            gameEvent.Type == GameplayEventType.HealingApplied);
-
         AdvanceUntil(
             session,
             observation => observation.Encounter!.Phase == EncounterPhase.Defeat,
@@ -201,8 +161,7 @@ public sealed partial class CombatSessionTests
         Assert.Equal(EncounterPhase.Readying, retried.Encounter!.Phase);
         Assert.Equal(2, retried.Encounter.Attempt);
         Assert.Equal(100, retried.Protagonist.Combat!.Health);
-        Assert.Equal(100, retried.Hostiles![0].Combat.Health);
-        Assert.Equal(1, Assert.Single(retried.Protagonist.Combat.Items).Charges);
+        Assert.Equal(retried.Hostiles![0].Combat.MaximumHealth, retried.Hostiles[0].Combat.Health);
         Assert.Equal(routePower, retried.RoutePowerMode);
         Assert.Equal(entryState, FindInteraction(
             retried,
@@ -210,13 +169,13 @@ public sealed partial class CombatSessionTests
         Assert.False(FindInteraction(retried, SoloExitDoorId).CanInteract);
     }
 
-    private static GameSession CreateAtEncounter()
+    private static GameSession CreateAtEncounter(StationEncounterPlacement? partyPlacement = null, ISpatialPathfinder? pathfinder = null)
     {
         var session = GameSession.CreateStationRoute(
             StationRouteContent.ParseJson(File.ReadAllText(
                 Path.Combine(AppContext.BaseDirectory, "content", "station-route.json"))),
-            CreateLayout(),
-            new DirectPathfinder());
+            CreateLayout(partyPlacement),
+            pathfinder ?? new DirectPathfinder());
         Assert.True(session.Execute(new ChooseProtagonistKitCommand(
             new CommandId("kit.vanguard"),
             new ProtagonistKitId("kit.protagonist.vanguard"))).Accepted);
@@ -240,7 +199,7 @@ public sealed partial class CombatSessionTests
         Assert.True(session.Execute(new SetPauseCommand(
             new CommandId("combat.resume.initial"),
             Paused: false)).Accepted);
-        session.AdvanceTicks(54);
+        session.AdvanceTicks(Observe(session).Encounter!.TransitionTicksRemaining);
         Assert.Equal(EncounterPhase.Active, Observe(session).Encounter!.Phase);
     }
 
@@ -257,7 +216,7 @@ public sealed partial class CombatSessionTests
             300);
     }
 
-    private static StationRouteLayout CreateLayout()
+    private static StationRouteLayout CreateLayout(StationEncounterPlacement? partyPlacement = null)
     {
         return new StationRouteLayout(
             new WorldPosition(-10, 0, 8.5),
@@ -277,7 +236,8 @@ public sealed partial class CombatSessionTests
                 new WorldPosition(-10, 0, 2.75),
                 0.75,
                 new WorldPosition(-10, 0, 2.5),
-                new WorldPosition(-10, 0, -1)));
+                new WorldPosition(-10, 0, -1)),
+            partyPlacement ?? CreatePartyPlacement());
     }
 
     private static void AdvanceUntil(

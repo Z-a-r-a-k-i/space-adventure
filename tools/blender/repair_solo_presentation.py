@@ -184,6 +184,8 @@ def repair_vanguard():
         rig['holster_transfer_progress'] = .75
         rig['right_palm_offset_m'] = list(offsets['Right'])
         rig['left_palm_offset_m'] = list(offsets['Left'])
+    from repair_crew_death import repair_death
+    repair_death(rig, duration=2.1)
     rig.animation_data.action = bpy.data.actions['anim.humanoid.idle_holstered']
     bpy.context.scene.frame_set(1)
     bpy.context.view_layer.update()

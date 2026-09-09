@@ -158,3 +158,12 @@ along the hand's local Y). Fully armed review checkpoints enforce 3 cm maximum
 proxy-to-grip error; these are rig-fit metrics, not finger-surface measurements.
 The original `Firing Rifle` donor remains published for provenance but no
 longer drives runtime shooting. See `docs/testing.md` for contextual checks.
+
+## Death repair — 2026-09-08
+
+[`repair_crew_death.py`](../../../tools/blender/repair_crew_death.py) reuses this
+run's retained `raw/mixamo/rifle-death-no-skin.fbx`. It preserves the falling
+pelvis rotation, settles the torso and boots, and bakes evaluated mesh contact with the
+floor onto the accepted rig. This replaces the seated, buried-leg down clip
+in the source and published GLB. The tool fresh-imports each export to check
+the complete fall and final pose; other handling and locomotion stay intact.

@@ -17,12 +17,13 @@ public partial class GameHost
     private async Task InputFrame()
     {
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        if (DisplayServer.GetName() == "headless") { return; }
         await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
     }
 
-    private async Task InputKey(Key key)
+    private async Task InputKey(Key key, bool shift = false)
     {
-        Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = true });
+        Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = true, ShiftPressed = shift });
         await InputFrame();
         Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = false });
         await InputFrame();
@@ -39,10 +40,13 @@ public partial class GameHost
             && _session.Observe().LatestEventSequence == eventSequence && _feedbackLabel.Text == feedback);
     }
 
-    private async Task InputClick(Vector2 position, MouseButton button)
+    private async Task InputClick(Vector2 position, MouseButton button, bool alt = false)
     {
-        Input.ParseInputEvent(new InputEventMouseButton { Position = position, ButtonIndex = button, Pressed = true });
-        Input.ParseInputEvent(new InputEventMouseButton { Position = position, ButtonIndex = button, Pressed = false });
+        // ParseInputEvent enters at window coordinates; the viewport then applies
+        // its stretch transform. Control/world projections above are local.
+        var windowPosition = GetViewport().GetFinalTransform() * position;
+        Input.ParseInputEvent(new InputEventMouseButton { Position = windowPosition, GlobalPosition = windowPosition, ButtonIndex = button, Pressed = true, ShiftPressed = Input.IsKeyPressed(Key.Shift), AltPressed = alt });
+        Input.ParseInputEvent(new InputEventMouseButton { Position = windowPosition, GlobalPosition = windowPosition, ButtonIndex = button, Pressed = false, ShiftPressed = Input.IsKeyPressed(Key.Shift), AltPressed = alt });
         await InputFrame();
     }
 
@@ -102,7 +106,8 @@ public partial class GameHost
         _reviewDrivesClock = false;
         await InputKey(Key.Space);
         InputCheck("Space resumes real-time gameplay", !_session.IsPaused);
-        for (var frame = 0; frame < 30; frame++) { await InputFrame(); }
+        var realtimeSample = System.Diagnostics.Stopwatch.StartNew();
+        while (realtimeSample.Elapsed.TotalSeconds < .6) { await InputFrame(); }
         var realtimeSampleTick = _presentationTick;
         var realtimePose = JsonSerializer.Deserialize<JsonElement>(GetPresentationDiagnosticsJson());
         _reviewDrivesClock = true;
@@ -128,13 +133,14 @@ public partial class GameHost
             await ReviewUntil(state => state.Encounter!.Phase == EncounterPhase.Defeat, 1000, fast: true);
             InputCheck("defeat pauses and exposes retry", _session.IsPaused && _retryButton.Visible);
             await CheckUnavailableStop("defeat");
+            await CheckCompletedDeathPresentation();
             await ReviewCapture("defeat");
             var button = _retryButton.GetGlobalRect();
             InputCheck("retry button fits viewport", GetViewport().GetVisibleRect().Encloses(button));
             await InputClick(button.GetCenter(), MouseButton.Left);
             InputCheck("retry button creates a new attempt", ReviewState().Encounter!.Attempt == 2
-                && ReviewState().Protagonist.Combat!.Health == 100 && ReviewState().Protagonist.Combat!.Items[0].Charges == 1);
-            await ReviewTicks(54);
+                && ReviewState().Protagonist.Combat!.Health == ReviewState().Protagonist.Combat!.MaximumHealth);
+            await ReviewTicks(_definition!.Combat.SoloEncounter.ReadyingTicks);
             await ReviewCapture("retry");
             FinishSoloReview();
             return;
@@ -173,16 +179,26 @@ public partial class GameHost
         InputCheck("arrival removes the bolt and reveals the impact", !_combatPresentationEffects.Contains(projectileEffect)
             && delayedImpact.Node.Visible);
         InputCheck("arrival reveals the damage number", delayedNumber.Node.Visible);
-        await ReviewUntil(state => state.Protagonist.Combat!.Health <= 85, 200);
-        await InputClick(_healButton.GetGlobalRect().GetCenter(), MouseButton.Left);
-        InputCheck("Field Aid button creates item order", ReviewState().Protagonist.PendingAction?.Kind == PrimaryActionKind.Item);
-        await ReviewUntil(state => state.Protagonist.Combat!.Items[0].Charges == 0
-            && state.Protagonist.CurrentAction?.Kind == PrimaryActionKind.Attack, 60);
-        InputCheck("basic attack resumes after aid without another click", true);
-        await ReviewUntil(state => state.Hostiles![0].CurrentAction?.Phase == PrimaryActionPhase.Windup, 120);
+        // Wait for a strike that can actually be interrupted after our remaining
+        // offensive recovery, instead of accepting the final frame of any windup.
+        await ReviewUntil(state => state.Hostiles![0].CurrentAction is { Phase: PrimaryActionPhase.Windup } strike
+            && strike.PhaseTicksRemaining > _definition!.Combat.ProtagonistAbility.WindupTicks
+                + Math.Max(0, state.Protagonist.Combat!.OffensiveRecoveryUntilTick - _session.Tick), 120);
         var sequence = _session.Observe().LatestEventSequence;
         await InputClick(_abilityButton.GetGlobalRect().GetCenter(), MouseButton.Left);
         InputCheck("ability button enters targeting", _abilityTargeting);
+        var beforeRejection = ReviewState().Protagonist.PendingAction;
+        var abilityFocus = _camera.FocusPoint;
+        var distantFloor = ToGodot(ReviewState().Protagonist.Position)
+            + Vector3.Right * (float)(_definition!.Combat.ProtagonistAbility.RangeMeters + 1);
+        _camera.FocusOn(distantFloor);
+        await InputFrame();
+        await InputWorldClick(distantFloor, MouseButton.Left);
+        InputCheck("out-of-range Interrupt retains targeting and reports ability range", _abilityTargeting
+            && _feedbackLabel.Text == "Outside ability range." && ReviewState().Protagonist.PendingAction == beforeRejection);
+        await ReviewCapture("ability-range");
+        _camera.FocusPoint = abilityFocus;
+        await InputFrame();
         await InputWorldClick(ToGodot(ReviewState().Hostiles![0].Position), MouseButton.Left);
         InputCheck("left click confirms targeted ability", ReviewState().Protagonist.PendingAction?.Kind == PrimaryActionKind.Ability && !_abilityTargeting);
         await ReviewUntil(_ => _session.EventsSince(sequence).Any(item => item.Type == GameplayEventType.ActionInterrupted), 50);

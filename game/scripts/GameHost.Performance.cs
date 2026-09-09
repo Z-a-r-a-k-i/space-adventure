@@ -13,6 +13,10 @@ public partial class GameHost
     private readonly List<double> _renderIntervals = [];
     private readonly List<double> _simulationCosts = [];
     private readonly List<double> _presentationCosts = [];
+    private readonly List<double> _engineProcessCosts = [];
+    private readonly List<double> _renderCpuCosts = [];
+    private readonly List<double> _renderGpuCosts = [];
+    private int _unfocusedFrames;
     private readonly List<CommandTiming> _commandTimings = [];
     private readonly List<object> _frameSpikes = [];
 
@@ -22,6 +26,11 @@ public partial class GameHost
     {
         if (!_performanceRunning) { return; }
         var now = Stopwatch.GetTimestamp();
+        _engineProcessCosts.Add(Performance.GetMonitor(Performance.Monitor.TimeProcess) * 1000);
+        _renderCpuCosts.Add(RenderingServer.ViewportGetMeasuredRenderTimeCpu(GetViewport().GetViewportRid())
+            + RenderingServer.GetFrameSetupTimeCpu());
+        _renderGpuCosts.Add(RenderingServer.ViewportGetMeasuredRenderTimeGpu(GetViewport().GetViewportRid()));
+        if (!GetWindow().HasFocus()) { _unfocusedFrames++; }
         if (_lastRenderedStamp != 0)
         {
             var interval = Milliseconds(_lastRenderedStamp, now);
@@ -49,6 +58,7 @@ public partial class GameHost
     private async Task RunRealtimePerformanceAsync()
     {
         var startupSeconds = _startupWatch.Elapsed.TotalSeconds;
+        RenderingServer.ViewportSetMeasureRenderTime(GetViewport().GetViewportRid(), true);
         var warmup = Stopwatch.StartNew();
         while (warmup.Elapsed.TotalSeconds < 2) { await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame); }
         _reviewDrivesClock = false;
@@ -68,9 +78,13 @@ public partial class GameHost
         while (watch.Elapsed.TotalSeconds < 30)
         {
             var route = ReviewState();
-            if (route.Encounter!.Phase == EncounterPhase.Defeat)
+            if (IsPartyReview)
             {
-                Dispatch(new RestartEncounterCommand(NextHumanCommandId("perf.retry"), _definition!.Combat.Encounter.Id));
+                DrivePartyPerformance(route);
+            }
+            else if (route.Encounter!.Phase == EncounterPhase.Defeat)
+            {
+                Dispatch(new RestartEncounterCommand(NextHumanCommandId("perf.retry"), _definition!.Combat.SoloEncounter.Id));
                 Dispatch(new SetPauseCommand(NextHumanCommandId("perf.resume"), false));
             }
             else if (route.Encounter.Phase == EncounterPhase.Active)
@@ -81,7 +95,7 @@ public partial class GameHost
                     relocated = false;
                     suppressed = false;
                     Dispatch(new AssignBasicAttackTargetCommand(NextHumanCommandId("perf.attack"),
-                        _definition!.Protagonist.Id, _definition.Combat.Hostile.Id));
+                        _definition!.Protagonist.Id, _definition.Combat.SoloHostile.Id));
                 }
                 else if (!relocated && route.Hostiles![0].Combat.Health <= 70)
                 {
@@ -97,12 +111,6 @@ public partial class GameHost
                     Dispatch(new UseAbilityCommand(NextHumanCommandId("perf.ability"), _definition!.Protagonist.Id,
                         _definition.Combat.ProtagonistAbility.Id, new PositionAbilityTarget(route.Hostiles[0].Position)));
                 }
-                if (route.Protagonist.Combat!.Health <= 70 && route.Protagonist.Combat.Items[0].Charges > 0
-                    && route.Protagonist.CurrentAction?.Kind != PrimaryActionKind.Item)
-                {
-                    Dispatch(new UseItemCommand(NextHumanCommandId("perf.aid"), _definition!.Protagonist.Id,
-                        _definition.Combat.HealingItem.Id, _definition.Protagonist.Id));
-                }
             }
             await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         }
@@ -110,8 +118,9 @@ public partial class GameHost
         RenderingServer.FramePostDraw -= MeasureRenderedFrame;
         var report = new
         {
-            schema_version = 1,
-            passed = _renderIntervals.Count > 300 && _commandTimings.All(item => item.Accepted),
+            schema_version = 2,
+            measurement_completed = _renderIntervals.Count > 300 && _commandTimings.All(item => item.Accepted),
+            frame_pacing_warning = _renderIntervals.Count(interval => interval > 50) > _renderIntervals.Count * .01,
             method = "Stopwatch wall time between FramePostDraw signals in ordinary real-time play; no MovieWriter or fixed frame delta",
             startup_to_checkpoint_seconds = startupSeconds,
             excluded_warmup_seconds = warmup.Elapsed.TotalSeconds - watch.Elapsed.TotalSeconds,
@@ -121,6 +130,17 @@ public partial class GameHost
             render_intervals_ms = TimingSummary(_renderIntervals),
             simulation_advance_cpu_ms = TimingSummary(_simulationCosts),
             presentation_cpu_ms = TimingSummary(_presentationCosts),
+            engine_process_ms = TimingSummary(_engineProcessCosts),
+            render_cpu_ms = TimingSummary(_renderCpuCosts),
+            render_gpu_ms = TimingSummary(_renderGpuCosts),
+            unfocused_frames = _unfocusedFrames,
+            runtime = new { max_fps = Engine.MaxFps, low_processor = OS.LowProcessorUsageMode,
+                vsync = DisplayServer.WindowGetVsyncMode().ToString(),
+                renderer = RenderingServer.GetCurrentRenderingMethod(),
+                driver = RenderingServer.GetCurrentRenderingDriverName(),
+                gpu = RenderingServer.GetVideoAdapterName(),
+                primitives = Performance.GetMonitor(Performance.Monitor.RenderTotalPrimitivesInFrame),
+                draw_calls = Performance.GetMonitor(Performance.Monitor.RenderTotalDrawCallsInFrame) },
             pipeline_compilations_during_sample = new
             {
                 mesh = Performance.GetMonitor(Performance.Monitor.PipelineCompilationsMesh) - initialMeshCompilations,
@@ -132,12 +152,56 @@ public partial class GameHost
             command_count = _commandTimings.Count,
             rejected_commands = _commandTimings.Count(item => !item.Accepted),
             frame_spikes = _frameSpikes,
-            limitation = "Command timing starts in the game handler; OS input latency, compositor display latency, GPU duration, and external tool round trips are not measured.",
+            limitation = "Command timing starts in the game handler; OS input latency, compositor display latency, and external tool round trips are not measured. Completion is not a frame-rate acceptance gate.",
         };
         File.WriteAllText(Path.Combine(_reviewOutput, "performance.json"), JsonSerializer.Serialize(report, CaptureManifestJsonOptions));
-        WriteReviewManifest(report.passed);
-        GD.Print(JsonSerializer.Serialize(report, CaptureLogJsonOptions));
-        GetTree().Quit(report.passed ? 0 : 1);
+        WriteReviewManifest(report.measurement_completed);
+        GD.Print(JsonSerializer.Serialize(new { report.measurement_completed, report.frame_pacing_warning, report.render_intervals_ms,
+            report.engine_process_ms, report.render_cpu_ms, report.render_gpu_ms, report.unfocused_frames, report.runtime }, CaptureLogJsonOptions));
+        GetTree().Quit(report.measurement_completed ? 0 : 1);
+    }
+
+    private void DrivePartyPerformance(StationRouteObservation route)
+    {
+        if (route.Encounter!.Phase == EncounterPhase.Defeat)
+        {
+            Dispatch(new RestartEncounterCommand(NextHumanCommandId("perf.retry"), route.Encounter.Id));
+            Dispatch(new SetPauseCommand(NextHumanCommandId("perf.resume"), false));
+            return;
+        }
+        if (route.Encounter.Phase != EncounterPhase.Active) { return; }
+        foreach (var actor in route.Party.Where(actor => !actor.Combat!.IsDefeated))
+        {
+            if (actor.PendingAction is not null) { continue; }
+            if (actor.Combat!.RememberedAttackTargetId is null && actor.CurrentAction is null)
+            {
+                var target = route.Hostiles!.Where(hostile => !hostile.Combat.IsDefeated)
+                    .OrderBy(hostile => hostile.Position.DistanceTo(actor.Position)).FirstOrDefault();
+                if (target is not null) { Dispatch(new AssignBasicAttackTargetCommand(NextHumanCommandId("perf.attack"), actor.Id, target.Id)); }
+            }
+            else if (actor.Id == _definition!.Companion.Id && actor.Combat.Cooldowns.Single(cd => cd.AbilityId == _definition.Combat.Barrier.Id).RemainingTicks == 0
+                && actor.CurrentAction?.Kind != PrimaryActionKind.Ability)
+            {
+                var direction = ToGodot(route.Hostiles!.Single(hostile => _enemyViews[hostile.Id].Sentry is not null).Position) - ToGodot(actor.Position);
+                direction.Y = 0;
+                var target = new BarrierAbilityTarget(new WorldPosition(actor.Position.X, actor.Position.Y, actor.Position.Z + .8), ToCore(direction.Normalized()));
+                if (_session!.CheckBarrierPlacement(actor.Id, target) is null)
+                { Dispatch(new UseAbilityCommand(NextHumanCommandId("perf.barrier"), actor.Id, _definition.Combat.Barrier.Id, target)); }
+            }
+            else if (actor.CurrentAction?.Kind != PrimaryActionKind.Ability
+                && actor.Combat.Cooldowns.Single(cd => cd.AbilityId == actor.Loadout!.SecondaryAbilityId).RemainingTicks == 0)
+            {
+                if (actor.Id == _definition.Companion.Id)
+                { Dispatch(new UseAbilityCommand(NextHumanCommandId("perf.taunt"), actor.Id, _definition.Combat.Taunt.Id, new SelfAbilityTarget())); }
+                else
+                {
+                    var target = route.Hostiles!.FirstOrDefault(enemy => !enemy.Combat.IsDefeated
+                        && actor.Position.DistanceTo(enemy.Position) <= _definition.Combat.Burst.RangeMeters);
+                    if (target is not null)
+                    { Dispatch(new UseAbilityCommand(NextHumanCommandId("perf.burst"), actor.Id, _definition.Combat.Burst.Id, new EntityAbilityTarget(target.Id))); }
+                }
+            }
+        }
     }
 
     private static object TimingSummary(IEnumerable<double> measurements)

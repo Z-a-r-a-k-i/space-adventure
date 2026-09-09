@@ -1,7 +1,7 @@
 # Protector shotgun source
 
-Status: candidate 01 retained as the preferred future cleanup source; Blender
-and Godot work deferred.
+Status: candidate 01 retained as the source of the
+[accepted publication](../../../source/weapon.crew.protector_shotgun.v1/production.md).
 
 - Asset ID: `weapon.crew.protector_shotgun.v1`
 - Run ID: `prod-tripo-v31bq-20260723-01`
@@ -12,5 +12,4 @@ and Godot work deferred.
   Generate in Parts off, 8K off.
 
 The candidate retains the short broad shotgun identity, stock, primary grip,
-support grip, and open muzzle. It still needs production topology, markers,
-hand/shoulder/back fitting, and live Blender/Godot review before publication.
+support grip, and open muzzle.
