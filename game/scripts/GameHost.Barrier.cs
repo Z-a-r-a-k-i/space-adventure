@@ -217,18 +217,19 @@ public partial class GameHost
             node.Configure(sentry.MuzzlePosition, ToGodot(projectile.Destination), new Color("ff7659"));
             AddChild(node); _incomingBolts.Add(projectile.Id, node);
             _combatPresentationEffects.Add(new TimedPresentationEffect(node, (float)projectile.FlightTicks / GameSession.TicksPerSecond, tick));
-            SpawnImpact(sentry.MuzzlePosition, new Color("ffe2ad")); PlayCombatCue("sentry", sentry.MuzzlePosition);
+            SpawnMuzzleSignature(sentry.MuzzlePosition, sentry.MuzzleDirection, "sentry");
+            PlayCombatCue("sentry", sentry.MuzzlePosition);
             return;
         }
         if (_incomingBolts.Remove(projectile.Id, out var bolt))
         { _combatPresentationEffects.RemoveAll(effect => effect.Node == bolt); if (GodotObject.IsInstanceValid(bolt)) { bolt.QueueFree(); } }
         if (type != GameplayEventType.ProjectileBlocked || projectile.ImpactPosition is not { } impact) { return; }
         _barrierView.NotifyBlocked(tick);
-        SpawnImpact(ToGodot(impact), new Color("8afff0"));
+        SpawnSignature(CombatSignature.Block, ToGodot(impact), _barrierView.GlobalBasis.Z);
         var label = new Label3D { Text = "BLOCKED", Position = ToGodot(impact) + Vector3.Up * .3f, FontSize = 28,
             OutlineSize = 7, Modulate = new Color("8afff0"), Billboard = BaseMaterial3D.BillboardModeEnum.Enabled };
         AddChild(label); _combatPresentationEffects.Add(new TimedPresentationEffect(label, .5f, tick));
-        PlayCombatCue("guard", ToGodot(impact));
+        PlayCombatCue("block", ToGodot(impact));
     }
 
     private void ClearIncomingBolts()
