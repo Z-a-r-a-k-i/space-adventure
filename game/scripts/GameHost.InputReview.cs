@@ -52,10 +52,26 @@ public partial class GameHost
         InputCheck("field manual fits viewport", GetViewport().GetVisibleRect().Encloses(
             _controlsOverlay.GetChild<PanelContainer>(0).GetGlobalRect()));
         var commands = _humanCommandSequence;
+        var audioBus = AudioServer.GetBusIndex("Master");
+        var volume = _masterVolume.Value;
+        var muted = AudioServer.IsBusMute(audioBus);
+        await InputKey(Key.Minus);
+        InputCheck("manual volume changes the audio bus", _masterVolume.Value == Math.Max(0, volume - 5)
+            && AudioServer.GetBusVolumeDb(audioBus) < 0);
+        await InputKey(Key.Equal);
+        await InputKey(Key.M);
+        InputCheck("manual mute reaches audio bus", AudioServer.IsBusMute(audioBus) != muted);
+        await InputKey(Key.M);
+        InputCheck("manual unmute restores audio state", AudioServer.IsBusMute(audioBus) == muted
+            && _masterVolume.Value == volume);
+        await InputKey(Key.Tab);
+        InputCheck("manual Tab focuses volume", _masterVolume.HasFocus());
+        await InputKey(Key.Tab, shift: true);
         await InputKey(Key.Space);
         await InputKey(Key.Key1);
         await InputClick(new Vector2(20, 300), MouseButton.Right);
-        InputCheck("field manual blocks gameplay input", _session!.IsPaused && _humanCommandSequence == commands && !_abilityTargeting);
+        InputCheck("field manual blocks gameplay input", _controlsOverlay.Visible && _session!.IsPaused
+            && _humanCommandSequence == commands && !_abilityTargeting);
         await InputKey(Key.Escape);
         InputCheck("field manual closes and restores camera input", !_controlsOverlay.Visible && !_controlsScrim.Visible
             && _camera.InputEnabled == cameraEnabled);

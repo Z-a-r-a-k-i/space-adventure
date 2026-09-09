@@ -30,6 +30,12 @@ public partial class GameHost
         await ReviewWaitForPath(ReviewState().Interactions.Single(item => item.Id.Value == "interaction.protector").ApproachPosition);
         ReviewOrder(new InteractCommand(new CommandId("party.setup.protector"), protagonist, new EntityId("interaction.protector")));
         await ReviewUntil(state => state.ActiveDialogue is not null, 300, fast: true);
+        if (_reviewCheckpoint == "recruitment")
+        {
+            _camera.DistanceMeters = float.Parse(ReviewArgument("review-distance", "14.5"), System.Globalization.CultureInfo.InvariantCulture);
+            _camera.FocusOn(ToGodot(ReviewState().Protagonist.Position));
+            if (await ReviewCapture("recruitment")) { return; }
+        }
         ReviewOrder(new ChooseDialogueResponseCommand(new CommandId("party.setup.recruit"), protagonist,
             new EntityId("interaction.protector"), new DialogueResponseId("response.recruit_protector")));
         await ReviewWaitForPath(new WorldPosition(0, 0, 5));

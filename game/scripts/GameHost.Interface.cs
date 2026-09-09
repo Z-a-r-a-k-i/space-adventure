@@ -486,7 +486,7 @@ public partial class GameHost
                     next.GrabFocus();
                     _manualScroll.EnsureControlVisible(next);
                 }
-                else if ((IsKey(audioKey, Key.Enter) || IsKey(audioKey, Key.KpEnter) || IsKey(audioKey, Key.Space)) && !audioKey.Echo)
+                else if ((IsKey(audioKey, Key.Enter) || IsKey(audioKey, Key.KpEnter)) && !audioKey.Echo)
                 { if (_muteButton.HasFocus()) { ToggleMasterMute(); } else if (!_masterVolume.HasFocus()) { ToggleControls(); } }
                 else if (IsKey(audioKey, Key.M) && !audioKey.Echo) { ToggleMasterMute(); }
                 else if (IsKey(audioKey, Key.Minus) || IsKey(audioKey, Key.KpSubtract)) { _masterVolume.Value -= 5; }

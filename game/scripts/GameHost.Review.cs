@@ -71,6 +71,12 @@ public partial class GameHost
             ReviewOrder(new InteractCommand(new CommandId("review.survivor"), _definition!.Protagonist.Id,
                 new EntityId("interaction.survivor")));
             await ReviewUntil(state => state.ActiveDialogue is not null, 300, fast: true);
+            if (_reviewCheckpoint == "briefing")
+            {
+                _camera.DistanceMeters = distance;
+                _camera.FocusOn(ToGodot(ReviewState().Protagonist.Position));
+                if (await ReviewCapture("briefing")) { return; }
+            }
             ReviewOrder(new ChooseDialogueResponseCommand(new CommandId("review.survivor.choice"),
                 _definition.Protagonist.Id, new EntityId("interaction.survivor"),
                 new DialogueResponseId("response.reroute_service_power")));
