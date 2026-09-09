@@ -66,7 +66,7 @@ public sealed partial class GameSession
             actor.RememberedAttackTargetId = action.CombatTargetId;
             actor.RememberedAttackCommandId = action.CommandId;
         }
-        else if (action.Kind is PrimaryActionKind.Move or PrimaryActionKind.Interact or PrimaryActionKind.Stop or PrimaryActionKind.Face)
+        else if (action.Kind is PrimaryActionKind.Move or PrimaryActionKind.Interact or PrimaryActionKind.Stop)
         {
             ClearAttackIntent(actor);
         }
@@ -75,12 +75,11 @@ public sealed partial class GameSession
         // restarts the attack cycle that is already running against this target.
         if (SameAttack(actor.PendingAction, action)
             || (SameAttack(actor.CurrentAction, action) && (!IsPaused
-                || actor.PendingAction is null && actor.HeldFacing is null)))
+                || actor.PendingAction is null)))
         {
             if (!IsPaused)
             {
                 actor.PendingAction = null;
-                actor.HeldFacing = null;
             }
 
             return;
@@ -109,11 +108,8 @@ public sealed partial class GameSession
                 action.InteractionTargetId, pending, replacedCommandId));
     }
 
-    private void StartPrimaryAction(ActorRuntime actor, PrimaryActionRuntime action, long startedTick, bool preserveFacing = false)
+    private void StartPrimaryAction(ActorRuntime actor, PrimaryActionRuntime action, long startedTick)
     {
-        if (action.Kind == PrimaryActionKind.Face) { actor.HeldFacing = action.Facing; }
-        else if (!preserveFacing && (action.Kind is PrimaryActionKind.Move or PrimaryActionKind.Interact || IsOffensive(action)))
-        { actor.HeldFacing = null; }
         if (SameAttack(actor.CurrentAction, action))
         {
             return;
@@ -229,7 +225,7 @@ public sealed partial class GameSession
         {
             CombatTargetId = hostile.Id, AttackId = actor.Loadout!.BasicAttackId, InstanceId = ++_actionSequence,
         };
-        StartPrimaryAction(actor, action, Tick, preserveFacing: true);
+        StartPrimaryAction(actor, action, Tick);
     }
 
     private static void ClearAttackIntent(ActorRuntime actor)

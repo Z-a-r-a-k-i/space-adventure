@@ -18,7 +18,7 @@ public partial class CarbineProjectile : Node3D
         LaunchPosition = origin;
         TargetPosition = destination;
         // Keep a few readable frames even at melee distance without changing combat timing.
-        FlightSeconds = Math.Clamp(origin.DistanceTo(destination) / 28.0f, 0.14f, 0.24f);
+        FlightSeconds = Math.Clamp(origin.DistanceTo(destination) / 28.0f, 0.14f, 0.24f) / AnimationPacing.Rate;
         var direction = origin.DirectionTo(destination);
         Transform = new Transform3D(new Basis(new Quaternion(Vector3.Up,
             direction.IsZeroApprox() ? Vector3.Forward : direction)), origin);

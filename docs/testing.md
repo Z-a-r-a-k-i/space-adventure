@@ -53,6 +53,8 @@ pwsh -NoProfile -File scripts/dev.ps1 review -Mode performance -Resolution 1920x
 Add `-Encounter party` to the same capture, record, input, or performance commands
 for the two-character arena. Review accepts victory/defeat sequences, 7.5–20 m
 camera distance, and 720p/1080p.
+For environment inspection, capture/live also accept optional `-Pitch 0.45..1.15`
+and `-Yaw -3.14..3.14` (radians); these captures have separate output folders.
 Restrained recoil is the default; `-Recoil strong` reproduces the alternative.
 Checkpoints are defined in [GameHost.Review.cs](../game/scripts/GameHost.Review.cs)
 and [GameHost.PartyReview.cs](../game/scripts/GameHost.PartyReview.cs).
@@ -67,11 +69,19 @@ Stop, projectile pause/travel/arrival, and victory/recruitment or defeat/retry.
 Party input also checks world/portrait/drag selection, Shift-drag, Tab ability
 focus within a group, drag cancellation/HUD exclusion, edge panning and its
 focus/drag/HUD stops, independent orders,
-single-click barrier placement/cancellation/interception, independent T/click and
-Alt/right-click facing and movement after deployment, group facing, Taunt targeting, separate Burst releases
+single-click barrier placement/cancellation/interception, movement and automatic
+turning after deployment, removed-facing shortcut/command rejection, Taunt targeting, separate Burst releases
 and pause, both skill cooldowns, rejection of removed commands/shortcuts, sentry aim limits, complete
 death playback, shotgun pellets, and HUD bounds. Injected mouse events use the
 viewport's final transform so 1080p exercises the same hit regions as 720p.
+Solo and party input reviews also check that F1 opens a bounded field manual,
+blocks gameplay input, and restores camera input when Escape closes it.
+Field Ops checks cover dialogue bounds, the open world-input space between
+control groups, pending-order replacement and label bounds, shared target badges,
+and hiding world labels in the manual. The party `field-orders` checkpoint
+captures shared attack planning; the solo `dialogue` checkpoint captures a response panel.
+Overhead health checks cover current/max health, active-encounter filtering,
+death/retry, mouse passthrough, paused camera tracking, and separation from order labels.
 Inspect live playback or the exact recording for every visual change; stills
 alone can miss accumulated offsets and transition defects.
 
@@ -129,7 +139,7 @@ input injection is separate evidence. The [roadmap](ROADMAP.md) owns gate status
    switch abilities while keeping the group selected. Use portraits or Shift-click
    for independent orders; assign different enemies, place Protector's Barrier with one click
    between him and the sentry, then Taunt. Check that nearby enemies focus him, front-side shots
-   are blocked, and melee still hits. Move and turn Protector: the barrier must
+   are blocked, and melee still hits. Move Protector in another direction: the barrier must
    keep its deployed position and direction until expiry.
    Check per-member health, orders, cooldowns, and incoming-hit countdowns.
    Idle crew must wait for a target order, including after their target falls.
@@ -159,18 +169,18 @@ at 3,000 ticks. Read events/acknowledgements after injected input; injection
 success alone is not command acceptance. The bridge exposes no arbitrary
 property setters or code evaluation.
 
-Example schema-v8 adapter command:
+Example schema-v9 adapter command:
 
 ```json
-{"schema_version":8,"command_id":"review.pause","type":"set_pause","payload":{"paused":true}}
+{"schema_version":9,"command_id":"review.pause","type":"set_pause","payload":{"paused":true}}
 ```
 
 `use_ability` takes `target_position` for Interrupt, `target_actor_id` for Burst,
 or `target_self: true` for Taunt. Barrier requires both `target_position` (ground)
 and `target_facing` (horizontal direction). Mixed target kinds are rejected.
-`face_actors` takes `actor_ids` and a finite horizontal `facing`
-vector. Observations expose current/queued facing, held headings, both skill slots, cooldowns, taunted targets,
+Observations expose automatic body heading, both skill slots, cooldowns, taunted targets,
 barrier position/facing, and flying projectiles. Both input paths use these commands.
+Schema 9 removes manual-facing commands and the held/pending heading fields.
 
 Prefer these bounded helpers over arbitrary scene mutation. For ad hoc live
 control, `plugin-link` links the external `godot-ai-plugin`; override its source

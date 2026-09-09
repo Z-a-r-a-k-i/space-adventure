@@ -24,7 +24,7 @@ public partial class GameHost
             await InputWorldClick(ToGodot(sentry.Position) + Vector3.Up * 1.3f, MouseButton.Left);
             InputCheck("world enemy picking queues Burst", !_abilityTargeting && ReviewState().Protagonist.PendingAction?.AbilityId == combat.Burst.Id);
             await InputKey(Key.Key2);
-            await InputClick(_threatRows[sentry.Id].Button.GetGlobalRect().GetCenter(), MouseButton.Left);
+            await InputWorldClick(_enemyViews[sentry.Id].Root.GlobalPosition + Vector3.Up * 1.3f, MouseButton.Left);
         }
         else { ReviewOrder(new UseAbilityCommand(new CommandId("review.burst"), _definition.Protagonist.Id, combat.Burst.Id, new EntityAbilityTarget(sentry.Id))); }
         InputCheck("Burst queues the selected enemy", ReviewState().Protagonist.PendingAction?.AbilityId == combat.Burst.Id

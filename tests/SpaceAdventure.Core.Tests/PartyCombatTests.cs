@@ -17,7 +17,7 @@ public sealed partial class CombatSessionTests
         var session = CreateAtPartyEncounter();
         var route = Observe(session);
         Assert.True(session.IsPaused);
-        Assert.Equal(24, route.Encounter!.TransitionTicksRemaining);
+        Assert.Equal(CombatTuning.PartyEncounter.ReadyingTicks, route.Encounter!.TransitionTicksRemaining);
         Assert.Equal(2, route.Hostiles!.Count);
         Assert.Equal(150, route.Party.Single(actor => actor.Id == ProtectorId).Combat!.Health);
         Assert.Equal(100, route.Protagonist.Combat!.Health);
@@ -183,7 +183,7 @@ public sealed partial class CombatSessionTests
             session.AdvanceTicks(1);
         }
         Assert.Equal(EncounterPhase.Securing, Observe(session).Encounter!.Phase);
-        session.AdvanceTicks(54);
+        session.AdvanceTicks(CombatTuning.PartyEncounter.SecuringTicks);
         var victory = Observe(session);
         Assert.Equal(EncounterPhase.Victory, victory.Encounter!.Phase);
         Assert.Equal(ObjectiveStatus.Completed, victory.Objective.Status);
@@ -198,7 +198,7 @@ public sealed partial class CombatSessionTests
         var session = CreateAtPartyEncounter();
         Assert.True(Barrier(session).Accepted);
         ResumeIntoActiveCombat(session);
-        session.AdvanceTicks(6);
+        session.AdvanceTicks(CombatTuning.Barrier.WindupTicks);
         var duration = Observe(session).Encounter!.Barrier!.TotalTicks;
         session.AdvanceTicks(duration - 1);
         Assert.Equal(1, Observe(session).Encounter!.Barrier!.RemainingTicks);

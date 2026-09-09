@@ -96,7 +96,7 @@ public partial class GameHost
             && _focusedActorId == vanguard && _selectedActorIds.SetEquals([vanguard, protector]));
         var protectorOrder = ReviewState().Party[1].PendingAction;
         await InputKey(Key.Key2);
-        await InputClick(_threatRows[new EntityId("actor.enemy.gun_sentry.main")].Button.GetGlobalRect().GetCenter(), MouseButton.Left);
+        await InputWorldClick(_enemyViews[new EntityId("actor.enemy.gun_sentry.main")].Root.GlobalPosition + Vector3.Up * 1.3f, MouseButton.Left);
         InputCheck("a grouped ability goes only to the focused hero", ReviewState().Protagonist.PendingAction?.AbilityId == _definition!.Combat.Burst.Id
             && ReviewState().Party[1].PendingAction == protectorOrder);
         await InputKey(Key.Tab, shift: true);

@@ -46,16 +46,15 @@ attack intent. There is no arbitrary action queue.
 
 Basic attacks remember an explicitly assigned target. Same-target orders
 preserve the cycle; abilities preserve the target for automatic
-resumption. Movement, interaction, facing, Stop, target defeat, encounter completion,
+resumption. Movement, interaction, Stop, target defeat, encounter completion,
 and retry clear that intent. A running move can cancel an unreleased attack;
 released offense owns an independent recovery deadline that replacements
 cannot erase. New offense waits for recovery; Barrier and Taunt may begin
 during it. See [GameSession.Orders.cs](../src/SpaceAdventure.Core/GameSession.Orders.cs).
 
 Idle crew wait for an explicit attack order, including after their target falls.
-Facing orders turn selected actors in place at a bounded fixed-tick rate and
-hold that heading; move, interaction, or offensive orders release it.
-Defensive abilities preserve it. Godot interpolates observed body facing;
+Actor heading follows movement and combat targets at a bounded fixed-tick rate.
+Godot interpolates observed body facing;
 upper-body aim follows the assigned target.
 
 Selection and ability focus belong to the Godot adapter. Drag selection collects

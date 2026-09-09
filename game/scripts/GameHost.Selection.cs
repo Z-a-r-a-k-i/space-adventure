@@ -40,6 +40,7 @@ public partial class GameHost
     // Receive the end of a world drag before GUI controls can swallow its release.
     public override void _Input(InputEvent @event)
     {
+        if (HandleControlsInput(@event)) { return; }
         if (_selectionStart is null) { return; }
         switch (@event)
         {

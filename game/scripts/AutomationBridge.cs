@@ -85,7 +85,7 @@ public partial class AutomationBridge : Node
             var root = document.RootElement;
 
             if (!root.TryGetProperty("schema_version", out var schemaVersion)
-                || schemaVersion.GetInt32() != 8)
+                || schemaVersion.GetInt32() != 9)
             {
                 return Error("unsupported_schema_version");
             }
@@ -122,11 +122,6 @@ public partial class AutomationBridge : Node
                     payload.GetProperty("actor_ids").EnumerateArray()
                         .Select(actorId => new EntityId(actorId.GetString()
                             ?? throw new JsonException("'actor_ids' cannot contain null.")))),
-                "face_actors" => new FaceActorsCommand(commandId,
-                    payload.GetProperty("actor_ids").EnumerateArray()
-                        .Select(actorId => new EntityId(actorId.GetString()
-                            ?? throw new JsonException("'actor_ids' cannot contain null."))),
-                    ReadPosition(payload.GetProperty("facing"))),
                 "interact" => new InteractCommand(
                     commandId,
                     new EntityId(RequiredString(payload, "actor_id")),
@@ -568,7 +563,7 @@ public partial class AutomationBridge : Node
                     SecondaryAbilityTargetKind = ToExternalName(actor.Loadout.SecondaryAbilityTargetKind),
                 },
             Position = ProjectPosition(actor.Position),
-            Facing = ProjectPosition(actor.Facing), actor.FacingHeld,
+            Facing = ProjectPosition(actor.Facing),
             CurrentAction = ProjectAction(actor.CurrentAction),
             PendingAction = ProjectAction(actor.PendingAction),
             Combat = ProjectCombatant(actor.Combat),
@@ -623,7 +618,6 @@ public partial class AutomationBridge : Node
                 InteractionTargetId = action.InteractionTargetId?.Value,
                 CombatTargetId = action.CombatTargetId?.Value,
                 AbilityFacing = action.AbilityFacing is { } facing ? ProjectPosition(facing) : null,
-                Facing = action.Facing is { } heading ? ProjectPosition(heading) : null,
                 AttackId = action.AttackId?.Value,
                 AbilityId = action.AbilityId?.Value,
                 Phase = ToExternalName(action.Phase),

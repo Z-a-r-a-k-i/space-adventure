@@ -5,6 +5,11 @@ namespace SpaceAdventure.Core.Tests;
 
 public sealed partial class CombatSessionTests
 {
+    private static readonly StationRouteDefinition TestDefinition = StationRouteContent.ParseJson(File.ReadAllText(
+        Path.Combine(AppContext.BaseDirectory, "content", "station-route.json")));
+    private static StationCombatDefinition CombatTuning => TestDefinition.Combat;
+    private static AttackDefinition CarbineTuning => CombatTuning.GetAttack(TestDefinition.ProtagonistKits.Single().BasicAttackId);
+    private static AttackDefinition ShotgunTuning => CombatTuning.GetAttack(TestDefinition.Companion.Loadout!.BasicAttackId);
     private static readonly EntityId ProtagonistId = new("actor.protagonist");
     private static readonly EntityId EnforcerId = new("actor.enemy.security_enforcer.solo");
     private static readonly EntityId SoloExitDoorId = new("interaction.service_door.solo_exit");
@@ -34,7 +39,7 @@ public sealed partial class CombatSessionTests
         Assert.True(session.Execute(new SetPauseCommand(
             new CommandId("combat.resume"),
             Paused: false)).Accepted);
-        Assert.Equal(24, session.AdvanceTicks(24));
+        Assert.Equal(CombatTuning.SoloEncounter.ReadyingTicks, session.AdvanceTicks(CombatTuning.SoloEncounter.ReadyingTicks));
         Assert.Equal(EncounterPhase.Active, Observe(session).Encounter!.Phase);
         session.AdvanceTicks(1);
         Assert.Equal(PrimaryActionKind.Attack, Observe(session).Protagonist.CurrentAction!.Kind);
@@ -63,7 +68,7 @@ public sealed partial class CombatSessionTests
         Assert.True(session.Execute(new SetPauseCommand(
             new CommandId("combat.resume.suppress"),
             Paused: false)).Accepted);
-        session.AdvanceTicks(6);
+        session.AdvanceTicks(CombatTuning.ProtagonistAbility.WindupTicks);
 
         Assert.Contains(session.EventsSince(0), gameEvent =>
             gameEvent.Type == GameplayEventType.ActionInterrupted);
@@ -172,8 +177,7 @@ public sealed partial class CombatSessionTests
     private static GameSession CreateAtEncounter(StationEncounterPlacement? partyPlacement = null, ISpatialPathfinder? pathfinder = null)
     {
         var session = GameSession.CreateStationRoute(
-            StationRouteContent.ParseJson(File.ReadAllText(
-                Path.Combine(AppContext.BaseDirectory, "content", "station-route.json"))),
+            TestDefinition,
             CreateLayout(partyPlacement),
             pathfinder ?? new DirectPathfinder());
         Assert.True(session.Execute(new ChooseProtagonistKitCommand(

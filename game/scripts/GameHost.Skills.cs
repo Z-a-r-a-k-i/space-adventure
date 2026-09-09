@@ -15,7 +15,7 @@ public partial class GameHost
             MaterialOverride = CreateCombatEffectMaterial(new Color(.98f, .57f, .2f, .32f)),
             CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
         };
-        AddChild(ring); _combatPresentationEffects.Add(new TimedPresentationEffect(ring, .5f, tick));
+        AddChild(ring); _combatPresentationEffects.Add(new TimedPresentationEffect(ring, .5f / AnimationPacing.Rate, tick));
         foreach (var hostile in _session!.Observe().StationRoute!.Hostiles!.Where(enemy => enemy.Combat.TauntedBy == ability.SourceId))
         {
             var label = new Label3D { Text = "TAUNTED", Position = ToGodot(hostile.Position) + Vector3.Up * 2,

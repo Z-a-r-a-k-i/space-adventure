@@ -6,7 +6,7 @@ Run one explicit target from the repository root:
       --python tools/blender/build_station_environment_v2.py -- \
       --asset structure
 
-Available targets are structure, service-door, terminal, and airlock. Add
+Available targets are structure, service-surround, service-door, terminal, and airlock. Add
 ``--replace`` only when intentionally rebuilding that target's exact source and
 publication paths.
 """
@@ -187,6 +187,7 @@ def add_box(
     assigned_material: bpy.types.Material,
     *,
     bevel: float = 0.035,
+    bevel_segments: int = 2,
     rotation: tuple[float, float, float] = (0.0, 0.0, 0.0),
 ) -> bpy.types.Object:
     # Authoring arguments use the Godot/glTF contract (+Y up, -Z front).
@@ -201,7 +202,7 @@ def add_box(
     if bevel > 0:
         modifier = obj.modifiers.new("edge_softening", "BEVEL")
         modifier.width = min(bevel, min(blender_dimensions) * 0.24)
-        modifier.segments = 2
+        modifier.segments = bevel_segments
         modifier.limit_method = "ANGLE"
         bpy.context.view_layer.objects.active = obj
         bpy.ops.object.modifier_apply(modifier=modifier.name)
@@ -228,6 +229,8 @@ def wall(
     dimensions: tuple[float, float, float],
     dark: bpy.types.Material,
     armor: bpy.types.Material,
+    deck: bpy.types.Material,
+    cyan: bpy.types.Material,
 ) -> bpy.types.Object:
     x, _, z = center
     width, height, depth = dimensions
@@ -247,6 +250,30 @@ def wall(
                 add_box(f"{name}.upper_cap", (x, height - 0.20, z), (width, 0.34, depth + 0.06), armor, bevel=0.025),
             ]
         )
+    # All medium detail belongs to the wall's one cutaway mesh.
+    length = depth if vertical else width
+    count = max(1, round(length / 2.0))
+    step = length / count
+    for index in range(count):
+        along = -length / 2 + (index + 0.5) * step
+        def detail(suffix, elevation, span, thickness, surface, bevel=0.012):
+            for side in (-1, 1):
+                location = (x + side * (width / 2 + thickness / 2), elevation, z + along) if vertical else (x + along, elevation, z + side * (depth / 2 + thickness / 2))
+                size = (thickness, 0.70, span) if vertical else (span, 0.70, thickness)
+                pieces.append(add_box(f"{name}.{suffix}_{index}_{side}", location, size, surface, bevel=bevel, bevel_segments=1))
+        detail("panel_lower", 0.90, step - 0.20, 0.035, deck)
+        detail("panel_upper", 1.77, step - 0.20, 0.035, deck)
+        # Short luminaires punctuate the base instead of washing entire walls.
+        if index % 2 == 0:
+            for side in (-1, 1):
+                location = (x + side * (width / 2 + 0.026), 0.43, z + along) if vertical else (x + along, 0.43, z + side * (depth / 2 + 0.026))
+                size = (0.025, 0.065, min(0.68, step - 0.3)) if vertical else (min(0.68, step - 0.3), 0.065, 0.025)
+                pieces.append(add_box(f"{name}.light_{index}_{side}", location, size, cyan, bevel=0))
+        if index > 0:
+            offset = -length / 2 + index * step
+            location = (x, 1.30, z + offset) if vertical else (x + offset, 1.30, z)
+            size = (width + 0.10, 2.18, 0.12) if vertical else (0.12, 2.18, depth + 0.10)
+            pieces.append(add_box(f"{name}.rib_{index}", location, size, armor, bevel=0.018, bevel_segments=1))
     result = join(name, pieces)
     result["camera_occluder"] = True
     result["occluder_id"] = occluder_id
@@ -259,47 +286,44 @@ def floor_panel(
     dimensions: tuple[float, float, float],
     dark: bpy.types.Material,
     armor: bpy.types.Material,
+    deck: bpy.types.Material,
 ) -> bpy.types.Object:
     x, y, z = center
     width, height, depth = dimensions
     pieces = [add_box(f"{name}.base", center, dimensions, dark, bevel=0.045)]
-    long_axis = max(width, depth)
-    panel_count = max(1, int(long_axis / 1.75))
-    if depth >= width:
-        for index in range(panel_count):
-            panel_z = z - depth / 2 + (index + 0.5) * depth / panel_count
-            pieces.append(add_box(
-                f"{name}.panel_{index:02}",
-                (x, y + height * 0.52, panel_z),
-                (width - 0.28, 0.025, depth / panel_count - 0.10),
-                armor,
-                bevel=0.02,
-            ))
-    else:
-        for index in range(panel_count):
-            panel_x = x - width / 2 + (index + 0.5) * width / panel_count
-            pieces.append(add_box(
-                f"{name}.panel_{index:02}",
-                (panel_x, y + height * 0.52, z),
-                (width / panel_count - 0.10, 0.025, depth - 0.28),
-                armor,
-                bevel=0.02,
-            ))
+    columns, rows = max(1, round(width / 2)), max(1, round(depth / 2))
+    for column in range(columns):
+        for row in range(rows):
+            panel_x = x - width / 2 + (column + 0.5) * width / columns
+            panel_z = z - depth / 2 + (row + 0.5) * depth / rows
+            pieces.append(add_box(f"{name}.panel_{column}_{row}",
+                (panel_x, y + height * 0.52, panel_z),
+                (width / columns - 0.07, 0.025, depth / rows - 0.07), armor, bevel=0.035, bevel_segments=1))
+            pieces.append(add_box(f"{name}.inset_{column}_{row}",
+                (panel_x, 0.020, panel_z),
+                (width / columns - 0.18, 0.008, depth / rows - 0.18), deck, bevel=0))
+    # Broad perimeter trim gives the room an engineered frame at tactical range.
+    for side in (-1, 1):
+        pieces.append(add_box(f"{name}.edge_x_{side}", (x + side * (width / 2 - 0.11), 0.020, z),
+            (0.16, 0.024, depth - 0.10), armor, bevel=0.012))
+        pieces.append(add_box(f"{name}.edge_z_{side}", (x, 0.020, z + side * (depth / 2 - 0.11)),
+            (width - 0.10, 0.024, 0.16), armor, bevel=0.012))
     return join(name, pieces)
 
 
 def build_structure() -> tuple[str, str, list[str], int, int]:
     asset_id = "kit.station.structure.v2"
     dark = material("mat.station.structure.dark", (0.026, 0.045, 0.070, 1), metallic=0.42, roughness=0.58)
-    armor = material("mat.station.structure.armor", (0.20, 0.25, 0.30, 1), metallic=0.55, roughness=0.43)
-    cyan = material("mat.station.structure.route_cyan", (0.02, 0.58, 0.82, 1), metallic=0.16, roughness=0.30, emission=4.0)
+    armor = material("mat.station.structure.armor", (0.24, 0.26, 0.27, 1), metallic=0.48, roughness=0.58)
+    deck = material("mat.station.structure.deck", (0.038, 0.055, 0.073, 1), metallic=0.30, roughness=0.72)
+    cyan = material("mat.station.structure.route_cyan", (0.035, 0.26, 0.30, 1), metallic=0.16, roughness=0.50, emission=1.2)
 
     objects: list[bpy.types.Object] = [
-        floor_panel("Floor_StartRoom", (-10, -0.10, 7), (6, 0.20, 6), dark, armor),
-        floor_panel("Floor_SoloCombatArena", (-10, -0.10, 0), (10, 0.20, 8), dark, armor),
-        floor_panel("Floor_ProtectorRoom", (-1.5, -0.10, 0), (7, 0.20, 6), dark, armor),
-        floor_panel("Floor_MainPartyArena", (0, -0.10, 8), (12, 0.20, 10), dark, armor),
-        floor_panel("Floor_FinalAirlockApproach", (9, -0.10, 8), (6, 0.20, 6), dark, armor),
+        floor_panel("Floor_StartRoom", (-10, -0.10, 7), (6, 0.20, 6), dark, armor, deck),
+        floor_panel("Floor_SoloCombatArena", (-10, -0.10, 0), (10, 0.20, 8), dark, armor, deck),
+        floor_panel("Floor_ProtectorRoom", (-1.5, -0.10, 0), (7, 0.20, 6), dark, armor, deck),
+        floor_panel("Floor_MainPartyArena", (0, -0.10, 8), (12, 0.20, 10), dark, armor, deck),
+        floor_panel("Floor_FinalAirlockApproach", (9, -0.10, 8), (6, 0.20, 6), dark, armor, deck),
     ]
 
     wall_specs = [
@@ -327,7 +351,7 @@ def build_structure() -> tuple[str, str, list[str], int, int]:
         ("Wall_Final_EastNorth", "presentation.wall.final.east_north", (12, 1.30, 10.25), (0.30, 2.60, 1.50)),
         ("Wall_Final_EastSouth", "presentation.wall.final.east_south", (12, 1.30, 5.75), (0.30, 2.60, 1.50)),
     ]
-    objects.extend(wall(name, occluder_id, center, dimensions, dark, armor)
+    objects.extend(wall(name, occluder_id, center, dimensions, dark, armor, deck, cyan)
                    for name, occluder_id, center, dimensions in wall_specs)
 
     for name, location in (
@@ -356,6 +380,112 @@ def build_structure() -> tuple[str, str, list[str], int, int]:
     for obj in objects:
         obj["asset_id"] = asset_id
     return asset_id, "structure-v2", [obj.name for obj in objects], 30_000, 4
+
+
+def build_service_surround() -> tuple[str, str, list[str], int, int]:
+    """Recessed engineering layer; never contributes walkable or occluding geometry."""
+    asset_id = "assembly.station.service_surround.v1"
+    # A small baked fill keeps the service recesses legible beneath cast shadows.
+    shell = material("mat.station.surround.shell", (0.012, 0.021, 0.031, 1), metallic=0.25, roughness=0.86, emission=0.22)
+    frame = material("mat.station.surround.frame", (0.040, 0.063, 0.081, 1), metallic=0.40, roughness=0.72, emission=0.10)
+    equipment = material("mat.station.surround.equipment", (0.075, 0.091, 0.10, 1), metallic=0.48, roughness=0.65, emission=0.07)
+    lamp = material("mat.station.surround.utility_amber", (0.38, 0.15, 0.045, 1), metallic=0.0, roughness=0.70, emission=0.7)
+    groups: dict[str, list[bpy.types.Object]] = {name: [] for name in
+        ("Surround_Foundations", "Surround_ServiceBed", "Surround_Machinery", "Surround_UtilityLights")}
+
+    def box(group, name, location, size, surface, bevel=0.0):
+        groups[group].append(add_box(name, location, size, surface, bevel=bevel, bevel_segments=1))
+
+    # Deep continuous backing covers camera orbit/zoom, with large-scale seams
+    # instead of the small floor tiles reserved for the playable route.
+    box("Surround_ServiceBed", "service_basin", (0, -5.1, 0), (256, 0.3, 256), shell)
+    for offset in range(-120, 121, 12):
+        box("Surround_ServiceBed", f"longitudinal_{offset}", (offset, -4.9, 0), (0.32, 0.26, 256), frame)
+        box("Surround_ServiceBed", f"transverse_{offset}", (0, -4.9, offset), (256, 0.26, 0.32), frame)
+
+    # Five separate deck foundations match the authored rooms, all below y=-.20.
+    rooms = [(-10, 7, 6, 6), (-10, 0, 10, 8), (-1.5, 0, 7, 6), (0, 8, 12, 10), (9, 8, 6, 6)]
+    for index, (x, z, width, depth) in enumerate(rooms):
+        box("Surround_Foundations", f"foundation_{index}", (x, -1.05, z), (width + 0.30, 1.65, depth + 0.30), shell, 0.10)
+        for side in (-1, 1):
+            box("Surround_Foundations", f"rim_x_{index}_{side}", (x + side * (width / 2 + 0.10), -0.45, z), (0.20, 0.36, depth + 0.40), frame, 0.04)
+            box("Surround_Foundations", f"rim_z_{index}_{side}", (x, -0.45, z + side * (depth / 2 + 0.10)), (width + 0.40, 0.36, 0.20), frame, 0.04)
+        for dx in (-width / 2 + 0.7, width / 2 - 0.7):
+            for dz in (-depth / 2 + 0.7, depth / 2 - 0.7):
+                box("Surround_Foundations", f"support_{index}_{dx}_{dz}", (x + dx, -3.25, z + dz), (0.65, 3.30, 0.65), frame, 0.07)
+
+    # Broad HVAC/heat-exchanger banks occupy the negative spaces around the
+    # rooms. A recessed louver stack reads as machinery rather than extra floor.
+    banks = [(-18, 0, 0), (-17, 9, 0), (-10, 13.5, 1), (-5, 17, 1), (3, 17, 1),
+             (11, 15, 1), (16, 7, 0), (8, 0, 1), (-1, -7, 1), (-10, -8, 1),
+             (-23, -9, 0), (22, -7, 0), (-18, 22, 1), (15, 25, 1)]
+    for index, (x, z, across) in enumerate(banks):
+        if index in (2, 6, 8, 11):
+            continue  # These locations have cylindrical coolant reservoirs below.
+        def part(name, dx, y, dz, width, height, depth, surface, bevel=0):
+            location = (x + (dz if across else dx), y, z + (dx if across else dz))
+            size = (depth, height, width) if across else (width, height, depth)
+            box("Surround_Machinery", f"bank_{index}_{name}", location, size, surface, bevel)
+        part("plinth", 0, -4.45, 0, 3.3, 0.65, 6.8, frame, 0.12)
+        part("housing", 0, -3.5, 0, 2.8, 1.4, 6.2, shell, 0.18)
+        part("recess", 0, -2.77, 0, 2.3, 0.10, 5.5, shell)
+        for side in (-1, 1):
+            part(f"rail_{side}", side * 1.30, -2.67, 0, 0.22, 0.30, 6.0, equipment, 0.04)
+        for rib in range(9):
+            part(f"louver_{rib}", 0, -2.67, (rib - 4) * 0.57, 2.3, 0.22, 0.20, frame)
+        # Only one end is lit; no route-like continuous luminous lines.
+        light_at = (x + (2.95 if across else 0), -2.69, z + (0 if across else 2.95))
+        light_size = (0.12, 0.06, 0.70) if across else (0.70, 0.06, 0.12)
+        box("Surround_UtilityLights", f"bank_light_{index}", light_at, light_size, lamp)
+
+    # Bundled octagonal coolant pipes, with supports and collars at a readable scale.
+    def pipe(name, start, end, radius, surface):
+        a, b = Vector((start[0], -start[2], start[1])), Vector((end[0], -end[2], end[1]))
+        direction = b - a
+        bpy.ops.mesh.primitive_cylinder_add(vertices=8, radius=radius, depth=direction.length, location=(a + b) / 2)
+        obj = bpy.context.object
+        obj.name = name
+        obj.rotation_euler = direction.to_track_quat("Z", "Y").to_euler()
+        obj.data.materials.append(surface)
+        bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+        groups["Surround_Machinery"].append(obj)
+
+    for index in (2, 6, 8, 11):
+        x, z, across = banks[index]
+        def tank_point(cross, along, height=-3.25):
+            return (x + (along if across else cross), height, z + (cross if across else along))
+        box("Surround_Machinery", f"tank_rack_{index}", (x, -4.45, z),
+            (6.6, 0.6, 3.4) if across else (3.4, 0.6, 6.6), frame, 0.10)
+        for lane in (-0.78, 0.78):
+            pipe(f"reservoir_{index}_{lane}", tank_point(lane, -2.6), tank_point(lane, 2.6), 0.65, equipment)
+            for along in (-2.6, -1.7, 1.7, 2.6):
+                pipe(f"reservoir_band_{index}_{lane}_{along}", tank_point(lane, along - 0.08),
+                    tank_point(lane, along + 0.08), 0.71, frame)
+            pipe(f"reservoir_feed_{index}_{lane}", tank_point(lane, 2.6), tank_point(lane, 3.3), 0.20, frame)
+        box("Surround_UtilityLights", f"tank_light_{index}", tank_point(0, -2.8, -3.92),
+            (0.12, 0.06, 0.70) if across else (0.70, 0.06, 0.12), lamp)
+
+    for index, (x, z, length, across) in enumerate([(-15, 13, 21, True), (-15, -6, 26, True),
+            (-21, -6, 22, False), (14, -6, 28, False), (-4, 21, 30, True)]):
+        for lane in range(3):
+            cross = (lane - 1) * 0.55
+            start = (x, -3.55, z + cross) if across else (x + cross, -3.55, z)
+            end = (x + length, -3.55, z + cross) if across else (x + cross, -3.55, z + length)
+            pipe(f"coolant_{index}_{lane}", start, end, 0.19, equipment)
+        for station in range(0, int(length), 4):
+            location = (x + station, -3.85, z) if across else (x, -3.85, z + station)
+            size = (0.25, 0.85, 2.1) if across else (2.1, 0.85, 0.25)
+            box("Surround_Machinery", f"pipe_saddle_{index}_{station}", location, size, frame, 0.03)
+
+    objects = [join(name, pieces) for name, pieces in groups.items()]
+    for obj in objects:
+        obj["asset_id"] = asset_id
+        obj["presentation_only"] = True
+        # This is a physical silhouette contract, not a collision proxy.
+        highest = max((obj.matrix_world @ vertex.co).z for vertex in obj.data.vertices)
+        if highest > -0.20:
+            raise RuntimeError(f"Surround '{obj.name}' reaches the playable floor: {highest}")
+    return asset_id, "service-surround-v1", [obj.name for obj in objects], 12_000, 4
 
 
 BoxSpec = tuple[
@@ -734,7 +864,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--asset",
         required=True,
-        choices=("structure", "service-door", "terminal", "airlock"),
+        choices=("structure", "service-surround", "service-door", "terminal", "airlock"),
     )
     parser.add_argument("--replace", action="store_true")
     return parser.parse_args(script_arguments)
@@ -744,6 +874,7 @@ def main() -> None:
     arguments = parse_arguments()
     builders = {
         "structure": build_structure,
+        "service-surround": build_service_surround,
         "service-door": build_service_door,
         "terminal": build_terminal,
         "airlock": build_airlock,

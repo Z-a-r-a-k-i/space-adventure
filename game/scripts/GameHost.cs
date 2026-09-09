@@ -18,7 +18,7 @@ public partial class GameHost : Node3D
     private const int MaximumVisualCaptureSettleFrames = 600;
     private const int VisualCaptureWidth = 1280;
     private const int VisualCaptureHeight = 720;
-    private const float ServiceDoorAnimationSeconds = 0.25f;
+    private const float ServiceDoorAnimationSeconds = 0.25f / AnimationPacing.Rate;
     private const float ServiceDoorLeafTravelMeters = 0.94f;
     private const float WallCutawayCaptureYawRadians = -1.5707964f;
     private const float WallCutawayCapturePitchRadians = 0.90f;
@@ -82,12 +82,11 @@ public partial class GameHost : Node3D
     private MeshInstance3D _abilityTargetPreview = null!;
     private Label _objectiveLabel = null!;
     private Label _pauseLabel = null!;
-    private Label _actionLabel = null!;
     private Label _feedbackLabel = null!;
     private Label _combatLabel = null!;
     private Button _retryButton = null!;
-    private HBoxContainer _partyList = null!;
-    private CenterContainer _dialogueOverlay = null!;
+    private VBoxContainer _partyList = null!;
+    private MarginContainer _dialogueOverlay = null!;
     private Label _dialogueSpeaker = null!;
     private Label _dialogueLine = null!;
     private VBoxContainer _dialogueResponses = null!;
@@ -247,6 +246,7 @@ public partial class GameHost : Node3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
+        if (_controlsOverlay?.Visible == true) { GetViewport().SetInputAsHandled(); return; }
         if (_session is null || _visualCaptureRequested)
         {
             return;
@@ -262,7 +262,7 @@ public partial class GameHost : Node3D
                 return;
             }
 
-            if (IsKey(key, Key.Escape) && (_abilityTargeting || _facingTargeting))
+            if (IsKey(key, Key.Escape) && _abilityTargeting)
             {
                 CancelAbilityTargeting();
                 SetFeedback("Targeting cancelled.", new Color("9eb6ce"));
@@ -285,9 +285,6 @@ public partial class GameHost : Node3D
                 GetViewport().SetInputAsHandled();
                 return;
             }
-
-            if (IsKey(key, Key.T))
-            { BeginFacingTargeting(); GetViewport().SetInputAsHandled(); return; }
 
             if (IsKey(key, Key.X) && _stopButton.Visible && !_stopButton.Disabled)
             {
@@ -336,8 +333,6 @@ public partial class GameHost : Node3D
 
         if (@event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left } crewClick)
         {
-            if (_facingTargeting)
-            { ConfirmFacing(crewClick.Position); GetViewport().SetInputAsHandled(); return; }
             BeginSelectionGesture(crewClick);
             GetViewport().SetInputAsHandled();
             return;
@@ -349,8 +344,7 @@ public partial class GameHost : Node3D
                 ButtonIndex: MouseButton.Right,
             } mouseButton)
         {
-            if (mouseButton.AltPressed) { ConfirmFacing(mouseButton.Position); }
-            else if (_abilityTargeting || _facingTargeting) { CancelAbilityTargeting(); }
+            if (_abilityTargeting) { CancelAbilityTargeting(); }
             else { HandleContextClick(mouseButton.Position); }
             GetViewport().SetInputAsHandled();
         }
@@ -362,6 +356,13 @@ public partial class GameHost : Node3D
         GD.Print($"SPACEADVENTURE_NAV_READY iteration={NavigationServer3D.MapGetIterationId(navigationMap)} regions={NavigationServer3D.MapGetRegions(navigationMap).Count} vertices={navigationRegion.NavigationMesh?.GetVertices().Length ?? 0} polygons={navigationRegion.NavigationMesh?.GetPolygonCount() ?? 0}");
         var contentJson = Godot.FileAccess.GetFileAsString("res://content/station-route.json");
         _definition = StationRouteContent.ParseJson(contentJson);
+        _vanguardPresentation.LocomotionPlaybackRate = (float)_definition.Protagonist.MovementSpeedMetersPerSecond / AnimationPacing.CrewStrideSpeed;
+        _protectorPartyPresentation.LocomotionPlaybackRate = (float)_definition.Companion.MovementSpeedMetersPerSecond / AnimationPacing.CrewStrideSpeed;
+        foreach (var hostile in _definition.Combat.Hostiles)
+        {
+            if (_enemyViews[hostile.Id].Humanoid is { } humanoid)
+                humanoid.LocomotionPlaybackRate = (float)hostile.MovementSpeedMetersPerSecond / AnimationPacing.EnforcerStrideSpeed;
+        }
         ValidateCombatViews(_definition);
         CreateBarrierViews();
         _interactionDefinitions.Clear();
@@ -627,36 +628,8 @@ public partial class GameHost : Node3D
 
         CreateTacticalHud(canvas);
         CreateSelectionBox(canvas);
-
-        _dialogueOverlay = new CenterContainer
-        {
-            Name = "DialogueOverlay",
-            AnchorRight = 1,
-            AnchorBottom = 1,
-            MouseFilter = Control.MouseFilterEnum.Stop,
-            Visible = false,
-            ZIndex = 20,
-        };
-        canvas.AddChild(_dialogueOverlay);
-        var dialoguePanel = HudPanel();
-        dialoguePanel.CustomMinimumSize = new Vector2(640, 0);
-        _dialogueOverlay.AddChild(dialoguePanel);
-        var dialogueContent = new VBoxContainer();
-        dialogueContent.AddThemeConstantOverride("separation", 12);
-        dialoguePanel.AddChild(dialogueContent);
-        _dialogueSpeaker = new Label();
-        _dialogueSpeaker.AddThemeFontSizeOverride("font_size", 22);
-        dialogueContent.AddChild(_dialogueSpeaker);
-        _dialogueLine = new Label
-        {
-            AutowrapMode = TextServer.AutowrapMode.WordSmart,
-            CustomMinimumSize = new Vector2(620, 80),
-        };
-        _dialogueLine.AddThemeFontSizeOverride("font_size", 18);
-        dialogueContent.AddChild(_dialogueLine);
-        _dialogueResponses = new VBoxContainer();
-        _dialogueResponses.AddThemeConstantOverride("separation", 8);
-        dialogueContent.AddChild(_dialogueResponses);
+        CreateFieldDialogue(canvas);
+        CreateControlsOverlay(canvas);
 
         _completionOverlay = new CenterContainer
         {
@@ -725,7 +698,8 @@ public partial class GameHost : Node3D
         var actionActor = selectedActors.FirstOrDefault(actor =>
             actor.PendingAction is not null || actor.CurrentAction is not null);
         var visibleAction = actionActor?.PendingAction ?? actionActor?.CurrentAction;
-        _destinationMarker.Visible = visibleAction?.Kind is PrimaryActionKind.Move or PrimaryActionKind.Interact;
+        _destinationMarker.Visible = (visibleAction?.Kind is PrimaryActionKind.Move or PrimaryActionKind.Interact)
+            && !(observation.Paused && actionActor?.PendingAction is not null);
         if (visibleAction is not null)
         {
             _destinationMarker.GlobalPosition = ToGodot(visibleAction.Destination)
@@ -733,8 +707,8 @@ public partial class GameHost : Node3D
         }
 
         _objectiveLabel.Modulate = route.Objective.Status == ObjectiveStatus.Completed
-            ? new Color("72f2a8")
-            : new Color("f2dc72");
+            ? TacticalUi.Cyan
+            : Colors.White;
 
         _pauseLabel.Modulate = observation.Paused
             ? new Color("ffc45c")
@@ -763,7 +737,6 @@ public partial class GameHost : Node3D
 
         UpdateTacticalHud(observation, route, FocusedActor(route));
         UpdateAbilityTargetPreview(observation);
-        SynchronizeFacing(route);
 
         var objectiveTargetId = GetObjectiveTargetId(route.Objective.Id);
         var combatSuppressesInteractionLabels = route.Encounter?.Phase is
@@ -802,14 +775,14 @@ public partial class GameHost : Node3D
                 label.Visible = !combatSuppressesInteractionLabels;
                 var labelText = interaction.State switch
                 {
-                    InteractionState.Unavailable => $"{interaction.Prompt.ToUpperInvariant()}  [LOCKED]",
-                    InteractionState.DialogueActive => $"{interaction.Prompt.ToUpperInvariant()}  [TALKING]",
+                    InteractionState.Unavailable => $"{interaction.Prompt} · Locked",
+                    InteractionState.DialogueActive => $"{interaction.Prompt} · In conversation",
                     InteractionState.Completed when isServiceDoor
-                        => $"{interaction.Prompt.ToUpperInvariant()}  [OPEN]",
+                        => $"{interaction.Prompt} · Open",
                     InteractionState.Completed when interaction.Kind == StationInteractionKind.Environment
-                        => $"{interaction.Prompt.ToUpperInvariant()}  [INSPECTED]",
-                    InteractionState.Completed => $"{interaction.Prompt.ToUpperInvariant()}  [DONE]",
-                    _ => interaction.Prompt.ToUpperInvariant(),
+                        => $"{interaction.Prompt} · Inspected",
+                    InteractionState.Completed => interaction.Prompt,
+                    _ => interaction.Prompt,
                 };
 
                 var isHovered = string.Equals(
@@ -828,11 +801,11 @@ public partial class GameHost : Node3D
                     || interaction.State == InteractionState.DialogueActive);
                 if (isHovered && interaction.CanInteract)
                 {
-                    labelText += "  [RIGHT-CLICK]";
+                    labelText += "\nRight-click to interact";
                 }
                 else if (isObjectiveTarget)
                 {
-                    labelText += "  [OBJECTIVE]";
+                    labelText = "◆  " + labelText;
                 }
 
                 var baseColor = _interactionLabelColors[interaction.Id.Value];
@@ -842,10 +815,10 @@ public partial class GameHost : Node3D
                     : isHovered
                         ? Colors.White
                         : isObjectiveTarget
-                            ? baseColor.Lightened(0.18f)
+                            ? TacticalUi.Amber
                             : baseColor;
-                label.Scale = Vector3.One * (isHovered ? 1.18f : isObjectiveTarget ? 1.10f : 1.0f);
-                label.OutlineSize = isHovered || isObjectiveTarget ? 12 : 8;
+                label.Scale = Vector3.One * (isHovered ? 1.08f : 1.0f);
+                label.OutlineSize = 6;
             }
 
             if (!isServiceDoor)
@@ -871,7 +844,7 @@ public partial class GameHost : Node3D
 
         if (route.ActiveDialogue is DialogueObservation dialogue)
         {
-            _dialogueOverlay.Visible = true;
+            _dialogueOverlay.Visible = _dialogueScrim.Visible = true;
             _dialogueSpeaker.Text = dialogue.Speaker.ToUpperInvariant();
             _dialogueLine.Text = dialogue.Line;
             var responseSignature = string.Join(
@@ -897,7 +870,8 @@ public partial class GameHost : Node3D
                     var responseIndex = index;
                     var response = dialogue.Responses[index];
                     var button = HudButton($"{index + 1}   {response.Text}", () => _ = ChooseVisibleDialogueResponse(responseIndex));
-                    button.CustomMinimumSize = new Vector2(600, 46);
+                    button.CustomMinimumSize = new Vector2(0, 48);
+                    button.Alignment = HorizontalAlignment.Left;
                     _dialogueResponses.AddChild(button);
                 }
             }
@@ -906,7 +880,7 @@ public partial class GameHost : Node3D
         }
         else
         {
-            _dialogueOverlay.Visible = false;
+            _dialogueOverlay.Visible = _dialogueScrim.Visible = false;
             _visibleDialogueInteractionId = null;
             _visibleDialogueResponseSignature = null;
         }
@@ -914,6 +888,8 @@ public partial class GameHost : Node3D
         _completionOverlay.Visible = route.Phase == ScenarioPhase.Completed;
         SynchronizeServiceDoorAuthority(route);
         SetAirlockOpen(route.Phase == ScenarioPhase.Completed);
+        UpdateWorldHealth(route);
+        UpdateFieldOrders(observation, route);
     }
 
     private void ProcessCombatPresentationEvents(GameObservation observation)
@@ -1125,7 +1101,7 @@ public partial class GameHost : Node3D
             },
         };
         AddChild(node);
-        _combatPresentationEffects.Add(new TimedPresentationEffect(node, 0.16f, _effectEventTick, delaySeconds));
+        _combatPresentationEffects.Add(new TimedPresentationEffect(node, 0.16f / AnimationPacing.Rate, _effectEventTick, delaySeconds));
     }
 
     private void SpawnDamageNumber(Vector3 position, int amount, Color color, float delaySeconds = 0)
@@ -1160,7 +1136,7 @@ public partial class GameHost : Node3D
             },
         };
         AddChild(node);
-        _combatPresentationEffects.Add(new TimedPresentationEffect(node, 0.28f, _effectEventTick, delaySeconds));
+        _combatPresentationEffects.Add(new TimedPresentationEffect(node, 0.28f / AnimationPacing.Rate, _effectEventTick, delaySeconds));
     }
 
     private static StandardMaterial3D CreateCombatEffectMaterial(Color color) => new()
@@ -1375,6 +1351,15 @@ public partial class GameHost : Node3D
             {
                 for (var surface = 0; surface < mesh.GetSurfaceOverrideMaterialCount(); surface++)
                 {
+                    if (mesh.Name.ToString().StartsWith("Floor_", StringComparison.Ordinal)
+                        && mesh.GetActiveMaterial(surface) is StandardMaterial3D floorMaterial
+                        && floorMaterial.ResourceName.EndsWith(".armor", StringComparison.Ordinal))
+                    {
+                        var trim = (StandardMaterial3D)floorMaterial.Duplicate();
+                        trim.AlbedoColor = new Color("435560");
+                        trim.Roughness = .7f;
+                        mesh.SetSurfaceOverrideMaterial(surface, trim);
+                    }
                     if (mesh.GetActiveMaterial(surface) is StandardMaterial3D material
                         && material.ResourceName.Contains("route_cyan", StringComparison.Ordinal))
                     {
@@ -2304,7 +2289,7 @@ public partial class GameHost : Node3D
     {
         var result = _automationBridge!.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 8,
+            schema_version = 9,
             command_id = "godot.bootstrap.pause",
             type = "set_pause",
             payload = new { paused = true },
@@ -2316,7 +2301,7 @@ public partial class GameHost : Node3D
             GameSession.MaximumDirectTickAdvance + 1);
         var oversizedMove = _automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 8,
+            schema_version = 9,
             command_id = "godot.bootstrap.oversized-move",
             type = "move_actor",
             payload = new
@@ -2395,7 +2380,7 @@ public partial class GameHost : Node3D
             && !GetNode<Node3D>("Actors/Protector").Visible;
         var response = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 8,
+            schema_version = 9,
             command_id = "godot.route.response",
             type = "choose_dialogue_response",
             payload = new
@@ -2451,7 +2436,7 @@ public partial class GameHost : Node3D
         var arenaSequence = _session.Observe().LatestEventSequence;
         var arenaMove = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 8,
+            schema_version = 9,
             command_id = "godot.route.enter-solo-arena",
             type = "move_actor",
             payload = new
@@ -2494,7 +2479,7 @@ public partial class GameHost : Node3D
             definition.Combat.SoloEncounter.ReadyingTicks);
         var ability = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 8,
+            schema_version = 9,
             command_id = "godot.route.suppress-enforcer",
             type = "use_ability",
             payload = new
@@ -2520,7 +2505,7 @@ public partial class GameHost : Node3D
             {
                 var attack = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
                 {
-                    schema_version = 8,
+                    schema_version = 9,
                     command_id = "godot.route.attack-enforcer",
                     type = "assign_basic_attack_target",
                     payload = new
@@ -2677,7 +2662,7 @@ public partial class GameHost : Node3D
     {
         return _automationBridge!.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 8,
+            schema_version = 9,
             command_id = commandId,
             type = "interact",
             payload = new { actor_id = actorId, target_id = targetId },
@@ -2830,7 +2815,7 @@ public partial class GameHost : Node3D
         var arenaSequence = session.Observe().LatestEventSequence;
         var arenaMove = bridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 8,
+            schema_version = 9,
             command_id = "defeat.enter-arena",
             type = "move_actor",
             payload = new

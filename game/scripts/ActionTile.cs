@@ -9,18 +9,23 @@ public partial class ActionTile : Button
     private ProgressBar _meter = null!;
     private TextureRect _icon = null!;
     private string? _iconPath;
+    private bool? _targeting;
 
     public void Build(string key, string caption, string icon)
     {
         CustomMinimumSize = new Vector2(94, 88);
         TacticalUi.Style(this);
-        var hotkey = TacticalUi.Label(key, 11, "8fa7b6");
-        hotkey.Position = new Vector2(8, 5);
-        AddChild(hotkey);
+        var badge = new PanelContainer { Position = new Vector2(6, 6), MouseFilter = MouseFilterEnum.Ignore };
+        badge.AddThemeStyleboxOverride("panel", new StyleBoxEmpty());
+        var hotkey = TacticalUi.Label(key, 12, "dcebe9");
+        hotkey.CustomMinimumSize = new Vector2(12, 0);
+        hotkey.HorizontalAlignment = HorizontalAlignment.Center;
+        badge.AddChild(hotkey);
+        AddChild(badge);
         _icon = new TextureRect { Position = new Vector2(33, 8), Size = new Vector2(28, 28),
             ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, MouseFilter = MouseFilterEnum.Ignore };
         AddChild(_icon);
-        _caption = TacticalUi.Label(caption, 12);
+        _caption = TacticalUi.Label(caption, 13);
         _caption.HorizontalAlignment = HorizontalAlignment.Center;
         _caption.SetAnchorsAndOffsetsPreset(LayoutPreset.TopWide);
         _caption.OffsetTop = 41;
@@ -41,7 +46,15 @@ public partial class ActionTile : Button
     {
         _caption.Text = caption;
         _state.Text = state;
+        _state.AddThemeColorOverride("font_color", readiness < 1 ? TacticalUi.Amber : TacticalUi.Muted);
+        _caption.Modulate = Disabled ? new Color("96a5ad") : Colors.White;
         _meter.Value = readiness * 100;
+        var targeting = state is "Place barrier" or "Aim + confirm" or "Pick enemy";
+        if (_targeting != targeting)
+        {
+            AddThemeStyleboxOverride("normal", TacticalUi.Box(targeting ? "28443f" : "101c22", targeting ? "e5bc7d" : "36534f", 8));
+            _targeting = targeting;
+        }
         if (_iconPath != icon)
         {
             _icon.Texture = ResourceLoader.Load<Texture2D>($"res://ui/icons/{icon}.svg");

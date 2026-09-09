@@ -45,7 +45,11 @@ public partial class ArmedHumanoidPresentation : Node3D
 
     public bool StrongRecoil { get; set; }
 
-    public double DownDurationSeconds => _animationPlayer.GetAnimation(Down).Length;
+    public float LocomotionPlaybackRate { get; set; } = 1;
+
+    public double DownClipLengthSeconds => _animationPlayer.GetAnimation(Down).Length;
+
+    public double DownDurationSeconds => DownClipLengthSeconds / AnimationPacing.Rate;
 
     public Vector3 MuzzlePosition => _muzzle.GlobalPosition;
 
@@ -107,7 +111,8 @@ public partial class ArmedHumanoidPresentation : Node3D
 
         var animation = IdleHolstered;
         _sampleTick = presentationTick;
-        var clipSeconds = presentationTick / GameSession.TicksPerSecond;
+        var clipSeconds = presentationTick / GameSession.TicksPerSecond
+            * (moving ? LocomotionPlaybackRate : AnimationPacing.Rate);
         long cycle = 0;
         var weaponInHand = false;
 
@@ -154,7 +159,7 @@ public partial class ArmedHumanoidPresentation : Node3D
             animation = Down;
             weaponInHand = true;
             clipSeconds = Math.Clamp((presentationTick - (defeatedAtTick ?? presentationTick))
-                / GameSession.TicksPerSecond, 0, DownDurationSeconds);
+                / GameSession.TicksPerSecond * AnimationPacing.Rate, 0, DownClipLengthSeconds);
             cycle = defeatedAtTick ?? 0;
         }
         _animationPlayer.SpeedScale = paused ? 0 : 1;
@@ -166,7 +171,7 @@ public partial class ArmedHumanoidPresentation : Node3D
             _encounterId = encounter?.Id;
         }
         _posePlayer.Sample(animation, clipSeconds, presentationTick / GameSession.TicksPerSecond, cycle,
-            blendSeconds: newAttempt ? 0 : 0.12);
+            blendSeconds: newAttempt ? 0 : 0.12 / AnimationPacing.Rate);
         if (!defeated)
         {
             if (bodyFacing is { } heading)
@@ -265,7 +270,7 @@ public partial class ArmedHumanoidPresentation : Node3D
         var yaw = Mathf.Clamp(Mathf.Atan2(local.X, local.Z), -0.9f, 0.9f);
         var distance = new Vector2(local.X, local.Z).Length();
         var pitch = moving || distance < 0.1f ? 0 : -Mathf.Atan2(1.15f - 1.43f, distance);
-        var age = (_sampleTick - _lastShotTick) / 30;
+        var age = (_sampleTick - _lastShotTick) / GameSession.TicksPerSecond * AnimationPacing.Rate;
         var kick = age is >= 0 and < 0.4
             ? (float)(age < 0.045 ? Math.Sin(age / 0.045 * Math.PI / 2) : Math.Exp(-(age - 0.045) * 20))
             : 0;
@@ -288,7 +293,7 @@ public partial class ArmedHumanoidPresentation : Node3D
         planarDirection = planarDirection.Normalized();
         // The accepted Mixamo rigs face local +Z after Blender/glTF conversion.
         var targetYaw = Mathf.Atan2(planarDirection.X, planarDirection.Z);
-        Rotation = new Vector3(0.0f, Mathf.LerpAngle(Rotation.Y, targetYaw, 1 - Mathf.Exp(-16 * deltaSeconds)), 0.0f);
+        Rotation = new Vector3(0.0f, Mathf.LerpAngle(Rotation.Y, targetYaw, 1 - Mathf.Exp(-16 * AnimationPacing.Rate * deltaSeconds)), 0.0f);
     }
 
     private void AttachWeapon(bool inHand)

@@ -36,21 +36,28 @@ console executable; an editor plugin is optional. `help` lists all commands.
 | 1, then left-click | Vanguard: aim Interrupt on the floor. Protector: place Barrier with one click, facing from him toward the placement point. Escape/right-click cancels |
 | 2 | Vanguard: click an enemy for Burst. Protector: Taunt nearby enemies |
 | X or Stop | Cancel orders; follows pause/readying rules |
-| T, then left-click; Alt + right-click | Turn selected crew in place |
 | Dialogue 1/2, Enter, or buttons | Choose a response; Enter chooses the first |
 | Defeat Enter/keypad Enter or Retry | Restart the fight, preserving route progress |
 | Mouse at window edge; WASD/arrows | Camera-relative pan; edge scrolling stops over HUD, during selection drags, or outside the active game window |
 | Q/E or middle drag | Yaw; vertical middle drag changes pitch |
 | Page Up/Down; wheel | Pitch; zoom |
 | Home/R; F | Reset orientation; focus selected crew |
+| F1; Escape | Open the field manual; close it. Opening the manual pauses play; Space resumes after closing |
 
 Stop is unavailable during dialogue, defeat, and victory securing. Combat
 pauses when readying starts; resume to play the draw. Crew only attack assigned
-targets. Basic fire resumes after an ability; movement, interaction, facing,
-and Stop clear the target. Manual facing holds the heading; move or attack
-orders release it. Move, face, attack, and Stop apply to the selected living
+targets. Basic fire resumes after an ability; movement, interaction,
+and Stop clear the target. Crew turn automatically as they move and fight.
+Move, attack, and Stop apply to the selected living
 crew. Abilities belong to the focused portrait. The arena ends when every enemy or every crew
 member is down; retry restores the encounter while preserving route progress.
+
+The Field Ops HUD keeps crew selection at the lower left and focused abilities
+at the lower right. During tactical pause, labels beside the crew show their
+next orders; shared destinations use a combined crew-number badge. The crew
+cards retain pending orders when a world label cannot fit or its owner is offscreen.
+Health bars sit above living crew and enemies. Enemy attack countdowns and
+Taunt status appear beside their bars; assign targets directly in the world.
 
 ## Work on the prototype
 

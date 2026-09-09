@@ -26,6 +26,21 @@ authored one-handed transfer portions. Draw/holster landmarks may be named
 Attachments must reconstruct correctly after pause, seek, retry, or resync.
 World movement remains core-owned; combat animation is in-place.
 
+## Playback pacing
+
+`AnimationPacing` in [SkeletalPosePlayer.cs](../game/scripts/SkeletalPosePlayer.cs)
+owns the shared presentation rate. Locomotion instead derives playback from
+the actor's configured travel speed and the source clip's fitted stride speed.
+Draw, holster, Enforcer contact, and Barrier deployment map to observed phase
+durations; do not multiply those normalized samples again. Down playback uses
+the faster rate while clamping to the original clip length, so the full fall
+still completes. Blends, recoil, and short impact effects use the same pacing.
+
+Combat phase durations and hostile projectile travel remain content-owned
+fixed-tick rules. Preserve the Enforcer's practical Interrupt reaction window
+when tuning its wind-up. Cooldowns, status lifetimes, pause, and readable labels
+do not inherit the animation multiplier.
+
 ## Current combat mapping
 
 - Both crew use `ArmedHumanoidPresentation`: fitted authored handling,
@@ -51,7 +66,6 @@ World movement remains core-owned; combat animation is in-place.
 - Barrier expands upward from its placed ground base. Its clipped outline
   matches the core hit plane. The preview faces from Protector toward the pointer
   and shows the protected side; one click fixes that pose, preserved by the queued tint.
-  Ground chevrons show the crew's separate current/queued headings.
   Burst presents each release from the carbine muzzle. Taunt uses a
   radius pulse and threat countdowns. Crew cards and target lines show attack state.
   Damage uses health, values, and effects. Shared projectile resources and

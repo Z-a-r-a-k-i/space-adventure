@@ -23,11 +23,11 @@ public sealed class StationRouteSessionTests
         var definition = LoadDefinition();
 
         Assert.Equal(9, definition.SchemaVersion);
-        Assert.Equal("station-route-v13", definition.ContentRevision);
+        Assert.Equal("station-route-v14", definition.ContentRevision);
         Assert.Equal(new ScenarioId("scenario.station_route"), definition.ScenarioId);
         Assert.Equal(ProtagonistId, definition.Protagonist.Id);
         Assert.Equal(ProtectorActorId, definition.Companion.Id);
-        Assert.Equal(2.0, definition.Companion.MovementSpeedMetersPerSecond);
+        Assert.Equal(2.4, definition.Companion.MovementSpeedMetersPerSecond);
         Assert.Equal(new ObjectiveId("objective.open_entry_service_door"), definition.EntryDoorObjective.Id);
         Assert.Equal(new ObjectiveId("objective.reach_first_combat"), definition.CombatThresholdObjective.Id);
         Assert.Equal(new ObjectiveId("objective.defeat_security_enforcer"), definition.CombatObjective.Id);
@@ -212,8 +212,11 @@ public sealed class StationRouteSessionTests
         Assert.True(acknowledgement.Accepted);
         Assert.Equal(new WorldPosition(-10, 0, 8.5), ObserveStation(session).Protagonist.Position);
         Assert.True(ObserveStation(session).Protagonist.CurrentAction!.HasRemainingMovement);
-        session.AdvanceTicks(59);
-        Assert.InRange(ObserveStation(session).Protagonist.Position.Z, 4.56, 4.57);
+        var speed = LoadDefinition().Protagonist.MovementSpeedMetersPerSecond;
+        var travelTicks = (int)Math.Ceiling(4 / speed * GameSession.TicksPerSecond);
+        session.AdvanceTicks(travelTicks - 1);
+        Assert.Equal(8.5 - (travelTicks - 1) * speed / GameSession.TicksPerSecond,
+            ObserveStation(session).Protagonist.Position.Z, precision: 8);
         session.AdvanceTicks(1);
 
         var arrived = ObserveStation(session);

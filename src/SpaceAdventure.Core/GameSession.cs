@@ -69,7 +69,6 @@ public sealed partial class GameSession
             MoveActorCommand moveActor => Execute(moveActor),
             MovePartyCommand moveParty => Execute(moveParty),
             StopActorsCommand stop => Execute(stop),
-            FaceActorsCommand face => Execute(face),
             InteractCommand interact => Execute(interact),
             ChooseDialogueResponseCommand chooseResponse => Execute(chooseResponse),
             AssignBasicAttackTargetCommand attack => Execute(attack),
@@ -627,7 +626,6 @@ public sealed partial class GameSession
         ActorRuntime actor,
         PrimaryActionRuntime action)
     {
-        if (action.Kind == PrimaryActionKind.Face) { return; }
         if (action.Kind is PrimaryActionKind.Attack
             or PrimaryActionKind.Ability)
         {
@@ -1036,7 +1034,6 @@ public sealed partial class GameSession
                     actor.Loadout.SecondaryAbilityId, actor.Loadout.SecondaryAbilityName, actor.Loadout.SecondaryAbilityTargetKind),
             actor.Position,
             actor.Facing,
-            actor.HeldFacing is not null,
             ObserveAction(actor.CurrentAction),
             ObserveAction(actor.PendingAction, actor.PendingAction is null ? null : GetWaitingReason(actor, actor.PendingAction)),
             actor.MaximumHealth <= 0
@@ -1093,8 +1090,7 @@ public sealed partial class GameSession
                 action.InstanceId,
                 action.PhaseStartedTick,
                 waitingReason,
-                AbilityFacing: action.AbilityFacing,
-                Facing: action.Facing);
+                AbilityFacing: action.AbilityFacing);
     }
 
     private static InteractionState GetInteractionState(
@@ -1300,8 +1296,6 @@ public sealed partial class GameSession
 
         public WorldPosition Facing { get; set; } = new(0, 0, 1);
 
-        public WorldPosition? HeldFacing { get; set; }
-
         public PrimaryActionRuntime? CurrentAction { get; set; }
 
         public PrimaryActionRuntime? PendingAction { get; set; }
@@ -1375,8 +1369,6 @@ public sealed partial class GameSession
 
         public WorldPosition AbilityTargetPosition { get; init; }
 
-
         public WorldPosition? AbilityFacing { get; init; }
-        public WorldPosition? Facing { get; init; }
     }
 }

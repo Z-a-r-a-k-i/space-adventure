@@ -13,6 +13,8 @@ public partial class GameHost
     private string _reviewCheckpoint = "all";
     private string _reviewOutput = string.Empty;
     private bool _requestedCheckpointReached;
+    private float? _reviewPitch;
+    private float? _reviewYaw;
     private readonly List<object> _reviewCheckpoints = [];
 
     private string ReviewArgument(string name, string fallback) => _developmentArguments
@@ -34,12 +36,27 @@ public partial class GameHost
 
             var distance = float.Parse(ReviewArgument("review-distance", "14.5"), CultureInfo.InvariantCulture);
             if (!float.IsFinite(distance) || distance < 7.5 || distance > 20) { throw new InvalidOperationException("Review camera outside supported range."); }
+            if (ReviewArgument("review-pitch", "") is { Length: > 0 } pitchText)
+            {
+                _reviewPitch = float.Parse(pitchText, CultureInfo.InvariantCulture);
+                if (!float.IsFinite(_reviewPitch.Value) || _reviewPitch < .45f || _reviewPitch > 1.15f)
+                    throw new InvalidOperationException("Review pitch outside supported range.");
+            }
+            if (ReviewArgument("review-yaw", "") is { Length: > 0 } yawText)
+            {
+                _reviewYaw = float.Parse(yawText, CultureInfo.InvariantCulture);
+                if (!float.IsFinite(_reviewYaw.Value)) { throw new InvalidOperationException("Review yaw must be finite."); }
+            }
+            if ((_reviewPitch.HasValue || _reviewYaw.HasValue) && _reviewMode is not ("capture" or "live"))
+                throw new InvalidOperationException("Camera angle overrides are for capture/live review only.");
             var repositoryRoot = Path.GetFullPath(ProjectSettings.GlobalizePath("res://.."));
             var size = GetWindow().Size;
             var recoil = ReviewArgument("review-recoil", "restrained");
             _vanguardPresentation.StrongRecoil = recoil == "strong";
             _reviewOutput = Path.Combine(repositoryRoot, "artifacts", IsPartyReview ? "party-review" : "solo-review",
                 FormattableString.Invariant($"{_reviewMode}-{_reviewSequence}-{size.X:0}x{size.Y:0}-{distance:0.0}-{recoil}"));
+            if (_reviewPitch.HasValue || _reviewYaw.HasValue)
+                _reviewOutput += FormattableString.Invariant($"-pitch{_reviewPitch ?? .90f:0.00}-yaw{_reviewYaw ?? .68f:0.00}");
             EnsureSafeCaptureDirectory(repositoryRoot, _reviewOutput);
             File.WriteAllText(Path.Combine(_reviewOutput, "review.json"), JsonSerializer.Serialize(new
             {
@@ -73,7 +90,7 @@ public partial class GameHost
             if (_reviewSequence == "defeat")
             {
                 await ReviewUntil(state => state.Hostiles![0].CurrentAction?.Phase == PrimaryActionPhase.Windup, 200);
-                await ReviewTicks(42);
+                await ReviewTicks(_definition.Combat.GetAttack(_definition.Combat.SoloHostile.BasicAttackId).WindupTicks);
                 if (await ReviewCapture("contact")) { return; }
                 await ReviewUntil(state => state.Encounter!.Phase == EncounterPhase.Defeat, 900, fast: true);
                 await CheckCompletedDeathPresentation();
@@ -92,19 +109,20 @@ public partial class GameHost
             if (await ReviewCapture("armed-walk")) { return; }
             ReviewOrder(new StopActorsCommand(new CommandId("review.stop"), [_definition.Protagonist.Id]));
             ReviewAttack("review.fire");
-            await ReviewTicks(9);
+            await ReviewTicks(_definition!.Combat.GetAttack(ReviewState().Protagonist.Combat!.BasicAttackId).WindupTicks);
             if (await ReviewCapture("fire")) { return; }
             await ReviewTicks(3);
             if (await ReviewCapture("recoil")) { return; }
             ReviewOrder(new StopActorsCommand(new CommandId("review.wait.for.hostile"), [_definition.Protagonist.Id]));
             await ReviewUntil(state => state.Hostiles![0].CurrentAction?.Phase == PrimaryActionPhase.Windup, 200);
-            await ReviewTicks(21);
+            var meleeWindup = _definition.Combat.GetAttack(_definition.Combat.SoloHostile.BasicAttackId).WindupTicks;
+            await ReviewTicks(meleeWindup / 2);
             if (await ReviewCapture("anticipation")) { return; }
-            await ReviewTicks(21);
+            await ReviewTicks(meleeWindup - meleeWindup / 2);
             if (await ReviewCapture("contact")) { return; }
 
             ReviewAttack("review.resume.attack");
-            await ReviewTicks(9);
+            await ReviewTicks(_definition!.Combat.GetAttack(ReviewState().Protagonist.Combat!.BasicAttackId).WindupTicks);
             await ReviewUntil(state => state.Hostiles![0].CurrentAction?.Phase == PrimaryActionPhase.Windup, 200);
             var beforeInterrupt = _session!.Observe().LatestEventSequence;
             ReviewOrder(new UseAbilityCommand(new CommandId("review.suppress"), _definition.Protagonist.Id,
@@ -118,9 +136,9 @@ public partial class GameHost
             await ReviewTicks(3);
             if (await ReviewCapture("late-fire")) { return; }
             await ReviewUntil(state => state.Encounter!.Phase == EncounterPhase.Securing, 600);
-            await ReviewTicks(27);
+            await ReviewTicks(_definition.Combat.SoloEncounter.SecuringTicks / 2);
             if (await ReviewCapture("holster")) { return; }
-            await ReviewTicks(27);
+            await ReviewTicks(_definition.Combat.SoloEncounter.SecuringTicks - _definition.Combat.SoloEncounter.SecuringTicks / 2);
             if (await ReviewCapture("victory")) { return; }
             ReviewOrder(new InteractCommand(new CommandId("review.exit"), _definition.Protagonist.Id,
                 new EntityId("interaction.service_door.solo_exit")));
@@ -220,9 +238,12 @@ public partial class GameHost
         if (_reviewMode == "smoke") { return false; }
         _reviewSampleTick = _session!.Tick;
         SynchronizePresentation();
+        if (_reviewPitch.HasValue) { _camera.PitchRadians = _reviewPitch.Value; }
+        if (_reviewYaw.HasValue) { _camera.YawRadians = _reviewYaw.Value; }
         _camera.SnapOcclusionToDesiredState();
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
+        if (_reviewMode == "input" && checkpoint != "dialogue") { CheckWorldHealth(checkpoint); }
         var diagnostics = JsonSerializer.Deserialize<JsonElement>(GetPresentationDiagnosticsJson());
         var length = diagnostics.GetProperty("vanguard").GetProperty("weapon_length_m").GetDouble();
         if (Math.Abs(length - 0.82) > 0.0164)
@@ -266,6 +287,7 @@ public partial class GameHost
         {
             checkpoint,
             rendered_frame = Engine.GetFramesDrawn(),
+            camera = new { distance = _camera.DistanceMeters, pitch = _camera.PitchRadians, yaw = _camera.YawRadians },
             tick = _session.Tick,
             encounter = ReviewState().Encounter!.Phase.ToString(),
             current_action = ReviewState().Protagonist.CurrentAction,

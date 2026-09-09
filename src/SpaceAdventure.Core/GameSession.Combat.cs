@@ -215,7 +215,6 @@ public sealed partial class GameSession
                 ? combat.Definition.ProtagonistMaximumHealth : station.Definition.Combat.CompanionMaximumHealth;
             actor.Health = actor.MaximumHealth;
             actor.DefeatedAtTick = null;
-            actor.HeldFacing = null;
             actor.Facing = DirectionTo(actor.Position, combat.Placement.HostileSpawnPosition) ?? new WorldPosition(0, 0, 1);
             actor.CurrentAction = null;
             actor.PendingAction = null;

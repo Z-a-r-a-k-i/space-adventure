@@ -5,6 +5,7 @@ namespace SpaceAdventure.Game;
 
 public partial class SentryPresentation : Node3D
 {
+    internal const float TurnDegreesPerSecond = 150 * AnimationPacing.Rate;
     private Node3D _aim = null!;
     private Node3D _recoil = null!;
     private Node3D _muzzle = null!;
@@ -51,13 +52,13 @@ public partial class SentryPresentation : Node3D
         {
             var yaw = Mathf.Clamp(Mathf.Atan2(-direction.X, -direction.Z), -Mathf.Pi / 3, Mathf.Pi / 3);
             var pitch = Mathf.Clamp(Mathf.Atan2(direction.Y, horizontal), Mathf.DegToRad(-15), Mathf.DegToRad(25));
-            var step = Mathf.DegToRad(150) * Math.Max(0, deltaSeconds);
+            var step = Mathf.DegToRad(TurnDegreesPerSecond) * Math.Max(0, deltaSeconds);
             _yaw = Mathf.MoveToward(_yaw, yaw, step);
             _pitch = Mathf.MoveToward(_pitch, pitch, step);
         }
         _aim.Rotation = new Vector3(hostile.Combat.IsDefeated ? -.26f : _pitch, _yaw, 0);
         var age = hostile.CurrentAction is { Phase: PrimaryActionPhase.Recovery, Interrupted: false } action
-            ? (tick - action.PhaseStartedTick) / GameSession.TicksPerSecond : -1;
+            ? (tick - action.PhaseStartedTick) / GameSession.TicksPerSecond * AnimationPacing.Rate : -1;
         var kick = age is >= 0 and < .3 ? .08f * (float)Math.Exp(-age * 15) : 0;
         _recoil.Position = _rest + Vector3.Back * kick;
     }
