@@ -2,6 +2,12 @@ namespace SpaceAdventure.Core;
 
 public sealed partial class GameSession
 {
+    public CommandRejectionCode? CheckBurstTarget(EntityId actorId, EntityId targetId)
+    {
+        return !TryValidateCombatOrder(actorId, out var station, out var actor, out var rejection)
+            ? rejection : ValidateSecondaryAbility(station, actor, station.Definition.Combat.Burst.Id, targetId);
+    }
+
     private CommandAcknowledgement ExecuteSecondaryAbility(UseAbilityCommand command, StationRouteRuntime station, ActorRuntime actor)
     {
         var combat = station.Definition.Combat;
@@ -32,7 +38,9 @@ public sealed partial class GameSession
         if (id != station.Definition.Combat.Burst.Id) { return null; }
         if (targetId is not { } target || !station.Combat.Hostiles.TryGetValue(target, out var hostile))
         { return CommandRejectionCode.UnknownCombatTarget; }
+        if (!IsVisibleToCrew(station, hostile)) { return CommandRejectionCode.CombatTargetNotVisible; }
         if (hostile.Health <= 0) { return CommandRejectionCode.CombatantDefeated; }
+        if (!HasClearSight(station, actor.Position, hostile.Position)) { return CommandRejectionCode.AbilityTargetObstructed; }
         return actor.Position.DistanceTo(hostile.Position) > station.Definition.Combat.Burst.RangeMeters
             ? CommandRejectionCode.AbilityTargetOutOfRange : null;
     }
@@ -55,7 +63,7 @@ public sealed partial class GameSession
         if (action.AbilityId == combat.Taunt.Id)
         {
             actor.Cooldowns[combat.Taunt.Id] = combat.Taunt.CooldownTicks;
-            var targets = station.Combat.Hostiles.Values.Where(hostile => hostile.Health > 0
+            var targets = station.Combat.Hostiles.Values.Where(hostile => hostile.Health > 0 && IsVisibleToCrew(station, hostile)
                 && hostile.Position.DistanceTo(actor.Position) <= combat.Taunt.RadiusMeters).ToArray();
             Record(GameplayEventType.AbilityReleased, action.CommandId,
                 detail: new AbilityReleasedEventDetail(actor.Id, actor.Position, combat.Taunt.Id, targets.Length > 0));
@@ -75,7 +83,7 @@ public sealed partial class GameSession
         if (action.ShotsReleased == 0) { actor.Cooldowns[burst.Id] = burst.CooldownTicks; }
         var target = station.Combat.Hostiles[action.CombatTargetId!.Value];
         Record(GameplayEventType.AbilityReleased, action.CommandId,
-            detail: new AbilityReleasedEventDetail(actor.Id, target.Position, burst.Id, true));
+            detail: new AbilityReleasedEventDetail(actor.Id, target.Position, burst.Id, true, target.Id));
         action.ShotsReleased++;
         actor.OffensiveRecoveryUntilTick = Tick + burst.RecoveryTicks;
         DamageHostile(station, target, actor.Id, burst.DamagePerShot, null, burst.Id);

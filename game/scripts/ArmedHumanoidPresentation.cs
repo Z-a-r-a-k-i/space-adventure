@@ -47,6 +47,8 @@ public partial class ArmedHumanoidPresentation : Node3D
     private int _attempt;
     private EncounterId? _encounterId;
 
+    [Export] public bool OneHanded { get; set; }
+
     public bool StrongRecoil { get; set; }
 
     internal double LastShotTick => _lastShotTick;
@@ -72,7 +74,7 @@ public partial class ArmedHumanoidPresentation : Node3D
         _posePlayer = new SkeletalPosePlayer(_animationPlayer, _skeleton);
         _muzzle = FindSocket("socket.attack.muzzle.primary");
         _primaryGrip = FindSocket("socket.grip.primary");
-        _supportGrip = FindSocket("socket.grip.support");
+        _supportGrip = OneHanded ? _primaryGrip : FindSocket("socket.grip.support");
         _handSocket = FindSocket("socket.weapon.hand_primary");
         _holsterSocket = FindSocket("socket.weapon.holster_primary");
         ConfigureSupportHand();
@@ -143,7 +145,7 @@ public partial class ArmedHumanoidPresentation : Node3D
                     cycle = encounter.Attempt;
                     break;
                 case EncounterPhase.Defeat:
-                    animation = Down;
+                    animation = defeated ? Down : IdleArmed;
                     weaponInHand = true;
                     break;
                 case EncounterPhase.Victory:
@@ -182,8 +184,7 @@ public partial class ArmedHumanoidPresentation : Node3D
         {
             if (bodyFacing is { } heading)
             {
-                if (heading.IsFinite() && new Vector2(heading.X, heading.Z).LengthSquared() > .000001f)
-                { Rotation = new Vector3(0, Mathf.Atan2(heading.X, heading.Z), 0); }
+                if (HumanoidPresentation.TryLocalYaw(this, heading, out var yaw)) { Rotation = new Vector3(0, yaw, 0); }
             }
             else { FaceDirection(direction, turnDeltaSeconds); }
         }
@@ -262,7 +263,7 @@ public partial class ArmedHumanoidPresentation : Node3D
 
     private void SynchronizeSupportHand(EncounterObservation? encounter, double tick)
     {
-        var amount = SupportInfluence(encounter, tick);
+        var amount = OneHanded ? 0 : SupportInfluence(encounter, tick);
         _supportIk.Active = amount > 0;
         _supportOrientation.Active = amount > 0;
         _supportIk.Influence = amount;
@@ -275,7 +276,7 @@ public partial class ArmedHumanoidPresentation : Node3D
 
     private bool FitSupportReach(float influence)
     {
-        if (influence <= 0) { return false; }
+        if (OneHanded || influence <= 0) { return false; }
         var leftShoulder = HandWorld(_leftArm).Origin;
         var leftElbow = HandWorld(_leftForeArm).Origin;
         var leftWrist = HandWorld(_leftHand);
@@ -323,7 +324,7 @@ public partial class ArmedHumanoidPresentation : Node3D
         var right = HandWorld(_rightHand);
         var left = HandWorld(_leftHand);
         _primaryGripError = (right.Origin + right.Basis.Y.Normalized() * _rightPalmOffset).DistanceTo(_primaryGrip.GlobalPosition);
-        _supportGripError = (left.Origin + left.Basis.Y.Normalized() * _leftPalmOffset).DistanceTo(_supportGrip.GlobalPosition);
+        _supportGripError = OneHanded ? 0 : (left.Origin + left.Basis.Y.Normalized() * _leftPalmOffset).DistanceTo(_supportGrip.GlobalPosition);
     }
 
     private void ApplyAimAndRecoil(Vector3 direction, bool moving)
@@ -346,15 +347,11 @@ public partial class ArmedHumanoidPresentation : Node3D
 
     private void FaceDirection(Vector3 direction, float deltaSeconds)
     {
-        var planarDirection = new Vector3(direction.X, 0.0f, direction.Z);
-        if (planarDirection.LengthSquared() <= 0.000001f)
+        if (!HumanoidPresentation.TryLocalYaw(this, direction, out var targetYaw))
         {
             return;
         }
 
-        planarDirection = planarDirection.Normalized();
-        // The accepted Mixamo rigs face local +Z after Blender/glTF conversion.
-        var targetYaw = Mathf.Atan2(planarDirection.X, planarDirection.Z);
         Rotation = new Vector3(0.0f, Mathf.LerpAngle(Rotation.Y, targetYaw, 1 - Mathf.Exp(-16 * AnimationPacing.Rate * deltaSeconds)), 0.0f);
     }
 
@@ -369,7 +366,7 @@ public partial class ArmedHumanoidPresentation : Node3D
 
     public object GetDiagnostics()
     {
-        var body = FindDescendants<MeshInstance3D>(_weapon).Single();
+        var body = FindDescendants<MeshInstance3D>(_weapon).OrderByDescending(mesh => mesh.GetAabb().Volume).First();
         var bounds = body.GetAabb();
         return new
         {
@@ -390,7 +387,8 @@ public partial class ArmedHumanoidPresentation : Node3D
                 highest_foot_height_m = Math.Max(HandWorld(_skeleton.FindBone("mixamorig_LeftFoot")).Origin.Y,
                     HandWorld(_skeleton.FindBone("mixamorig_RightFoot")).Origin.Y) - GlobalPosition.Y,
             },
-            support_grip_world = VectorValues(_supportGrip.GlobalPosition),
+            one_handed = OneHanded,
+            support_grip_world = OneHanded ? null : VectorValues(_supportGrip.GlobalPosition),
             muzzle_world = VectorValues(MuzzlePosition),
             muzzle_direction = VectorValues(MuzzleDirection),
             bones = Enumerable.Range(0, _skeleton.GetBoneCount())

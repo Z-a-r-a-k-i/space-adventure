@@ -1,6 +1,7 @@
 {
-  "schema_version": 9,
-  "content_revision": "station-route-v15",
+  "schema_version": 11,
+  "content_revision": "station-route-v18",
+  "vision": { "range_meters": 18, "eye_height_meters": 1.4 },
   "scenario_id": "scenario.station_route",
   "protagonist": {
     "id": "actor.protagonist",
@@ -43,7 +44,7 @@
   },
   "entry_door_objective": {
     "id": "objective.open_entry_service_door",
-    "text": "Open the service door into the security arena."
+    "text": "Open the service door onto the damaged security deck."
   },
   "combat_threshold_objective": {
     "id": "objective.reach_first_combat",
@@ -51,7 +52,7 @@
   },
   "combat_objective": {
     "id": "objective.defeat_security_enforcer",
-    "text": "Defeat the Security Enforcer."
+    "text": "Defeat the Enforcer. Circle the damaged deck to avoid its strike."
   },
   "solo_exit_door_objective": {
     "id": "objective.open_solo_exit_service_door",
@@ -63,7 +64,7 @@
   },
   "main_combat_objective": {
     "id": "objective.reach_main_combat",
-    "text": "Lead both crew into the main arena and defeat its security units."
+    "text": "Lead both crew into the transit switchyard and defeat its security units."
   },
   "destination_objective": {
     "id": "objective.reach_evacuation_airlock",
@@ -99,6 +100,21 @@
         "windup_ticks": 30,
         "recovery_ticks": 30,
         "projectile_speed_meters_per_second": 18.0
+      },
+      {
+        "id": "attack.crew.medic.pistol",
+        "range_meters": 7,
+        "damage": 7,
+        "windup_ticks": 8,
+        "recovery_ticks": 27
+      },
+      {
+        "id": "attack.enemy.ranged_enforcer.rifle",
+        "range_meters": 8,
+        "damage": 18,
+        "windup_ticks": 36,
+        "recovery_ticks": 36,
+        "projectile_speed_meters_per_second": 16
       }
     ],
     "protagonist_ability": {
@@ -136,6 +152,134 @@
         "movement_speed_meters_per_second": 0,
         "maximum_health": 90,
         "basic_attack_id": "attack.enemy.gun_sentry.shot"
+      },
+      {
+        "id": "actor.enemy.security_enforcer.service.1",
+        "display_name": "Security Enforcer",
+        "behavior": "melee",
+        "movement_speed_meters_per_second": 2.52,
+        "maximum_health": 110,
+        "basic_attack_id": "attack.enemy.security_enforcer.body_strike"
+      },
+      {
+        "id": "actor.enemy.security_enforcer.service.2",
+        "display_name": "Security Enforcer",
+        "behavior": "melee",
+        "movement_speed_meters_per_second": 2.52,
+        "maximum_health": 110,
+        "basic_attack_id": "attack.enemy.security_enforcer.body_strike"
+      },
+      {
+        "id": "actor.enemy.ranged_enforcer.service.3",
+        "display_name": "Ranged Enforcer",
+        "behavior": "ranged",
+        "movement_speed_meters_per_second": 2.3,
+        "maximum_health": 90,
+        "basic_attack_id": "attack.enemy.ranged_enforcer.rifle"
+      },
+      {
+        "id": "actor.enemy.security_enforcer.security.1",
+        "display_name": "Security Enforcer",
+        "behavior": "melee",
+        "movement_speed_meters_per_second": 2.52,
+        "maximum_health": 110,
+        "basic_attack_id": "attack.enemy.security_enforcer.body_strike"
+      },
+      {
+        "id": "actor.enemy.ranged_enforcer.security.2",
+        "display_name": "Ranged Enforcer",
+        "behavior": "ranged",
+        "movement_speed_meters_per_second": 2.3,
+        "maximum_health": 90,
+        "basic_attack_id": "attack.enemy.ranged_enforcer.rifle"
+      },
+      {
+        "id": "actor.enemy.ranged_enforcer.security.3",
+        "display_name": "Ranged Enforcer",
+        "behavior": "ranged",
+        "movement_speed_meters_per_second": 2.3,
+        "maximum_health": 90,
+        "basic_attack_id": "attack.enemy.ranged_enforcer.rifle"
+      },
+      {
+        "id": "actor.enemy.gun_sentry.security.4",
+        "display_name": "Security Sentry",
+        "behavior": "sentry",
+        "movement_speed_meters_per_second": 0,
+        "maximum_health": 90,
+        "basic_attack_id": "attack.enemy.gun_sentry.shot"
+      },
+      {
+        "id": "actor.enemy.security_enforcer.dock.1",
+        "display_name": "Security Enforcer",
+        "behavior": "melee",
+        "movement_speed_meters_per_second": 2.52,
+        "maximum_health": 110,
+        "basic_attack_id": "attack.enemy.security_enforcer.body_strike"
+      },
+      {
+        "id": "actor.enemy.security_enforcer.dock.2",
+        "display_name": "Security Enforcer",
+        "behavior": "melee",
+        "movement_speed_meters_per_second": 2.52,
+        "maximum_health": 110,
+        "basic_attack_id": "attack.enemy.security_enforcer.body_strike"
+      },
+      {
+        "id": "actor.enemy.ranged_enforcer.dock.3",
+        "display_name": "Ranged Enforcer",
+        "behavior": "ranged",
+        "movement_speed_meters_per_second": 2.3,
+        "maximum_health": 90,
+        "basic_attack_id": "attack.enemy.ranged_enforcer.rifle"
+      },
+      {
+        "id": "actor.enemy.ranged_enforcer.dock.4",
+        "display_name": "Ranged Enforcer",
+        "behavior": "ranged",
+        "movement_speed_meters_per_second": 2.3,
+        "maximum_health": 90,
+        "basic_attack_id": "attack.enemy.ranged_enforcer.rifle"
+      },
+      {
+        "id": "actor.enemy.security_enforcer.launch.1",
+        "display_name": "Security Enforcer",
+        "behavior": "melee",
+        "movement_speed_meters_per_second": 2.52,
+        "maximum_health": 110,
+        "basic_attack_id": "attack.enemy.security_enforcer.body_strike"
+      },
+      {
+        "id": "actor.enemy.security_enforcer.launch.2",
+        "display_name": "Security Enforcer",
+        "behavior": "melee",
+        "movement_speed_meters_per_second": 2.52,
+        "maximum_health": 110,
+        "basic_attack_id": "attack.enemy.security_enforcer.body_strike"
+      },
+      {
+        "id": "actor.enemy.ranged_enforcer.launch.3",
+        "display_name": "Ranged Enforcer",
+        "behavior": "ranged",
+        "movement_speed_meters_per_second": 2.3,
+        "maximum_health": 90,
+        "basic_attack_id": "attack.enemy.ranged_enforcer.rifle"
+      },
+      {
+        "id": "actor.enemy.ranged_enforcer.launch.4",
+        "display_name": "Ranged Enforcer",
+        "behavior": "ranged",
+        "movement_speed_meters_per_second": 2.3,
+        "maximum_health": 90,
+        "basic_attack_id": "attack.enemy.ranged_enforcer.rifle"
+      },
+      {
+        "id": "actor.enemy.gun_sentry.launch.5",
+        "display_name": "Security Sentry",
+        "behavior": "sentry",
+        "movement_speed_meters_per_second": 0,
+        "maximum_health": 90,
+        "basic_attack_id": "attack.enemy.gun_sentry.shot"
       }
     ],
     "encounters": [
@@ -147,7 +291,14 @@
         "hostile_ids": [
           "actor.enemy.security_enforcer.solo"
         ],
-        "requires_companion": false
+        "requires_companion": false,
+        "required_crew_ids": [
+          "actor.protagonist"
+        ],
+        "objective": {
+          "id": "objective.defeat_security_enforcer",
+          "text": "Defeat the Enforcer. Circle the damaged deck to avoid its strike."
+        }
       },
       {
         "id": "encounter.station.party",
@@ -158,7 +309,103 @@
           "actor.enemy.security_enforcer.main",
           "actor.enemy.gun_sentry.main"
         ],
-        "requires_companion": true
+        "requires_companion": true,
+        "required_crew_ids": [
+          "actor.protagonist",
+          "actor.companion.protector"
+        ],
+        "objective": {
+          "id": "objective.reach_main_combat",
+          "text": "Lead both crew into the transit switchyard and defeat its security units."
+        }
+      },
+      {
+        "id": "encounter.station.service",
+        "protagonist_maximum_health": 100,
+        "readying_ticks": 20,
+        "securing_ticks": 45,
+        "hostile_ids": [
+          "actor.enemy.security_enforcer.service.1",
+          "actor.enemy.security_enforcer.service.2",
+          "actor.enemy.ranged_enforcer.service.3"
+        ],
+        "requires_companion": true,
+        "required_crew_ids": [
+          "actor.protagonist",
+          "actor.companion.protector",
+          "actor.companion.medic"
+        ],
+        "objective": {
+          "id": "objective.clear_service",
+          "text": "Clear the service lanes."
+        }
+      },
+      {
+        "id": "encounter.station.security",
+        "protagonist_maximum_health": 100,
+        "readying_ticks": 20,
+        "securing_ticks": 45,
+        "hostile_ids": [
+          "actor.enemy.security_enforcer.security.1",
+          "actor.enemy.ranged_enforcer.security.2",
+          "actor.enemy.ranged_enforcer.security.3",
+          "actor.enemy.gun_sentry.security.4"
+        ],
+        "requires_companion": true,
+        "required_crew_ids": [
+          "actor.protagonist",
+          "actor.companion.protector",
+          "actor.companion.medic"
+        ],
+        "objective": {
+          "id": "objective.clear_security",
+          "text": "Break through security control."
+        }
+      },
+      {
+        "id": "encounter.station.dock",
+        "protagonist_maximum_health": 100,
+        "readying_ticks": 20,
+        "securing_ticks": 45,
+        "hostile_ids": [
+          "actor.enemy.security_enforcer.dock.1",
+          "actor.enemy.security_enforcer.dock.2",
+          "actor.enemy.ranged_enforcer.dock.3",
+          "actor.enemy.ranged_enforcer.dock.4"
+        ],
+        "requires_companion": true,
+        "required_crew_ids": [
+          "actor.protagonist",
+          "actor.companion.protector",
+          "actor.companion.medic"
+        ],
+        "objective": {
+          "id": "objective.clear_dock",
+          "text": "Secure the docking approach."
+        }
+      },
+      {
+        "id": "encounter.station.launch",
+        "protagonist_maximum_health": 100,
+        "readying_ticks": 20,
+        "securing_ticks": 45,
+        "hostile_ids": [
+          "actor.enemy.security_enforcer.launch.1",
+          "actor.enemy.security_enforcer.launch.2",
+          "actor.enemy.ranged_enforcer.launch.3",
+          "actor.enemy.ranged_enforcer.launch.4",
+          "actor.enemy.gun_sentry.launch.5"
+        ],
+        "requires_companion": true,
+        "required_crew_ids": [
+          "actor.protagonist",
+          "actor.companion.protector",
+          "actor.companion.medic"
+        ],
+        "objective": {
+          "id": "objective.clear_launch",
+          "text": "Clear the launch bay."
+        }
       }
     ],
     "companion_maximum_health": 150,
@@ -190,6 +437,26 @@
       "windup_ticks": 5,
       "recovery_ticks": 10,
       "cooldown_ticks": 300
+    },
+    "medic_maximum_health": 90,
+    "direct_heal": {
+      "id": "ability.crew.medic.heal",
+      "range_meters": 8,
+      "healing": 45,
+      "windup_ticks": 8,
+      "recovery_ticks": 12,
+      "cooldown_ticks": 210
+    },
+    "healing_field": {
+      "id": "ability.crew.medic.healing_field",
+      "range_meters": 8,
+      "radius_meters": 2.6,
+      "healing": 10,
+      "pulse_interval_ticks": 30,
+      "duration_ticks": 180,
+      "windup_ticks": 8,
+      "recovery_ticks": 12,
+      "cooldown_ticks": 360
     }
   },
   "interactions": [
@@ -260,12 +527,97 @@
       "preserved_result_text": "The terminal confirms stable shelter seals. The service corridor remains on intermittent emergency lighting."
     },
     {
+      "id": "interaction.medic",
+      "kind": "npc",
+      "prompt": "Recruit the Medic",
+      "use_radius_meters": 1.5,
+      "effect": "begin_medic_recruitment_dialogue",
+      "dialogue": {
+        "speaker": "Medic",
+        "line": "Four security positions block the cutter. I can heal one of us quickly or place a healing field. Stay inside it while we hold the line. After each fight we regroup and recover.",
+        "responses": [
+          {
+            "id": "response.recruit_medic",
+            "text": "Join the crew. We will reach the cutter together.",
+            "effect": "recruit_medic"
+          }
+        ]
+      }
+    },
+    {
       "id": "interaction.evacuation_airlock",
       "kind": "destination",
       "prompt": "Cycle the evacuation airlock",
       "use_radius_meters": 1.5,
+      "effect": "open_evacuation_airlock",
+      "result_text": "The evacuation airlock opens onto the escape cutter boarding ramp."
+    },
+    {
+      "id": "interaction.escape_cutter.board",
+      "kind": "destination",
+      "prompt": "Board the escape cutter",
+      "use_radius_meters": 3,
       "effect": "complete_scenario",
-      "result_text": "The Protector secures the inner door and the evacuation airlock opens."
+      "result_text": "All three crew board the escape cutter and depart the station."
+    },
+    {
+      "id": "interaction.service_door.service",
+      "kind": "environment",
+      "prompt": "Open service access",
+      "use_radius_meters": 1.25,
+      "effect": "open_route_door",
+      "required_encounter_id": "encounter.station.party",
+      "result_text": "Service access opens."
+    },
+    {
+      "id": "interaction.service_door.security",
+      "kind": "environment",
+      "prompt": "Open the security service door",
+      "use_radius_meters": 1.5,
+      "effect": "open_route_door",
+      "required_encounter_id": "encounter.station.service",
+      "result_text": "The security service door opens."
+    },
+    {
+      "id": "interaction.service_door.dock",
+      "kind": "environment",
+      "prompt": "Open the dock service door",
+      "use_radius_meters": 1.5,
+      "effect": "open_route_door",
+      "required_encounter_id": "encounter.station.security",
+      "result_text": "The dock service door opens."
+    },
+    {
+      "id": "interaction.service_door.launch",
+      "kind": "environment",
+      "prompt": "Open the launch service door",
+      "use_radius_meters": 1.5,
+      "effect": "open_route_door",
+      "required_encounter_id": "encounter.station.dock",
+      "result_text": "The launch service door opens."
     }
-  ]
+  ],
+  "medic": {
+    "id": "actor.companion.medic",
+    "display_name": "Medic",
+    "movement_speed_meters_per_second": 2.4,
+    "loadout": {
+      "weapon_name": "Medic Pistol",
+      "basic_attack_id": "attack.crew.medic.pistol",
+      "active_ability_id": "ability.crew.medic.heal",
+      "active_ability_name": "Heal",
+      "active_ability_target_kind": "entity",
+      "secondary_ability_id": "ability.crew.medic.healing_field",
+      "secondary_ability_name": "Healing Field",
+      "secondary_ability_target_kind": "position"
+    }
+  },
+  "medic_recruitment_objective": {
+    "id": "objective.recruit_medic",
+    "text": "Recruit the Medic at the service junction."
+  },
+  "boarding_objective": {
+    "id": "objective.board_escape_cutter",
+    "text": "Bring all three crew to the escape cutter and board."
+  }
 }

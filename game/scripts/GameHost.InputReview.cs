@@ -119,7 +119,7 @@ public partial class GameHost
         var route = ReviewState();
         var actors = route.Party.Where(actor => actor.Combat is not null)
             .Select(actor => (actor.Id, actor.Combat!.Health, actor.Combat.MaximumHealth))
-            .Concat((route.Hostiles ?? []).Select(enemy => (enemy.Id, enemy.Combat.Health, enemy.Combat.MaximumHealth))).ToArray();
+            .Concat(route.VisibleHostiles.Select(enemy => (enemy.Id, enemy.Combat.Health, enemy.Combat.MaximumHealth))).ToArray();
         foreach (var actor in actors)
         {
             InputCheck($"world health matches authoritative values during {context}: {actor.Id}",

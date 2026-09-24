@@ -15,6 +15,8 @@ try
         BootstrapScenarioId => RunBootstrap(output),
         StationRouteScenarioId => RunStationRoute(output),
         "station-party" => RunStationRoute(output, party: true),
+        "station-escape" => RunStationRoute(output, party: true, complete: true),
+        "station-escape-defeat" => RunStationRoute(output, party: true, complete: true, extensionDefeat: true),
         "station-party-defeat" => RunStationRoute(output, party: true, defeat: true),
         _ => ReportUnknownScenario(output, scenarioId),
     };
@@ -103,7 +105,7 @@ static int RunBootstrap(JsonLinesOutput output)
     return passed ? 0 : 1;
 }
 
-static int RunStationRoute(JsonLinesOutput output, bool party = false, bool defeat = false)
+static int RunStationRoute(JsonLinesOutput output, bool party = false, bool defeat = false, bool complete = false, bool extensionDefeat = false)
 {
     const int MaximumTicksPerLeg = 900;
 
@@ -115,7 +117,7 @@ static int RunStationRoute(JsonLinesOutput output, bool party = false, bool defe
     var definition = StationRouteContent.ParseJson(File.ReadAllText(contentPath));
     var layout = StationRouteFixture.CreateLayout(definition);
     var pathfinder = new StationRouteFixturePathfinder(
-        new[] { definition.Protagonist.Id, definition.Companion.Id }.Concat(definition.Combat.Hostiles.Select(hostile => hostile.Id)));
+        new[] { definition.Protagonist.Id, definition.Companion.Id, definition.Medic.Id }.Concat(definition.Combat.Hostiles.Select(hostile => hostile.Id)));
     var session = GameSession.CreateStationRoute(
         definition,
         layout,
@@ -139,8 +141,8 @@ static int RunStationRoute(JsonLinesOutput output, bool party = false, bool defe
     output.Emit(new
     {
         kind = "run_metadata",
-        schema_version = 9,
-        scenario_id = party ? (defeat ? "station-party-defeat" : "station-party") : StationRouteScenarioId,
+        schema_version = 11,
+        scenario_id = complete ? (extensionDefeat ? "station-escape-defeat" : "station-escape") : party ? (defeat ? "station-party-defeat" : "station-party") : StationRouteScenarioId,
         content_scenario_id = definition.ScenarioId.Value,
         content_revision = definition.ContentRevision,
         content_asset = "content/station-route.json",
@@ -386,6 +388,7 @@ static int RunStationRoute(JsonLinesOutput output, bool party = false, bool defe
     {
         pathfinder.SoloExitUnlocked = true;
         RunPartyContinuation(session, definition, events, assertions, output, defeat);
+        if (complete) { RunStationCompletion(session, definition, events, assertions, output, extensionDefeat); }
     }
 
     stopwatch.Stop();
@@ -466,18 +469,128 @@ static void RunPartyContinuation(GameSession session, StationRouteDefinition def
             {
                 if (actor.Combat!.RememberedAttackTargetId is null && actor.PendingAction is null)
                 {
-                    var target = state.Hostiles!.FirstOrDefault(hostile => !hostile.Combat.IsDefeated);
+                    var target = state.VisibleHostiles.FirstOrDefault(hostile => hostile.EncounterId == state.Encounter!.Id && !hostile.Combat.IsDefeated);
                     if (target is not null) { Order(new AssignBasicAttackTargetCommand(new CommandId($"party.retarget.{actor.Id}.{session.Tick}"), actor.Id, target.Id)); }
                 }
             }
             session.AdvanceTicks(1);
         }
         Until(state => state.Encounter!.Phase == EncounterPhase.Victory, 60);
-        assertions.Check("party_victory_completes_slice_with_final_airlock_deferred", State().Objective.Status == ObjectiveStatus.Completed
+        assertions.Check("party_victory_opens_medic_recruitment", State().Objective.Id == definition.MedicRecruitmentObjective.Id
             && State().Hostiles!.All(hostile => hostile.Combat.IsDefeated) && State().Phase == ScenarioPhase.InProgress
             && FindInteraction(State(), new EntityId("interaction.evacuation_airlock")).State == InteractionState.Unavailable);
     }
     events.Flush(session);
+}
+
+static void RunStationCompletion(GameSession session, StationRouteDefinition definition, GameplayEventOutput events,
+    ScenarioAssertions assertions, JsonLinesOutput output, bool forceDefeat)
+{
+    var protagonist = definition.Protagonist.Id;
+    var protector = definition.Companion.Id;
+    var medic = definition.Medic.Id;
+    var combat = definition.Combat;
+    StationRouteObservation State() => RequireStationObservation(session.Observe());
+    void Order(IGameCommand command)
+    {
+        var result = session.Execute(command);
+        if (!result.Accepted) { throw new InvalidOperationException($"Completion order {command.CommandId}: {result.RejectionCode}"); }
+    }
+    void Until(Func<StationRouteObservation, bool> done, int ticks)
+    {
+        for (var index = 0; index < ticks && !done(State()); index++) { session.AdvanceTicks(1); }
+        if (!done(State())) { throw new InvalidOperationException($"Completion route timed out at {session.Tick}: {State().Encounter!.Id} {State().Encounter!.Phase}."); }
+    }
+    var medicInteraction = new EntityId("interaction.medic");
+    Order(new InteractCommand(new CommandId("complete.recruit"), protagonist, medicInteraction));
+    Until(state => state.ActiveDialogue is not null, 600);
+    Order(new ChooseDialogueResponseCommand(new CommandId("complete.join"), protagonist, medicInteraction, new DialogueResponseId("response.recruit_medic")));
+    assertions.Check("medic_joins_with_two_independent_healing_skills", State().Party.Count == 3
+        && State().Party.Single(actor => actor.Id == medic).Combat!.Cooldowns.Count == 2);
+    foreach (var placement in StationRouteFixture.CreateExtensionEncounters(definition))
+    {
+        Order(new MovePartyCommand(new CommandId($"complete.enter.{placement.EncounterId}"), [protagonist, protector, medic], placement.TriggerCenter));
+        Order(new SetPauseCommand(new CommandId("complete.travel.resume"), false));
+        Until(state => state.Encounter!.Id == placement.EncounterId, 1000);
+        assertions.Check($"{placement.EncounterId}.ready", session.IsPaused && State().Encounter!.Phase == EncounterPhase.Readying);
+        Order(new SetPauseCommand(new CommandId("complete.combat.resume"), false));
+        Until(state => state.Encounter!.Phase == EncounterPhase.Active, 30);
+        if (forceDefeat && placement.EncounterId == combat.Encounters[2].Id)
+        {
+            Order(new UseAbilityCommand(new CommandId("complete.defeat.field"), medic, combat.HealingField.Id,
+                new PositionAbilityTarget(State().Party.Single(actor => actor.Id == medic).Position)));
+            Until(state => state.Encounter!.Phase == EncounterPhase.Defeat, 1800);
+            Order(new RestartEncounterCommand(new CommandId("complete.retry"), placement.EncounterId));
+            assertions.Check("extension_retry_preserves_two_victories_and_three_crew", State().CompletedEncounterIds!.Count == 2
+                && State().Party.Count == 3 && State().Encounter!.HealingField is null && State().Encounter!.Projectiles!.Count == 0
+                && State().Party.All(actor => actor.Combat!.Health == actor.Combat.MaximumHealth));
+            // Retry restarts this encounter from its authored placements without carried-over orders.
+            assertions.Check("extension_retry_restores_placements_and_clears_orders",
+                State().Party.All(actor => actor.CurrentAction is null && actor.PendingAction is null
+                    && actor.Combat!.RememberedAttackTargetId is null
+                    && actor.Position == placement.CrewRestartPositions!.Single(item => item.ActorId == actor.Id).Position)
+                && State().Hostiles!.All(hostile => hostile.CurrentAction is null && hostile.Combat.Health == hostile.Combat.MaximumHealth
+                    && hostile.Position == placement.HostilePlacements!.Single(item => item.ActorId == hostile.Id).Position));
+            Order(new SetPauseCommand(new CommandId("complete.retry.resume"), false));
+            Until(state => state.Encounter!.Phase == EncounterPhase.Active, 30);
+        }
+        for (var tick = 0; tick < 2000 && State().Encounter!.Phase == EncounterPhase.Active; tick++)
+        {
+            var state = State();
+            foreach (var actor in state.Party.Where(member => !member.Combat!.IsDefeated))
+            {
+                var target = state.VisibleHostiles.Where(enemy => enemy.EncounterId == state.Encounter!.Id && !enemy.Combat.IsDefeated)
+                    .OrderBy(enemy => enemy.Combat.Health).ThenBy(enemy => enemy.Id.Value, StringComparer.Ordinal).FirstOrDefault();
+                if (target is null) { continue; }
+                if (actor.Combat!.RememberedAttackTargetId is null)
+                { Order(new AssignBasicAttackTargetCommand(new CommandId($"complete.attack.{actor.Id}.{session.Tick}"), actor.Id, target.Id)); }
+                if (actor.CurrentAction?.Kind == PrimaryActionKind.Ability || actor.PendingAction?.Kind == PrimaryActionKind.Ability) { continue; }
+                bool Ready(AbilityId id) => actor.Combat.Cooldowns.Single(cd => cd.AbilityId == id).RemainingTicks == 0;
+                void Skill(AbilityId id, AbilityTarget aim) => Order(new UseAbilityCommand(new CommandId($"complete.skill.{id}.{session.Tick}"), actor.Id, id, aim));
+                if (actor.Id == protagonist)
+                {
+                    if (Ready(combat.Burst.Id) && actor.Position.DistanceTo(target.Position) <= combat.Burst.RangeMeters)
+                    { Skill(combat.Burst.Id, new EntityAbilityTarget(target.Id)); }
+                    else if (Ready(combat.ProtagonistAbility.Id) && actor.Position.DistanceTo(target.Position) <= combat.ProtagonistAbility.RangeMeters)
+                    { Skill(combat.ProtagonistAbility.Id, new PositionAbilityTarget(target.Position)); }
+                }
+                else if (actor.Id == protector)
+                {
+                    if (Ready(combat.Taunt.Id)) { Skill(combat.Taunt.Id, new SelfAbilityTarget()); }
+                    else if (Ready(combat.Barrier.Id)) { Skill(combat.Barrier.Id,
+                        new BarrierAbilityTarget(new WorldPosition(actor.Position.X + .8, 0, actor.Position.Z), new WorldPosition(1, 0, 0))); }
+                }
+                else
+                {
+                    var injured = state.Party.Where(member => !member.Combat!.IsDefeated && member.Position.DistanceTo(actor.Position) <= combat.DirectHeal.RangeMeters)
+                        .OrderBy(member => (double)member.Combat!.Health / member.Combat.MaximumHealth).First();
+                    if (Ready(combat.DirectHeal.Id) && injured.Combat!.MaximumHealth - injured.Combat.Health >= 20)
+                    { Skill(combat.DirectHeal.Id, new EntityAbilityTarget(injured.Id)); }
+                    else if (Ready(combat.HealingField.Id))
+                    {
+                        var center = state.Party.Single(member => member.Id == protector).Position;
+                        if (center.DistanceTo(actor.Position) <= combat.HealingField.RangeMeters) { Skill(combat.HealingField.Id, new PositionAbilityTarget(center)); }
+                    }
+                }
+            }
+            session.AdvanceTicks(1);
+        }
+        Until(state => state.Encounter!.Phase == EncounterPhase.Victory, 60);
+        assertions.Check($"{placement.EncounterId}.victory_recovers_crew", State().Party.All(actor => actor.Combat!.Health == actor.Combat.MaximumHealth
+            && !actor.Combat.IsDefeated && actor.Combat.Cooldowns.All(cd => cd.RemainingTicks == 0)));
+        events.Flush(session);
+    }
+    var airlock = new EntityId("interaction.evacuation_airlock");
+    Order(new InteractCommand(new CommandId("complete.airlock"), protagonist, airlock));
+    Until(state => FindInteraction(state, airlock).State == InteractionState.Completed, 600);
+    var board = new EntityId("interaction.escape_cutter.board");
+    Order(new InteractCommand(new CommandId("complete.board"), protagonist, board));
+    Until(state => state.Phase == ScenarioPhase.Completed, 1000);
+    events.Flush(session);
+    assertions.Check("six_victories_and_all_crew_boarded_complete_station", State().CompletedEncounterIds!.Count == 6
+        && State().Party.All(actor => actor.Position.DistanceTo(FindInteraction(State(), board).Position) <= FindInteraction(State(), board).UseRadiusMeters)
+        && State().Phase == ScenarioPhase.Completed);
+    output.Emit(new { kind = "station_completion", completed_encounters = State().CompletedEncounterIds!.Select(id => id.Value), party_count = State().Party.Count });
 }
 
 static StationRouteObservation RequireStationObservation(GameObservation observation)
@@ -742,9 +855,20 @@ internal sealed class GameplayEventOutput(JsonLinesOutput output)
             {
                 detail_type = "ability_released",
                 source_id = ability.SourceId.Value,
+                target_id = ability.TargetId?.Value,
                 target_position = ObservationProjection.ProjectPosition(ability.TargetPosition),
                 ability_id = ability.AbilityId.Value,
                 ability.Hit,
+            },
+            HealingAppliedEventDetail healing => new
+            {
+                detail_type = "healing_applied", source_id = healing.SourceId.Value, target_id = healing.TargetId.Value,
+                ability_id = healing.AbilityId.Value, healing.Amount, healing.RemainingHealth,
+            },
+            HealingFieldEventDetail field => new
+            {
+                detail_type = "healing_field", source_id = field.SourceId.Value, ability_id = field.AbilityId.Value,
+                position = ObservationProjection.ProjectPosition(field.Position), field.RadiusMeters, field.DurationTicks,
             },
             DamageAppliedEventDetail damage => new
             {
@@ -836,6 +960,7 @@ internal static class ObservationProjection
             phase = JsonLinesOutput.ToJsonName(observation.Phase),
             protagonist = ProjectActor(observation.Protagonist),
             party = observation.Party.Select(ProjectActor).ToArray(),
+            completed_encounter_ids = observation.CompletedEncounterIds?.Select(id => id.Value).ToArray(),
             available_protagonist_kits = observation.AvailableProtagonistKits.Select(kit => new
             {
                 id = kit.Id.Value,
@@ -858,6 +983,7 @@ internal static class ObservationProjection
                 ? null
                 : ProjectDialogue(observation.ActiveDialogue),
             hostiles = observation.Hostiles?.Select(ProjectHostile).ToArray(),
+            visible_hostiles = observation.VisibleHostiles.Select(ProjectHostile).ToArray(),
             encounter = observation.Encounter is null
                 ? null
                 : new
@@ -874,6 +1000,11 @@ internal static class ObservationProjection
                         source_id = barrier.SourceId.Value, position = ProjectPosition(barrier.Position), facing = ProjectPosition(barrier.Facing),
                         remaining_ticks = barrier.RemainingTicks, total_ticks = barrier.TotalTicks,
                         width_meters = barrier.WidthMeters, height_meters = barrier.HeightMeters, deployed_at_tick = barrier.DeployedAtTick,
+                    } : null,
+                    healing_field = observation.Encounter.HealingField is { } field ? new
+                    {
+                        source_id = field.SourceId.Value, position = ProjectPosition(field.Position), field.RadiusMeters,
+                        field.DeployedAtTick, field.RemainingTicks, field.TotalTicks, field.PulseIntervalTicks,
                     } : null,
                     projectiles = observation.Encounter.Projectiles?.Select(projectile => new
                     {
@@ -920,6 +1051,10 @@ internal static class ObservationProjection
         {
             id = observation.Id.Value,
             display_name = observation.DisplayName,
+            encounter_id = observation.EncounterId.Value,
+            encounter_phase = JsonLinesOutput.ToJsonName(observation.EncounterPhase),
+            observation.EncounterAttempt,
+            facing = ProjectPosition(observation.Facing),
             position = ProjectPosition(observation.Position),
             observation.MovementSpeedMetersPerSecond,
             combat = ProjectCombatant(observation.Combat),
@@ -1019,6 +1154,19 @@ internal static class ObservationProjection
 
 internal static class StationRouteFixture
 {
+    private static readonly int[] ExtensionCenters = [18, 32, 46, 62];
+
+    public static StationEncounterPlacement[] CreateExtensionEncounters(StationRouteDefinition definition) => definition.Combat.Encounters.Skip(2)
+        .Select((encounter, index) =>
+        {
+            double center = ExtensionCenters[index];
+            var crew = encounter.RequiredCrewIds!.Select((id, crewIndex) => new StationActorPlacement(id, new WorldPosition(center - 4, 0, 7 + crewIndex))).ToArray();
+            var hostiles = encounter.HostileIds.Select((id, enemyIndex) => new StationHostilePlacement(id,
+                new WorldPosition(center + 1 + enemyIndex / 3 * 2, 0, 5.5 + enemyIndex % 3 * 2.5), new WorldPosition(-1, 0, 0))).ToArray();
+            return new StationEncounterPlacement(encounter.Id, new WorldPosition(center - 4, 0, 8), 3,
+                crew[0].Position, hostiles[0].Position, CrewRestartPositions: crew, HostilePlacements: hostiles);
+        }).ToArray();
+
     private static readonly Dictionary<string, (WorldPosition Position, WorldPosition Approach)>
         InteractionPlacements = new Dictionary<string, (WorldPosition, WorldPosition)>(StringComparer.Ordinal)
         {
@@ -1027,7 +1175,13 @@ internal static class StationRouteFixture
             ["interaction.service_door.solo_exit"] = (new(-5, 0, 0), new(-5.85, 0, 0)),
             ["interaction.protector"] = (new(-1.5, 0, 0), new(-2.35, 0, 0)),
             ["interaction.service_terminal"] = (new(-11.5, 0, 6.5), new(-10.65, 0, 6.5)),
-            ["interaction.evacuation_airlock"] = (new(12, 0, 8), new(11.15, 0, 8)),
+            ["interaction.evacuation_airlock"] = (new(73, 0, 8), new(72.15, 0, 8)),
+            ["interaction.medic"] = (new(9, 0, 8), new(8.15, 0, 8)),
+            ["interaction.escape_cutter.board"] = (new(76.5, 0, 8), new(76.5, 0, 8)),
+            ["interaction.service_door.service"] = (new(12, 0, 8), new(11.15, 0, 8)),
+            ["interaction.service_door.security"] = (new(25, 0, 8), new(24.15, 0, 8)),
+            ["interaction.service_door.dock"] = (new(39, 0, 8), new(38.15, 0, 8)),
+            ["interaction.service_door.launch"] = (new(53, 0, 8), new(52.15, 0, 8)),
         };
 
     public static StationRouteLayout CreateLayout(StationRouteDefinition definition)
@@ -1058,7 +1212,8 @@ internal static class StationRouteFixture
         });
         return new StationRouteLayout(
             new WorldPosition(-10, 0, 8.5),
-            [new StationActorPlacement(definition.Companion.Id, new WorldPosition(-1.5, 0, 0))],
+            [new StationActorPlacement(definition.Companion.Id, new WorldPosition(-1.5, 0, 0)),
+                new StationActorPlacement(definition.Medic.Id, new WorldPosition(9, 0, 8))],
             placements,
             new StationEncounterPlacement(
                 definition.Combat.SoloEncounter.Id,
@@ -1068,7 +1223,7 @@ internal static class StationRouteFixture
                 new WorldPosition(-10, 0, -1.4)),
             new StationEncounterPlacement(definition.Combat.PartyEncounter.Id, new WorldPosition(0, 0, 5), 2,
                 new WorldPosition(-.55, 0, 4.5), partyHostiles[0].Position, new WorldPosition(.55, 0, 4.5),
-                partyHostiles.Skip(1).ToArray(), new WorldPosition(0, 0, -1)));
+                partyHostiles.Skip(1).ToArray(), new WorldPosition(0, 0, -1)), CreateExtensionEncounters(definition));
     }
 }
 
@@ -1143,7 +1298,7 @@ internal sealed class StationRouteFixturePathfinder(IEnumerable<EntityId> actorI
             return FixtureRegion.SoloArena;
         }
 
-        if (position.X >= -5.7 && position.X <= 12 && position.Z >= -3 && position.Z <= 13)
+        if (position.X >= -5.7 && position.X <= 86 && position.Z >= -3 && position.Z <= 13)
         {
             return FixtureRegion.FutureRoute;
         }

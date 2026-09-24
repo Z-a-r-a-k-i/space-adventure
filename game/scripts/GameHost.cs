@@ -52,6 +52,7 @@ public partial class GameHost : Node3D
         new(StringComparer.Ordinal);
     private readonly Dictionary<StationInteractionEffect, StationInteractionDefinition>
         _interactionDefinitionsByEffect = [];
+    private NavigationLink3D? _airlockLink;
     private readonly HashSet<string> _reportedCompletedInteractions = new(StringComparer.Ordinal);
     private readonly HashSet<EntityId> _selectedActorIds = [];
     private readonly Dictionary<string, CrewCard> _partyButtons = new(StringComparer.Ordinal);
@@ -148,6 +149,7 @@ public partial class GameHost : Node3D
         {
             _actorViews.Add(GetStableId(actorView), actorView);
         }
+        CacheMedicViews();
         CachePartyCombatViews();
         CreateDestinationMarker();
         CreateAbilityTargetPreview();
@@ -222,6 +224,7 @@ public partial class GameHost : Node3D
         UpdateHoveredInteraction(observation);
         SynchronizePresentation();
         AdvanceServiceDoorPresentation((float)delta);
+        if (!_reviewDrivesClock) { AdvanceDeparture(observation, delta); }
         if (_feedbackSeconds > 0)
         {
             _feedbackSeconds = Math.Max(0, _feedbackSeconds - delta);
@@ -247,6 +250,8 @@ public partial class GameHost : Node3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
+        if (_session?.IsStationRouteCompleted == true)
+        { GetViewport().SetInputAsHandled(); return; }
         if (_controlsOverlay?.Visible == true) { GetViewport().SetInputAsHandled(); return; }
         if (_session is null || _visualCaptureRequested)
         {
@@ -364,11 +369,14 @@ public partial class GameHost : Node3D
         _definition = StationRouteContent.ParseJson(contentJson);
         _vanguardPresentation.LocomotionPlaybackRate = (float)_definition.Protagonist.MovementSpeedMetersPerSecond / AnimationPacing.CrewStrideSpeed;
         _protectorPartyPresentation.LocomotionPlaybackRate = (float)_definition.Companion.MovementSpeedMetersPerSecond / AnimationPacing.CrewStrideSpeed;
+        _medicPresentation.LocomotionPlaybackRate = (float)_definition.Medic.MovementSpeedMetersPerSecond / AnimationPacing.CrewStrideSpeed;
         ValidateCombatViews(_definition);
         foreach (var hostile in _definition.Combat.Hostiles)
         {
             if (_enemyViews[hostile.Id].Humanoid is { } humanoid)
                 humanoid.LocomotionPlaybackRate = (float)hostile.MovementSpeedMetersPerSecond / AnimationPacing.EnforcerStrideSpeed;
+            if (_enemyViews[hostile.Id].Armed is { } armed)
+                armed.LocomotionPlaybackRate = (float)hostile.MovementSpeedMetersPerSecond / AnimationPacing.EnforcerStrideSpeed;
         }
         CreateBarrierViews();
         _interactionDefinitions.Clear();
@@ -376,7 +384,12 @@ public partial class GameHost : Node3D
         foreach (var interaction in _definition.Interactions)
         {
             _interactionDefinitions.Add(interaction.Id.Value, interaction);
-            _interactionDefinitionsByEffect.Add(interaction.Effect, interaction);
+            // Route doors repeat once per fight and are never objective targets;
+            // every other effect is unique, so a duplicate stays a content error.
+            if (interaction.Effect != StationInteractionEffect.OpenRouteDoor)
+            {
+                _interactionDefinitionsByEffect.Add(interaction.Effect, interaction);
+            }
         }
         ValidateServiceDoorContentBindings(_definition);
         var layout = CreateLayout(_definition);
@@ -456,7 +469,8 @@ public partial class GameHost : Node3D
             ToCore(WithGroundHeight(startMarker.GlobalPosition)),
             [new StationActorPlacement(
                 definition.Companion.Id,
-                ToCore(WithGroundHeight(companionMarker.GlobalPosition)))],
+                ToCore(WithGroundHeight(companionMarker.GlobalPosition))),
+             new StationActorPlacement(definition.Medic.Id, ToCore(markers[definition.Medic.Id.Value].GlobalPosition))],
             placements,
             new StationEncounterPlacement(
                 definition.Combat.SoloEncounter.Id,
@@ -464,7 +478,9 @@ public partial class GameHost : Node3D
                 triggerRadius,
                 ToCore(WithGroundHeight(restartMarker.GlobalPosition)),
                 ToCore(WithGroundHeight(hostileMarker.GlobalPosition))),
-            CreatePartyPlacement(definition));
+            CreatePartyPlacement(definition),
+            CreateEscapePlacements(definition),
+            CreateVisionBlockers());
     }
 
     private void CacheInteractionViews()
@@ -496,6 +512,8 @@ public partial class GameHost : Node3D
         CacheServiceDoorPresentation(
             "interaction.service_door.solo_exit",
             "NavigationLinks/SoloExitServiceDoor");
+        foreach (var area in new[] { "service", "security", "dock", "launch" })
+        { CacheServiceDoorPresentation($"interaction.service_door.{area}", $"NavigationLinks/Escape_{area}"); }
     }
 
     private void CacheServiceDoorPresentation(string interactionId, string navigationLinkPath)
@@ -547,7 +565,8 @@ public partial class GameHost : Node3D
         var missingPresentationIds = definition.Interactions
             .Where(interaction => interaction.Effect is
                 StationInteractionEffect.OpenEntryServiceDoor
-                or StationInteractionEffect.OpenSoloExitServiceDoor)
+                or StationInteractionEffect.OpenSoloExitServiceDoor
+                or StationInteractionEffect.OpenRouteDoor)
             .Select(interaction => interaction.Id.Value)
             .Where(interactionId => !_serviceDoors.ContainsKey(interactionId))
             .Order(StringComparer.Ordinal)
@@ -652,7 +671,7 @@ public partial class GameHost : Node3D
         _completionOverlay.AddChild(completionPanel);
         var completion = new Label
         {
-            Text = "ROUTE COMPLETE\nEvacuation airlock reached.\n\nThe station route is secure.",
+            Text = "STATION ESCAPED\nThree crew aboard. Six encounters cleared.\n\nNext: spaceship combat.",
             HorizontalAlignment = HorizontalAlignment.Center,
         };
         completion.AddThemeFontSizeOverride("font_size", 28);
@@ -703,7 +722,7 @@ public partial class GameHost : Node3D
         _camera.ClearOcclusionSubjects();
         foreach (var actor in route.Party.Where(actor => actor.Combat?.IsDefeated != true))
             _camera.IncludeOcclusionSubject(_actorViews[actor.Id.Value].GlobalPosition);
-        foreach (var hostile in route.Hostiles ?? [])
+        foreach (var hostile in route.VisibleHostiles)
             if (!hostile.Combat.IsDefeated)
                 _camera.IncludeOcclusionSubject(_enemyViews[hostile.Id].Root.GlobalPosition);
 
@@ -768,10 +787,11 @@ public partial class GameHost : Node3D
             var interactionDefinition = _interactionDefinitions[interaction.Id.Value];
             var isServiceDoor = interactionDefinition.Effect is
                 StationInteractionEffect.OpenEntryServiceDoor
-                or StationInteractionEffect.OpenSoloExitServiceDoor;
-            var isRecruitedProtector = interactionDefinition.Effect
-                    == StationInteractionEffect.BeginRecruitmentDialogue
-                && route.Party.Any(actor => actor.Id == definition.Companion.Id);
+                or StationInteractionEffect.OpenSoloExitServiceDoor
+                or StationInteractionEffect.OpenRouteDoor;
+            var isRecruitedProtector = interactionDefinition.Effect == StationInteractionEffect.BeginRecruitmentDialogue
+                && route.Party.Any(actor => actor.Id == definition.Companion.Id)
+                || interaction.Id.Value == "interaction.medic" && route.Party.Any(actor => actor.Id == definition.Medic.Id);
             view.Visible = !isRecruitedProtector;
             if (view is CollisionObject3D collisionObject)
             {
@@ -900,12 +920,18 @@ public partial class GameHost : Node3D
             _visibleDialogueResponseSignature = null;
         }
 
-        _completionOverlay.Visible = route.Phase == ScenarioPhase.Completed;
+        _completionOverlay.Visible = route.Phase == ScenarioPhase.Completed && _departureSeconds >= DepartureDuration;
         UpdateDialogueInput(route.ActiveDialogue is not null);
         SynchronizeServiceDoorAuthority(route);
-        SetAirlockOpen(route.Phase == ScenarioPhase.Completed);
+        var airlockOpen = route.Interactions.Any(item => item.Id.Value == "interaction.evacuation_airlock" && item.State == InteractionState.Completed);
+        SetAirlockOpen(airlockOpen);
+        _airlockLink ??= GetNode<NavigationLink3D>("NavigationLinks/Escape_airlock");
+        _airlockLink.Enabled = airlockOpen;
         UpdateWorldHealth(route);
         UpdateFieldOrders(observation, route);
+        // Ordinary play advances departure once per frame in _Process. A review drives
+        // that clock itself, so re-apply its terminal pose after every state refresh.
+        if (_reviewDrivesClock) { AdvanceDeparture(observation, 0); }
     }
 
     private void SynchronizeServiceDoorAuthority(StationRouteObservation route)
@@ -1008,6 +1034,7 @@ public partial class GameHost : Node3D
             presentationTick: _presentationTick,
             turnDeltaSeconds: _presentationDeltaSeconds);
 
+        SynchronizeMedic(observation, route);
         var protector = route.Party.SingleOrDefault(actor => actor.Id == definition.Companion.Id);
         _protectorPartyPresentation.Synchronize(
             protector is not null, protector?.CurrentAction?.HasRemainingMovement == true,
@@ -1104,7 +1131,7 @@ public partial class GameHost : Node3D
         }
 
         var occluderIds = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var importedNode in EnumerateDescendants(structure))
+        foreach (var importedNode in EnumerateDescendants(structure).Concat(EnumerateDescendants(GetNode<Node3D>("Environment/EscapeStructure"))))
         {
             if (importedNode is MeshInstance3D mesh)
             {
@@ -1233,6 +1260,8 @@ public partial class GameHost : Node3D
             && hostileCollider.HasMeta("stable_id"))
         {
             var targetId = new EntityId(hostileCollider.GetMeta("stable_id").AsString());
+            if (FindVisibleHostile(route, targetId) is not { } target
+                || !CanTargetVisibleHostile(route, target)) { return; }
             AttackWithSelectedCrew(targetId);
             return;
         }
@@ -1385,8 +1414,9 @@ public partial class GameHost : Node3D
                     : objectiveId == _definition.RecruitmentObjective.Id
                         ? StationInteractionEffect.BeginRecruitmentDialogue
                         : objectiveId == _definition.DestinationObjective.Id
-                            ? StationInteractionEffect.CompleteScenario
-                            : null;
+                            ? StationInteractionEffect.OpenEvacuationAirlock
+                            : objectiveId == _definition.MedicRecruitmentObjective.Id ? StationInteractionEffect.BeginMedicRecruitmentDialogue
+                            : objectiveId == _definition.BoardingObjective.Id ? StationInteractionEffect.CompleteScenario : null;
         if (targetEffect is null)
         {
             return null;
@@ -1421,7 +1451,7 @@ public partial class GameHost : Node3D
                     ? collision.GlobalPosition
                     : interactionView.GlobalPosition + new Vector3(0, 0.8f, 0);
         }
-        else if (route.Hostiles?.SingleOrDefault(hostile =>
+        else if (route.VisibleHostiles.SingleOrDefault(hostile =>
             string.Equals(hostile.Id.Value, stableId, StringComparison.Ordinal)) is HostileObservation hostile)
         {
             worldPosition = ToGodot(hostile.Position) + new Vector3(0, 1.0f, 0);
@@ -2048,7 +2078,7 @@ public partial class GameHost : Node3D
     {
         var result = _automationBridge!.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 9,
+            schema_version = 11,
             command_id = "godot.bootstrap.pause",
             type = "set_pause",
             payload = new { paused = true },
@@ -2060,7 +2090,7 @@ public partial class GameHost : Node3D
             GameSession.MaximumDirectTickAdvance + 1);
         var oversizedMove = _automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 9,
+            schema_version = 11,
             command_id = "godot.bootstrap.oversized-move",
             type = "move_actor",
             payload = new
@@ -2139,7 +2169,7 @@ public partial class GameHost : Node3D
             && !GetNode<Node3D>("Actors/Protector").Visible;
         var response = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 9,
+            schema_version = 11,
             command_id = "godot.route.response",
             type = "choose_dialogue_response",
             payload = new
@@ -2161,7 +2191,7 @@ public partial class GameHost : Node3D
         var entryNavigationPath = entryPathfinder.FindPath(
             definition.Protagonist.Id,
             _session.Observe().StationRoute!.Protagonist.Position,
-            new WorldPosition(-10.0, 0.0, 0.0));
+            new WorldPosition(-8.0, 0.0, 0.0));
         for (var frame = 0;
              frame < MaximumNavigationInitializationFrames && !entryNavigationPath.IsReachable;
              frame++)
@@ -2173,7 +2203,7 @@ public partial class GameHost : Node3D
             entryNavigationPath = entryPathfinder.FindPath(
                 definition.Protagonist.Id,
                 _session.Observe().StationRoute!.Protagonist.Position,
-                new WorldPosition(-10.0, 0.0, 0.0));
+                new WorldPosition(-8.0, 0.0, 0.0));
         }
         var doorNavigationUnlocked = entryDoorPresentation.NavigationLink.Enabled
             && entryNavigationPath.IsReachable
@@ -2195,7 +2225,7 @@ public partial class GameHost : Node3D
         var arenaSequence = _session.Observe().LatestEventSequence;
         var arenaMove = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 9,
+            schema_version = 11,
             command_id = "godot.route.enter-solo-arena",
             type = "move_actor",
             payload = new
@@ -2238,7 +2268,7 @@ public partial class GameHost : Node3D
             definition.Combat.SoloEncounter.ReadyingTicks);
         var ability = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 9,
+            schema_version = 11,
             command_id = "godot.route.suppress-enforcer",
             type = "use_ability",
             payload = new
@@ -2264,7 +2294,7 @@ public partial class GameHost : Node3D
             {
                 var attack = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
                 {
-                    schema_version = 9,
+                    schema_version = 11,
                     command_id = "godot.route.attack-enforcer",
                     type = "assign_basic_attack_target",
                     payload = new
@@ -2421,7 +2451,7 @@ public partial class GameHost : Node3D
     {
         return _automationBridge!.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 9,
+            schema_version = 11,
             command_id = commandId,
             type = "interact",
             payload = new { actor_id = actorId, target_id = targetId },
@@ -2574,7 +2604,7 @@ public partial class GameHost : Node3D
         var arenaSequence = session.Observe().LatestEventSequence;
         var arenaMove = bridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 9,
+            schema_version = 11,
             command_id = "defeat.enter-arena",
             type = "move_actor",
             payload = new

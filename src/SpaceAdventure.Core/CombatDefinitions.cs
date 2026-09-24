@@ -27,7 +27,7 @@ public sealed record HostileDefinition(
     AttackId BasicAttackId,
     HostileBehavior Behavior);
 
-public enum HostileBehavior { Melee, Sentry }
+public enum HostileBehavior { Melee, Sentry, Ranged }
 
 public sealed record BarrierDefinition(
     AbilityId Id,
@@ -50,13 +50,22 @@ public sealed record BurstDefinition(AbilityId Id, double RangeMeters, int Damag
 public sealed record TauntDefinition(AbilityId Id, double RadiusMeters, int DurationTicks,
     int WindupTicks, int RecoveryTicks, int CooldownTicks);
 
+public sealed record DirectHealDefinition(AbilityId Id, double RangeMeters, int Healing,
+    int WindupTicks, int RecoveryTicks, int CooldownTicks);
+
+public sealed record HealingFieldDefinition(AbilityId Id, double RangeMeters, double RadiusMeters,
+    int HealingPerPulse, int PulseIntervalTicks, int DurationTicks,
+    int WindupTicks, int RecoveryTicks, int CooldownTicks);
+
 public sealed record EncounterDefinition(
     EncounterId Id,
     IReadOnlyList<EntityId> HostileIds,
     int ProtagonistMaximumHealth,
     int ReadyingTicks,
     int SecuringTicks,
-    bool RequiresCompanion);
+    bool RequiresCompanion,
+    IReadOnlyList<EntityId> RequiredCrewIds,
+    StationObjectiveDefinition Objective);
 
 public sealed record StationCombatDefinition(
     IReadOnlyList<AttackDefinition> Attacks,
@@ -66,15 +75,17 @@ public sealed record StationCombatDefinition(
     BarrierDefinition Barrier,
     int CompanionMaximumHealth,
     BurstDefinition Burst,
-    TauntDefinition Taunt)
+    TauntDefinition Taunt,
+    DirectHealDefinition DirectHeal, HealingFieldDefinition HealingField, int MedicMaximumHealth)
 {
     public EncounterDefinition SoloEncounter => Encounters.Single(encounter => !encounter.RequiresCompanion);
-    public EncounterDefinition PartyEncounter => Encounters.Single(encounter => encounter.RequiresCompanion);
+    public EncounterDefinition PartyEncounter => Encounters.First(encounter => encounter.RequiresCompanion);
     public HostileDefinition SoloHostile => GetHostile(SoloEncounter.HostileIds.Single());
 
     public int AbilityCooldownTicks(AbilityId id) => id == ProtagonistAbility.Id ? ProtagonistAbility.CooldownTicks
         : id == Barrier.Id ? Barrier.CooldownTicks : id == Burst.Id ? Burst.CooldownTicks
         : id == Taunt.Id ? Taunt.CooldownTicks
+        : id == DirectHeal.Id ? DirectHeal.CooldownTicks : id == HealingField.Id ? HealingField.CooldownTicks
         : throw new ArgumentOutOfRangeException(nameof(id), $"Unknown ability '{id.Value}'.");
 
     public AttackDefinition GetAttack(AttackId id) =>

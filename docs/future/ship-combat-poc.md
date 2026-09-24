@@ -1,7 +1,8 @@
 # Escape-cutter ship-combat proof of concept
 
-Status: approved direction for Phase 7; implementation remains gated behind
-the station POC and its production-hardening exit.
+Status: approved direction for Phase 6, the next gameplay milestone;
+implementation follows the expanded station POC and its integrated hardening
+and owner-acceptance exit.
 
 ## Purpose and boundary
 
@@ -10,12 +11,12 @@ fixed simulation tick, and active pause remain enjoyable when the party escapes
 the station aboard a small ship. It is a separate post-POC experiment, not an
 expansion of the current station POC.
 
-The station POC still ends when the evacuation airlock opens and presents its
-completion summary. Phases 3 through 6 and their exit gates remain unchanged.
-Once those gates pass, the ship prototype may begin with a short authored
-launch-bay transition, entering the escape cutter, and one fixed battle.
-Entering the cutter is a fixed scenario handoff, not a reusable boarding
-mechanic.
+The station POC ends with all three crew boarding and departing in the cutter,
+then its completion summary. Ship combat continues that departure with one
+fixed battle. The station's exterior and short departure presentation do not
+activate ship systems or approve combat interiors. Carry Vanguard, Protector,
+and Medic forward; entering the cutter remains an authored handoff rather than
+a reusable boarding mechanic.
 
 The approved composition reference is
 [ship-combat-separated-clean-direction-v4.png](../../art/concepts/station-escape-ship-combat-v1/ship-combat-separated-clean-direction-v4.png).
@@ -29,13 +30,13 @@ topology, UI, balance, 3D production, or live integration.
 
 ## Player journey
 
-1. Begin in the escape cutter with exactly two party members and one fixed
+1. Begin in the escape cutter with Vanguard, Protector, and Medic and one fixed
    hostile ship already detected.
 2. Inspect both ships, crew locations, hull state, system state, power
    allocation, weapon target, and current threats.
 3. Enter combat in tactical pause.
 4. Allocate a fixed reactor budget among weapons, engines, and shields.
-5. Move either party member between authored rooms to operate or repair a
+5. Move any of the three party members between authored rooms to operate or repair a
    system.
 6. Select one enemy system as the cutter's weapon target.
 7. Resume the fixed simulation tick and observe weapon charge, incoming fire,
@@ -50,7 +51,7 @@ pause-plan-resume-replan loop in roughly three to five minutes.
 
 - One authored player escape cutter.
 - One authored hostile interceptor.
-- Exactly two controllable party members.
+- Exactly three controllable party members: Vanguard, Protector, and Medic.
 - One deterministic enemy controller; enemy crew are not simulated.
 - Weapons, engines, and shields as the only authoritative ship systems.
 - A maximum of six readable rooms per ship.
@@ -122,7 +123,7 @@ definition and tests, not in presentation scenes.
 - Both ships point upward.
 - A visually quiet central divider communicates separation and distance.
 - No movement, trajectory, or decorative targeting lines between the ships.
-- Exactly two player crew figures remain individually readable.
+- All three player crew figures remain individually readable.
 - Rooms, occupied locations, powered systems, weapon target, shields, damage,
   repairs, pause state, victory, and defeat are understandable without external
   explanation.
@@ -151,6 +152,7 @@ call, or multiplayer belongs in this proof of concept.
 5. The owner completes the encounter using physical input and confirms that
    pausing to reassign crew, power, and target is clear and tactically useful.
 
-The slice passes only when all five layers pass. Final ship models and
-production UI remain blocked until the greybox proves the room layout and
-combat information hierarchy.
+The slice passes only when all five layers pass. Final combat interiors,
+enemy-ship models, and production ship-combat UI remain blocked until the
+greybox proves the room layout and combat information hierarchy. The approved
+station cutter exterior may be reused without expanding this combat budget.

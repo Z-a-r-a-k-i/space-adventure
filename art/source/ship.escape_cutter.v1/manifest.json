@@ -1,0 +1,113 @@
+{
+  "asset_id": "ship.escape_cutter.v1",
+  "status": "technical publication; agent Godot review passed; owner acceptance pending",
+  "reference": "art/concepts/station-escape-ship-combat-v1/escape-cutter-exterior-turnaround-v1.png",
+  "approval": "owner-approved station escape plan, 2026-09-12",
+  "rights": "original dimensional Blender geometry/materials from project-owned concept; no external model/texture inputs",
+  "tool": "5.2.0 LTS",
+  "reproduce": "tools/blender/build_escape_cutter.py -- --replace --render",
+  "source": "art/source/ship.escape_cutter.v1/model.blend",
+  "publication": "game/Assets/Published/ship.escape_cutter.v1.glb",
+  "source_bytes": 240967,
+  "publication_bytes": 1323968,
+  "authored": {
+    "triangles": 19014,
+    "meshes": 17,
+    "materials": 9,
+    "bounds_blender_metres": {
+      "min": [
+        -3.1,
+        -6.84443,
+        0.0
+      ],
+      "max": [
+        3.1,
+        5.5875,
+        3.835
+      ]
+    },
+    "sockets_godot_metres": {
+      "pivot.door": [
+        0.0,
+        3.1,
+        4.79
+      ],
+      "pivot.ramp": [
+        0.0,
+        1.02,
+        4.82
+      ],
+      "socket.boarding.entry": [
+        0.0,
+        0.06,
+        6.68
+      ],
+      "socket.boarding.interior": [
+        0.0,
+        1.08,
+        3.9
+      ],
+      "socket.engine.left": [
+        -2.51,
+        1.89,
+        4.32
+      ],
+      "socket.engine.right": [
+        2.51,
+        1.89,
+        4.32
+      ]
+    },
+    "ramp_closed_rotation_x_radians": -2.0183163
+  },
+  "fresh_reimport": {
+    "triangles": 19014,
+    "meshes": 17,
+    "materials": 9,
+    "bounds_blender_metres": {
+      "min": [
+        -3.1,
+        -6.84443,
+        0.0
+      ],
+      "max": [
+        3.1,
+        5.5875,
+        3.835
+      ]
+    },
+    "sockets_godot_metres": {
+      "pivot.door": [
+        0.0,
+        3.1,
+        4.79
+      ],
+      "pivot.ramp": [
+        0.0,
+        1.02,
+        4.82
+      ],
+      "socket.boarding.entry": [
+        0.0,
+        0.06,
+        6.68
+      ],
+      "socket.boarding.interior": [
+        0.0,
+        1.08,
+        3.9
+      ],
+      "socket.engine.left": [
+        -2.51,
+        1.89,
+        4.32
+      ],
+      "socket.engine.right": [
+        2.51,
+        1.89,
+        4.32
+      ]
+    },
+    "ramp_closed_rotation_x_radians": -2.0183163
+  }
+}

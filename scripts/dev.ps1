@@ -13,7 +13,7 @@ param(
     [ValidateSet("live", "capture", "record", "performance", "input")]
     [string]$Mode = "capture",
 
-    [ValidateSet("solo", "party")]
+    [ValidateSet("solo", "party", "escape", "vision")]
     [string]$Encounter = "solo",
 
     [ValidateSet("victory", "defeat")]
@@ -22,7 +22,7 @@ param(
     [ValidateSet("restrained", "strong")]
     [string]$Recoil = "restrained",
 
-    [ValidateSet("all", "briefing", "recruitment", "ready", "draw", "armed", "armed-walk", "fire", "recoil", "anticipation", "contact", "barrier-queued", "barrier", "barrier-block", "taunt", "burst", "interrupt", "late-fire", "holster", "victory", "slice-complete", "defeat", "retry")]
+    [ValidateSet("all", "briefing", "recruitment", "ready", "draw", "armed", "armed-walk", "fire", "recoil", "anticipation", "contact", "barrier-queued", "barrier", "barrier-block", "taunt", "burst", "interrupt", "late-fire", "holster", "victory", "slice-complete", "defeat", "retry", "service", "security", "dock", "launch", "heal", "field", "boarding", "departure", "complete", "vision-hidden", "vision-revealed", "vision-occluded", "vision-shared")]
     [string]$Checkpoint = "all",
 
     [ValidateRange(7.5, 20.0)]
@@ -396,10 +396,11 @@ SpaceAdventure development commands
   plugin-link             Create the ignored local Godot AI Control junction
   import                  Import the Godot project headlessly
   headless [-Name name]   Run a bounded Godot smoke (bootstrap, station-route, station-combat-defeat,
-                          station-party, station-party-defeat, humanoid-gallery, hostile-gallery)
+                          station-party, station-party-defeat, station-escape, station-escape-defeat, station-vision,
+                          humanoid-gallery, hostile-gallery)
   capture -Name name      Create and verify a deterministic graphical capture (wall-cutaway)
   review                  Bounded combat review through ordinary typed commands
-                          -Encounter solo|party
+                          -Encounter solo|party|escape|vision
                           -Mode live|capture|record|performance|input -Sequence victory|defeat
                           -Recoil restrained|strong (restrained is the game default)
                           -Checkpoint all|armed|fire|... -Distance 7.5..20
@@ -512,6 +513,9 @@ Options:
                 "station-combat-defeat" { @{ Argument = "--station-combat-defeat-smoke"; Scene = $null } }
                 "station-party" { @{ Argument = @("--solo-review=smoke", "--review-encounter=party", "--review-sequence=victory"); Scene = $null } }
                 "station-party-defeat" { @{ Argument = @("--solo-review=smoke", "--review-encounter=party", "--review-sequence=defeat"); Scene = $null } }
+                "station-vision" { @{ Argument = @("--solo-review=smoke", "--review-encounter=vision"); Scene = $null } }
+                "station-escape" { @{ Argument = @("--solo-review=smoke", "--review-encounter=escape", "--review-sequence=victory"); Scene = $null } }
+                "station-escape-defeat" { @{ Argument = @("--solo-review=smoke", "--review-encounter=escape", "--review-sequence=defeat"); Scene = $null } }
                 "humanoid-gallery" {
                     @{
                         Argument = "--humanoid-gallery-smoke"
@@ -524,7 +528,7 @@ Options:
                         Scene = "res://scenes/hostile_gallery.tscn"
                     }
                 }
-                default { throw "Unknown Godot headless scenario '$Name'. Expected 'bootstrap', 'station-route', 'station-combat-defeat', 'station-party', 'station-party-defeat', 'humanoid-gallery', or 'hostile-gallery'." }
+                default { throw "Unknown Godot headless scenario '$Name'. Expected 'bootstrap', 'station-route', 'station-combat-defeat', 'station-party', 'station-party-defeat', 'station-escape', 'station-escape-defeat', 'station-vision', 'humanoid-gallery', or 'hostile-gallery'." }
             }
             $arguments = @("--headless", "--path", $gameProject)
             if ($null -ne $smoke.Scene) {
@@ -804,7 +808,23 @@ Options:
                 $Mode -notin @('capture', 'live')) {
                 throw "-Pitch and -Yaw are supported only with -Mode capture or -Mode live."
             }
-            if ($Mode -eq 'live' -and $Checkpoint -eq 'all') { $Checkpoint = 'armed' }
+            # Checkpoints each review profile captures; a mismatch would otherwise fail only after a full run.
+            $reviewCheckpoints = @{
+                solo = @('briefing', 'ready', 'draw', 'armed', 'armed-walk', 'fire', 'recoil', 'anticipation', 'contact',
+                    'interrupt', 'late-fire', 'holster', 'victory', 'slice-complete', 'defeat', 'retry')
+                party = @('recruitment', 'ready', 'draw', 'armed', 'fire', 'recoil', 'barrier-queued', 'barrier',
+                    'barrier-block', 'taunt', 'burst', 'holster', 'victory', 'slice-complete', 'defeat', 'retry')
+                escape = @('ready', 'armed', 'service', 'security', 'dock', 'launch', 'heal', 'field', 'defeat', 'retry',
+                    'boarding', 'departure', 'complete')
+                vision = @('vision-hidden', 'vision-revealed', 'vision-occluded', 'vision-shared')
+            }
+            if ($Encounter -eq 'vision' -and $Mode -eq 'performance') {
+                throw "The vision review takes no performance sample; use -Encounter escape for -Mode performance."
+            }
+            if ($Mode -eq 'live' -and $Checkpoint -eq 'all') { $Checkpoint = if ($Encounter -eq 'vision') { 'vision-hidden' } else { 'armed' } }
+            if ($Checkpoint -ne 'all' -and $Checkpoint -notin $reviewCheckpoints[$Encounter]) {
+                throw "Checkpoint '$Checkpoint' is not captured by the $Encounter review. Use one of: $($reviewCheckpoints[$Encounter] -join ', ')."
+            }
             if ($Mode -eq 'record') { $Resolution = '1920x1080' }
             if (-not $PSBoundParameters.ContainsKey('TimeoutSeconds')) { $TimeoutSeconds = 180 }
             $arguments = @('--path', $gameProject, '--windowed', '--resolution', $Resolution)

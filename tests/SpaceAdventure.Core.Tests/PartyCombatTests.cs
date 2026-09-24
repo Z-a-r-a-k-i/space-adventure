@@ -186,7 +186,8 @@ public sealed partial class CombatSessionTests
         session.AdvanceTicks(CombatTuning.PartyEncounter.SecuringTicks);
         var victory = Observe(session);
         Assert.Equal(EncounterPhase.Victory, victory.Encounter!.Phase);
-        Assert.Equal(ObjectiveStatus.Completed, victory.Objective.Status);
+        Assert.Equal(ObjectiveStatus.Active, victory.Objective.Status);
+        Assert.Equal(new ObjectiveId("objective.recruit_medic"), victory.Objective.Id);
         Assert.Equal(ScenarioPhase.InProgress, victory.Phase);
         Assert.All(victory.Hostiles!, hostile => Assert.True(hostile.Combat.IsDefeated));
         Assert.False(FindInteraction(victory, new EntityId("interaction.evacuation_airlock")).CanInteract);
@@ -279,9 +280,10 @@ public sealed partial class CombatSessionTests
         session.Execute(new UseAbilityCommand(new CommandId($"party.barrier.{session.Tick}"), ProtectorId, BarrierId,
             new BarrierAbilityTarget(position ?? new WorldPosition(Observe(session).Party[1].Position.X, Observe(session).Party[1].Position.Y, Observe(session).Party[1].Position.Z + .8), facing ?? new WorldPosition(0, 0, 1))));
 
-    private static GameSession CreateAtPartyEncounter(StationEncounterPlacement? placement = null, ISpatialPathfinder? pathfinder = null)
+    private static GameSession CreateAtPartyEncounter(StationEncounterPlacement? placement = null, ISpatialPathfinder? pathfinder = null,
+        StationRouteDefinition? definition = null, IReadOnlyList<StationEncounterPlacement>? extensionPlacements = null)
     {
-        var session = CreateAtEncounter(placement, pathfinder);
+        var session = CreateAtEncounter(placement, pathfinder, definition, extensionPlacements);
         Assert.True(Attack(session, ProtagonistId, EnforcerId).Accepted);
         ResumeIntoActiveCombat(session);
         AdvanceUntil(session, route => route.Encounter!.Phase == EncounterPhase.Victory, 1200);
@@ -295,7 +297,7 @@ public sealed partial class CombatSessionTests
         return session;
     }
 
-    private static StationEncounterPlacement CreatePartyPlacement() => new(PartyEncounterId,
+    internal static StationEncounterPlacement CreatePartyPlacement() => new(PartyEncounterId,
         new WorldPosition(0, 0, 5), 2, new WorldPosition(-0.55, 0, 4.5), new WorldPosition(-2, 0, 8),
         new WorldPosition(0.55, 0, 4.5), [new StationActorPlacement(SentryId, new WorldPosition(2.5, 0, 10.5))],
         new WorldPosition(0, 0, -1));

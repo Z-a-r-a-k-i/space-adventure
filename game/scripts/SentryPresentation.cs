@@ -43,6 +43,13 @@ public partial class SentryPresentation : Node3D
         _rest = _recoil.Position;
     }
 
+    public void SynchronizeDormant()
+    {
+        _yaw = _pitch = 0;
+        _aim.Rotation = Vector3.Zero;
+        _recoil.Position = _rest;
+    }
+
     public void Synchronize(HostileObservation hostile, Vector3 target, double tick, float deltaSeconds)
     {
         var direction = ToLocal(target) - ToLocal(_aim.GlobalPosition);

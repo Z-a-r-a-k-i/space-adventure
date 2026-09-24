@@ -127,6 +127,8 @@ public sealed partial class GameSession
             && action.CombatTargetId is EntityId targetId
             && station.Combat.Hostiles.TryGetValue(targetId, out var hostile)
             && hostile.Health > 0
+            && IsVisibleToCrew(station, hostile)
+            && HasClearSight(station, actor.Position, hostile.Position)
             && actor.Position.DistanceTo(hostile.Position) <= station.Definition.Combat.GetAttack(attackId).RangeMeters)
         {
             BeginAttackWindup(actor.Id, hostile.Id,
@@ -190,6 +192,8 @@ public sealed partial class GameSession
         }
         if (action.Kind == PrimaryActionKind.Ability)
         {
+            if (action.AbilityId == station.Definition.Combat.DirectHeal.Id || action.AbilityId == station.Definition.Combat.HealingField.Id)
+            { return ValidateHealingAbility(station, actor, action.AbilityId.Value, action.CombatTargetId, action.AbilityTargetPosition); }
             if (action.AbilityId == station.Definition.Combat.Barrier.Id)
             {
                 return ValidateBarrierTarget(station, actor, action.AbilityTargetPosition, action.AbilityFacing);
@@ -208,6 +212,10 @@ public sealed partial class GameSession
             }
         }
 
+        if (action.Kind == PrimaryActionKind.Attack && action.CombatTargetId is { } attackTarget
+            && station.Combat.Hostiles.TryGetValue(attackTarget, out var attackHostile) && !IsVisibleToCrew(station, attackHostile))
+        { return CommandRejectionCode.CombatTargetNotVisible; }
+
         return null;
     }
 
@@ -217,6 +225,7 @@ public sealed partial class GameSession
             || actor.PendingAction is not null || Tick < actor.OffensiveRecoveryUntilTick
             || actor.RememberedAttackTargetId is not EntityId targetId
             || !station.Combat.Hostiles.TryGetValue(targetId, out var hostile) || hostile.Health <= 0
+            || !IsVisibleToCrew(station, hostile)
             || actor.RememberedAttackCommandId is not CommandId commandId)
         {
             return;

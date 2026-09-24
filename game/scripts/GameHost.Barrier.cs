@@ -69,6 +69,8 @@ public partial class GameHost
         SetFeedback(_targetAbilityKind switch
         {
             AbilityTargetKind.Barrier => "Barrier · click to place. Faces from Protector toward the pointer. Esc cancels.",
+            AbilityTargetKind.Entity when IsHealingAbility(_targetAbilityId) => "Heal · choose a living ally or portrait. Esc cancels.",
+            AbilityTargetKind.Position when IsHealingField(_targetAbilityId) => "Healing Field · click the floor to place a healing area. Esc cancels.",
             AbilityTargetKind.Entity => "Burst · choose an enemy for three rapid shots. Esc cancels.",
             _ => "Interrupt · click the floor to interrupt enemies in the circle. Esc cancels.",
         }, TacticalUi.Cyan);
@@ -89,21 +91,34 @@ public partial class GameHost
             ? ToCore(facing.Normalized()) : actor.Facing);
     }
 
-    private EntityId? PickSkillEnemy(Vector2 screen)
+    private EntityId? PickSkillEnemy(Vector2 screen, StationRouteObservation? route = null)
     {
         var origin = _camera.ProjectRayOrigin(screen);
         var hit = CastRay(origin, origin + _camera.ProjectRayNormal(screen) * 200, HostileCollisionLayer);
-        return hit.Count > 0 && hit["collider"].AsGodotObject() is Node node && node.HasMeta("stable_id")
-            ? new EntityId(node.GetMeta("stable_id").AsString()) : null;
+        if (hit.Count == 0 || hit["collider"].AsGodotObject() is not Node node || !node.HasMeta("stable_id")) { return null; }
+        var id = new EntityId(node.GetMeta("stable_id").AsString());
+        route ??= _session!.Observe().StationRoute!;
+        return FindVisibleHostile(route, id) is { } hostile && CanTargetVisibleHostile(route, hostile) ? id : null;
     }
 
-    private void ConfirmEnemyAbility(EntityId enemy)
+    private void ConfirmEntityAbility(EntityId enemy)
     {
-        var result = _session!.Execute(new UseAbilityCommand(NextHumanCommandId("burst"), _abilityOwnerId!.Value,
+        var name = IsHealingAbility(_targetAbilityId) ? "Heal" : "Burst";
+        var result = _session!.Execute(new UseAbilityCommand(NextHumanCommandId("entity-skill"), _abilityOwnerId!.Value,
             _targetAbilityId, new EntityAbilityTarget(enemy)));
-        if (!result.Accepted) { SetFeedback($"Burst unavailable · {result.RejectionCode}", TacticalUi.Danger); return; }
+        if (!result.Accepted)
+        {
+            var feedback = result.RejectionCode switch
+            {
+                CommandRejectionCode.AbilityTargetObstructed => "LINE OF FIRE BLOCKED · move to a clear angle",
+                CommandRejectionCode.CombatTargetNotVisible => "TARGET OUT OF SIGHT · choose a visible enemy",
+                _ => $"{name} unavailable · {result.RejectionCode}",
+            };
+            SetFeedback(feedback, TacticalUi.Danger);
+            return;
+        }
         CancelAbilityTargeting(); SynchronizePresentation();
-        SetFeedback(_session.IsPaused ? "Burst queued · fires on resume." : "Burst fire.", TacticalUi.Cyan);
+        SetFeedback(_session.IsPaused ? $"{name} queued · activates on resume." : $"{name} activated.", TacticalUi.Cyan);
     }
 
     private void ConfirmAbilityTarget(Vector2 screenPosition)
@@ -113,8 +128,8 @@ public partial class GameHost
         if (actor?.Loadout is null || actor.Combat?.IsDefeated == true) { CancelAbilityTargeting(); return; }
         if (_targetAbilityKind == AbilityTargetKind.Entity)
         {
-            if (PickSkillEnemy(screenPosition) is { } enemy) { ConfirmEnemyAbility(enemy); }
-            else { SetFeedback("Choose an enemy.", TacticalUi.Danger); }
+            if ((IsHealingAbility(_targetAbilityId) ? PickCrew(screenPosition) : PickSkillEnemy(screenPosition)) is { } targetId) { ConfirmEntityAbility(targetId); }
+            else { SetFeedback(IsHealingAbility(_targetAbilityId) ? "Choose a living ally." : "Choose an enemy.", TacticalUi.Danger); }
             return;
         }
         if (!TryPickFloor(screenPosition, out var point)) { return; }
@@ -125,6 +140,7 @@ public partial class GameHost
         {
             var rejection = acknowledgement.RejectionCode!.Value;
             if (_targetAbilityKind == AbilityTargetKind.Barrier) { ShowBarrierRejection(rejection); }
+            else if (IsHealingField(_targetAbilityId)) { SetFeedback(HealingFieldRejectionText(rejection), TacticalUi.Danger); }
             else { SetFeedback(rejection == CommandRejectionCode.AbilityTargetOutOfRange
                 ? "Outside ability range." : "Ability is not ready.", TacticalUi.Danger); }
             return;
@@ -146,7 +162,8 @@ public partial class GameHost
         var pointer = PointerPosition;
         if (!GetViewport().GetVisibleRect().HasPoint(pointer)) { return; }
         if (FieldHudBounds().Any(rect => rect.HasPoint(pointer))) { return; }
-        var name = _targetAbilityKind == AbilityTargetKind.Barrier ? "BARRIER" : _targetAbilityKind == AbilityTargetKind.Entity ? "BURST" : "INTERRUPT";
+        var name = IsHealingAbility(_targetAbilityId) ? "HEAL" : IsHealingField(_targetAbilityId) ? "HEALING FIELD"
+            : _targetAbilityKind == AbilityTargetKind.Barrier ? "BARRIER" : _targetAbilityKind == AbilityTargetKind.Entity ? "BURST" : "INTERRUPT";
         var title = $"{CrewNumber(route, actor.Id):00} {actor.DisplayName.ToUpperInvariant()} · {name}";
         var cooldown = actor.Combat.Cooldowns.FirstOrDefault(value => value.AbilityId == _targetAbilityId)?.RemainingTicks ?? 0;
         if (cooldown > 0)
@@ -157,17 +174,24 @@ public partial class GameHost
             return;
         }
         var timing = AbilityResumeText(observation, route, actor, _targetAbilityKind == AbilityTargetKind.Barrier);
+        if (ShowMedicTargetPreview(observation, route, actor, pointer)) { return; }
         if (_targetAbilityKind == AbilityTargetKind.Entity)
         {
-            var hostile = route.Hostiles?.FirstOrDefault(enemy => enemy.Id == PickSkillEnemy(pointer) && !enemy.Combat.IsDefeated);
+            var picked = PickSkillEnemy(pointer, route);
+            var hostile = picked is null ? null : route.VisibleHostiles.FirstOrDefault(enemy => enemy.Id == picked && !enemy.Combat.IsDefeated);
             if (hostile is null)
             { ShowAbilityContext(title, "Choose a living enemy.", "Left-click enemy · Esc / RMB cancels", TacticalUi.Amber, atPointer: true); return; }
             var range = _definition!.Combat.Burst.RangeMeters;
             var distance = hostile.Position.DistanceTo(actor.Position);
-            var valid = distance <= range;
+            var burstRejection = _session!.CheckBurstTarget(actor.Id, hostile.Id);
+            var valid = burstRejection is null;
             ShowAbilityContext(title, valid
                 ? $"{hostile.DisplayName}: {_definition.Combat.Burst.ShotCount} shots × {_definition.Combat.Burst.DamagePerShot} damage."
-                : $"OUT OF RANGE · {distance:0.0}m / {range:0.#}m", valid ? timing : "Choose a closer enemy · Esc cancels",
+                : burstRejection == CommandRejectionCode.AbilityTargetObstructed
+                    ? "LINE OF FIRE BLOCKED · move to a clear angle."
+                    : burstRejection == CommandRejectionCode.AbilityTargetOutOfRange
+                        ? $"OUT OF RANGE · {distance:0.0}m / {range:0.#}m"
+                        : "TARGET UNAVAILABLE · choose a visible enemy when ready.", valid ? timing : "Esc cancels",
                 valid ? CrewAccent(route, actor) : TacticalUi.Danger, atPointer: true);
             if (valid) { ShowAffectedTargets(route, [hostile.Id]); }
             return;
@@ -187,7 +211,8 @@ public partial class GameHost
         }
         var ability = _definition!.Combat.ProtagonistAbility;
         var inRange = ToCore(point).DistanceTo(actor.Position) <= ability.RangeMeters;
-        var affected = route.Hostiles!.Where(enemy => !enemy.Combat.IsDefeated && enemy.Position.DistanceTo(ToCore(point)) <= ability.RadiusMeters).ToArray();
+        var affected = PlayerVisibleHostiles(route).Where(enemy => CanTargetVisibleHostile(route, enemy)
+            && enemy.Position.DistanceTo(ToCore(point)) <= ability.RadiusMeters).ToArray();
         var windups = affected.Count(enemy => enemy.CurrentAction?.Phase == PrimaryActionPhase.Windup);
         ShowAbilityContext(title, !inRange ? $"OUT OF RANGE · aim within {ability.RangeMeters:0.#}m."
             : affected.Length == 0 ? $"EMPTY AREA · no enemies in {ability.RadiusMeters:0.#}m radius."
@@ -213,17 +238,21 @@ public partial class GameHost
     {
         if (type == GameplayEventType.ProjectileLaunched)
         {
-            var sentry = _enemyViews[projectile.SourceId].Sentry!;
+            var route = _session!.Observe().StationRoute!;
+            if (FindVisibleHostile(route, projectile.SourceId) is null) { return; }
+            var source = _enemyViews[projectile.SourceId];
+            var muzzle = source.Armed?.MuzzlePosition ?? source.Sentry!.MuzzlePosition;
+            var direction = source.Armed?.MuzzleDirection ?? source.Sentry!.MuzzleDirection;
             var node = new CarbineProjectile();
-            node.Configure(sentry.MuzzlePosition, ToGodot(projectile.Destination), new Color("ff7659"));
+            node.Configure(muzzle, ToGodot(projectile.Destination), new Color("ff7659"));
             AddChild(node); _incomingBolts.Add(projectile.Id, node);
-            _combatPresentationEffects.Add(new TimedPresentationEffect(node, (float)projectile.FlightTicks / GameSession.TicksPerSecond, tick));
-            SpawnMuzzleSignature(sentry.MuzzlePosition, sentry.MuzzleDirection, "sentry");
-            PlayCombatCue("sentry", sentry.MuzzlePosition);
+            TrackCombatEffect(new TimedPresentationEffect(node, (float)projectile.FlightTicks / GameSession.TicksPerSecond, tick), projectile.SourceId);
+            SpawnMuzzleSignature(muzzle, direction, "sentry", projectile.SourceId);
+            PlayCombatCue("sentry", muzzle, visibilitySubject: projectile.SourceId);
             return;
         }
         if (_incomingBolts.Remove(projectile.Id, out var bolt))
-        { _combatPresentationEffects.RemoveAll(effect => effect.Node == bolt); if (GodotObject.IsInstanceValid(bolt)) { bolt.QueueFree(); } }
+        { _combatPresentationEffects.RemoveAll(effect => effect.Node == bolt); ForgetCombatEffect(bolt); if (GodotObject.IsInstanceValid(bolt)) { bolt.QueueFree(); } }
         if (type != GameplayEventType.ProjectileBlocked || projectile.ImpactPosition is not { } impact) { return; }
         _barrierView.NotifyBlocked(tick);
         SpawnSignature(CombatSignature.Block, ToGodot(impact), _barrierView.GlobalBasis.Z);
@@ -235,8 +264,8 @@ public partial class GameHost
 
     private void ClearIncomingBolts()
     {
-        foreach (var bolt in _incomingBolts.Values)
-        { _combatPresentationEffects.RemoveAll(effect => effect.Node == bolt); if (GodotObject.IsInstanceValid(bolt)) { bolt.QueueFree(); } }
+        foreach (var bolt in _incomingBolts.Values.ToArray())
+        { _combatPresentationEffects.RemoveAll(effect => effect.Node == bolt); ForgetCombatEffect(bolt); if (GodotObject.IsInstanceValid(bolt)) { bolt.QueueFree(); } }
         _incomingBolts.Clear();
     }
 }

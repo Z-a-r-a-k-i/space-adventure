@@ -74,11 +74,14 @@ public partial class GameHost
         var attempt = -1;
         var relocated = false;
         var suppressed = false;
+        var observedPhases = new Dictionary<string, int>(StringComparer.Ordinal);
         Dispatch(new SetPauseCommand(NextHumanCommandId("perf.resume"), false));
         while (watch.Elapsed.TotalSeconds < 30)
         {
             var route = ReviewState();
-            if (IsPartyReview)
+            var phase = route.Encounter!.Phase.ToString();
+            observedPhases[phase] = observedPhases.GetValueOrDefault(phase) + 1;
+            if (IsPartyReview || IsEscapeReview)
             {
                 DrivePartyPerformance(route);
             }
@@ -126,6 +129,7 @@ public partial class GameHost
             excluded_warmup_seconds = warmup.Elapsed.TotalSeconds - watch.Elapsed.TotalSeconds,
             sample_wall_seconds = watch.Elapsed.TotalSeconds,
             simulation_ticks = _session.Tick - startTick,
+            observed_phase_frames = observedPhases,
             resolution = new { width = GetWindow().Size.X, height = GetWindow().Size.Y },
             render_intervals_ms = TimingSummary(_renderIntervals),
             simulation_advance_cpu_ms = TimingSummary(_simulationCosts),
@@ -175,14 +179,29 @@ public partial class GameHost
             if (actor.PendingAction is not null) { continue; }
             if (actor.Combat!.RememberedAttackTargetId is null && actor.CurrentAction is null)
             {
-                var target = route.Hostiles!.Where(hostile => !hostile.Combat.IsDefeated)
+                var target = route.VisibleHostiles.Where(hostile => hostile.EncounterId == route.Encounter!.Id && !hostile.Combat.IsDefeated)
                     .OrderBy(hostile => hostile.Position.DistanceTo(actor.Position)).FirstOrDefault();
                 if (target is not null) { Dispatch(new AssignBasicAttackTargetCommand(NextHumanCommandId("perf.attack"), actor.Id, target.Id)); }
+            }
+            else if (actor.Id == _definition!.Medic.Id && actor.CurrentAction?.Kind != PrimaryActionKind.Ability)
+            {
+                // Pre-check each command with the core, as the Barrier branch does: a single
+                // rejected command fails the measurement, and a rejection would repeat every frame.
+                var heal = _definition.Combat.DirectHeal;
+                var ally = route.Party.Where(crew => !crew.Combat!.IsDefeated && crew.Position.DistanceTo(actor.Position) <= heal.RangeMeters)
+                    .OrderBy(crew => (double)crew.Combat!.Health / crew.Combat.MaximumHealth).First();
+                var field = new PositionAbilityTarget(actor.Position);
+                if (actor.Combat.Cooldowns.Single(cd => cd.AbilityId == heal.Id).RemainingTicks == 0
+                    && ally.Combat!.MaximumHealth - ally.Combat.Health >= 20 && _session!.CheckDirectHealTarget(actor.Id, ally.Id) is null)
+                { Dispatch(new UseAbilityCommand(NextHumanCommandId("perf.heal"), actor.Id, heal.Id, new EntityAbilityTarget(ally.Id))); }
+                else if (actor.Combat.Cooldowns.Single(cd => cd.AbilityId == _definition.Combat.HealingField.Id).RemainingTicks == 0
+                    && _session!.CheckHealingFieldPlacement(actor.Id, field) is null)
+                { Dispatch(new UseAbilityCommand(NextHumanCommandId("perf.field"), actor.Id, _definition.Combat.HealingField.Id, field)); }
             }
             else if (actor.Id == _definition!.Companion.Id && actor.Combat.Cooldowns.Single(cd => cd.AbilityId == _definition.Combat.Barrier.Id).RemainingTicks == 0
                 && actor.CurrentAction?.Kind != PrimaryActionKind.Ability)
             {
-                var direction = ToGodot(route.Hostiles!.Single(hostile => _enemyViews[hostile.Id].Sentry is not null).Position) - ToGodot(actor.Position);
+                var direction = ToGodot(route.Hostiles!.First(hostile => _enemyViews[hostile.Id].Sentry is not null).Position) - ToGodot(actor.Position);
                 direction.Y = 0;
                 var target = new BarrierAbilityTarget(new WorldPosition(actor.Position.X, actor.Position.Y, actor.Position.Z + .8), ToCore(direction.Normalized()));
                 if (_session!.CheckBarrierPlacement(actor.Id, target) is null)
@@ -195,8 +214,9 @@ public partial class GameHost
                 { Dispatch(new UseAbilityCommand(NextHumanCommandId("perf.taunt"), actor.Id, _definition.Combat.Taunt.Id, new SelfAbilityTarget())); }
                 else
                 {
-                    var target = route.Hostiles!.FirstOrDefault(enemy => !enemy.Combat.IsDefeated
-                        && actor.Position.DistanceTo(enemy.Position) <= _definition.Combat.Burst.RangeMeters);
+                    // Shared sight is not enough: the shooter needs its own clear line of fire.
+                    var target = route.VisibleHostiles.FirstOrDefault(enemy => enemy.EncounterId == route.Encounter!.Id && !enemy.Combat.IsDefeated
+                        && _session!.CheckBurstTarget(actor.Id, enemy.Id) is null);
                     if (target is not null)
                     { Dispatch(new UseAbilityCommand(NextHumanCommandId("perf.burst"), actor.Id, _definition.Combat.Burst.Id, new EntityAbilityTarget(target.Id))); }
                 }

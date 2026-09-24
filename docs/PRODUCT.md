@@ -8,78 +8,108 @@ clicking. Authored, coherent low-poly presentation supports that clarity.
 
 ## First playable experience
 
-Build one authored 8–12 minute journey through a disabled frontier station:
+Build one authored journey through a disabled frontier station:
 
-Vanguard start → survivor conversation → ordinary service door → solo tutorial
-fight → Protector recruitment → two-character encounter → evacuation airlock
-opening and completion summary.
+Vanguard start → survivor conversation → service door → solo tutorial fight →
+Protector recruitment → two-person encounter → safe Medic recruitment junction
+→ service access fight → security checkpoint fight → dock concourse fight →
+launch bay fight → evacuation airlock → cutter boarding and departure →
+completion summary.
 
-Vanguard is the only protagonist; Protector is the fixed recruit. Operator and
-its pistol are deferred. The optional terminal supplies an inspectable detail;
+Vanguard is the fixed protagonist. Protector joins after the solo fight;
+Operator joins as the Medic after the two-person encounter through a short
+authored conversation. The optional terminal supplies an inspectable detail;
 one authored dialogue choice must have an observable consequence. Conversation
 is available to eligible sapient NPCs, without guaranteeing persuasion or a
 peaceful route through every encounter. Setting, names, factions, and final
-lore remain provisional.
-
-The [roadmap](ROADMAP.md) distinguishes the implemented slice from this target.
+lore remain provisional. [Roadmap](ROADMAP.md) owns implementation and gate status.
 
 ## Content budget
 
-- One authored level: start, solo arena, recruitment room, main encounter,
-  final approach, and evacuation airlock. Reserve the airlock assembly for
-  the destination; use ordinary service doors elsewhere.
-- Exactly two controllable characters, deployed solo until recruitment, plus
-  one noncontrollable survivor. Keep control architecture extensible to four
-  without implementing a larger party now.
-- One solo tutorial and one party encounter; at most two hostile behaviors:
-  mobile humanoid Security Enforcer melee and stationary integrated-gun sentry.
-- Each party character has one fixed weapon, repeatable basic attack, and two
-  active skills. Vanguard uses a carbine, area Interrupt, and targeted Burst
-  damage. Protector uses a shotgun, a stationary directional Barrier that blocks projectiles,
-  and a nearby-enemy Taunt. Crew attack only explicitly assigned targets.
-- Weapons are separate presentation assets; each human
-  has one fixed outfit. No ammunition, reload, loot, or generalized inventory.
-- Two authored NPC exchanges with selectable responses, one meaningful choice
-  consequence, and one optional inspection.
-- Reviewed production models for every visible environment, NPC, and combatant
-  on the active route. Hidden spatial wrappers may be primitives. The bounded
-  approved asset inventory is in [POC-ASSET-ROSTER.md](POC-ASSET-ROSTER.md).
+- One connected station route, with short passages, distinct area landmarks,
+  and victory-controlled ordinary service doors. Reserve the evacuation
+  airlock assembly for the final destination. The [tactical layout](station-layout.md)
+  uses distinct movement lanes, open service recesses, and staggered entries.
+- Exactly three controllable crew, recruited sequentially, plus one
+  noncontrollable survivor. Keep control extensible to four without adding
+  another recruit now.
+- Six fights: preserve the solo tutorial and two-person encounter, then add
+  the four encounters below. Hostiles are mobile melee Enforcers, mobile
+  rifle-equipped ranged Enforcers, and stationary integrated-gun sentries.
+- Each crew member has one separate fixed weapon, a repeatable basic attack,
+  and two active skills. Each human has one fixed outfit. No ammunition,
+  reload, loot, or generalized inventory.
+- Three authored NPC exchanges with selectable responses, one meaningful
+  choice consequence, and one optional inspection.
+- Reviewed production presentation for every visible environment, NPC,
+  combatant, and the cutter exterior. Hidden spatial wrappers may be
+  primitives. [POC-ASSET-ROSTER.md](POC-ASSET-ROSTER.md) owns the asset inventory.
+
+| New encounter | Enemies | Tactical purpose |
+| --- | --- | --- |
+| Service access | 2 melee Enforcers, 1 ranged Enforcer | Introduce healing and protecting Medic |
+| Security checkpoint | 1 melee Enforcer, 2 ranged Enforcers, 1 sentry | Combine Barrier, Interrupt, and target priority |
+| Dock concourse | 2 melee Enforcers, 2 ranged Enforcers | Coordinate positioning and field placement |
+| Launch bay | 2 melee Enforcers, 2 ranged Enforcers, 1 sentry | Combine all three kits before escape |
+
+| Crew | Weapon | Active skills |
+| --- | --- | --- |
+| Vanguard | Carbine | Area Interrupt; targeted Burst damage |
+| Protector | Shotgun | Stationary directional Barrier that blocks projectiles; nearby-enemy Taunt |
+| Medic (Operator) | One-handed pistol | Heal one living ally or herself; ground-placed Healing Field |
+
+Crew attack only explicitly assigned targets. Healing is player-commanded,
+available during combat, and cannot resurrect fallen crew. Healing Field
+periodically heals living crew inside its fixed radius and survives Medic
+moving or falling; one field exists at a time. Ranged Enforcers approach rifle
+range, stop, telegraph, and fire without automatic retreat. Content owns tuning;
+[Architecture](ARCHITECTURE.md) owns exact rules.
+
+Exploration can reveal dormant enemies before the crew enters combat.
+[Shared crew vision](ARCHITECTURE.md#shared-crew-vision) governs enemy visibility
+and targeting; moving the camera does not discover enemies. The authored
+all-crew entry zones still control encounter activation and tactical pause.
 
 ## Acceptance
 
-The player can select either crew member, drag a selection box, use additive selection and
-compact automatic formation, and issue contextual move, attack, or interact
-orders. Tab changes ability focus within the selected group. Camera edge/keyboard pan,
-free yaw, constrained pitch/zoom, reset, and focus are usable
-without fighting the player. Health, targets, destinations, pending orders,
-cooldowns, valid ability targets, and rejection reasons are legible.
+The player can select any crew member, drag a selection box, use additive
+selection and compact automatic formation, and issue contextual move, attack,
+or interact orders. Tab changes ability focus within the selected group.
+Heal targeting works through world characters and portraits; field previews
+show radius and affected crew. Camera pan, yaw, pitch/zoom, reset, and focus
+remain usable around every area. Health, targets, pending orders, cooldowns,
+valid ability targets, and rejection reasons are legible with crowded fights.
 
-Pause allows deliberate order entry. Attacks communicate source, facing,
-wind-up, release/contact, and recovery. A threat creates a useful interrupt,
-repositioning, defensive, or coordinated targeting decision. Defeat offers
-immediate encounter retry; victory and final completion are unambiguous.
-The [architecture](ARCHITECTURE.md) owns exact command and pause semantics.
+Each encounter starts in tactical pause once its recruited crew reach the
+entry zone. Pause supports deliberate order entry; attacks communicate source,
+facing, wind-up, release/contact, and recovery. Threats create useful interrupt,
+positioning, healing, defensive, and coordinated targeting decisions. After
+securing victory, restore health, fallen crew, and cooldowns and clear combat
+orders/effects before travel. Defeat retries only the current encounter,
+preserving recruitment, dialogue consequences, inspection, and prior victories.
 
-The finished POC passes five consecutive blocker-free owner-operated
-playthroughs plus the relevant automated checks. These runs exercise Vanguard
-throughout and Protector after recruitment, using production presentation.
-Controls, dialogue, threats, skills, and outcomes must be understandable from
-the game itself. Another contributor must be able to build, reproduce a bug,
-and add a small authored encounter using the repository workflow.
+The final victory opens access to the evacuation airlock. Boarding requires
+all three crew in the boarding zone, including when approach movement
+completes. Completion occurs once, followed by boarding, entrance closure,
+takeoff, and the summary. This is an authored departure without ship interiors
+or ship-combat mechanics.
+
+The finished POC requires five consecutive blocker-free owner-operated
+full-route playthroughs plus relevant automated and graphical checks. Controls,
+dialogue, threats, skills, and outcomes must be understandable from the game.
+Another contributor must be able to build, reproduce an accepted asset and a
+bug, and author/verify a small encounter using the repository workflow.
 
 ## Deferred
 
 No procedural generation, metaprogression, general quest framework, save
-migration, crafting/economy, runtime LLM calls, vehicles, ship simulation,
+migration, crafting/economy, runtime LLM calls, ship simulation, generalized
 boarding, or multiplayer belongs in the station POC. Bulk asset generation and
 unbounded variants are also outside scope.
 
-The approved [escape-cutter experiment](future/ship-combat-poc.md) follows POC
-hardening; [generated dialogue](future/dialogue-ai.md) is a separate optional
+The approved [escape-cutter combat experiment](future/ship-combat-poc.md) is
+the next gameplay milestone and carries Vanguard, Protector, and Medic forward.
+[Generated dialogue](future/dialogue-ai.md) remains a separate optional
 experiment. Model output may propose dialogue but never establish world facts
 or mutate rules directly. Larger adventures, progression, relationships, and
 procedural runs depend on the tactical loop proving enjoyable first.
-
-No unresolved product decision currently blocks the active slice. Record a
-new blocking question beside its milestone; do not maintain another list of
-already-decided features.

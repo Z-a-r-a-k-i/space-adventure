@@ -17,6 +17,10 @@ bundled pipes, structural ribs, and sparse dim utility lamps. Keep colors and
 detail quieter than the playable deck. All geometry stays below y=-0.20 m;
 there are no walkable extensions, collision, navigation, interaction, animation,
 or camera-occluder metadata. Existing room and doorway contracts remain intact.
+The solo and party foundation slabs must leave open shafts matching the pits in
+`tools/station-layout.json`, with 0.06 m clearance for their visible lining.
+Review these foundations together with the structure publication so the backing
+cannot visually cap the recessed machinery.
 
 Validate bounds, topology/material budgets, and exact GLB fresh import. Inspect
 in Godot at 7.5, 14.5, and 20 m, including low pitch and alternate yaw. Check

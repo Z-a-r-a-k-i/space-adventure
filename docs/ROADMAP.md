@@ -2,46 +2,51 @@
 
 ## Current state
 
-Phase 4 is active on `station-route-v15` (content schema 9). The owner accepted
-the solo fight and requested faster weapon draw. The local preview now joins
-recruitment to Vanguard/Protector versus an Enforcer and stationary sentry,
-with independent orders, two skills per crew member,
-party retry, and a compact tactical HUD. [Product](PRODUCT.md) owns the kits.
-Arena victory ends this slice; final airlock completion remains unavailable.
+**Phase 5 — The station escape slice is implemented; owner acceptance remains open.**
+The owner approved the three-person crew and station escape expansion on
+2026-09-12. The current revision is `station-route-v18`, with content and
+automation schema 11.
+The accepted solo/Protector baseline remains the opening; Operator joins as
+Medic before four new connected fights and a short cutter departure.
+[Product](PRODUCT.md) owns the route and kits. The [tactical layout](station-layout.md)
+adds staggered approaches and distinct movement loops to all six fights.
+The [shared crew vision rules](ARCHITECTURE.md#shared-crew-vision) add enemy
+discovery during exploration without changing encounter entry conditions.
 
-**Next gate: owner review of the completed station polish pass.** The party
-combat slice merged in PR 20 after the owner's 2026-09-08 preview acceptance;
-the environment, Field Ops, and faster handling baseline merged in PR 21.
-The follow-up adds zone identity, threat/contact cues, contextual skill previews,
-staged guidance, and session sound controls. Agent verification remains separate
-from owner handling and listening acceptance.
-The fitted Protector and shotgun are included
-under `game/Assets/Published/`; running the game needs no local art staging.
-Rebuild instructions live with the [party presentation tool](../tools/blender/README.md).
-The workstation's display workaround is in [Testing](testing.md); the measured
-frame-pacing result is in [history](archive/prototype-history.md).
+**Next gate: owner acceptance and the remaining station hardening checks.**
+Agent build, rule, CLI, headless and graphical checks are recorded in
+[prototype evidence](archive/prototype-history.md). Handling and listening
+acceptance remain open. Agent verification does not satisfy the five
+consecutive blocker-free owner-operated full-route runs. Do not infer
+acceptance from the earlier solo/party reviews.
+Shared vision now has its own rule, actual-layout, and graphical results in
+the evidence record; the owner gate remains separate.
+
+The prior party slice and station/Field Ops polish established the baseline.
+Its completion evidence belongs in Git/PR history. Presentation rebuild
+instructions live with the [Blender tools](../tools/blender/README.md);
+[Testing](testing.md) owns verification and the local display workaround.
 
 ## Remaining milestones
 
 | Phase | Work | Exit |
 | --- | --- | --- |
-| 4 — Party combat | Review the environment, Field Ops HUD, overhead health, and faster pacing follow-up. | Active pause helps coordinate both characters; victory, defeat, retry, and graphical checks pass; owner accepts the polished slice. |
-| 5 — Complete station POC | Join both fights, recruitment, dialogue consequence, inspection, opening final airlock, and completion summary into the authored 8–12 minute flow. Add comprehension polish only. | Five consecutive blocker-free manual runs and the relevant automated checks pass. |
-| 6 — Hardening | Reproduce an accepted asset and a small authored encounter from a clean checkout; record useful startup/frame-time/memory/tooling baselines. | Another contributor can author and verify them using the documented workflow. |
-| 7 — Ship experiment | One separately gated escape-cutter battle under the approved [spec](future/ship-combat-poc.md). Prove deterministic greybox before final art. | Rule, CLI, Godot, graphical, and owner-operated checks pass; pause-based crew/power/target decisions are useful. |
+| 5 — Complete and harden station POC | Recruit Medic, complete six fights, recover between victories, retry each encounter independently, and board/depart in the cutter. Finish three-person controls, production presentation, and station hardening. | Relevant automated and graphical checks pass; owner accepts visuals, handling, and sound and completes five consecutive blocker-free full-route runs. Another contributor can reproduce an accepted asset and author/verify a small encounter from a clean checkout; useful startup/frame-time/memory/tooling baselines are recorded. |
+| 6 — Ship combat | One escape-cutter battle with Vanguard, Protector, and Medic under the approved [spec](future/ship-combat-poc.md). Prove deterministic greybox before ship interiors, enemy-ship art, or production combat UI. | Rule, CLI, Godot, graphical, and owner-operated checks pass; pause-based crew/power/target decisions are useful. |
 
-Phases 0–3 established the C# foundation, walking skeleton, and production
-station/character bases. Their completion evidence belongs in history, not
-the current work list.
+The former standalone hardening phase is part of Phase 5's completion gate;
+ship combat is the next gameplay milestone. Phases 0–4 established the C#
+foundation, production station/character bases, solo combat, and party combat.
 
 ## Scope discipline
 
 Each change should test the active milestone's playable outcome. Approved
-offline assets may be prepared under the [art pipeline](ART-PIPELINE.md), but
-that does not activate a later gameplay phase or authorize live replacement.
-Animation and effects are finalized alongside authoritative combat timings.
+asset production follows the [art pipeline](ART-PIPELINE.md). Operator/pistol,
+the rifle-equipped Enforcer derivative, station extensions, and cutter exterior
+are authorized for this route; unrelated exploratory concepts are not.
+Animation and effects are finalized with authoritative combat timings.
 
-Operator, wall-utility integration, broader inventory/progression, procedural
-runs, generated dialogue, deeper ship systems, and boarding remain deferred.
-The owner may reprioritize explicitly; record consequential changes in
-[DECISIONS.md](DECISIONS.md).
+Wall-utility integration, broader inventory/progression, procedural runs,
+generated dialogue, ship interiors/combat systems, and generalized boarding
+remain deferred. The cutter's authored boarding/departure closes the station
+route. Record consequential scope changes in [DECISIONS.md](DECISIONS.md).

@@ -126,11 +126,13 @@ public enum CommandRejectionCode
     UnknownEncounter,
     InvalidEncounterState,
     UnknownCombatTarget,
+    CombatTargetNotVisible,
     CombatantDefeated,
     UnknownAttack,
     UnknownAbility,
     AbilityTargetKindMismatch,
     AbilityTargetOutOfRange,
+    AbilityTargetObstructed,
     AbilityOnCooldown,
     InvalidAbilityTarget,
 }

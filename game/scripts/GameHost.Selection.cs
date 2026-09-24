@@ -43,6 +43,8 @@ public partial class GameHost
     // Receive the end of a world drag before GUI controls can swallow its release.
     public override void _Input(InputEvent @event)
     {
+        if (_session?.IsStationRouteCompleted == true)
+        { GetViewport().SetInputAsHandled(); return; }
         if (@event is InputEventMouse pointer) { _inputPointerPosition = pointer.Position; }
         if (HandleControlsInput(@event)) { return; }
         if (HandleDialogueInput(@event)) { return; }

@@ -29,13 +29,18 @@ public sealed partial class GameSession
         var action = actor.CurrentAction;
         if (action is not null && action.WaypointIndex < action.Waypoints.Count)
         { return DirectionTo(actor.Position, action.Waypoints[action.WaypointIndex]) ?? actor.Facing; }
-        if (action?.CombatTargetId is { } targetId && station.Combat.Hostiles.TryGetValue(targetId, out var target) && target.Health > 0)
+        if (action?.CombatTargetId is { } targetId && station.Combat.Hostiles.TryGetValue(targetId, out var target)
+            && target.Health > 0 && IsVisibleToCrew(station, target))
         { return DirectionTo(actor.Position, target.Position) ?? actor.Facing; }
-        if (action?.AbilityId == station.Definition.Combat.ProtagonistAbility.Id)
+        if (action?.AbilityId == station.Definition.Combat.DirectHeal.Id && action.CombatTargetId is { } allyId
+            && station.Actors.TryGetValue(allyId, out var ally))
+        { return DirectionTo(actor.Position, ally.Position) ?? actor.Facing; }
+        if (action?.AbilityId == station.Definition.Combat.ProtagonistAbility.Id
+            || action?.AbilityId == station.Definition.Combat.HealingField.Id)
         { return DirectionTo(actor.Position, action.AbilityTargetPosition) ?? actor.Facing; }
         if (station.Combat.Phase is EncounterPhase.Readying or EncounterPhase.Active or EncounterPhase.Securing)
         {
-            var nearest = station.Combat.Hostiles.Values.Where(hostile => hostile.Health > 0)
+            var nearest = station.Combat.Hostiles.Values.Where(hostile => hostile.Health > 0 && IsVisibleToCrew(station, hostile))
                 .OrderBy(hostile => hostile.Position.DistanceTo(actor.Position))
                 .ThenBy(hostile => hostile.Id.Value, StringComparer.Ordinal).FirstOrDefault();
             if (nearest is not null) { return DirectionTo(actor.Position, nearest.Position) ?? actor.Facing; }

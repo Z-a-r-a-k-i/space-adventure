@@ -43,7 +43,8 @@ public partial class GameHost
             }
         }
         var solo = encounter.Id == _definition!.Combat.SoloEncounter.Id;
-        var incoming = route.Hostiles?.Any(enemy => enemy.CurrentAction?.Phase == PrimaryActionPhase.Windup) == true;
+        var incoming = route.VisibleHostiles.Any(enemy => enemy.EncounterId == route.Encounter?.Id
+            && enemy.CurrentAction?.Phase == PrimaryActionPhase.Windup);
         _onboardingHint.Text = encounter.Phase switch
         {
             EncounterPhase.Readying when solo => "FIRST CONTACT\nRight-click the Enforcer to assign fire. Space resumes the weapon draw.",
@@ -53,10 +54,16 @@ public partial class GameHost
                 "WATCH THE ENFORCER\nIts strike has a wind-up. Pause when the warning appears, then use Interrupt (1).",
             EncounterPhase.Active when solo && _counterLearned =>
                 "STRIKE INTERRUPTED\nKeep firing at your assigned target. Move or Stop (X) to break off.",
+            EncounterPhase.Readying when route.Party.Count == 3 =>
+                "THREE CREW\nUse Tab to focus Medic. Heal (1) targets an ally or portrait; Healing Field (2) restores crew inside its circle.",
+            EncounterPhase.Active when route.Party.Count == 3 && observation.Paused =>
+                "HOLD THE LINE\nPlace a healing field where crew can stay together. Barrier stops rifle shots; Taunt protects the Medic.",
             EncounterPhase.Readying =>
                 "COORDINATE THE CREW\nDrag to select both; right-click to order. Tab changes ability focus. Place Protector's Barrier (1) toward the sentry.",
             EncounterPhase.Active when !solo && observation.Paused =>
                 "PLAN TOGETHER\nEach crew member keeps one next order. Protector's Barrier blocks shots; Vanguard's Interrupt cancels a strike.",
+            _ when route.VisibleHostiles.Any(enemy => enemy.EncounterPhase == EncounterPhase.Dormant && !enemy.Combat.IsDefeated) =>
+                "ENEMIES AHEAD\nCrew share sight. Bring the whole crew into the area to engage. Walls and closed doors conceal enemies.",
             _ => "",
         };
         _onboardingHint.Visible = _onboardingHint.Text.Length > 0 && route.ActiveDialogue is null
