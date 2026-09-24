@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "cache": "artifacts/audio-sources",
+  "policy": "Only CC0 packs are used. Raw downloads stay in the ignored cache; only processed game clips are committed.",
+  "packs": [
+    {
+      "id": "kenney_sci-fi-sounds",
+      "title": "Sci-Fi Sounds 1.0",
+      "author": "Kenney (kenney.nl)",
+      "license": "CC0-1.0",
+      "page": "https://kenney.nl/assets/sci-fi-sounds",
+      "url": "https://kenney.nl/media/pages/assets/sci-fi-sounds/6b296f9ecf-1677589334/kenney_sci-fi-sounds.zip",
+      "file": "kenney_sci-fi-sounds.zip",
+      "bytes": 5875104,
+      "sha256": "119340f351a5098ad814f78719438c0da355a9ce8a4c8a3af6a8d48aa3d49e04"
+    },
+    {
+      "id": "kenney_impact-sounds",
+      "title": "Impact Sounds 1.0",
+      "author": "Kenney (kenney.nl)",
+      "license": "CC0-1.0",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "url": "https://kenney.nl/media/pages/assets/impact-sounds/87b4ddecda-1677589768/kenney_impact-sounds.zip",
+      "file": "kenney_impact-sounds.zip",
+      "bytes": 800850,
+      "sha256": "029d734af1582474edf3a694d1b0cebc97c1c152f2f39fa34d4c2bafc5de77f8"
+    },
+    {
+      "id": "kenney_interface-sounds",
+      "title": "Interface Sounds 1.0",
+      "author": "Kenney (kenney.nl)",
+      "license": "CC0-1.0",
+      "page": "https://kenney.nl/assets/interface-sounds",
+      "url": "https://kenney.nl/media/pages/assets/interface-sounds/fa43c1dd4d-1677589452/kenney_interface-sounds.zip",
+      "file": "kenney_interface-sounds.zip",
+      "bytes": 834536,
+      "sha256": "f2193d072726d6758a5f7871b2dcc54dcce0d5c35c6f0a62f92549b327c81232"
+    },
+    {
+      "id": "kenney_digital-audio",
+      "title": "Digital Audio",
+      "author": "Kenney (kenney.nl)",
+      "license": "CC0-1.0",
+      "page": "https://kenney.nl/assets/digital-audio",
+      "url": "https://kenney.nl/media/pages/assets/digital-audio/216eac4753-1677590265/kenney_digital-audio.zip",
+      "file": "kenney_digital-audio.zip",
+      "bytes": 990367,
+      "sha256": "24e6ce28b76a6d8c89cff4d331e0965ff5c3de8a73c612028e9d363cc64e4f06"
+    },
+    {
+      "id": "rubberduck_sfx_loops",
+      "title": "30 CC0 SFX loops",
+      "author": "rubberduck (OpenGameArt)",
+      "license": "CC0-1.0",
+      "page": "https://opengameart.org/content/30-cc0-sfx-loops",
+      "url": "https://opengameart.org/sites/default/files/sfx_loops.zip",
+      "file": "rubberduck_sfx_loops.zip",
+      "bytes": 3526706,
+      "sha256": "9c013474c7e56192a0d1b2840535a1e1d8b93166948d4a9f7136bb6c3d5421cd"
+    },
+    {
+      "id": "rubberduck_100-CC0-SFX",
+      "title": "100 CC0 SFX",
+      "author": "rubberduck (OpenGameArt)",
+      "license": "CC0-1.0",
+      "page": "https://opengameart.org/content/100-cc0-sfx",
+      "url": "https://opengameart.org/sites/default/files/100-CC0-SFX_0.zip",
+      "file": "rubberduck_100-CC0-SFX.zip",
+      "bytes": 2921904,
+      "sha256": "a5c135878c132f1c59cca54e60061c296cd0ac27ad031ca2c41b8cd5cab3c706"
+    },
+    {
+      "id": "antumdeluge_fire",
+      "title": "Fire Crackling (fire-1.wav)",
+      "author": "AntumDeluge (OpenGameArt)",
+      "license": "CC0-1.0",
+      "page": "https://opengameart.org/content/fire-crackling",
+      "url": "https://opengameart.org/sites/default/files/fire-1.wav",
+      "file": "antumdeluge_fire-1.wav",
+      "bytes": 253232,
+      "sha256": "26702de8a195bcbafeae72034861d875a1b7917168a25106f4e1957ecdddf7e5"
+    }
+  ],
+  "rejected": [
+    {
+      "id": "oga_gunshot_sounds",
+      "page": "https://opengameart.org/content/gunshot-sounds",
+      "reason": "Listed as CC0 on the page, but the archive's creativecommons.txt says CC-BY 3.0 (Vincent Sevedge, 2009). Excluded to keep the library strictly CC0."
+    }
+  ]
+}

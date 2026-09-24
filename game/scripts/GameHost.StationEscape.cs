@@ -101,8 +101,8 @@ public partial class GameHost
             _departureEnginesStarted = true;
             if (_reviewMode != "capture" && DisplayServer.GetName() != "headless")
             {
-                _departureAudio = new AudioStreamPlayer3D { Stream = CombatAudio.Get("departure"),
-                    VolumeDb = -10, MaxDb = -10, UnitSize = 18, MaxDistance = 70 };
+                _departureAudio = new AudioStreamPlayer3D { Stream = CombatAudio.Get("departure"), Bus = CombatAudio.Bus("departure"),
+                    VolumeDb = CombatAudio.VolumeDb("departure"), MaxDb = CombatAudio.VolumeDb("departure"), UnitSize = 18, MaxDistance = 70 };
                 cutter.AddChild(_departureAudio); _departureAudio.Play();
             }
         }

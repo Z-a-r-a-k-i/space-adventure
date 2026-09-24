@@ -10,10 +10,10 @@ param(
 
     [string]$Name = "bootstrap",
 
-    [ValidateSet("live", "capture", "record", "performance", "input")]
+    [ValidateSet("live", "capture", "record", "performance", "input", "handoff")]
     [string]$Mode = "capture",
 
-    [ValidateSet("solo", "party", "escape", "vision")]
+    [ValidateSet("solo", "party", "escape", "vision", "ship")]
     [string]$Encounter = "solo",
 
     [ValidateSet("victory", "defeat")]
@@ -397,10 +397,12 @@ SpaceAdventure development commands
   import                  Import the Godot project headlessly
   headless [-Name name]   Run a bounded Godot smoke (bootstrap, station-route, station-combat-defeat,
                           station-party, station-party-defeat, station-escape, station-escape-defeat, station-vision,
-                          humanoid-gallery, hostile-gallery)
+                          humanoid-gallery, hostile-gallery,
+                          ship-battle, ship-battle-defeat, ship-handoff)
   capture -Name name      Create and verify a deterministic graphical capture (wall-cutaway)
   review                  Bounded combat review through ordinary typed commands
-                          -Encounter solo|party|escape|vision
+                          -Encounter solo|party|escape|vision|ship (ship: -Mode capture|input|performance|handoff,
+                          -Resolution; PNG+JSON under artifacts/ship-review)
                           -Mode live|capture|record|performance|input -Sequence victory|defeat
                           -Recoil restrained|strong (restrained is the game default)
                           -Checkpoint all|armed|fire|... -Distance 7.5..20
@@ -522,13 +524,16 @@ Options:
                         Scene = "res://scenes/humanoid_gallery.tscn"
                     }
                 }
+                "ship-battle" { @{ Argument = "--ship-battle-smoke"; Scene = "res://scenes/ship_battle.tscn" } }
+                "ship-handoff" { @{ Argument = @("--solo-review=smoke", "--review-encounter=escape", "--review-sequence=victory", "--review-continue=ship"); Scene = $null } }
+                "ship-battle-defeat" { @{ Argument = @("--ship-battle-smoke", "--review-sequence=defeat"); Scene = "res://scenes/ship_battle.tscn" } }
                 "hostile-gallery" {
                     @{
                         Argument = "--hostile-gallery-smoke"
                         Scene = "res://scenes/hostile_gallery.tscn"
                     }
                 }
-                default { throw "Unknown Godot headless scenario '$Name'. Expected 'bootstrap', 'station-route', 'station-combat-defeat', 'station-party', 'station-party-defeat', 'station-escape', 'station-escape-defeat', 'station-vision', 'humanoid-gallery', or 'hostile-gallery'." }
+                default { throw "Unknown Godot headless scenario '$Name'. Expected 'bootstrap', 'station-route', 'station-combat-defeat', 'station-party', 'station-party-defeat', 'station-escape', 'station-escape-defeat', 'station-vision', 'humanoid-gallery', 'hostile-gallery', 'ship-battle', 'ship-battle-defeat', or 'ship-handoff'." }
             }
             $arguments = @("--headless", "--path", $gameProject)
             if ($null -ne $smoke.Scene) {
@@ -804,6 +809,21 @@ Options:
             Write-Output "SHA-256: $actualSha256"
         }
         "review" {
+            if ($Encounter -eq 'ship') {
+                if ($Mode -notin @('capture', 'input', 'performance', 'handoff')) { throw "The ship review supports -Mode capture, input, performance or handoff." }
+                if (-not $PSBoundParameters.ContainsKey('TimeoutSeconds')) { $TimeoutSeconds = if ($Mode -eq 'handoff') { 600 } else { 180 } }
+                $shipArguments = if ($Mode -eq 'handoff') {
+                    @('--path', $gameProject, '--windowed', '--resolution', $Resolution, '--', '--solo-review=smoke', '--review-encounter=escape',
+                        '--review-sequence=victory', '--review-continue=ship-capture')
+                } else {
+                    @('--path', $gameProject, '--windowed', '--resolution', $Resolution, 'res://scenes/ship_battle.tscn', '--', "--ship-review=$Mode")
+                }
+                Invoke-GodotAutomated -UserDataScope "ship-review-$Mode" -Arguments $shipArguments
+                break
+            }
+            if ($Mode -eq 'handoff') {
+                throw "-Mode handoff is supported only with -Encounter ship."
+            }
             if (($PSBoundParameters.ContainsKey('Pitch') -or $PSBoundParameters.ContainsKey('Yaw')) -and
                 $Mode -notin @('capture', 'live')) {
                 throw "-Pitch and -Yaw are supported only with -Mode capture or -Mode live."

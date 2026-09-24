@@ -18,6 +18,7 @@ try
         "station-escape" => RunStationRoute(output, party: true, complete: true),
         "station-escape-defeat" => RunStationRoute(output, party: true, complete: true, extensionDefeat: true),
         "station-party-defeat" => RunStationRoute(output, party: true, defeat: true),
+        _ when SpaceAdventure.SimCli.ShipScenarios.Handles(scenarioId) => SpaceAdventure.SimCli.ShipScenarios.Run(scenarioId, output),
         _ => ReportUnknownScenario(output, scenarioId),
     };
 }

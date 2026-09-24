@@ -225,6 +225,7 @@ public partial class GameHost : Node3D
         SynchronizePresentation();
         AdvanceServiceDoorPresentation((float)delta);
         if (!_reviewDrivesClock) { AdvanceDeparture(observation, delta); }
+        if (!_reviewDrivesClock) { AdvanceShipContinuation(observation); }
         if (_feedbackSeconds > 0)
         {
             _feedbackSeconds = Math.Max(0, _feedbackSeconds - delta);

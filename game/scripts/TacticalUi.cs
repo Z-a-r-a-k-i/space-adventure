@@ -12,6 +12,31 @@ internal static class TacticalUi
     public static readonly Color Danger = new("ee907d");
     public static readonly Color Protector = new("e5bc7d");
 
+    // Ship battle tokens extend the same kit: friendly mint-cyan, hostile orange, shield blue.
+    public static readonly Color Hostile = new("ff7a4d");
+    public static readonly Color Shield = new("63c9ff");
+    public static readonly Color Power = new("8ee6b4");
+    public static readonly Color PowerOff = new("24343d");
+    public static readonly Color Damaged = new("ff5c4d");
+    public static readonly Color Oxygen = new("ff6f9c");
+    public static readonly Color Line = new("344651");
+
+    private static readonly Dictionary<string, Texture2D?> Icons = new(StringComparer.Ordinal);
+    private static FontFile? _boldFont;
+
+    /// <summary>Bold face of the project font for headings and numbers; the regular face is the project default.</summary>
+    public static Font BoldFont => _boldFont ??= ResourceLoader.Load<FontFile>("res://ui/fonts/chakra_petch_bold.ttf");
+
+    /// <summary>White line icon from <c>res://ui/icons</c>, tinted by the caller; null when the file is missing.</summary>
+    public static Texture2D? Icon(string name)
+    {
+        if (Icons.TryGetValue(name, out var cached)) { return cached; }
+        var path = $"res://ui/icons/{name}.svg";
+        var texture = ResourceLoader.Exists(path) ? ResourceLoader.Load<Texture2D>(path) : null;
+        Icons[name] = texture;
+        return texture;
+    }
+
     public static StyleBoxFlat Box(string background = "09131d", string border = "344651", int margin = 12) => new()
     {
         BgColor = new Color(background, .96f), BorderColor = new Color(border),

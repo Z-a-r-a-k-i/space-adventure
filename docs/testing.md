@@ -22,6 +22,14 @@ pwsh -NoProfile -File scripts/dev.ps1 headless -Name station-party-defeat
 pwsh -NoProfile -File scripts/dev.ps1 headless -Name station-escape
 pwsh -NoProfile -File scripts/dev.ps1 headless -Name station-escape-defeat
 pwsh -NoProfile -File scripts/dev.ps1 headless -Name station-vision
+pwsh -NoProfile -File scripts/dev.ps1 scenario -Name ship-victory     # also ship-overwhelm, ship-defeat, ship-retry
+pwsh -NoProfile -File scripts/dev.ps1 scenario -Name ship-balance     # every pilot across 40 seeds (tuning report)
+pwsh -NoProfile -File scripts/dev.ps1 headless -Name ship-battle      # also ship-battle-defeat
+pwsh -NoProfile -File scripts/dev.ps1 headless -Name ship-handoff     # station escape -> ordinary handoff
+pwsh -NoProfile -File scripts/dev.ps1 review -Encounter ship -Mode capture -Resolution 1280x720   # and 1920x1080
+pwsh -NoProfile -File scripts/dev.ps1 review -Encounter ship -Mode input      # input + window resize
+pwsh -NoProfile -File scripts/dev.ps1 review -Encounter ship -Mode handoff    # graphical handoff capture
+pwsh -NoProfile -File scripts/dev.ps1 review -Encounter ship -Mode performance
 ```
 
 Core tests cover rules and regressions; the CLI uses a deterministic fixture
@@ -32,6 +40,8 @@ establish animation quality, camera feel, or physical input usability.
 `station-escape` completes all six fights and departure. The
 `station-escape-defeat` CLI/headless profiles force defeat and retry in security
 checkpoint and launch bay while preserving previous victories and recruitment.
+
+Ship profiles: `ShipCombatTests` pin tick order, chunking, power and pause exploits, manning/Hold, auto priority, door traversal gas exchange, single-breach recovery, Medic interruption/no revival, defeat precedence, per-weapon telegraphs, wins inside the pilot band (`ShipBattlePilot.MinimumWinSeconds`–`MaximumWinSeconds`) for two distinct pilots with the repair reserve exhausted, retry and continuation orderings/failures. `ShipFtlRulesTests` pin shield layers versus piercing missiles, crew injury by damage, seeded per-attempt evasion (missiles never miss), mounting-order weapon power, synchronized held volleys, missile ammunition and Medic auto-treatment. `ship-balance` reports win rate, duration and hull spread per pilot across 40 seeds; it informs tuning and asserts nothing. CLI and `ship-battle` headless use the same scripted typed-command pilot. `ship-handoff` runs the escape pilot through the real 8 s departure and threaded load into the battle (paused tick 0, crew identity, one instance, battle-only retry). Ship reviews write `artifacts/ship-review/*.png/json` and check publication bounds/anchors (including enemy room anchors), that each ship and its shield bubble fit the HUD-safe area, that HUD panels neither overlap each other nor the hulls, on-screen controls, projectiles in flight (`ship-combat-*` capture), weapon-card/room aiming, power-column clicks, volley hold, the bounded destruction clock and retry cleanup; the project stretches a 1280x720 logical layout, so resize evidence records the real window size. Missing hazard publications are reported in the manifests. None of this is owner acceptance of art, handling or audio.
 
 `station-vision` checks perception against the actual Godot station layout.
 Keep pure rule fixtures separate: their synthetic paths and blockers cannot

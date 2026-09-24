@@ -52,6 +52,7 @@ public partial class GameHost
             effect.Configure(signature, Vector3.Zero, Vector3.Forward);
             warmup.AddChild(effect);
         }
+        GameAudio.Ensure(this);
         CombatAudio.Warmup();
         var audition = System.Environment.GetEnvironmentVariable("SPACE_ADVENTURE_AUDIO_REVIEW");
         if (!string.IsNullOrWhiteSpace(audition)) { CombatAudio.WriteAudition(audition); }
@@ -59,8 +60,8 @@ public partial class GameHost
         {
             _stationAmbience = new AudioStreamPlayer3D
             {
-                Name = "StationVentilation", Stream = CombatAudio.Get("ambience"), VolumeDb = -12,
-                UnitSize = 14, MaxDistance = 60, MaxDb = -12,
+                Name = "StationVentilation", Stream = CombatAudio.Get("ambience"), Bus = CombatAudio.Bus("ambience"),
+                VolumeDb = CombatAudio.VolumeDb("ambience"), UnitSize = 14, MaxDistance = 60, MaxDb = CombatAudio.VolumeDb("ambience"),
                 Position = GetNode<Marker3D>("Markers/PartyEncounterTrigger").GlobalPosition + Vector3.Up * 3,
             };
             AddChild(_stationAmbience);
@@ -171,7 +172,7 @@ public partial class GameHost
         _audioVariants[cue] = (variant + 1) % 4;
         var player = new AudioStreamPlayer3D
         {
-            Stream = CombatAudio.Get(cue, variant), Position = position,
+            Stream = CombatAudio.Get(cue, variant), Position = position, Bus = CombatAudio.Bus(cue),
             VolumeDb = CombatAudio.VolumeDb(cue), MaxDb = CombatAudio.VolumeDb(cue),
             UnitSize = 10, MaxDistance = 38,
         };

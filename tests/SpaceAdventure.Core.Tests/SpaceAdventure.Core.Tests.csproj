@@ -19,5 +19,9 @@
     <None Include="..\..\game\content\station-route.json"
           Link="content\station-route.json"
           CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\game\content\ship-battle.json"
+          Link="content\ship-battle.json"
+          CopyToOutputDirectory="PreserveNewest" />
+    <Compile Include="..\..\tools\SpaceAdventure.SimCli\ShipBattlePilot.cs" Link="ShipBattlePilot.cs" />
   </ItemGroup>
 </Project>

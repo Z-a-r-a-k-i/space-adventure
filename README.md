@@ -2,7 +2,8 @@
 
 A single-player science-fiction party RPG built with Godot 4.7.1 .NET and C#.
 The active station milestone grows the crew from Vanguard to Protector and
-Medic, through six tactical-pause fights and a spaceship departure. See the
+Medic, through six tactical-pause fights and a spaceship departure into an
+FTL-like battle with crew tasks, ship systems and compartment emergencies. See the
 [roadmap](docs/ROADMAP.md) for implementation status and the next acceptance gate.
 
 ## Run

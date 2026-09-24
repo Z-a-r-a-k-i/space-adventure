@@ -7,4 +7,8 @@
   <ItemGroup>
     <ProjectReference Include="..\src\SpaceAdventure.Core\SpaceAdventure.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Scripted ship pilot shared with the CLI; used only by bounded automation profiles. -->
+    <Compile Include="..\tools\SpaceAdventure.SimCli\ShipBattlePilot.cs" Link="scripts\automation\ShipBattlePilot.cs" />
+  </ItemGroup>
 </Project>

@@ -125,6 +125,15 @@ revalidates their presence at completion, and completes the route once. Godot pr
 entrance closure, and departure before showing the completion summary; it does
 not supply authoritative completion or implement ship simulation.
 
+The ship battle is a separate pure `ShipCombatSession` with its own typed
+commands, observations and content ([spec](future/ship-combat-poc.md)). A pure
+`ShipContinuation` enters it exactly once after the departure presentation and
+threaded load both finish; the Godot `ShipBattleHost` only presents
+observations, samples crew poses from the battle tick and sends commands.
+Its evasion and hazard-chance rolls come from one seeded stream per attempt
+(content seed, overridable in tests), so a seed, attempt and command log replay
+exactly; effects and audio variation use separate presentation-only randomness.
+
 ## Shared crew vision
 
 Enemy perception belongs to the core. Any living recruited crew member supplies
