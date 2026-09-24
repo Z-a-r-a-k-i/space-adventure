@@ -89,3 +89,23 @@ The first command edits both crew sources and overwrites both published crew
 GLBs after fresh-import checks of floor contact and the
 final poses. It needs the retained Rifle Death donor in Vanguard's raw cache.
 `--verify-only` checks those existing GLBs without editing assets.
+
+
+## Station escape publications
+
+`build_station_crew_expansion.py -- --asset all --publish-existing` exports the
+committed Medic, pistol, and ranged Enforcer sources without provider caches.
+`verify_station_crew_expansion.py` checks the exact published files; see the
+[Medic production record](../../art/source/character.crew.operator.v1/production.md)
+for the source audit and full commands.
+
+`build_station_escape.py` builds the connected room kit, and
+`build_escape_cutter.py` builds the boarding/takeoff exterior. Their
+[station](../../art/briefs/station-escape-v1.md) and
+[cutter](../../art/briefs/escape-cutter-v1.md) briefs own dimensions and references.
+Use the canonical Godot escape reviews after publication; Blender validation
+and owner acceptance remain separate.
+
+The [station layout guide](../../docs/station-layout.md) owns the shared offline
+layout input and matching scene-wrapper rebuild command. Rebuild both structure
+kits and the spatial wrappers together when changing floor openings or door positions.

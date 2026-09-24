@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=3]
+[gd_scene load_steps=125 format=3]
 
 [ext_resource type="Script" path="res://scripts/GameHost.cs" id="1_host"]
 [ext_resource type="Script" path="res://scripts/TacticalCameraController.cs" id="2_camera"]
@@ -18,6 +18,12 @@
 [ext_resource type="PackedScene" path="res://Assets/Published/machine.security.gun_sentry.v1.glb" id="16_sentry"]
 [ext_resource type="Script" path="res://scripts/SentryPresentation.cs" id="17_sentry_presentation"]
 [ext_resource type="PackedScene" path="res://Assets/Published/assembly.station.service_surround.v1.glb" id="18_surround"]
+
+[ext_resource type="PackedScene" path="res://Assets/Published/character.crew.operator.v1.glb" id="escape_medic"]
+[ext_resource type="PackedScene" path="res://Assets/Published/weapon.crew.operator_pistol.v1.glb" id="escape_pistol"]
+[ext_resource type="PackedScene" path="res://Assets/Published/character.enemy.ranged_enforcer.v1.glb" id="escape_ranged"]
+[ext_resource type="PackedScene" path="res://Assets/Published/ship.escape_cutter.v1.glb" id="escape_cutter"]
+[ext_resource type="PackedScene" path="res://Assets/Published/kit.station.escape.v1.glb" id="escape_escape"]
 
 [sub_resource type="Environment" id="Environment_station"]
 background_mode = 1
@@ -47,26 +53,18 @@ glow_bloom = 0.0
 glow_hdr_threshold = 1.6
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_route"]
-vertices = PackedVector3Array(-12.7, 0, 4.3, -12.7, 0, 9.7, -7.3, 0, 9.7, -7.3, 0, 4.3, -14.7, 0, -3.7, -14.7, 0, 3.7, -5.3, 0, 3.7, -5.3, 0, -3.7, -4.7, 0, -2.7, -4.7, 0, 3.3, 1.7, 0, 3.3, 1.7, 0, -2.7, -5.7, 0, 3.3, -5.7, 0, 12.7, 5.7, 0, 12.7, 5.7, 0, 3.3, 5.7, 0, 5.3, 5.7, 0, 10.7, 11.7, 0, 10.7, 11.7, 0, 5.3)
-polygons = [PackedInt32Array(3, 2, 1, 0), PackedInt32Array(7, 6, 5, 4), PackedInt32Array(11, 10, 9, 8), PackedInt32Array(15, 14, 13, 12), PackedInt32Array(19, 18, 17, 16)]
+vertices = PackedVector3Array(-12.7, 0, 4.3, -7.3, 0, 4.3, -7.3, 0, 9.7, -12.7, 0, 9.7, -4.7, 0, -2.7, 1.7, 0, -2.7, 1.7, 0, 3.3, -4.7, 0, 3.3, 5.7, 0, 5.3, 11.7, 0, 5.3, 11.7, 0, 10.7, 5.7, 0, 10.7, -14.7, 0, -3.7, -12.5, 0, -3.7, -12.5, 0, -1.1, -14.7, 0, -1.1, -12.5, 0, 1.3, -14.7, 0, 1.3, -12.5, 0, 3.7, -14.7, 0, 3.7, -8.8, 0, -3.7, -8.8, 0, -1.1, -8.8, 0, 1.3, -8.8, 0, 3.7, -5.3, 0, -3.7, -5.3, 0, -1.1, -5.3, 0, 1.3, -5.3, 0, 3.7, -5.7, 0, 3.3, -1.3, 0, 3.3, -1.3, 0, 6.7, -5.7, 0, 6.7, -1.3, 0, 10, -5.7, 0, 10, -1.3, 0, 12.7, -5.7, 0, 12.7, 1.3, 0, 3.3, 1.3, 0, 6.7, 1.3, 0, 10, 1.3, 0, 12.7, 5.7, 0, 3.3, 5.7, 0, 6.7, 5.7, 0, 10, 5.7, 0, 12.7, 12.4, 0, -0.6, 16.6, 0, -0.6, 16.6, 0, 3.6, 12.4, 0, 3.6, 16.6, 0, 8.4, 12.4, 0, 8.4, 16.6, 0, 12.6, 12.4, 0, 12.6, 20.4, 0, -0.6, 20.4, 0, 3.6, 20.4, 0, 8.4, 20.4, 0, 12.6, 23.6, 0, -0.6, 23.6, 0, 3.6, 23.6, 0, 8.4, 23.6, 0, 12.6, 26.4, 0, -3.6, 29.6, 0, -3.6, 29.6, 0, -0.9, 26.4, 0, -0.9, 29.6, 0, 2.4, 26.4, 0, 2.4, 29.6, 0, 4.6, 26.4, 0, 4.6, 29.6, 0, 7.9, 26.4, 0, 7.9, 29.6, 0, 9.6, 26.4, 0, 9.6, 32.4, 0, -3.6, 32.4, 0, -0.9, 32.4, 0, 2.4, 32.4, 0, 4.6, 32.4, 0, 7.9, 32.4, 0, 9.6, 32.6, 0, -3.6, 32.6, 0, -0.9, 32.6, 0, 2.4, 32.6, 0, 4.6, 32.6, 0, 7.9, 32.6, 0, 9.6, 35.4, 0, -3.6, 35.4, 0, -0.9, 35.4, 0, 2.4, 35.4, 0, 4.6, 35.4, 0, 7.9, 35.4, 0, 9.6, 37.6, 0, -3.6, 37.6, 0, -0.9, 37.6, 0, 2.4, 37.6, 0, 4.6, 37.6, 0, 7.9, 37.6, 0, 9.6, 40.4, 0, 4.4, 43.6, 0, 4.4, 43.6, 0, 8.6, 40.4, 0, 8.6, 43.6, 0, 12.9, 40.4, 0, 12.9, 43.6, 0, 17.6, 40.4, 0, 17.6, 48.4, 0, 4.4, 48.4, 0, 8.6, 48.4, 0, 12.9, 48.4, 0, 17.6, 51.6, 0, 4.4, 51.6, 0, 8.6, 51.6, 0, 12.9, 51.6, 0, 17.6, 54.4, 0, 4.4, 59.6, 0, 4.4, 59.6, 0, 7.6, 54.4, 0, 7.6, 59.6, 0, 12.4, 54.4, 0, 12.4, 59.6, 0, 14.6, 54.4, 0, 14.6, 59.6, 0, 17.4, 54.4, 0, 17.4, 59.6, 0, 19.6, 54.4, 0, 19.6, 62.4, 0, 4.4, 62.4, 0, 7.6, 62.4, 0, 12.4, 62.4, 0, 14.6, 62.4, 0, 17.4, 62.4, 0, 19.6, 64.6, 0, 4.4, 64.6, 0, 7.6, 64.6, 0, 12.4, 64.6, 0, 14.6, 64.6, 0, 17.4, 64.6, 0, 19.6, 68.4, 0, 4.4, 68.4, 0, 7.6, 68.4, 0, 12.4, 68.4, 0, 14.6, 68.4, 0, 17.4, 68.4, 0, 19.6, 71.6, 0, 4.4, 71.6, 0, 7.6, 71.6, 0, 12.4, 71.6, 0, 14.6, 71.6, 0, 17.4, 71.6, 0, 19.6, 74.4, 0, 2.4, 77.2, 0, 2.4, 77.2, 0, 13.6, 74.4, 0, 13.6)
+polygons = [PackedInt32Array(0, 1, 2, 3), PackedInt32Array(4, 5, 6, 7), PackedInt32Array(8, 9, 10, 11), PackedInt32Array(12, 13, 14, 15), PackedInt32Array(15, 14, 16, 17), PackedInt32Array(17, 16, 18, 19), PackedInt32Array(13, 20, 21, 14), PackedInt32Array(16, 22, 23, 18), PackedInt32Array(20, 24, 25, 21), PackedInt32Array(21, 25, 26, 22), PackedInt32Array(22, 26, 27, 23), PackedInt32Array(28, 29, 30, 31), PackedInt32Array(31, 30, 32, 33), PackedInt32Array(33, 32, 34, 35), PackedInt32Array(29, 36, 37, 30), PackedInt32Array(32, 38, 39, 34), PackedInt32Array(36, 40, 41, 37), PackedInt32Array(37, 41, 42, 38), PackedInt32Array(38, 42, 43, 39), PackedInt32Array(44, 45, 46, 47), PackedInt32Array(47, 46, 48, 49), PackedInt32Array(49, 48, 50, 51), PackedInt32Array(45, 52, 53, 46), PackedInt32Array(48, 54, 55, 50), PackedInt32Array(52, 56, 57, 53), PackedInt32Array(53, 57, 58, 54), PackedInt32Array(54, 58, 59, 55), PackedInt32Array(60, 61, 62, 63), PackedInt32Array(63, 62, 64, 65), PackedInt32Array(65, 64, 66, 67), PackedInt32Array(67, 66, 68, 69), PackedInt32Array(69, 68, 70, 71), PackedInt32Array(61, 72, 73, 62), PackedInt32Array(64, 74, 75, 66), PackedInt32Array(66, 75, 76, 68), PackedInt32Array(68, 76, 77, 70), PackedInt32Array(72, 78, 79, 73), PackedInt32Array(73, 79, 80, 74), PackedInt32Array(74, 80, 81, 75), PackedInt32Array(75, 81, 82, 76), PackedInt32Array(76, 82, 83, 77), PackedInt32Array(78, 84, 85, 79), PackedInt32Array(79, 85, 86, 80), PackedInt32Array(80, 86, 87, 81), PackedInt32Array(82, 88, 89, 83), PackedInt32Array(84, 90, 91, 85), PackedInt32Array(85, 91, 92, 86), PackedInt32Array(86, 92, 93, 87), PackedInt32Array(87, 93, 94, 88), PackedInt32Array(88, 94, 95, 89), PackedInt32Array(96, 97, 98, 99), PackedInt32Array(99, 98, 100, 101), PackedInt32Array(101, 100, 102, 103), PackedInt32Array(97, 104, 105, 98), PackedInt32Array(100, 106, 107, 102), PackedInt32Array(104, 108, 109, 105), PackedInt32Array(105, 109, 110, 106), PackedInt32Array(106, 110, 111, 107), PackedInt32Array(112, 113, 114, 115), PackedInt32Array(115, 114, 116, 117), PackedInt32Array(117, 116, 118, 119), PackedInt32Array(119, 118, 120, 121), PackedInt32Array(121, 120, 122, 123), PackedInt32Array(113, 124, 125, 114), PackedInt32Array(116, 126, 127, 118), PackedInt32Array(118, 127, 128, 120), PackedInt32Array(120, 128, 129, 122), PackedInt32Array(124, 130, 131, 125), PackedInt32Array(125, 131, 132, 126), PackedInt32Array(126, 132, 133, 127), PackedInt32Array(127, 133, 134, 128), PackedInt32Array(128, 134, 135, 129), PackedInt32Array(130, 136, 137, 131), PackedInt32Array(131, 137, 138, 132), PackedInt32Array(132, 138, 139, 133), PackedInt32Array(134, 140, 141, 135), PackedInt32Array(136, 142, 143, 137), PackedInt32Array(137, 143, 144, 138), PackedInt32Array(138, 144, 145, 139), PackedInt32Array(139, 145, 146, 140), PackedInt32Array(140, 146, 147, 141), PackedInt32Array(148, 149, 150, 151)]
 agent_radius = 0.35
 
 [sub_resource type="BoxMesh" id="BoxMesh_floor_start"]
 size = Vector3(6, 0.2, 6)
 [sub_resource type="BoxShape3D" id="BoxShape_floor_start"]
 size = Vector3(6, 0.2, 6)
-[sub_resource type="BoxMesh" id="BoxMesh_floor_solo"]
-size = Vector3(10, 0.2, 8)
-[sub_resource type="BoxShape3D" id="BoxShape_floor_solo"]
-size = Vector3(10, 0.2, 8)
 [sub_resource type="BoxMesh" id="BoxMesh_floor_protector"]
 size = Vector3(7, 0.2, 6)
 [sub_resource type="BoxShape3D" id="BoxShape_floor_protector"]
 size = Vector3(7, 0.2, 6)
-[sub_resource type="BoxMesh" id="BoxMesh_floor_main"]
-size = Vector3(12, 0.2, 10)
-[sub_resource type="BoxShape3D" id="BoxShape_floor_main"]
-size = Vector3(12, 0.2, 10)
 [sub_resource type="BoxMesh" id="BoxMesh_floor_final"]
 size = Vector3(6, 0.2, 6)
 [sub_resource type="BoxShape3D" id="BoxShape_floor_final"]
@@ -111,6 +109,252 @@ albedo_color = Color(0.95, 0.12, 0.08, 0.82)
 emission_enabled = true
 emission = Color(0.75, 0.03, 0.02, 1)
 emission_energy_multiplier = 3.0
+
+[sub_resource type="BoxShape3D" id="escape_passage_25"]
+size = Vector3(2, 0.2, 3)
+[sub_resource type="BoxShape3D" id="escape_passage_39"]
+size = Vector3(2, 0.2, 3)
+[sub_resource type="BoxShape3D" id="escape_passage_53"]
+size = Vector3(2, 0.2, 3)
+[sub_resource type="BoxShape3D" id="escape_passage_73"]
+size = Vector3(2, 0.2, 3)
+
+[sub_resource type="BoxShape3D" id="layout_floor_0"]
+size = Vector3(2.9, 0.2, 3.3)
+
+[sub_resource type="BoxShape3D" id="layout_floor_1"]
+size = Vector3(2.9, 0.2, 1.6)
+
+[sub_resource type="BoxShape3D" id="layout_floor_2"]
+size = Vector3(2.9, 0.2, 3.1)
+
+[sub_resource type="BoxShape3D" id="layout_floor_3"]
+size = Vector3(2.9, 0.2, 3.3)
+
+[sub_resource type="BoxShape3D" id="layout_floor_4"]
+size = Vector3(2.9, 0.2, 3.1)
+
+[sub_resource type="BoxShape3D" id="layout_floor_5"]
+size = Vector3(4.2, 0.2, 3.3)
+
+[sub_resource type="BoxShape3D" id="layout_floor_6"]
+size = Vector3(4.2, 0.2, 1.6)
+
+[sub_resource type="BoxShape3D" id="layout_floor_7"]
+size = Vector3(4.2, 0.2, 3.1)
+
+[sub_resource type="BoxShape3D" id="layout_floor_8"]
+size = Vector3(5.1, 0.2, 4.1)
+
+[sub_resource type="BoxShape3D" id="layout_floor_9"]
+size = Vector3(5.1, 0.2, 2.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_10"]
+size = Vector3(5.1, 0.2, 3.4)
+
+[sub_resource type="BoxShape3D" id="layout_floor_11"]
+size = Vector3(1.8, 0.2, 4.1)
+
+[sub_resource type="BoxShape3D" id="layout_floor_12"]
+size = Vector3(1.8, 0.2, 3.4)
+
+[sub_resource type="BoxShape3D" id="layout_floor_13"]
+size = Vector3(5.1, 0.2, 4.1)
+
+[sub_resource type="BoxShape3D" id="layout_floor_14"]
+size = Vector3(5.1, 0.2, 2.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_15"]
+size = Vector3(5.1, 0.2, 3.4)
+
+[sub_resource type="BoxShape3D" id="layout_floor_16"]
+size = Vector3(5, 0.2, 5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_17"]
+size = Vector3(5, 0.2, 4)
+
+[sub_resource type="BoxShape3D" id="layout_floor_18"]
+size = Vector3(5, 0.2, 5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_19"]
+size = Vector3(3, 0.2, 5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_20"]
+size = Vector3(3, 0.2, 5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_21"]
+size = Vector3(4, 0.2, 5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_22"]
+size = Vector3(4, 0.2, 4)
+
+[sub_resource type="BoxShape3D" id="layout_floor_23"]
+size = Vector3(4, 0.2, 5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_24"]
+size = Vector3(4, 0.2, 3.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_25"]
+size = Vector3(4, 0.2, 2.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_26"]
+size = Vector3(4, 0.2, 3)
+
+[sub_resource type="BoxShape3D" id="layout_floor_27"]
+size = Vector3(4, 0.2, 2.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_28"]
+size = Vector3(4, 0.2, 2.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_29"]
+size = Vector3(2, 0.2, 3.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_30"]
+size = Vector3(2, 0.2, 3)
+
+[sub_resource type="BoxShape3D" id="layout_floor_31"]
+size = Vector3(2, 0.2, 2.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_32"]
+size = Vector3(2, 0.2, 2.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_33"]
+size = Vector3(1, 0.2, 3.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_34"]
+size = Vector3(1, 0.2, 2.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_35"]
+size = Vector3(1, 0.2, 3)
+
+[sub_resource type="BoxShape3D" id="layout_floor_36"]
+size = Vector3(1, 0.2, 2.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_37"]
+size = Vector3(1, 0.2, 2.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_38"]
+size = Vector3(2, 0.2, 3.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_39"]
+size = Vector3(2, 0.2, 2.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_40"]
+size = Vector3(2, 0.2, 3)
+
+[sub_resource type="BoxShape3D" id="layout_floor_41"]
+size = Vector3(2, 0.2, 2.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_42"]
+size = Vector3(3, 0.2, 3.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_43"]
+size = Vector3(3, 0.2, 2.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_44"]
+size = Vector3(3, 0.2, 3)
+
+[sub_resource type="BoxShape3D" id="layout_floor_45"]
+size = Vector3(3, 0.2, 2.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_46"]
+size = Vector3(3, 0.2, 2.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_47"]
+size = Vector3(4, 0.2, 5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_48"]
+size = Vector3(4, 0.2, 3.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_49"]
+size = Vector3(4, 0.2, 5.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_50"]
+size = Vector3(4, 0.2, 5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_51"]
+size = Vector3(4, 0.2, 5.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_52"]
+size = Vector3(4, 0.2, 5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_53"]
+size = Vector3(4, 0.2, 3.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_54"]
+size = Vector3(4, 0.2, 5.5)
+
+[sub_resource type="BoxShape3D" id="layout_floor_55"]
+size = Vector3(6, 0.2, 4)
+
+[sub_resource type="BoxShape3D" id="layout_floor_56"]
+size = Vector3(6, 0.2, 4)
+
+[sub_resource type="BoxShape3D" id="layout_floor_57"]
+size = Vector3(6, 0.2, 3)
+
+[sub_resource type="BoxShape3D" id="layout_floor_58"]
+size = Vector3(6, 0.2, 2)
+
+[sub_resource type="BoxShape3D" id="layout_floor_59"]
+size = Vector3(6, 0.2, 3)
+
+[sub_resource type="BoxShape3D" id="layout_floor_60"]
+size = Vector3(2, 0.2, 4)
+
+[sub_resource type="BoxShape3D" id="layout_floor_61"]
+size = Vector3(2, 0.2, 3)
+
+[sub_resource type="BoxShape3D" id="layout_floor_62"]
+size = Vector3(2, 0.2, 2)
+
+[sub_resource type="BoxShape3D" id="layout_floor_63"]
+size = Vector3(2, 0.2, 3)
+
+[sub_resource type="BoxShape3D" id="layout_floor_64"]
+size = Vector3(3, 0.2, 4)
+
+[sub_resource type="BoxShape3D" id="layout_floor_65"]
+size = Vector3(3, 0.2, 4)
+
+[sub_resource type="BoxShape3D" id="layout_floor_66"]
+size = Vector3(3, 0.2, 3)
+
+[sub_resource type="BoxShape3D" id="layout_floor_67"]
+size = Vector3(3, 0.2, 2)
+
+[sub_resource type="BoxShape3D" id="layout_floor_68"]
+size = Vector3(3, 0.2, 3)
+
+[sub_resource type="BoxShape3D" id="layout_floor_69"]
+size = Vector3(3, 0.2, 4)
+
+[sub_resource type="BoxShape3D" id="layout_floor_70"]
+size = Vector3(3, 0.2, 4)
+
+[sub_resource type="BoxShape3D" id="layout_floor_71"]
+size = Vector3(3, 0.2, 3)
+
+[sub_resource type="BoxShape3D" id="layout_floor_72"]
+size = Vector3(3, 0.2, 3)
+
+[sub_resource type="BoxShape3D" id="layout_floor_73"]
+size = Vector3(4, 0.2, 4)
+
+[sub_resource type="BoxShape3D" id="layout_floor_74"]
+size = Vector3(4, 0.2, 4)
+
+[sub_resource type="BoxShape3D" id="layout_floor_75"]
+size = Vector3(4, 0.2, 3)
+
+[sub_resource type="BoxShape3D" id="layout_floor_76"]
+size = Vector3(4, 0.2, 2)
+
+[sub_resource type="BoxShape3D" id="layout_floor_77"]
+size = Vector3(4, 0.2, 3)
+
+[sub_resource type="BoxShape3D" id="layout_floor_78"]
+size = Vector3(18, 0.2, 12)
 
 [node name="StationRoute" type="Node3D"]
 script = ExtResource("1_host")
@@ -233,12 +477,12 @@ font_size = 70
 outline_size = 0
 
 [node name="Security" type="Label3D" parent="Environment/Wayfinding"]
-position = Vector3(-12.3, 0.042, 2.4)
+position = Vector3(-8.2, 0.042, -2.5)
 rotation_degrees = Vector3(-90, 0, 0)
-pixel_size = 0.007
+pixel_size = 0.006
 modulate = Color(0.74, 0.64, 0.45, 0.5)
 text = "02 / SECURITY"
-font_size = 80
+font_size = 64
 outline_size = 0
 
 [node name="CrewAccess" type="Label3D" parent="Environment/Wayfinding"]
@@ -280,16 +524,6 @@ mesh = SubResource("BoxMesh_floor_start")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/StartRoom"]
 shape = SubResource("BoxShape_floor_start")
 
-[node name="SoloCombatArena" type="StaticBody3D" parent="Environment/Floors"]
-position = Vector3(-10, -0.1, 0)
-collision_layer = 1
-collision_mask = 0
-[node name="Mesh" type="MeshInstance3D" parent="Environment/Floors/SoloCombatArena"]
-visible = false
-mesh = SubResource("BoxMesh_floor_solo")
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/SoloCombatArena"]
-shape = SubResource("BoxShape_floor_solo")
-
 [node name="ProtectorRoom" type="StaticBody3D" parent="Environment/Floors"]
 position = Vector3(-1.5, -0.1, 0)
 collision_layer = 1
@@ -299,16 +533,6 @@ visible = false
 mesh = SubResource("BoxMesh_floor_protector")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/ProtectorRoom"]
 shape = SubResource("BoxShape_floor_protector")
-
-[node name="MainPartyArena" type="StaticBody3D" parent="Environment/Floors"]
-position = Vector3(0, -0.1, 8)
-collision_layer = 1
-collision_mask = 0
-[node name="Mesh" type="MeshInstance3D" parent="Environment/Floors/MainPartyArena"]
-visible = false
-mesh = SubResource("BoxMesh_floor_main")
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/MainPartyArena"]
-shape = SubResource("BoxShape_floor_main")
 
 [node name="FinalAirlockApproach" type="StaticBody3D" parent="Environment/Floors"]
 position = Vector3(9, -0.1, 8)
@@ -343,7 +567,7 @@ metadata/stable_id = "actor.companion.protector"
 position = Vector3(-10.65, 0, 6.5)
 metadata/stable_id = "interaction.service_terminal"
 [node name="AirlockApproach" type="Marker3D" parent="Markers"]
-position = Vector3(11.15, 0, 8)
+position = Vector3(71.55, 0, 8)
 metadata/stable_id = "interaction.evacuation_airlock"
 [node name="SoloEncounterTrigger" type="Marker3D" parent="Markers"]
 position = Vector3(-10, 0, 2.75)
@@ -353,7 +577,7 @@ metadata/trigger_radius_meters = 0.75
 position = Vector3(-10, 0, 2.35)
 metadata/stable_id = "encounter.station.solo_tutorial.restart"
 [node name="SecurityEnforcerSpawn" type="Marker3D" parent="Markers"]
-position = Vector3(-10, 0, -1.4)
+position = Vector3(-13.3, 0, 0.6)
 metadata/stable_id = "actor.enemy.security_enforcer.solo"
 
 [node name="PartyEncounterTrigger" type="Marker3D" parent="Markers"]
@@ -402,7 +626,7 @@ material_override = SubResource("Material_beacon")
 
 [node name="Hostiles" type="Node3D" parent="."]
 [node name="SecurityEnforcer" type="Node3D" parent="Hostiles"]
-position = Vector3(-10, 0, -1.4)
+position = Vector3(-13.3, 0, 0.6)
 visible = false
 metadata/stable_id = "actor.enemy.security_enforcer.solo"
 [node name="Presentation" type="Node3D" parent="Hostiles/SecurityEnforcer"]
@@ -568,7 +792,7 @@ metadata/stable_id = "interaction.protector"
 rotation_degrees = Vector3(0, -90, 0)
 script = ExtResource("11_humanoid_presentation")
 IdleAnimationName = "anim_humanoid_idle_holstered"
-LocomotionAnimationName = "anim_humanoid_locomotion_holstered"
+LocomotionAnimationName = "anim_humanoid_walk_holstered"
 [node name="Model" parent="Interactions/Protector/ProtectorPresentation" instance=ExtResource("10_protector")]
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Protector"]
 position = Vector3(0, 1.05, 0)
@@ -602,7 +826,7 @@ billboard = 1
 no_depth_test = true
 
 [node name="EvacuationAirlock" type="StaticBody3D" parent="Interactions"]
-position = Vector3(12, 0, 8)
+position = Vector3(73, 0, 8)
 rotation_degrees = Vector3(0, 90, 0)
 collision_layer = 2
 collision_mask = 0
@@ -626,3 +850,1338 @@ near = 0.15
 far = 120.0
 current = true
 script = ExtResource("2_camera")
+
+
+[node name="EscapeStructure" parent="Environment" instance=ExtResource("escape_escape")]
+[node name="EscapeCutter" parent="Environment" instance=ExtResource("escape_cutter")]
+position = Vector3(83, 0, 8)
+rotation_degrees = Vector3(0, -90, 0)
+[node name="Medic" type="Node3D" parent="Actors"]
+position = Vector3(9, 0, 7)
+visible = false
+metadata/stable_id = "actor.companion.medic"
+[node name="MedicPresentation" type="Node3D" parent="Actors/Medic"]
+script = ExtResource("7_vanguard_presentation")
+OneHanded = true
+[node name="Model" parent="Actors/Medic/MedicPresentation" instance=ExtResource("escape_medic")]
+[node name="Weapon" parent="Actors/Medic/MedicPresentation" instance=ExtResource("escape_pistol")]
+[node name="SelectionBeacon" type="MeshInstance3D" parent="Actors/Medic"]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_beacon")
+material_override = SubResource("Material_beacon")
+
+[node name="Medic" type="StaticBody3D" parent="Interactions"]
+position = Vector3(9, 0, 7)
+collision_layer = 2
+collision_mask = 0
+metadata/stable_id = "interaction.medic"
+[node name="MedicPresentation" type="Node3D" parent="Interactions/Medic"]
+rotation_degrees = Vector3(0, -90, 0)
+script = ExtResource("11_humanoid_presentation")
+IdleAnimationName = "anim_humanoid_idle_holstered"
+LocomotionAnimationName = "anim_humanoid_walk_holstered"
+[node name="Model" parent="Interactions/Medic/MedicPresentation" instance=ExtResource("escape_medic")]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Medic"]
+position = Vector3(0, 1.05, 0)
+shape = SubResource("CapsuleShape_protector")
+[node name="Label" type="Label3D" parent="Interactions/Medic"]
+position = Vector3(0, 2.45, 0)
+text = "PROTECTOR"
+font_size = 36
+outline_size = 8
+modulate = Color(0.42, 1, 0.72, 1)
+billboard = 1
+no_depth_test = true
+
+[node name="MedicPlacement" type="Marker3D" parent="Markers"]
+position = Vector3(9, 0, 7)
+metadata/stable_id = "actor.companion.medic"
+
+[node name="MedicApproach" type="Marker3D" parent="Markers"]
+position = Vector3(8.2, 0, 7)
+metadata/stable_id = "interaction.medic"
+
+[node name="BoardingApproach" type="Marker3D" parent="Markers"]
+position = Vector3(76.5, 0, 8)
+metadata/stable_id = "interaction.escape_cutter.board"
+
+[node name="EscapeLight_service" type="OmniLight3D" parent="."]
+position = Vector3(18, 4, 6)
+light_color = Color(0.68, 0.78, 0.9, 1)
+light_energy = 2.2
+omni_range = 14
+shadow_enabled = true
+[node name="EscapeSign_service" type="Label3D" parent="Environment/Wayfinding"]
+position = Vector3(18, 0.043, 0.3)
+rotation_degrees = Vector3(-90, 0, 0)
+pixel_size = 0.006
+font_size = 68
+outline_size = 0
+text = "SERVICE"
+modulate = Color(0.42, 0.62, 0.67, 1)
+[node name="EscapeLight_security" type="OmniLight3D" parent="."]
+position = Vector3(32, 4, 3)
+light_color = Color(0.68, 0.78, 0.9, 1)
+light_energy = 2.2
+omni_range = 14
+shadow_enabled = true
+[node name="EscapeSign_security" type="Label3D" parent="Environment/Wayfinding"]
+position = Vector3(32, 0.043, -2.7)
+rotation_degrees = Vector3(-90, 0, 0)
+pixel_size = 0.006
+font_size = 68
+outline_size = 0
+text = "SECURITY"
+modulate = Color(0.42, 0.62, 0.67, 1)
+[node name="EscapeLight_dock" type="OmniLight3D" parent="."]
+position = Vector3(46, 4, 11)
+light_color = Color(0.68, 0.78, 0.9, 1)
+light_energy = 2.2
+omni_range = 14
+shadow_enabled = true
+[node name="EscapeSign_dock" type="Label3D" parent="Environment/Wayfinding"]
+position = Vector3(46, 0.043, 5.3)
+rotation_degrees = Vector3(-90, 0, 0)
+pixel_size = 0.006
+font_size = 68
+outline_size = 0
+text = "DOCK"
+modulate = Color(0.42, 0.62, 0.67, 1)
+[node name="EscapeLight_launch" type="OmniLight3D" parent="."]
+position = Vector3(63, 4, 12)
+light_color = Color(0.68, 0.78, 0.9, 1)
+light_energy = 2.2
+omni_range = 18
+shadow_enabled = true
+[node name="EscapeSign_launch" type="Label3D" parent="Environment/Wayfinding"]
+position = Vector3(63, 0.043, 5.3)
+rotation_degrees = Vector3(-90, 0, 0)
+pixel_size = 0.006
+font_size = 68
+outline_size = 0
+text = "LAUNCH"
+modulate = Color(0.42, 0.62, 0.67, 1)
+[node name="EscapeLight_apron" type="OmniLight3D" parent="."]
+position = Vector3(83, 4, 8)
+light_color = Color(0.68, 0.78, 0.9, 1)
+light_energy = 2.2
+omni_range = 18
+shadow_enabled = true
+[node name="EscapeSign_apron" type="Label3D" parent="Environment/Wayfinding"]
+position = Vector3(83, 0.043, 3.3)
+rotation_degrees = Vector3(-90, 0, 0)
+pixel_size = 0.006
+font_size = 68
+outline_size = 0
+text = "APRON"
+modulate = Color(0.42, 0.62, 0.67, 1)
+[node name="Passage25" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(25, -0.1, 3)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Passage25"]
+shape = SubResource("escape_passage_25")
+[node name="Passage39" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(39, -0.1, 7)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Passage39"]
+shape = SubResource("escape_passage_39")
+[node name="Passage53" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(53, -0.1, 13)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Passage53"]
+shape = SubResource("escape_passage_53")
+[node name="Passage73" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(73, -0.1, 8)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Passage73"]
+shape = SubResource("escape_passage_73")
+[node name="Escape_service" type="NavigationLink3D" parent="NavigationLinks"]
+enabled = false
+start_position = Vector3(11.3, 0, 8)
+end_position = Vector3(12.7, 0, 8)
+[node name="Escape_service" type="StaticBody3D" parent="Interactions"]
+position = Vector3(12, 0, 8)
+rotation_degrees = Vector3(0, 90, 0)
+collision_layer = 2
+collision_mask = 0
+metadata/stable_id = "interaction.service_door.service"
+[node name="ProductionAsset" parent="Interactions/Escape_service" instance=ExtResource("8_service_door")]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Escape_service"]
+position = Vector3(0, 1.18, 0)
+shape = SubResource("BoxShape_door_interaction")
+[node name="DoorBlocker" type="StaticBody3D" parent="Interactions/Escape_service"]
+collision_layer = 4
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Escape_service/DoorBlocker"]
+position = Vector3(0, 1.18, 0)
+shape = SubResource("BoxShape_door_blocker")
+[node name="Label" type="Label3D" parent="Interactions/Escape_service"]
+position = Vector3(0, 2.95, 0)
+text = "SERVICE"
+font_size = 34
+outline_size = 8
+modulate = Color(1, 0.55, 0.18, 1)
+billboard = 1
+no_depth_test = true
+
+[node name="EscapeDoor_service" type="Marker3D" parent="Markers"]
+position = Vector3(11.15, 0, 8)
+metadata/stable_id = "interaction.service_door.service"
+
+[node name="Escape_security" type="NavigationLink3D" parent="NavigationLinks"]
+enabled = false
+start_position = Vector3(23.3, 0, 3)
+end_position = Vector3(26.7, 0, 3)
+[node name="Escape_security" type="StaticBody3D" parent="Interactions"]
+position = Vector3(25, 0, 3)
+rotation_degrees = Vector3(0, 90, 0)
+collision_layer = 2
+collision_mask = 0
+metadata/stable_id = "interaction.service_door.security"
+[node name="ProductionAsset" parent="Interactions/Escape_security" instance=ExtResource("8_service_door")]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Escape_security"]
+position = Vector3(0, 1.18, 0)
+shape = SubResource("BoxShape_door_interaction")
+[node name="DoorBlocker" type="StaticBody3D" parent="Interactions/Escape_security"]
+collision_layer = 4
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Escape_security/DoorBlocker"]
+position = Vector3(0, 1.18, 0)
+shape = SubResource("BoxShape_door_blocker")
+[node name="Label" type="Label3D" parent="Interactions/Escape_security"]
+position = Vector3(0, 2.95, 0)
+text = "SECURITY"
+font_size = 34
+outline_size = 8
+modulate = Color(1, 0.55, 0.18, 1)
+billboard = 1
+no_depth_test = true
+
+[node name="EscapeDoor_security" type="Marker3D" parent="Markers"]
+position = Vector3(23.55, 0, 3)
+metadata/stable_id = "interaction.service_door.security"
+
+[node name="Escape_dock" type="NavigationLink3D" parent="NavigationLinks"]
+enabled = false
+start_position = Vector3(37.3, 0, 7)
+end_position = Vector3(40.7, 0, 7)
+[node name="Escape_dock" type="StaticBody3D" parent="Interactions"]
+position = Vector3(39, 0, 7)
+rotation_degrees = Vector3(0, 90, 0)
+collision_layer = 2
+collision_mask = 0
+metadata/stable_id = "interaction.service_door.dock"
+[node name="ProductionAsset" parent="Interactions/Escape_dock" instance=ExtResource("8_service_door")]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Escape_dock"]
+position = Vector3(0, 1.18, 0)
+shape = SubResource("BoxShape_door_interaction")
+[node name="DoorBlocker" type="StaticBody3D" parent="Interactions/Escape_dock"]
+collision_layer = 4
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Escape_dock/DoorBlocker"]
+position = Vector3(0, 1.18, 0)
+shape = SubResource("BoxShape_door_blocker")
+[node name="Label" type="Label3D" parent="Interactions/Escape_dock"]
+position = Vector3(0, 2.95, 0)
+text = "DOCK"
+font_size = 34
+outline_size = 8
+modulate = Color(1, 0.55, 0.18, 1)
+billboard = 1
+no_depth_test = true
+
+[node name="EscapeDoor_dock" type="Marker3D" parent="Markers"]
+position = Vector3(37.55, 0, 7)
+metadata/stable_id = "interaction.service_door.dock"
+
+[node name="Escape_launch" type="NavigationLink3D" parent="NavigationLinks"]
+enabled = false
+start_position = Vector3(51.3, 0, 13)
+end_position = Vector3(54.7, 0, 13)
+[node name="Escape_launch" type="StaticBody3D" parent="Interactions"]
+position = Vector3(53, 0, 13)
+rotation_degrees = Vector3(0, 90, 0)
+collision_layer = 2
+collision_mask = 0
+metadata/stable_id = "interaction.service_door.launch"
+[node name="ProductionAsset" parent="Interactions/Escape_launch" instance=ExtResource("8_service_door")]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Escape_launch"]
+position = Vector3(0, 1.18, 0)
+shape = SubResource("BoxShape_door_interaction")
+[node name="DoorBlocker" type="StaticBody3D" parent="Interactions/Escape_launch"]
+collision_layer = 4
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Escape_launch/DoorBlocker"]
+position = Vector3(0, 1.18, 0)
+shape = SubResource("BoxShape_door_blocker")
+[node name="Label" type="Label3D" parent="Interactions/Escape_launch"]
+position = Vector3(0, 2.95, 0)
+text = "LAUNCH"
+font_size = 34
+outline_size = 8
+modulate = Color(1, 0.55, 0.18, 1)
+billboard = 1
+no_depth_test = true
+
+[node name="EscapeDoor_launch" type="Marker3D" parent="Markers"]
+position = Vector3(51.55, 0, 13)
+metadata/stable_id = "interaction.service_door.launch"
+
+[node name="Escape_airlock" type="NavigationLink3D" parent="NavigationLinks"]
+enabled = false
+start_position = Vector3(71.3, 0, 8)
+end_position = Vector3(74.7, 0, 8)
+[node name="EscapeTrigger_service" type="Marker3D" parent="Markers"]
+position = Vector3(14, 0, 8)
+metadata/stable_id = "encounter.station.service"
+metadata/trigger_radius_meters = 3.0
+[node name="service_crew0" type="Marker3D" parent="Markers"]
+position = Vector3(14, 0, 7)
+metadata/stable_id = "marker.service.crew0"
+
+[node name="service_crew1" type="Marker3D" parent="Markers"]
+position = Vector3(14, 0, 8)
+metadata/stable_id = "marker.service.crew1"
+
+[node name="service_crew2" type="Marker3D" parent="Markers"]
+position = Vector3(14, 0, 9)
+metadata/stable_id = "marker.service.crew2"
+
+[node name="Spawn_Escape_service_0" type="Marker3D" parent="Markers"]
+position = Vector3(17, 0, 10.5)
+metadata/stable_id = "actor.enemy.security_enforcer.service.1"
+rotation_degrees = Vector3(0, 50.1944, 0)
+[node name="Escape_service_0" type="Node3D" parent="Hostiles"]
+position = Vector3(17, 0, 10.5)
+visible = false
+metadata/stable_id = "actor.enemy.security_enforcer.service.1"
+rotation_degrees = Vector3(0, 50.1944, 0)
+
+[node name="Presentation" type="Node3D" parent="Hostiles/Escape_service_0"]
+script = ExtResource("11_humanoid_presentation")
+IdleAnimationName = "anim_humanoid_idle_holstered"
+LocomotionAnimationName = "anim_humanoid_walk_holstered"
+MeleeStrikeAnimationName = "anim_humanoid_melee_strike"
+DownAnimationName = "anim_humanoid_down"
+[node name="Model" parent="Hostiles/Escape_service_0/Presentation" instance=ExtResource("12_enforcer")]
+[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_service_0"]
+collision_layer = 0
+collision_mask = 0
+metadata/stable_id = "actor.enemy.security_enforcer.service.1"
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_service_0/TargetBody"]
+position = Vector3(0, 0.95, 0)
+shape = SubResource("CapsuleShape_enforcer")
+[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_service_0"]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_hostile")
+material_override = SubResource("Material_hostile")
+[node name="Spawn_Escape_service_1" type="Marker3D" parent="Markers"]
+position = Vector3(20.8, 0, 2)
+metadata/stable_id = "actor.enemy.security_enforcer.service.2"
+rotation_degrees = Vector3(0, 131.424, 0)
+[node name="Escape_service_1" type="Node3D" parent="Hostiles"]
+position = Vector3(20.8, 0, 2)
+visible = false
+metadata/stable_id = "actor.enemy.security_enforcer.service.2"
+rotation_degrees = Vector3(0, 131.424, 0)
+
+[node name="Presentation" type="Node3D" parent="Hostiles/Escape_service_1"]
+script = ExtResource("11_humanoid_presentation")
+IdleAnimationName = "anim_humanoid_idle_holstered"
+LocomotionAnimationName = "anim_humanoid_walk_holstered"
+MeleeStrikeAnimationName = "anim_humanoid_melee_strike"
+DownAnimationName = "anim_humanoid_down"
+[node name="Model" parent="Hostiles/Escape_service_1/Presentation" instance=ExtResource("12_enforcer")]
+[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_service_1"]
+collision_layer = 0
+collision_mask = 0
+metadata/stable_id = "actor.enemy.security_enforcer.service.2"
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_service_1/TargetBody"]
+position = Vector3(0, 0.95, 0)
+shape = SubResource("CapsuleShape_enforcer")
+[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_service_1"]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_hostile")
+material_override = SubResource("Material_hostile")
+[node name="Spawn_Escape_service_2" type="Marker3D" parent="Markers"]
+position = Vector3(21.5, 0, 8.5)
+metadata/stable_id = "actor.enemy.ranged_enforcer.service.3"
+rotation_degrees = Vector3(0, 86.1859, 0)
+[node name="Escape_service_2" type="Node3D" parent="Hostiles"]
+position = Vector3(21.5, 0, 8.5)
+visible = false
+metadata/stable_id = "actor.enemy.ranged_enforcer.service.3"
+rotation_degrees = Vector3(0, 86.1859, 0)
+
+[node name="Presentation" type="Node3D" parent="Hostiles/Escape_service_2"]
+script = ExtResource("7_vanguard_presentation")
+[node name="Model" parent="Hostiles/Escape_service_2/Presentation" instance=ExtResource("escape_ranged")]
+[node name="Weapon" parent="Hostiles/Escape_service_2/Presentation" instance=ExtResource("13_carbine")]
+[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_service_2"]
+collision_layer = 0
+collision_mask = 0
+metadata/stable_id = "actor.enemy.ranged_enforcer.service.3"
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_service_2/TargetBody"]
+position = Vector3(0, 0.95, 0)
+shape = SubResource("CapsuleShape_enforcer")
+[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_service_2"]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_hostile")
+material_override = SubResource("Material_hostile")
+[node name="EscapeTrigger_security" type="Marker3D" parent="Markers"]
+position = Vector3(28, 0, 3)
+metadata/stable_id = "encounter.station.security"
+metadata/trigger_radius_meters = 3.0
+[node name="security_crew0" type="Marker3D" parent="Markers"]
+position = Vector3(28, 0, 2)
+metadata/stable_id = "marker.security.crew0"
+
+[node name="security_crew1" type="Marker3D" parent="Markers"]
+position = Vector3(28, 0, 3)
+metadata/stable_id = "marker.security.crew1"
+
+[node name="security_crew2" type="Marker3D" parent="Markers"]
+position = Vector3(28, 0, 4)
+metadata/stable_id = "marker.security.crew2"
+
+[node name="Spawn_Escape_security_0" type="Marker3D" parent="Markers"]
+position = Vector3(31, 0, 3.5)
+metadata/stable_id = "actor.enemy.security_enforcer.security.1"
+rotation_degrees = Vector3(0, 80.5377, 0)
+[node name="Escape_security_0" type="Node3D" parent="Hostiles"]
+position = Vector3(31, 0, 3.5)
+visible = false
+metadata/stable_id = "actor.enemy.security_enforcer.security.1"
+rotation_degrees = Vector3(0, 80.5377, 0)
+
+[node name="Presentation" type="Node3D" parent="Hostiles/Escape_security_0"]
+script = ExtResource("11_humanoid_presentation")
+IdleAnimationName = "anim_humanoid_idle_holstered"
+LocomotionAnimationName = "anim_humanoid_walk_holstered"
+MeleeStrikeAnimationName = "anim_humanoid_melee_strike"
+DownAnimationName = "anim_humanoid_down"
+[node name="Model" parent="Hostiles/Escape_security_0/Presentation" instance=ExtResource("12_enforcer")]
+[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_security_0"]
+collision_layer = 0
+collision_mask = 0
+metadata/stable_id = "actor.enemy.security_enforcer.security.1"
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_security_0/TargetBody"]
+position = Vector3(0, 0.95, 0)
+shape = SubResource("CapsuleShape_enforcer")
+[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_security_0"]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_hostile")
+material_override = SubResource("Material_hostile")
+[node name="Spawn_Escape_security_1" type="Marker3D" parent="Markers"]
+position = Vector3(34, 0, -1.5)
+metadata/stable_id = "actor.enemy.ranged_enforcer.security.2"
+rotation_degrees = Vector3(0, 126.87, 0)
+[node name="Escape_security_1" type="Node3D" parent="Hostiles"]
+position = Vector3(34, 0, -1.5)
+visible = false
+metadata/stable_id = "actor.enemy.ranged_enforcer.security.2"
+rotation_degrees = Vector3(0, 126.87, 0)
+
+[node name="Presentation" type="Node3D" parent="Hostiles/Escape_security_1"]
+script = ExtResource("7_vanguard_presentation")
+[node name="Model" parent="Hostiles/Escape_security_1/Presentation" instance=ExtResource("escape_ranged")]
+[node name="Weapon" parent="Hostiles/Escape_security_1/Presentation" instance=ExtResource("13_carbine")]
+[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_security_1"]
+collision_layer = 0
+collision_mask = 0
+metadata/stable_id = "actor.enemy.ranged_enforcer.security.2"
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_security_1/TargetBody"]
+position = Vector3(0, 0.95, 0)
+shape = SubResource("CapsuleShape_enforcer")
+[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_security_1"]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_hostile")
+material_override = SubResource("Material_hostile")
+[node name="Spawn_Escape_security_2" type="Marker3D" parent="Markers"]
+position = Vector3(35.8, 0, 8.5)
+metadata/stable_id = "actor.enemy.ranged_enforcer.security.3"
+rotation_degrees = Vector3(0, 54.8113, 0)
+[node name="Escape_security_2" type="Node3D" parent="Hostiles"]
+position = Vector3(35.8, 0, 8.5)
+visible = false
+metadata/stable_id = "actor.enemy.ranged_enforcer.security.3"
+rotation_degrees = Vector3(0, 54.8113, 0)
+
+[node name="Presentation" type="Node3D" parent="Hostiles/Escape_security_2"]
+script = ExtResource("7_vanguard_presentation")
+[node name="Model" parent="Hostiles/Escape_security_2/Presentation" instance=ExtResource("escape_ranged")]
+[node name="Weapon" parent="Hostiles/Escape_security_2/Presentation" instance=ExtResource("13_carbine")]
+[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_security_2"]
+collision_layer = 0
+collision_mask = 0
+metadata/stable_id = "actor.enemy.ranged_enforcer.security.3"
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_security_2/TargetBody"]
+position = Vector3(0, 0.95, 0)
+shape = SubResource("CapsuleShape_enforcer")
+[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_security_2"]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_hostile")
+material_override = SubResource("Material_hostile")
+[node name="Spawn_Escape_security_3" type="Marker3D" parent="Markers"]
+position = Vector3(36, 0, 3.5)
+metadata/stable_id = "actor.enemy.gun_sentry.security.4"
+rotation_degrees = Vector3(0, 86.4237, 0)
+[node name="Escape_security_3" type="Node3D" parent="Hostiles"]
+position = Vector3(36, 0, 3.5)
+visible = false
+metadata/stable_id = "actor.enemy.gun_sentry.security.4"
+rotation_degrees = Vector3(0, 86.4237, 0)
+
+[node name="Presentation" type="Node3D" parent="Hostiles/Escape_security_3"]
+script = ExtResource("17_sentry_presentation")
+[node name="Model" parent="Hostiles/Escape_security_3/Presentation" instance=ExtResource("16_sentry")]
+[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_security_3"]
+collision_layer = 0
+collision_mask = 0
+metadata/stable_id = "actor.enemy.gun_sentry.security.4"
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_security_3/TargetBody"]
+position = Vector3(0, 0.95, 0)
+shape = SubResource("CapsuleShape_enforcer")
+[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_security_3"]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_hostile")
+material_override = SubResource("Material_hostile")
+[node name="EscapeTrigger_dock" type="Marker3D" parent="Markers"]
+position = Vector3(42, 0, 7)
+metadata/stable_id = "encounter.station.dock"
+metadata/trigger_radius_meters = 3.0
+[node name="dock_crew0" type="Marker3D" parent="Markers"]
+position = Vector3(42, 0, 6)
+metadata/stable_id = "marker.dock.crew0"
+
+[node name="dock_crew1" type="Marker3D" parent="Markers"]
+position = Vector3(42, 0, 7)
+metadata/stable_id = "marker.dock.crew1"
+
+[node name="dock_crew2" type="Marker3D" parent="Markers"]
+position = Vector3(42, 0, 8)
+metadata/stable_id = "marker.dock.crew2"
+
+[node name="Spawn_Escape_dock_0" type="Marker3D" parent="Markers"]
+position = Vector3(45, 0, 6.5)
+metadata/stable_id = "actor.enemy.security_enforcer.dock.1"
+rotation_degrees = Vector3(0, 99.4623, 0)
+[node name="Escape_dock_0" type="Node3D" parent="Hostiles"]
+position = Vector3(45, 0, 6.5)
+visible = false
+metadata/stable_id = "actor.enemy.security_enforcer.dock.1"
+rotation_degrees = Vector3(0, 99.4623, 0)
+
+[node name="Presentation" type="Node3D" parent="Hostiles/Escape_dock_0"]
+script = ExtResource("11_humanoid_presentation")
+IdleAnimationName = "anim_humanoid_idle_holstered"
+LocomotionAnimationName = "anim_humanoid_walk_holstered"
+MeleeStrikeAnimationName = "anim_humanoid_melee_strike"
+DownAnimationName = "anim_humanoid_down"
+[node name="Model" parent="Hostiles/Escape_dock_0/Presentation" instance=ExtResource("12_enforcer")]
+[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_dock_0"]
+collision_layer = 0
+collision_mask = 0
+metadata/stable_id = "actor.enemy.security_enforcer.dock.1"
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_dock_0/TargetBody"]
+position = Vector3(0, 0.95, 0)
+shape = SubResource("CapsuleShape_enforcer")
+[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_dock_0"]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_hostile")
+material_override = SubResource("Material_hostile")
+[node name="Spawn_Escape_dock_1" type="Marker3D" parent="Markers"]
+position = Vector3(44, 0, 15)
+metadata/stable_id = "actor.enemy.security_enforcer.dock.2"
+rotation_degrees = Vector3(0, 14.0362, 0)
+[node name="Escape_dock_1" type="Node3D" parent="Hostiles"]
+position = Vector3(44, 0, 15)
+visible = false
+metadata/stable_id = "actor.enemy.security_enforcer.dock.2"
+rotation_degrees = Vector3(0, 14.0362, 0)
+
+[node name="Presentation" type="Node3D" parent="Hostiles/Escape_dock_1"]
+script = ExtResource("11_humanoid_presentation")
+IdleAnimationName = "anim_humanoid_idle_holstered"
+LocomotionAnimationName = "anim_humanoid_walk_holstered"
+MeleeStrikeAnimationName = "anim_humanoid_melee_strike"
+DownAnimationName = "anim_humanoid_down"
+[node name="Model" parent="Hostiles/Escape_dock_1/Presentation" instance=ExtResource("12_enforcer")]
+[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_dock_1"]
+collision_layer = 0
+collision_mask = 0
+metadata/stable_id = "actor.enemy.security_enforcer.dock.2"
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_dock_1/TargetBody"]
+position = Vector3(0, 0.95, 0)
+shape = SubResource("CapsuleShape_enforcer")
+[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_dock_1"]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_hostile")
+material_override = SubResource("Material_hostile")
+[node name="Spawn_Escape_dock_2" type="Marker3D" parent="Markers"]
+position = Vector3(49.5, 0, 8)
+metadata/stable_id = "actor.enemy.ranged_enforcer.dock.3"
+rotation_degrees = Vector3(0, 82.4054, 0)
+[node name="Escape_dock_2" type="Node3D" parent="Hostiles"]
+position = Vector3(49.5, 0, 8)
+visible = false
+metadata/stable_id = "actor.enemy.ranged_enforcer.dock.3"
+rotation_degrees = Vector3(0, 82.4054, 0)
+
+[node name="Presentation" type="Node3D" parent="Hostiles/Escape_dock_2"]
+script = ExtResource("7_vanguard_presentation")
+[node name="Model" parent="Hostiles/Escape_dock_2/Presentation" instance=ExtResource("escape_ranged")]
+[node name="Weapon" parent="Hostiles/Escape_dock_2/Presentation" instance=ExtResource("13_carbine")]
+[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_dock_2"]
+collision_layer = 0
+collision_mask = 0
+metadata/stable_id = "actor.enemy.ranged_enforcer.dock.3"
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_dock_2/TargetBody"]
+position = Vector3(0, 0.95, 0)
+shape = SubResource("CapsuleShape_enforcer")
+[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_dock_2"]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_hostile")
+material_override = SubResource("Material_hostile")
+[node name="Spawn_Escape_dock_3" type="Marker3D" parent="Markers"]
+position = Vector3(49.5, 0, 15)
+metadata/stable_id = "actor.enemy.ranged_enforcer.dock.4"
+rotation_degrees = Vector3(0, 43.1524, 0)
+[node name="Escape_dock_3" type="Node3D" parent="Hostiles"]
+position = Vector3(49.5, 0, 15)
+visible = false
+metadata/stable_id = "actor.enemy.ranged_enforcer.dock.4"
+rotation_degrees = Vector3(0, 43.1524, 0)
+
+[node name="Presentation" type="Node3D" parent="Hostiles/Escape_dock_3"]
+script = ExtResource("7_vanguard_presentation")
+[node name="Model" parent="Hostiles/Escape_dock_3/Presentation" instance=ExtResource("escape_ranged")]
+[node name="Weapon" parent="Hostiles/Escape_dock_3/Presentation" instance=ExtResource("13_carbine")]
+[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_dock_3"]
+collision_layer = 0
+collision_mask = 0
+metadata/stable_id = "actor.enemy.ranged_enforcer.dock.4"
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_dock_3/TargetBody"]
+position = Vector3(0, 0.95, 0)
+shape = SubResource("CapsuleShape_enforcer")
+[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_dock_3"]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_hostile")
+material_override = SubResource("Material_hostile")
+[node name="EscapeTrigger_launch" type="Marker3D" parent="Markers"]
+position = Vector3(56.5, 0, 13)
+metadata/stable_id = "encounter.station.launch"
+metadata/trigger_radius_meters = 3.0
+[node name="launch_crew0" type="Marker3D" parent="Markers"]
+position = Vector3(56.5, 0, 12)
+metadata/stable_id = "marker.launch.crew0"
+
+[node name="launch_crew1" type="Marker3D" parent="Markers"]
+position = Vector3(56.5, 0, 13)
+metadata/stable_id = "marker.launch.crew1"
+
+[node name="launch_crew2" type="Marker3D" parent="Markers"]
+position = Vector3(56.5, 0, 14)
+metadata/stable_id = "marker.launch.crew2"
+
+[node name="Spawn_Escape_launch_0" type="Marker3D" parent="Markers"]
+position = Vector3(61, 0, 14)
+metadata/stable_id = "actor.enemy.security_enforcer.launch.1"
+rotation_degrees = Vector3(0, 77.4712, 0)
+[node name="Escape_launch_0" type="Node3D" parent="Hostiles"]
+position = Vector3(61, 0, 14)
+visible = false
+metadata/stable_id = "actor.enemy.security_enforcer.launch.1"
+rotation_degrees = Vector3(0, 77.4712, 0)
+
+[node name="Presentation" type="Node3D" parent="Hostiles/Escape_launch_0"]
+script = ExtResource("11_humanoid_presentation")
+IdleAnimationName = "anim_humanoid_idle_holstered"
+LocomotionAnimationName = "anim_humanoid_walk_holstered"
+MeleeStrikeAnimationName = "anim_humanoid_melee_strike"
+DownAnimationName = "anim_humanoid_down"
+[node name="Model" parent="Hostiles/Escape_launch_0/Presentation" instance=ExtResource("12_enforcer")]
+[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_launch_0"]
+collision_layer = 0
+collision_mask = 0
+metadata/stable_id = "actor.enemy.security_enforcer.launch.1"
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_launch_0/TargetBody"]
+position = Vector3(0, 0.95, 0)
+shape = SubResource("CapsuleShape_enforcer")
+[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_launch_0"]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_hostile")
+material_override = SubResource("Material_hostile")
+[node name="Spawn_Escape_launch_1" type="Marker3D" parent="Markers"]
+position = Vector3(64, 0, 6.5)
+metadata/stable_id = "actor.enemy.security_enforcer.launch.2"
+rotation_degrees = Vector3(0, 130.914, 0)
+[node name="Escape_launch_1" type="Node3D" parent="Hostiles"]
+position = Vector3(64, 0, 6.5)
+visible = false
+metadata/stable_id = "actor.enemy.security_enforcer.launch.2"
+rotation_degrees = Vector3(0, 130.914, 0)
+
+[node name="Presentation" type="Node3D" parent="Hostiles/Escape_launch_1"]
+script = ExtResource("11_humanoid_presentation")
+IdleAnimationName = "anim_humanoid_idle_holstered"
+LocomotionAnimationName = "anim_humanoid_walk_holstered"
+MeleeStrikeAnimationName = "anim_humanoid_melee_strike"
+DownAnimationName = "anim_humanoid_down"
+[node name="Model" parent="Hostiles/Escape_launch_1/Presentation" instance=ExtResource("12_enforcer")]
+[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_launch_1"]
+collision_layer = 0
+collision_mask = 0
+metadata/stable_id = "actor.enemy.security_enforcer.launch.2"
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_launch_1/TargetBody"]
+position = Vector3(0, 0.95, 0)
+shape = SubResource("CapsuleShape_enforcer")
+[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_launch_1"]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_hostile")
+material_override = SubResource("Material_hostile")
+[node name="Spawn_Escape_launch_2" type="Marker3D" parent="Markers"]
+position = Vector3(67, 0, 12.5)
+metadata/stable_id = "actor.enemy.ranged_enforcer.launch.3"
+rotation_degrees = Vector3(0, 92.7263, 0)
+[node name="Escape_launch_2" type="Node3D" parent="Hostiles"]
+position = Vector3(67, 0, 12.5)
+visible = false
+metadata/stable_id = "actor.enemy.ranged_enforcer.launch.3"
+rotation_degrees = Vector3(0, 92.7263, 0)
+
+[node name="Presentation" type="Node3D" parent="Hostiles/Escape_launch_2"]
+script = ExtResource("7_vanguard_presentation")
+[node name="Model" parent="Hostiles/Escape_launch_2/Presentation" instance=ExtResource("escape_ranged")]
+[node name="Weapon" parent="Hostiles/Escape_launch_2/Presentation" instance=ExtResource("13_carbine")]
+[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_launch_2"]
+collision_layer = 0
+collision_mask = 0
+metadata/stable_id = "actor.enemy.ranged_enforcer.launch.3"
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_launch_2/TargetBody"]
+position = Vector3(0, 0.95, 0)
+shape = SubResource("CapsuleShape_enforcer")
+[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_launch_2"]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_hostile")
+material_override = SubResource("Material_hostile")
+[node name="Spawn_Escape_launch_3" type="Marker3D" parent="Markers"]
+position = Vector3(69, 0, 18)
+metadata/stable_id = "actor.enemy.ranged_enforcer.launch.4"
+rotation_degrees = Vector3(0, 68.1986, 0)
+[node name="Escape_launch_3" type="Node3D" parent="Hostiles"]
+position = Vector3(69, 0, 18)
+visible = false
+metadata/stable_id = "actor.enemy.ranged_enforcer.launch.4"
+rotation_degrees = Vector3(0, 68.1986, 0)
+
+[node name="Presentation" type="Node3D" parent="Hostiles/Escape_launch_3"]
+script = ExtResource("7_vanguard_presentation")
+[node name="Model" parent="Hostiles/Escape_launch_3/Presentation" instance=ExtResource("escape_ranged")]
+[node name="Weapon" parent="Hostiles/Escape_launch_3/Presentation" instance=ExtResource("13_carbine")]
+[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_launch_3"]
+collision_layer = 0
+collision_mask = 0
+metadata/stable_id = "actor.enemy.ranged_enforcer.launch.4"
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_launch_3/TargetBody"]
+position = Vector3(0, 0.95, 0)
+shape = SubResource("CapsuleShape_enforcer")
+[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_launch_3"]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_hostile")
+material_override = SubResource("Material_hostile")
+[node name="Spawn_Escape_launch_4" type="Marker3D" parent="Markers"]
+position = Vector3(69, 0, 8)
+metadata/stable_id = "actor.enemy.gun_sentry.launch.5"
+rotation_degrees = Vector3(0, 111.801, 0)
+[node name="Escape_launch_4" type="Node3D" parent="Hostiles"]
+position = Vector3(69, 0, 8)
+visible = false
+metadata/stable_id = "actor.enemy.gun_sentry.launch.5"
+rotation_degrees = Vector3(0, 111.801, 0)
+
+[node name="Presentation" type="Node3D" parent="Hostiles/Escape_launch_4"]
+script = ExtResource("17_sentry_presentation")
+[node name="Model" parent="Hostiles/Escape_launch_4/Presentation" instance=ExtResource("16_sentry")]
+[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_launch_4"]
+collision_layer = 0
+collision_mask = 0
+metadata/stable_id = "actor.enemy.gun_sentry.launch.5"
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_launch_4/TargetBody"]
+position = Vector3(0, 0.95, 0)
+shape = SubResource("CapsuleShape_enforcer")
+[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_launch_4"]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_hostile")
+material_override = SubResource("Material_hostile")
+[node name="BoardCutter" type="StaticBody3D" parent="Interactions"]
+position = Vector3(76.5, 0, 8)
+collision_layer = 2
+collision_mask = 0
+metadata/stable_id = "interaction.escape_cutter.board"
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/BoardCutter"]
+position = Vector3(0, 0.8, 0)
+shape = SubResource("BoxShape_terminal")
+[node name="Label" type="Label3D" parent="Interactions/BoardCutter"]
+position = Vector3(0, 2.4, 0)
+text = "BOARD ESCAPE CUTTER"
+font_size = 30
+outline_size = 7
+billboard = 1
+no_depth_test = true
+[node name="Layout_solo_0" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(-13.55, -0.1, -2.35)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_solo_0"]
+shape = SubResource("layout_floor_0")
+
+[node name="Layout_solo_1" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(-13.55, -0.1, 0.1)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_solo_1"]
+shape = SubResource("layout_floor_1")
+
+[node name="Layout_solo_2" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(-13.55, -0.1, 2.45)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_solo_2"]
+shape = SubResource("layout_floor_2")
+
+[node name="Layout_solo_3" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(-10.65, -0.1, -2.35)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_solo_3"]
+shape = SubResource("layout_floor_3")
+
+[node name="Layout_solo_4" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(-10.65, -0.1, 2.45)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_solo_4"]
+shape = SubResource("layout_floor_4")
+
+[node name="Layout_solo_5" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(-7.1, -0.1, -2.35)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_solo_5"]
+shape = SubResource("layout_floor_5")
+
+[node name="Layout_solo_6" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(-7.1, -0.1, 0.1)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_solo_6"]
+shape = SubResource("layout_floor_6")
+
+[node name="Layout_solo_7" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(-7.1, -0.1, 2.45)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_solo_7"]
+shape = SubResource("layout_floor_7")
+
+[node name="Layout_party_8" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(-3.45, -0.1, 5.05)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_party_8"]
+shape = SubResource("layout_floor_8")
+
+[node name="Layout_party_9" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(-3.45, -0.1, 8.35)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_party_9"]
+shape = SubResource("layout_floor_9")
+
+[node name="Layout_party_10" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(-3.45, -0.1, 11.3)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_party_10"]
+shape = SubResource("layout_floor_10")
+
+[node name="Layout_party_11" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(0, -0.1, 5.05)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_party_11"]
+shape = SubResource("layout_floor_11")
+
+[node name="Layout_party_12" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(0, -0.1, 11.3)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_party_12"]
+shape = SubResource("layout_floor_12")
+
+[node name="Layout_party_13" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(3.45, -0.1, 5.05)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_party_13"]
+shape = SubResource("layout_floor_13")
+
+[node name="Layout_party_14" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(3.45, -0.1, 8.35)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_party_14"]
+shape = SubResource("layout_floor_14")
+
+[node name="Layout_party_15" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(3.45, -0.1, 11.3)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_party_15"]
+shape = SubResource("layout_floor_15")
+
+[node name="Layout_service_16" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(14.5, -0.1, 1.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_service_16"]
+shape = SubResource("layout_floor_16")
+
+[node name="Layout_service_17" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(14.5, -0.1, 6)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_service_17"]
+shape = SubResource("layout_floor_17")
+
+[node name="Layout_service_18" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(14.5, -0.1, 10.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_service_18"]
+shape = SubResource("layout_floor_18")
+
+[node name="Layout_service_19" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(18.5, -0.1, 1.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_service_19"]
+shape = SubResource("layout_floor_19")
+
+[node name="Layout_service_20" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(18.5, -0.1, 10.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_service_20"]
+shape = SubResource("layout_floor_20")
+
+[node name="Layout_service_21" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(22, -0.1, 1.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_service_21"]
+shape = SubResource("layout_floor_21")
+
+[node name="Layout_service_22" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(22, -0.1, 6)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_service_22"]
+shape = SubResource("layout_floor_22")
+
+[node name="Layout_service_23" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(22, -0.1, 10.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_service_23"]
+shape = SubResource("layout_floor_23")
+
+[node name="Layout_security_24" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(28, -0.1, -2.25)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_24"]
+shape = SubResource("layout_floor_24")
+
+[node name="Layout_security_25" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(28, -0.1, 0.75)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_25"]
+shape = SubResource("layout_floor_25")
+
+[node name="Layout_security_26" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(28, -0.1, 3.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_26"]
+shape = SubResource("layout_floor_26")
+
+[node name="Layout_security_27" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(28, -0.1, 6.25)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_27"]
+shape = SubResource("layout_floor_27")
+
+[node name="Layout_security_28" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(28, -0.1, 8.75)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_28"]
+shape = SubResource("layout_floor_28")
+
+[node name="Layout_security_29" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(31, -0.1, -2.25)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_29"]
+shape = SubResource("layout_floor_29")
+
+[node name="Layout_security_30" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(31, -0.1, 3.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_30"]
+shape = SubResource("layout_floor_30")
+
+[node name="Layout_security_31" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(31, -0.1, 6.25)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_31"]
+shape = SubResource("layout_floor_31")
+
+[node name="Layout_security_32" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(31, -0.1, 8.75)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_32"]
+shape = SubResource("layout_floor_32")
+
+[node name="Layout_security_33" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(32.5, -0.1, -2.25)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_33"]
+shape = SubResource("layout_floor_33")
+
+[node name="Layout_security_34" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(32.5, -0.1, 0.75)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_34"]
+shape = SubResource("layout_floor_34")
+
+[node name="Layout_security_35" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(32.5, -0.1, 3.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_35"]
+shape = SubResource("layout_floor_35")
+
+[node name="Layout_security_36" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(32.5, -0.1, 6.25)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_36"]
+shape = SubResource("layout_floor_36")
+
+[node name="Layout_security_37" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(32.5, -0.1, 8.75)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_37"]
+shape = SubResource("layout_floor_37")
+
+[node name="Layout_security_38" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(34, -0.1, -2.25)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_38"]
+shape = SubResource("layout_floor_38")
+
+[node name="Layout_security_39" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(34, -0.1, 0.75)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_39"]
+shape = SubResource("layout_floor_39")
+
+[node name="Layout_security_40" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(34, -0.1, 3.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_40"]
+shape = SubResource("layout_floor_40")
+
+[node name="Layout_security_41" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(34, -0.1, 8.75)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_41"]
+shape = SubResource("layout_floor_41")
+
+[node name="Layout_security_42" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(36.5, -0.1, -2.25)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_42"]
+shape = SubResource("layout_floor_42")
+
+[node name="Layout_security_43" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(36.5, -0.1, 0.75)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_43"]
+shape = SubResource("layout_floor_43")
+
+[node name="Layout_security_44" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(36.5, -0.1, 3.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_44"]
+shape = SubResource("layout_floor_44")
+
+[node name="Layout_security_45" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(36.5, -0.1, 6.25)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_45"]
+shape = SubResource("layout_floor_45")
+
+[node name="Layout_security_46" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(36.5, -0.1, 8.75)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_security_46"]
+shape = SubResource("layout_floor_46")
+
+[node name="Layout_dock_47" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(42, -0.1, 6.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_dock_47"]
+shape = SubResource("layout_floor_47")
+
+[node name="Layout_dock_48" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(42, -0.1, 10.75)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_dock_48"]
+shape = SubResource("layout_floor_48")
+
+[node name="Layout_dock_49" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(42, -0.1, 15.25)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_dock_49"]
+shape = SubResource("layout_floor_49")
+
+[node name="Layout_dock_50" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(46, -0.1, 6.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_dock_50"]
+shape = SubResource("layout_floor_50")
+
+[node name="Layout_dock_51" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(46, -0.1, 15.25)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_dock_51"]
+shape = SubResource("layout_floor_51")
+
+[node name="Layout_dock_52" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(50, -0.1, 6.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_dock_52"]
+shape = SubResource("layout_floor_52")
+
+[node name="Layout_dock_53" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(50, -0.1, 10.75)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_dock_53"]
+shape = SubResource("layout_floor_53")
+
+[node name="Layout_dock_54" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(50, -0.1, 15.25)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_dock_54"]
+shape = SubResource("layout_floor_54")
+
+[node name="Layout_launch_55" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(57, -0.1, 6)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_55"]
+shape = SubResource("layout_floor_55")
+
+[node name="Layout_launch_56" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(57, -0.1, 10)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_56"]
+shape = SubResource("layout_floor_56")
+
+[node name="Layout_launch_57" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(57, -0.1, 13.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_57"]
+shape = SubResource("layout_floor_57")
+
+[node name="Layout_launch_58" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(57, -0.1, 16)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_58"]
+shape = SubResource("layout_floor_58")
+
+[node name="Layout_launch_59" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(57, -0.1, 18.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_59"]
+shape = SubResource("layout_floor_59")
+
+[node name="Layout_launch_60" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(61, -0.1, 6)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_60"]
+shape = SubResource("layout_floor_60")
+
+[node name="Layout_launch_61" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(61, -0.1, 13.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_61"]
+shape = SubResource("layout_floor_61")
+
+[node name="Layout_launch_62" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(61, -0.1, 16)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_62"]
+shape = SubResource("layout_floor_62")
+
+[node name="Layout_launch_63" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(61, -0.1, 18.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_63"]
+shape = SubResource("layout_floor_63")
+
+[node name="Layout_launch_64" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(63.5, -0.1, 6)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_64"]
+shape = SubResource("layout_floor_64")
+
+[node name="Layout_launch_65" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(63.5, -0.1, 10)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_65"]
+shape = SubResource("layout_floor_65")
+
+[node name="Layout_launch_66" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(63.5, -0.1, 13.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_66"]
+shape = SubResource("layout_floor_66")
+
+[node name="Layout_launch_67" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(63.5, -0.1, 16)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_67"]
+shape = SubResource("layout_floor_67")
+
+[node name="Layout_launch_68" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(63.5, -0.1, 18.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_68"]
+shape = SubResource("layout_floor_68")
+
+[node name="Layout_launch_69" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(66.5, -0.1, 6)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_69"]
+shape = SubResource("layout_floor_69")
+
+[node name="Layout_launch_70" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(66.5, -0.1, 10)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_70"]
+shape = SubResource("layout_floor_70")
+
+[node name="Layout_launch_71" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(66.5, -0.1, 13.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_71"]
+shape = SubResource("layout_floor_71")
+
+[node name="Layout_launch_72" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(66.5, -0.1, 18.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_72"]
+shape = SubResource("layout_floor_72")
+
+[node name="Layout_launch_73" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(70, -0.1, 6)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_73"]
+shape = SubResource("layout_floor_73")
+
+[node name="Layout_launch_74" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(70, -0.1, 10)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_74"]
+shape = SubResource("layout_floor_74")
+
+[node name="Layout_launch_75" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(70, -0.1, 13.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_75"]
+shape = SubResource("layout_floor_75")
+
+[node name="Layout_launch_76" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(70, -0.1, 16)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_76"]
+shape = SubResource("layout_floor_76")
+
+[node name="Layout_launch_77" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(70, -0.1, 18.5)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_launch_77"]
+shape = SubResource("layout_floor_77")
+
+[node name="Layout_apron_78" type="StaticBody3D" parent="Environment/Floors"]
+position = Vector3(83, -0.1, 8)
+collision_layer = 1
+collision_mask = 0
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floors/Layout_apron_78"]
+shape = SubResource("layout_floor_78")

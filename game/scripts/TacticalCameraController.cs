@@ -44,6 +44,20 @@ public partial class TacticalCameraController : Camera3D
     private readonly List<OccludingLintel> _occludingLintels = [];
     private readonly List<Vector3> _occlusionSubjects = new(4);
 
+    // Original production geometry, unaffected by the camera's visual cutaways.
+    internal IEnumerable<(string Id, Aabb Bounds)> FullWallBounds =>
+        _occludingWalls.Select(wall => (wall.Id, wall.FullWorldBounds));
+
+    internal IEnumerable<string> OffAxisWallIds =>
+        _occludingWalls.Where(wall => !IsAxisAligned(wall.FullGlobalTransform.Basis)).Select(wall => wall.Id);
+
+    // True when every basis axis lies along a world axis (any multiple of 90 degrees).
+    internal static bool IsAxisAligned(Basis basis) => new[] { basis.X, basis.Y, basis.Z }.All(axis =>
+    {
+        var unit = axis.Normalized();
+        return new[] { unit.X, unit.Y, unit.Z }.Count(component => Mathf.Abs(component) > .999f) == 1;
+    });
+
     private Vector3 _focus = InitialFocus;
     private Vector3 _followTarget;
     private float _yaw = DefaultYaw;

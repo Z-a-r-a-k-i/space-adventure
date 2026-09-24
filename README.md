@@ -1,9 +1,9 @@
 # SpaceAdventure
 
 A single-player science-fiction party RPG built with Godot 4.7.1 .NET and C#.
-The current local prototype joins a solo tactical-pause fight, Protector
-recruitment, and a two-character arena. See the [roadmap](docs/ROADMAP.md) for
-the current milestone and next gate.
+The active station milestone grows the crew from Vanguard to Protector and
+Medic, through six tactical-pause fights and a spaceship departure. See the
+[roadmap](docs/ROADMAP.md) for implementation status and the next acceptance gate.
 
 ## Run
 
@@ -33,8 +33,8 @@ console executable; an editor plugin is optional. `help` lists all commands.
 | Tab / Shift + Tab | Cycle ability focus forward/backward within the group; with one selected, cycle living crew |
 | Shift + left-click crew / portrait | Add or remove a character from the selection |
 | Space | Tactical pause; newest pending order replaces the previous one |
-| 1, then left-click | Vanguard: aim Interrupt on the floor. Protector: place Barrier with one click, facing from him toward the placement point. Escape/right-click cancels |
-| 2 | Vanguard: click an enemy for Burst. Protector: Taunt nearby enemies |
+| 1, then left-click | Vanguard: aim Interrupt on the floor. Protector: place Barrier, facing toward the placement point. Medic: Heal a living crew member through the world or portrait. Escape/right-click cancels |
+| 2 | Vanguard: click an enemy for Burst. Protector: Taunt nearby enemies. Medic: place Healing Field on the floor |
 | X or Stop | Cancel orders; follows pause/readying rules |
 | Dialogue 1/2, Tab/arrows, Enter, or buttons | Choose a response; Tab/arrows change focus, Enter confirms it (first response initially) |
 | Defeat Enter/keypad Enter or Retry | Restart the fight, preserving route progress |
@@ -50,15 +50,18 @@ pauses when readying starts; resume to play the draw. Crew only attack assigned
 targets. Basic fire resumes after an ability; movement, interaction,
 and Stop clear the target. Crew turn automatically as they move and fight.
 Move, attack, and Stop apply to the selected living
-crew. Abilities belong to the focused portrait. The arena ends when every enemy or every crew
-member is down; retry restores the encounter while preserving route progress.
+crew. Abilities belong to the focused portrait. A fight ends when every enemy
+or every crew member is down. Secured victory restores the crew for travel;
+retry restores only the current encounter while preserving route progress.
 
 The Field Ops HUD links crew and focused abilities with matching numbers,
 portrait, and role accents. Inspect a skill tile or aim it to see targets,
 range, and what happens on resume. During tactical pause, labels beside the crew show their
 next orders; shared destinations use a combined crew-number badge. The crew
 cards retain pending orders when a world label cannot fit or its owner is offscreen.
-Health bars sit above living crew and enemies. Enemy attack countdowns and
+Health bars sit above living crew and enemies currently seen by the crew.
+Enemies can be discovered before their encounter starts; [shared crew vision](docs/ARCHITECTURE.md#shared-crew-vision)
+determines their visibility independently of the camera. Enemy attack countdowns and
 Taunt status appear beside their bars; assign targets directly in the world.
 
 ## Work on the prototype

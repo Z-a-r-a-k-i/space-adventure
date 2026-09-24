@@ -4,11 +4,11 @@ public sealed partial class GameSession
 {
     private long _projectileSequence;
 
-    private void LaunchSentryProjectile(StationRouteRuntime station, HostileRuntime source, ActorRuntime target, AttackDefinition attack)
+    private void LaunchHostileProjectile(StationRouteRuntime station, HostileRuntime source, ActorRuntime target, AttackDefinition attack)
     {
         var displacement = new WorldPosition(target.Position.X - source.Position.X, 0, target.Position.Z - source.Position.Z);
         var toward = displacement.DistanceTo(default) < .001 ? new WorldPosition(0, 0, -1) : NormalizeFacing(displacement);
-        var origin = new WorldPosition(source.Position.X + toward.X * .65, source.Position.Y + 1.62, source.Position.Z + toward.Z * .65);
+        var origin = new WorldPosition(source.Position.X + toward.X * .65, source.Position.Y + (source.Behavior == HostileBehavior.Sentry ? 1.62 : 1.35), source.Position.Z + toward.Z * .65);
         var destination = new WorldPosition(target.Position.X, target.Position.Y + 1.1, target.Position.Z);
         var ticks = Math.Max(1, (int)Math.Ceiling(origin.DistanceTo(destination) / attack.ProjectileSpeedMetersPerSecond * TicksPerSecond));
         var projectile = new ProjectileRuntime(++_projectileSequence, source.Id, target.Id, attack.Id,

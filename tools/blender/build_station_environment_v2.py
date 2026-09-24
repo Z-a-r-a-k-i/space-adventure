@@ -24,7 +24,7 @@ import sys
 import tempfile
 import time
 import uuid
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -35,6 +35,8 @@ from mathutils import Vector
 REPOSITORY = Path(
     os.environ.get("SPACE_ADVENTURE_REPOSITORY", Path(__file__).resolve().parents[2])
 ).resolve()
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import station_tactical_geometry as tactical
 
 
 def publication_lock_path(source: Path, publication: Path) -> Path:
@@ -399,6 +401,7 @@ def floor_panel(
 
 def build_structure() -> tuple[str, str, list[str], int, int]:
     asset_id = "kit.station.structure.v2"
+    layout = tactical.read_layout(REPOSITORY)
     dark = material("mat.station.structure.dark", (0.036, 0.046, 0.057, 1), metallic=0.32, roughness=0.76)
     armor = material("mat.station.structure.armor", (0.30, 0.29, 0.27, 1), metallic=0.48, roughness=0.62)
     deck = material("mat.station.structure.deck", (0.050, 0.057, 0.064, 1), metallic=0.14, roughness=0.86)
@@ -406,9 +409,9 @@ def build_structure() -> tuple[str, str, list[str], int, int]:
 
     objects: list[bpy.types.Object] = [
         floor_panel("Floor_StartRoom", (-10, -0.10, 7), (6, 0.20, 6), dark, armor, deck),
-        floor_panel("Floor_SoloCombatArena", (-10, -0.10, 0), (10, 0.20, 8), dark, armor, deck),
+        tactical.tactical_floor(sys.modules[__name__], "Floor_SoloCombatArena", tactical.room(layout, "solo"), dark, armor, deck, cyan),
         floor_panel("Floor_ProtectorRoom", (-1.5, -0.10, 0), (7, 0.20, 6), dark, armor, deck),
-        floor_panel("Floor_MainPartyArena", (0, -0.10, 8), (12, 0.20, 10), dark, armor, deck),
+        tactical.tactical_floor(sys.modules[__name__], "Floor_MainPartyArena", tactical.room(layout, "party"), dark, armor, deck, cyan),
         floor_panel("Floor_FinalAirlockApproach", (9, -0.10, 8), (6, 0.20, 6), dark, armor, deck),
     ]
 
@@ -454,18 +457,22 @@ def build_structure() -> tuple[str, str, list[str], int, int]:
 
     route_strips = [
         ("RouteStrip_Start", (-10, 0.025, 7.15), (0.10, 0.025, 5.40)),
-        ("RouteStrip_SoloVertical", (-10, 0.025, 1.95), (0.10, 0.025, 3.80)),
-        ("RouteStrip_SoloHorizontal", (-7.5, 0.025, 0), (4.90, 0.025, 0.10)),
+        ("RouteStrip_SoloVertical", (-10, 0.025, 2.70), (0.10, 0.025, 2.40)),
+        ("RouteStrip_SoloCorner", (-9.25, 0.025, 1.50), (1.50, 0.025, 0.10)),
+        ("RouteStrip_SoloReturn", (-8.5, 0.025, .75), (.10, 0.025, 1.50)),
+        ("RouteStrip_SoloHorizontal", (-6.85, 0.025, 0), (3.30, 0.025, 0.10)),
         ("RouteStrip_Protector", (-2.45, 0.025, 0), (4.70, 0.025, 0.10)),
-        ("RouteStrip_MainVertical", (0, 0.025, 4.0), (0.10, 0.025, 8.00)),
-        ("RouteStrip_Final", (6, 0.025, 8), (12.00, 0.025, 0.10)),
+        ("RouteStrip_MainVertical", (0, 0.025, 3.15), (0.10, 0.025, 6.30)),
+        ("RouteStrip_MainCorner", (.75, 0.025, 6.30), (1.50, 0.025, .10)),
+        ("RouteStrip_MainReturn", (1.5, 0.025, 7.15), (.10, 0.025, 1.70)),
+        ("RouteStrip_Final", (6.75, 0.025, 8), (10.50, 0.025, 0.10)),
     ]
     objects.extend(add_box(name, center, dimensions, cyan, bevel=0.008)
                    for name, center, dimensions in route_strips)
 
     for obj in objects:
         obj["asset_id"] = asset_id
-    return asset_id, "structure-v2", [obj.name for obj in objects], 30_000, 4
+    return asset_id, "structure-v2", [obj.name for obj in objects], 36_000, 4
 
 
 def build_service_surround() -> tuple[str, str, list[str], int, int]:
@@ -491,9 +498,20 @@ def build_service_surround() -> tuple[str, str, list[str], int, int]:
         box("Surround_ServiceBed", f"transverse_{offset}", (0, -4.9, offset), (256, 0.26, 0.32), surface)
 
     # Five separate deck foundations match the authored rooms, all below y=-.20.
+    # The two revised decks need matching physical shafts through their backing
+    # slabs; keep 6 cm for the visible lining and preserve every other assembly.
+    layout = tactical.read_layout(REPOSITORY)
     rooms = [(-10, 7, 6, 6), (-10, 0, 10, 8), (-1.5, 0, 7, 6), (0, 8, 12, 10), (9, 8, 6, 6)]
     for index, (x, z, width, depth) in enumerate(rooms):
-        box("Surround_Foundations", f"foundation_{index}", (x, -1.05, z), (width + 0.30, 1.65, depth + 0.30), shell, 0.10)
+        if index in (1, 3):
+            spec = tactical.room(layout, "solo" if index == 1 else "party")
+            holes = [(a-.06, b+.06, c-.06, d+.06) for a,b,c,d in spec["pits"]]
+            footprint = (x-width/2-.15, x+width/2+.15, z-depth/2-.15, z+depth/2+.15)
+            for part, (a,b,c,d) in enumerate(tactical.cut_rectangles(footprint, holes)):
+                box("Surround_Foundations", f"foundation_{index}_{part}",
+                    ((a+b)/2, -1.05, (c+d)/2), (b-a, 1.65, d-c), shell, 0.10)
+        else:
+            box("Surround_Foundations", f"foundation_{index}", (x, -1.05, z), (width + 0.30, 1.65, depth + 0.30), shell, 0.10)
         for side in (-1, 1):
             box("Surround_Foundations", f"rim_x_{index}_{side}", (x + side * (width / 2 + 0.10), -0.45, z), (0.20, 0.36, depth + 0.40), frame, 0.04)
             box("Surround_Foundations", f"rim_z_{index}_{side}", (x, -0.45, z + side * (depth / 2 + 0.10)), (width + 0.40, 0.36, 0.20), frame, 0.04)
@@ -823,7 +841,14 @@ def save_export_and_validate(
     triangle_budget: int,
     material_budget: int,
     replace: bool,
+    before_promotion: Callable[[], dict[str, object]] | None = None,
 ) -> dict[str, object]:
+    """Stage, export, fresh-import, and validate, then publish.
+
+    `before_promotion` runs against the fresh-import scene after the built-in
+    checks. It raises to reject the build; its returned fields join the report.
+    Nothing replaces the accepted source or publication until it passes.
+    """
     source = REPOSITORY / "art" / "source" / asset_id / f"{source_name}.blend"
     publication = REPOSITORY / "game" / "Assets" / "Published" / f"{asset_id}.glb"
     collisions = [path for path in (source, publication) if path.exists()]
@@ -968,6 +993,7 @@ def save_export_and_validate(
                     f"'{imported_occluder_id}'; expected '{expected_occluder_id}'"
                 )
 
+        pre_promotion_report = before_promotion() if before_promotion is not None else {}
         promote_staged_artifacts(
             staged_artifacts,
             replace=replace,
@@ -998,6 +1024,7 @@ def save_export_and_validate(
         "fresh_reimport_meshes": imported_names,
         "source_bytes": source.stat().st_size,
         "publication_bytes": publication.stat().st_size,
+        **pre_promotion_report,
     }
 
 
@@ -1033,8 +1060,40 @@ def main() -> None:
         triangle_budget,
         material_budget,
         arguments.replace,
+        before_promotion=layout_checks(arguments.asset),
     )
     print("SPACEADVENTURE_STATION_ASSET " + json.dumps(report, sort_keys=True))
+
+
+def layout_checks(asset: str) -> Callable[[], dict[str, object]] | None:
+    """Tactical-layout checks for the fresh-import scene, run before publication."""
+
+    def structure() -> dict[str, object]:
+        layout = tactical.read_layout(REPOSITORY)
+        for room_id, name in (("solo", "Floor_SoloCombatArena"), ("party", "Floor_MainPartyArena")):
+            tactical.verify_floor_pits(bpy.data.objects[name], tactical.room(layout, room_id))
+        return {"layout_revision": layout["revision"], "fresh_reimport_open_pits": 2}
+
+    def service_surround() -> dict[str, object]:
+        # Validate the actual combined publications, not the surround alone:
+        # the previous solid foundation capped the newly opened floor meshes.
+        bpy.ops.import_scene.gltf(filepath=str(REPOSITORY / "game/Assets/Published/kit.station.structure.v2.glb"))
+        bpy.context.view_layer.update()
+        depsgraph = bpy.context.evaluated_depsgraph_get()
+        layout = tactical.read_layout(REPOSITORY)
+        heights = []
+        for room_id, floor_name in (("solo", "Floor_SoloCombatArena"), ("party", "Floor_MainPartyArena")):
+            for a,b,c,d in tactical.room(layout, room_id)["pits"]:
+                for i in range(1, 6):
+                    for j in range(1, 6):
+                        origin = Vector((a+(b-a)*i/6, -(c+(d-c)*j/6), 2))
+                        hit, position, normal, face, obj, matrix = bpy.context.scene.ray_cast(depsgraph, origin, Vector((0,0,-1)))
+                        assert hit and obj.name == floor_name, f"Surround hides {room_id} pit at {origin}: {obj.name if obj else 'no hit'}"
+                        assert position.z < -.24, f"Surround caps {room_id} pit at {position.z}"
+                        heights.append(position.z)
+        return {"combined_structure_pit_probes": len(heights), "combined_pit_top_range": [min(heights), max(heights)]}
+
+    return {"structure": structure, "service-surround": service_surround}.get(asset)
 
 
 if __name__ == "__main__":

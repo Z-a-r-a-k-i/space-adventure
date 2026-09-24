@@ -41,6 +41,8 @@ public sealed partial class GameSession
 
     public bool IsPaused { get; private set; }
 
+    public bool IsStationRouteCompleted => _stationRoute?.Phase == ScenarioPhase.Completed;
+
     public double TickFraction => IsPaused ? 0 : Math.Clamp(_accumulatedSeconds / SecondsPerTick, 0, 1);
 
     public long OldestRetainedEventSequence => _events.Count == 0
@@ -333,6 +335,9 @@ public sealed partial class GameSession
             return Reject(command.CommandId, CommandRejectionCode.InteractionUnavailable);
         }
 
+        if (target.Definition.Effect == StationInteractionEffect.CompleteScenario)
+        { return AssignBoardingApproach(command, station, target); }
+
         IReadOnlyList<WorldPosition> waypoints = [];
         if (!IsWithinUseRadius(actor.Position, target))
         {
@@ -360,6 +365,26 @@ public sealed partial class GameSession
                 target.Placement.ApproachPosition,
                 command.TargetId,
                 waypoints));
+        return Accept(command.CommandId);
+    }
+
+    private CommandAcknowledgement AssignBoardingApproach(InteractCommand command, StationRouteRuntime station, InteractionRuntime target)
+    {
+        var crew = station.Actors.Values.OrderBy(member => member.PartyOrder).ToArray();
+        var destinations = GetPartyDestinations(crew, target.Placement.ApproachPosition);
+        var assignments = new List<(ActorRuntime Actor, PrimaryActionRuntime Action)>();
+        for (var index = 0; index < crew.Length; index++)
+        {
+            var member = crew[index];
+            var destination = destinations[index];
+            var result = _pathfinder!.FindPath(member.Id, member.Position, destination);
+            if (!TryNormalizePath(result, member.Position,
+                endpoint => endpoint.DistanceTo(destination) <= MoveEndpointToleranceMeters && IsWithinUseRadius(endpoint, target), out var waypoints))
+            { return Reject(command.CommandId, CommandRejectionCode.DestinationUnreachable); }
+            assignments.Add((member, new PrimaryActionRuntime(command.CommandId, PrimaryActionKind.Interact,
+                destination, target.Definition.Id, waypoints)));
+        }
+        foreach (var assignment in assignments) { AssignPrimaryAction(assignment.Actor, assignment.Action); }
         return Accept(command.CommandId);
     }
 
@@ -423,6 +448,11 @@ public sealed partial class GameSession
             case StationDialogueResponseEffect.PreserveShelterPower:
                 ApplyRouteConsequence(station, command.CommandId, RoutePowerMode.ShelterPreserved);
                 ChangeObjective(station, command.CommandId, station.Definition.EntryDoorObjective);
+                break;
+
+            case StationDialogueResponseEffect.RecruitMedic:
+                RecruitMedic(station, command.CommandId);
+                ChangeObjective(station, command.CommandId, station.Definition.Combat.Encounters[2].Objective!);
                 break;
 
             case StationDialogueResponseEffect.RecruitProtector:
@@ -503,7 +533,7 @@ public sealed partial class GameSession
             return actor.MaximumHealth > 0 && actor.Health <= 0 ? CommandRejectionCode.CombatantDefeated : null;
         }
 
-        return actorId == station.Definition.Companion.Id
+        return actorId == station.Definition.Companion.Id || actorId == station.Definition.Medic.Id
             || station.Interactions.ContainsKey(actorId)
                 ? CommandRejectionCode.ActorNotControllable
                 : CommandRejectionCode.UnknownActor;
@@ -581,6 +611,7 @@ public sealed partial class GameSession
             return;
         }
 
+        ClearHiddenOffensiveTargets(_stationRoute);
         if (AdvanceEncounterTransition(_stationRoute))
         {
             foreach (var actor in _stationRoute.Actors.Values) { AdvanceActorFacing(_stationRoute, actor); }
@@ -590,6 +621,7 @@ public sealed partial class GameSession
         if (_stationRoute.Combat.Phase == EncounterPhase.Active)
         {
             AdvanceCombatCooldowns(_stationRoute);
+            AdvanceHealingField(_stationRoute);
             ValidateTaunts(_stationRoute);
             ValidateBarrierLifetime(_stationRoute);
         }
@@ -619,6 +651,7 @@ public sealed partial class GameSession
         {
             TryStartEncounter(_stationRoute);
         }
+        ClearHiddenOffensiveTargets(_stationRoute);
     }
 
     private void AdvanceAction(
@@ -668,6 +701,10 @@ public sealed partial class GameSession
             return;
         }
 
+        if (action.InteractionTargetId is { } boardingId && station.Interactions.TryGetValue(boardingId, out var boarding)
+            && boarding.Definition.Effect == StationInteractionEffect.CompleteScenario
+            && station.Actors.Values.Any(member => !IsWithinUseRadius(member.Position, boarding)))
+        { return; }
         actor.CurrentAction = null;
         Record(
             GameplayEventType.MovementArrived,
@@ -688,7 +725,9 @@ public sealed partial class GameSession
         if (action.InteractionTargetId is not EntityId targetId
             || !station.Interactions.TryGetValue(targetId, out var interaction)
             || !IsInteractionAvailable(station, interaction)
-            || !IsWithinUseRadius(actor.Position, interaction))
+            || !IsWithinUseRadius(actor.Position, interaction)
+            || interaction.Definition.Effect == StationInteractionEffect.CompleteScenario
+                && station.Actors.Values.Any(member => member.Health <= 0 || !IsWithinUseRadius(member.Position, interaction)))
         {
             Record(
                 GameplayEventType.PrimaryActionFailed,
@@ -705,6 +744,7 @@ public sealed partial class GameSession
         {
             case StationInteractionEffect.BeginSurvivorDialogue:
             case StationInteractionEffect.BeginRecruitmentDialogue:
+            case StationInteractionEffect.BeginMedicRecruitmentDialogue:
                 station.ActiveDialogue = new ActiveDialogueRuntime(
                     interaction.Definition.Id,
                     actor.Id);
@@ -724,9 +764,14 @@ public sealed partial class GameSession
 
             case StationInteractionEffect.OpenEntryServiceDoor:
             case StationInteractionEffect.OpenSoloExitServiceDoor:
-                // The solo-exit branch is staged for Phase 4; availability keeps it and
-                // the following recruitment progression unreachable in this slice.
+            case StationInteractionEffect.OpenRouteDoor:
                 CompleteServiceDoorInteraction(station, actor, interaction, action.CommandId);
+                break;
+
+            case StationInteractionEffect.OpenEvacuationAirlock:
+                interaction.Completed = true;
+                RecordInteractionCompleted(action.CommandId, actor.Id, interaction);
+                ChangeObjective(station, action.CommandId, station.Definition.BoardingObjective);
                 break;
 
             case StationInteractionEffect.CompleteScenario:
@@ -775,6 +820,7 @@ public sealed partial class GameSession
                 station.Definition.CombatThresholdObjective,
             StationInteractionEffect.OpenSoloExitServiceDoor =>
                 station.Definition.RecruitmentObjective,
+            StationInteractionEffect.OpenRouteDoor => station.CurrentObjective,
             _ => throw new InvalidOperationException(
                 $"Interaction '{interaction.Definition.Id}' is not a service door."),
         };
@@ -810,6 +856,16 @@ public sealed partial class GameSession
             GameplayEventType.PartyMemberRecruited,
             commandId,
             detail: new PartyMemberRecruitedEventDetail(commandId, companion.Id));
+    }
+
+    private void RecruitMedic(StationRouteRuntime station, CommandId commandId)
+    {
+        if (station.Actors.ContainsKey(station.Definition.Medic.Id)) { return; }
+        var medic = new ActorRuntime(station.Definition.Medic, station.MedicPlacement.Position, partyOrder: 2);
+        InitializeActorCombatState(station, medic);
+        station.Actors.Add(medic.Id, medic);
+        Record(GameplayEventType.PartyMemberRecruited, commandId,
+            detail: new PartyMemberRecruitedEventDetail(commandId, medic.Id));
     }
 
     private void ChangeObjective(
@@ -890,6 +946,14 @@ public sealed partial class GameSession
             StationInteractionEffect.BeginRecruitmentDialogue =>
                 !interaction.Completed
                 && station.CurrentObjective.Id == station.Definition.RecruitmentObjective.Id,
+            StationInteractionEffect.BeginMedicRecruitmentDialogue =>
+                !interaction.Completed && station.CurrentObjective.Id == station.Definition.MedicRecruitmentObjective.Id,
+            StationInteractionEffect.OpenRouteDoor =>
+                !interaction.Completed && station.Actors.ContainsKey(station.Definition.Medic.Id)
+                && interaction.Definition.RequiredEncounterId is { } predecessor && station.CompletedEncounterIds.Contains(predecessor),
+            StationInteractionEffect.OpenEvacuationAirlock =>
+                !interaction.Completed && station.CurrentObjective.Id == station.Definition.DestinationObjective.Id
+                && station.CompletedEncounterIds.Count == station.Definition.Combat.Encounters.Count,
             StationInteractionEffect.RecordObservation =>
                 !interaction.Completed && station.RoutePowerMode != RoutePowerMode.Unset,
             StationInteractionEffect.OpenEntryServiceDoor =>
@@ -901,8 +965,9 @@ public sealed partial class GameSession
                 && station.CurrentObjective.Id == station.Definition.SoloExitDoorObjective.Id,
             StationInteractionEffect.CompleteScenario =>
                 !interaction.Completed
-                && station.CurrentObjective.Id == station.Definition.DestinationObjective.Id
-                && station.Actors.ContainsKey(station.Definition.Companion.Id),
+                && station.CurrentObjective.Id == station.Definition.BoardingObjective.Id
+                && station.Actors.Count == 3
+                && station.Actors.Values.All(actor => actor.Health > 0),
             _ => false,
         };
     }
@@ -950,7 +1015,6 @@ public sealed partial class GameSession
     private StationRouteObservation ObserveStationRoute(StationRouteRuntime station)
     {
         var objectiveStatus = station.Phase == ScenarioPhase.Completed
-            || (station.Combat.Definition.RequiresCompanion && station.Combat.Phase == EncounterPhase.Victory)
             ? ObjectiveStatus.Completed
             : ObjectiveStatus.Active;
         var party = station.Actors.Values
@@ -1002,7 +1066,7 @@ public sealed partial class GameSession
                 objectiveStatus),
             interactions,
             activeDialogue,
-            station.Combat.Hostiles.Values.Select(hostile => ObserveHostile(station, hostile)).ToArray(),
+            station.Combat.Hostiles.Values.Select(hostile => ObserveHostile(station, station.Combat, hostile)).ToArray(),
             new EncounterObservation(
                 station.Combat.Definition.Id,
                 station.Combat.Phase,
@@ -1015,7 +1079,14 @@ public sealed partial class GameSession
                     (int)Math.Max(0, barrier.ExpiresAtTick - Tick), station.Definition.Combat.Barrier.DurationTicks,
                     station.Definition.Combat.Barrier.WidthMeters, station.Definition.Combat.Barrier.HeightMeters,
                     barrier.DeployedAtTick) : null,
-                station.Combat.Projectiles.Select(projectile => projectile.Observe()).ToArray()));
+                station.Combat.Projectiles.Select(projectile => projectile.Observe()).ToArray(),
+                ObserveHealingField(station)),
+            station.CompletedEncounterIds.ToArray())
+        {
+            VisibleHostiles = station.Encounters.SelectMany(encounter => encounter.Hostiles.Values
+                .Where(hostile => IsVisibleToCrew(station, hostile))
+                .Select(hostile => ObserveHostile(station, encounter, hostile))).ToArray(),
+        };
     }
 
     private ActorObservation ObserveActor(ActorRuntime actor)
@@ -1171,11 +1242,20 @@ public sealed partial class GameSession
                 "Station route layout interaction IDs must exactly match the content definition.");
         }
 
+        foreach (var blocker in layout.VisionBlockers.Where(blocker => blocker.DoorInteractionId is not null))
+        {
+            if (!definition.Interactions.Any(interaction => interaction.Id == blocker.DoorInteractionId
+                && interaction.Effect is StationInteractionEffect.OpenEntryServiceDoor
+                    or StationInteractionEffect.OpenSoloExitServiceDoor or StationInteractionEffect.OpenRouteDoor
+                    or StationInteractionEffect.OpenEvacuationAirlock))
+            { throw new InvalidDataException($"Vision blocker '{blocker.Id}' must reference a known door interaction."); }
+        }
+
         var actorIds = layout.Actors.Select(actor => actor.ActorId).ToArray();
-        if (actorIds.Length != 1 || actorIds[0] != definition.Companion.Id)
+        if (!actorIds.ToHashSet().SetEquals(new[] { definition.Companion.Id, definition.Medic.Id }))
         {
             throw new InvalidDataException(
-                "Station route layout must define exactly the companion actor placement.");
+                "Station route layout must define the Protector and Medic actor placements.");
         }
 
         if (layout.Encounter is null
@@ -1187,7 +1267,7 @@ public sealed partial class GameSession
 
         // HostileIds[0] owns HostileSpawnPosition; the remaining IDs have explicit
         // AdditionalHostiles placements. The solo and party melee IDs are distinct.
-        if (layout.PartyEncounter is { } party &&
+        if (layout.PartyEncounter is { HostilePlacements: null } party &&
             (party.EncounterId != definition.Combat.PartyEncounter.Id
              || party.AdditionalHostiles is null
              || !party.AdditionalHostiles.Select(actor => actor.ActorId).ToHashSet()
@@ -1196,6 +1276,36 @@ public sealed partial class GameSession
             throw new InvalidDataException("Party encounter layout must match its encounter ID and hostile order: "
                 + "hostile_ids[0] uses HostileSpawnPosition; remaining IDs must match AdditionalHostiles.");
         }
+        foreach (var placement in layout.Encounters)
+        {
+            var encounter = definition.Combat.Encounters.SingleOrDefault(item => item.Id == placement.EncounterId)
+                ?? throw new InvalidDataException("Unknown encounter placement.");
+            if (placement.CrewRestartPositions is { } crew && !crew.Select(actor => actor.ActorId).ToHashSet().SetEquals(encounter.RequiredCrewIds!))
+            { throw new InvalidDataException("Encounter crew restart placements must exactly match required crew."); }
+            if (placement.HostilePlacements is { } hostiles && !hostiles.Select(actor => actor.ActorId).ToHashSet().SetEquals(encounter.HostileIds))
+            { throw new InvalidDataException("Encounter hostile placements must exactly match authored hostiles."); }
+            if (definition.Combat.Encounters.Skip(2).Any(item => item.Id == encounter.Id)
+                && (placement.CrewRestartPositions is null || placement.HostilePlacements is null))
+            { throw new InvalidDataException("New encounters require per-ID crew and hostile placements."); }
+            // Entry and retry read these fallbacks when per-ID placements are absent.
+            if (placement.CrewRestartPositions is null && encounter.RequiredCrewIds!.Count > 1
+                && placement.CompanionRestartPosition is not { IsFinite: true })
+            { throw new InvalidDataException($"Encounter '{encounter.Id}' needs crew restart placements."); }
+            if (placement.HostilePlacements is null && encounter.HostileIds.Count > 1
+                && (placement.AdditionalHostiles is null || !placement.AdditionalHostiles.Select(actor => actor.ActorId)
+                    .ToHashSet().SetEquals(encounter.HostileIds.Skip(1))))
+            { throw new InvalidDataException($"Encounter '{encounter.Id}' needs a placement for every hostile."); }
+        }
+        // The airlock requires every authored encounter, so each one must be placed.
+        var unplaced = definition.Combat.Encounters
+            .Where(encounter => layout.Encounters.All(placement => placement.EncounterId != encounter.Id))
+            .Select(encounter => encounter.Id.Value).ToArray();
+        if (unplaced.Length > 0)
+        {
+            throw new InvalidDataException(
+                $"Station route layout has no placement for encounter(s): {string.Join(", ", unplaced)}.");
+        }
+        ValidateVisionPlacements(definition, layout);
         foreach (var interaction in definition.Interactions)
         {
             _ = layout.TryGetInteraction(interaction.Id, out var placement);
@@ -1224,12 +1334,15 @@ public sealed partial class GameSession
         public StationRouteRuntime(StationRouteDefinition definition, StationRouteLayout layout)
         {
             Definition = definition;
+            VisionBlockers = layout.VisionBlockers;
             CurrentObjective = definition.BriefingObjective;
             Phase = ScenarioPhase.AwaitingProtagonistSelection;
             Protagonist = new ActorRuntime(definition.Protagonist, layout.ProtagonistStart, partyOrder: 0);
             Actors = new Dictionary<EntityId, ActorRuntime> { [Protagonist.Id] = Protagonist };
             _ = layout.TryGetActor(definition.Companion.Id, out var companionPlacement);
             CompanionPlacement = companionPlacement;
+            _ = layout.TryGetActor(definition.Medic.Id, out var medicPlacement);
+            MedicPlacement = medicPlacement;
             Interactions = definition.Interactions.ToDictionary(
                 interaction => interaction.Id,
                 interaction =>
@@ -1240,23 +1353,30 @@ public sealed partial class GameSession
             ServiceDoorInteractions = Interactions.Values
                 .Where(interaction => interaction.Definition.Effect is
                     StationInteractionEffect.OpenEntryServiceDoor
-                    or StationInteractionEffect.OpenSoloExitServiceDoor)
+                    or StationInteractionEffect.OpenSoloExitServiceDoor or StationInteractionEffect.OpenRouteDoor)
                 .OrderBy(
                     interaction => interaction.Definition.Id.Value,
                     StringComparer.Ordinal)
                 .ToArray();
-            Combat = new CombatEncounterRuntime(definition.Combat, definition.Combat.SoloEncounter, layout.Encounter!);
-            PartyCombat = layout.PartyEncounter is { } party
-                ? new CombatEncounterRuntime(definition.Combat, definition.Combat.PartyEncounter, party) : null;
+            Encounters = definition.Combat.Encounters.Where(encounter => layout.Encounters.Any(item => item.EncounterId == encounter.Id))
+                .Select(encounter => new CombatEncounterRuntime(definition.Combat, encounter,
+                    layout.Encounters.Single(item => item.EncounterId == encounter.Id))).ToArray();
+            Combat = Encounters[0];
+            PartyCombat = Encounters.FirstOrDefault(item => item.Definition.Id == definition.Combat.PartyEncounter.Id);
         }
 
         public StationRouteDefinition Definition { get; }
+
+        public IReadOnlyList<StationVisionBlocker> VisionBlockers { get; }
 
         public ActorRuntime Protagonist { get; }
 
         public Dictionary<EntityId, ActorRuntime> Actors { get; }
 
         public StationActorPlacement CompanionPlacement { get; }
+        public StationActorPlacement MedicPlacement { get; }
+        public IReadOnlyList<CombatEncounterRuntime> Encounters { get; }
+        public List<EncounterId> CompletedEncounterIds { get; } = [];
 
         public Dictionary<EntityId, InteractionRuntime> Interactions { get; }
 

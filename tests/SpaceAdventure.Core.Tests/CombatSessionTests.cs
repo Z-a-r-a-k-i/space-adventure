@@ -174,11 +174,12 @@ public sealed partial class CombatSessionTests
         Assert.False(FindInteraction(retried, SoloExitDoorId).CanInteract);
     }
 
-    private static GameSession CreateAtEncounter(StationEncounterPlacement? partyPlacement = null, ISpatialPathfinder? pathfinder = null)
+    private static GameSession CreateAtEncounter(StationEncounterPlacement? partyPlacement = null, ISpatialPathfinder? pathfinder = null,
+        StationRouteDefinition? definition = null, IReadOnlyList<StationEncounterPlacement>? extensionPlacements = null)
     {
         var session = GameSession.CreateStationRoute(
-            TestDefinition,
-            CreateLayout(partyPlacement),
+            definition ?? TestDefinition,
+            CreateLayout(partyPlacement, extensionPlacements),
             pathfinder ?? new DirectPathfinder());
         Assert.True(session.Execute(new ChooseProtagonistKitCommand(
             new CommandId("kit.vanguard"),
@@ -220,20 +221,26 @@ public sealed partial class CombatSessionTests
             300);
     }
 
-    private static StationRouteLayout CreateLayout(StationEncounterPlacement? partyPlacement = null)
+    private static StationRouteLayout CreateLayout(StationEncounterPlacement? partyPlacement = null, IReadOnlyList<StationEncounterPlacement>? extensionPlacements = null)
     {
         return new StationRouteLayout(
             new WorldPosition(-10, 0, 8.5),
             [new StationActorPlacement(
                 new EntityId("actor.companion.protector"),
-                new WorldPosition(-1.5, 0, 0))],
+                new WorldPosition(-1.5, 0, 0)), new StationActorPlacement(new EntityId("actor.companion.medic"), new WorldPosition(9, 0, 8))],
             [
+                new(new EntityId("interaction.medic"), new WorldPosition(9, 0, 8), new WorldPosition(8.15, 0, 8)),
+                new(new EntityId("interaction.escape_cutter.board"), new WorldPosition(76.5, 0, 8), new WorldPosition(76.5, 0, 8)),
+                new(new EntityId("interaction.service_door.service"), new WorldPosition(12, 0, 8), new WorldPosition(11.15, 0, 8)),
+                new(new EntityId("interaction.service_door.security"), new WorldPosition(25, 0, 8), new WorldPosition(24.15, 0, 8)),
+                new(new EntityId("interaction.service_door.dock"), new WorldPosition(39, 0, 8), new WorldPosition(38.15, 0, 8)),
+                new(new EntityId("interaction.service_door.launch"), new WorldPosition(53, 0, 8), new WorldPosition(52.15, 0, 8)),
                 new(new EntityId("interaction.survivor"), new WorldPosition(-8.5, 0, 6.5), new WorldPosition(-9.3, 0, 6.5)),
                 new(new EntityId("interaction.service_door.entry"), new WorldPosition(-10, 0, 4), new WorldPosition(-10, 0, 4.85)),
                 new(SoloExitDoorId, new WorldPosition(-5, 0, 0), new WorldPosition(-5.85, 0, 0)),
                 new(ProtectorInteractionId, new WorldPosition(-1.5, 0, 0), new WorldPosition(-2.35, 0, 0)),
                 new(new EntityId("interaction.service_terminal"), new WorldPosition(-11.5, 0, 6.5), new WorldPosition(-10.65, 0, 6.5)),
-                new(new EntityId("interaction.evacuation_airlock"), new WorldPosition(12, 0, 8), new WorldPosition(11.15, 0, 8)),
+                new(new EntityId("interaction.evacuation_airlock"), new WorldPosition(73, 0, 8), new WorldPosition(72.15, 0, 8)),
             ],
             new StationEncounterPlacement(
                 new EncounterId("encounter.station.solo_tutorial"),
@@ -241,7 +248,8 @@ public sealed partial class CombatSessionTests
                 0.75,
                 new WorldPosition(-10, 0, 2.5),
                 new WorldPosition(-10, 0, -1)),
-            partyPlacement ?? CreatePartyPlacement());
+            partyPlacement ?? CreatePartyPlacement(),
+            extensionPlacements ?? ExtensionEncounterPlacements());
     }
 
     private static void AdvanceUntil(

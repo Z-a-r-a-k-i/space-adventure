@@ -114,9 +114,9 @@ public partial class GameHost
     private void UpdateWorldHealth(StationRouteObservation route)
     {
         foreach (var view in _worldHealth.Values) { view.Root.Visible = view.Leader.Visible = false; }
-        if (route.ActiveDialogue is not null || _controlsOverlay.Visible || _completionOverlay.Visible) { return; }
+        if (route.Phase == ScenarioPhase.Completed || route.ActiveDialogue is not null || _controlsOverlay.Visible || _completionOverlay.Visible) { return; }
         var occupied = FieldHudBounds().ToList();
-        var hostiles = route.Hostiles ?? [];
+        var hostiles = route.VisibleHostiles;
         foreach (var hostile in hostiles.Where(enemy => enemy.CurrentAction?.Phase == PrimaryActionPhase.Windup))
         { ShowHostile(hostile); }
         foreach (var actor in route.Party.OrderByDescending(actor => actor.Combat is { } combat && combat.Health <= combat.MaximumHealth * .3)
@@ -135,7 +135,7 @@ public partial class GameHost
         {
             var action = hostile.CurrentAction;
             var target = route.Party.FirstOrDefault(actor => actor.Id == action?.CombatTargetId);
-            var attack = _enemyViews[hostile.Id].Sentry is null ? "STRIKE" : "SHOT";
+            var attack = _enemyViews[hostile.Id].Sentry is not null || _enemyViews[hostile.Id].Armed is not null ? "SHOT" : "STRIKE";
             var status = action?.Phase == PrimaryActionPhase.Windup
                 ? $"{attack} → {target?.DisplayName} · {action.PhaseTicksRemaining / 30.0:0.0}s" : "";
             if (hostile.Combat.TauntedBy is not null)
@@ -240,7 +240,9 @@ public partial class GameHost
             _ => ShortAction(action).Replace("Deploying barrier", "Barrier", StringComparison.Ordinal)
                 .Replace("Burst fire", "Burst", StringComparison.Ordinal),
         };
-        var target = AttackTargetName(route, action).Replace("Security ", "", StringComparison.Ordinal);
+        var target = (route.Party.FirstOrDefault(crew => crew.Id == action.CombatTargetId)?.DisplayName
+            ?? FindVisibleHostile(route, action.CombatTargetId)?.DisplayName ?? "")
+            .Replace("Security ", "", StringComparison.Ordinal);
         var wait = action.WaitingReason switch
         {
             ActionWaitingReason.EncounterReadying => "after draw",
@@ -269,7 +271,7 @@ public partial class GameHost
                     .Expand(_camera.UnprojectPosition(position + Vector3.Up * 2.2f)).Grow(15));
             }
         }
-        foreach (var hostile in route.Hostiles ?? [])
+        foreach (var hostile in route.VisibleHostiles)
         {
             var position = ToGodot(hostile.Position);
             if (!_camera.IsPositionBehind(position))
@@ -297,9 +299,11 @@ public partial class GameHost
             view.Order.Text = PendingOrderText(route, pending);
             var hasDestination = pending.Kind is PrimaryActionKind.Move or PrimaryActionKind.Interact or PrimaryActionKind.Attack
                 || pending.Kind == PrimaryActionKind.Ability && pending.AbilityId != _definition!.Combat.Taunt.Id;
-            if (hasDestination)
+            var hiddenHostileTarget = pending.CombatTargetId is { } targetId && _enemyViews.ContainsKey(targetId)
+                && FindVisibleHostile(route, targetId) is null;
+            if (hasDestination && !hiddenHostileTarget)
             {
-                var target = route.Hostiles?.FirstOrDefault(hostile => hostile.Id == pending.CombatTargetId);
+                var target = route.VisibleHostiles.FirstOrDefault(hostile => hostile.Id == pending.CombatTargetId);
                 var destination = ToGodot(target?.Position ?? pending.Destination) + Vector3.Up * .1f;
                 if (!_camera.IsPositionBehind(destination))
                 { destinations.Add((view, _camera.UnprojectPosition(destination), index + 1)); }
@@ -403,6 +407,8 @@ public partial class GameHost
         content.AddChild(TacticalUi.Rule(new Color("344651")));
         content.AddChild(TacticalUi.Label("Crew fire only at assigned targets. Escape cancels targeting.", 13, "e5bc7d"));
         content.AddChild(TacticalUi.Label("Interrupt stops wind-ups. Barrier blocks shots; Taunt draws nearby threats.", 13));
+        content.AddChild(TacticalUi.Label("Medic: Heal (1) targets a living ally or portrait. Healing Field (2) restores crew inside its circle.", 13));
+        content.AddChild(TacticalUi.Label("Each victory restores the crew. Defeat retries this fight; prior route progress stays cleared.", 13));
         content.AddChild(TacticalUi.Label("Numbers identify crew. The portrait marked 1 / 2 owns the ability keys.", 13));
         var audio = new HBoxContainer();
         audio.AddThemeConstantOverride("separation", 14);

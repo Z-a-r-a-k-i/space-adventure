@@ -5,6 +5,26 @@ namespace SpaceAdventure.Game;
 
 public partial class GameHost
 {
+    private readonly Dictionary<Node3D, EntityId[]> _effectVisibilitySubjects = [];
+
+    private static bool IsPresentationSubjectVisible(StationRouteObservation route, EntityId id) =>
+        route.Party.Any(actor => actor.Id == id) || FindVisibleHostile(route, id) is not null;
+
+    private void TrackCombatEffect(TimedPresentationEffect effect, params EntityId?[] subjects)
+    {
+        _combatPresentationEffects.Add(effect);
+        var hostiles = subjects.Where(id => id.HasValue).Select(id => id!.Value)
+            .Where(_enemyViews.ContainsKey).Distinct().ToArray();
+        if (hostiles.Length > 0) { _effectVisibilitySubjects[effect.Node] = hostiles; }
+    }
+
+    private void ForgetCombatEffect(Node3D node)
+    {
+        _effectVisibilitySubjects.Remove(node);
+        foreach (var id in _incomingBolts.Where(pair => pair.Value == node).Select(pair => pair.Key).ToArray())
+        { _incomingBolts.Remove(id); }
+    }
+
     private void ProcessCombatPresentationEvents(GameObservation observation)
     {
         if (_session is null || observation.StationRoute is not StationRouteObservation route)
@@ -25,23 +45,25 @@ public partial class GameHost
                     if (GodotObject.IsInstanceValid(effect.Node)) { effect.Node.QueueFree(); }
                 }
                 _combatPresentationEffects.Clear();
+                _effectVisibilitySubjects.Clear();
                 _incomingBolts.Clear();
                 _audioVariants.Clear();
             }
             switch (gameEvent.Detail)
             {
                 case AttackEventDetail attack when gameEvent.Type == GameplayEventType.AttackReleased:
+                    if (!IsPresentationSubjectVisible(route, attack.SourceId)) { break; }
                     if (TryGetCombatantPosition(route, attack.TargetId, out var target))
                     {
-                        if (ArmedPresentation(attack.SourceId) is { } armed)
+                        if (route.Party.Any(crew => crew.Id == attack.SourceId) && ArmedPresentation(attack.SourceId) is { } armed)
                         {
                             armed.NotifyShot(gameEvent.Tick);
                             var shotgun = attack.SourceId == _definition!.Companion.Id;
                             var destination = attack.Hit ? CombatImpactPosition(target, armed.MuzzlePosition)
                                 : armed.MuzzlePosition + armed.MuzzleDirection * (float)_definition.Combat.GetAttack(attack.AttackId).RangeMeters;
-                            var color = new Color(shotgun ? "f2c879" : "57ddff");
+                            var color = new Color(shotgun ? "f2c879" : attack.SourceId == _definition.Medic.Id ? "a8f5bd" : "57ddff");
                             var flight = SpawnProjectile(armed.MuzzlePosition, destination, color,
-                                armed.MuzzleDirection, shotgun ? "shotgun" : "carbine");
+                                armed.MuzzleDirection, shotgun ? "shotgun" : "carbine", attack.SourceId, attack.TargetId);
                             if (shotgun)
                             {
                                 var right = armed.MuzzleDirection.Cross(Vector3.Up).Normalized();
@@ -52,24 +74,28 @@ public partial class GameHost
                                     bolt.Configure(armed.MuzzlePosition, destination + right * pellet * .085f
                                         + Vector3.Up * (pellet % 2 == 0 ? .07f : -.07f), color);
                                     AddChild(bolt);
-                                    _combatPresentationEffects.Add(new TimedPresentationEffect(bolt, bolt.FlightSeconds, _effectEventTick));
+                                    TrackCombatEffect(new TimedPresentationEffect(bolt, bolt.FlightSeconds, _effectEventTick), attack.SourceId, attack.TargetId);
                                 }
                             }
                             releasedProjectile = (gameEvent.Tick, attack.SourceId, flight);
                         }
-                        else if (!attack.Hit && _enemyViews.TryGetValue(attack.SourceId, out var view) && view.Sentry is { } sentry)
+                        else if (!attack.Hit && _enemyViews.TryGetValue(attack.SourceId, out var view)
+                            && (view.Armed is not null || view.Sentry is not null))
                         {
-                            var destination = attack.Hit ? CombatImpactPosition(target, sentry.MuzzlePosition)
-                                : sentry.MuzzlePosition + sentry.MuzzleDirection * (float)_definition!.Combat.GetAttack(attack.AttackId).RangeMeters;
-                            var flight = SpawnProjectile(sentry.MuzzlePosition, destination,
-                                new Color("ff7659"), sentry.MuzzleDirection, "sentry");
+                            // A miss launches no core projectile; show the rifle or sentry shot going wide.
+                            var muzzle = view.Armed?.MuzzlePosition ?? view.Sentry!.MuzzlePosition;
+                            var muzzleDirection = view.Armed?.MuzzleDirection ?? view.Sentry!.MuzzleDirection;
+                            var destination = muzzle + muzzleDirection * (float)_definition!.Combat.GetAttack(attack.AttackId).RangeMeters;
+                            var flight = SpawnProjectile(muzzle, destination,
+                                new Color("ff7659"), muzzleDirection, "sentry", attack.SourceId, attack.TargetId);
                             releasedProjectile = (gameEvent.Tick, attack.SourceId, flight);
                         }
                     }
                     break;
                 case AbilityReleasedEventDetail ability when ability.SourceId == route.Protagonist.Id:
-                    _vanguardPresentation.NotifyShot(gameEvent.Tick);
                     var isBurst = ability.AbilityId == _definition!.Combat.Burst.Id;
+                    if (isBurst && (ability.TargetId is not { } burstTarget || !IsPresentationSubjectVisible(route, burstTarget))) { break; }
+                    _vanguardPresentation.NotifyShot(gameEvent.Tick);
                     var abilityDestination = isBurst
                         ? CombatImpactPosition(ToGodot(ability.TargetPosition), _vanguardPresentation.MuzzlePosition)
                         : ToGodot(ability.TargetPosition) + Vector3.Up * .65f;
@@ -77,7 +103,7 @@ public partial class GameHost
                         _vanguardPresentation.MuzzlePosition,
                         abilityDestination,
                         new Color("66f5ff"), _vanguardPresentation.MuzzleDirection,
-                        isBurst ? "burst" : "interrupt");
+                        isBurst ? "burst" : "interrupt", ability.SourceId, ability.TargetId);
                     releasedProjectile = (gameEvent.Tick, ability.SourceId, abilityFlightSeconds);
                     if (ability.AbilityId == _definition!.Combat.ProtagonistAbility.Id)
                     {
@@ -89,10 +115,17 @@ public partial class GameHost
                 case AbilityReleasedEventDetail ability when ability.AbilityId == _definition!.Combat.Taunt.Id:
                     PresentTaunt(ability, gameEvent.Tick);
                     break;
+                case HealingAppliedEventDetail healing:
+                    PresentHealing(healing, gameEvent.Tick);
+                    break;
+                case HealingFieldEventDetail field:
+                    PlayCombatCue("barrier", ToGodot(field.Position));
+                    break;
                 case DamageAppliedEventDetail damage:
                     if (TryGetCombatantPosition(route, damage.TargetId, out var impact))
                     {
                         var partyHit = route.Party.Any(actor => actor.Id == damage.TargetId);
+                        var sourceVisible = TryGetCombatantPosition(route, damage.SourceId, out var sourcePosition);
                         var color = partyHit
                             ? new Color("ff654f")
                             : new Color("75eeff");
@@ -101,28 +134,28 @@ public partial class GameHost
                         var signature = damage.AbilityId == _definition!.Combat.ProtagonistAbility.Id ? CombatSignature.Interrupt
                             : damage.AbilityId == _definition.Combat.Burst.Id ? CombatSignature.Burst
                             : damage.SourceId == _definition.Companion.Id ? CombatSignature.Shotgun
-                            : damage.SourceId == _definition.Protagonist.Id ? CombatSignature.Carbine
-                            : _enemyViews.TryGetValue(damage.SourceId, out var enemy) && enemy.Sentry is not null
+                            : damage.SourceId == _definition.Protagonist.Id || damage.SourceId == _definition.Medic.Id ? CombatSignature.Carbine
+                            : _enemyViews.TryGetValue(damage.SourceId, out var enemy) && (enemy.Sentry is not null || enemy.Armed is not null)
                                 ? CombatSignature.Sentry : CombatSignature.Melee;
                         var contact =
                             incomingContact is { } arrival && arrival.Tick == gameEvent.Tick
                                 && arrival.Source == damage.SourceId && arrival.Target == damage.TargetId
                                 ? arrival.Position
-                            : ArmedPresentation(damage.SourceId) is { } source
+                            : sourceVisible && ArmedPresentation(damage.SourceId) is { } source
                                 ? CombatImpactPosition(impact, source.MuzzlePosition)
                                 : impact + new Vector3(0.0f, 1.05f, 0.0f);
-                        TryGetCombatantPosition(route, damage.SourceId, out var sourcePosition);
-                        SpawnSignature(signature, contact, contact.DirectionTo(sourcePosition + Vector3.Up), impactDelay);
+                        var contactDirection = sourceVisible ? contact.DirectionTo(sourcePosition + Vector3.Up) : Vector3.Up;
+                        SpawnSignature(signature, contact, contactDirection, impactDelay, visibilitySubject: damage.TargetId);
                         PlayCombatCue(signature switch
                         {
                             CombatSignature.Shotgun => "shotgun_hit", CombatSignature.Melee => "melee_hit",
                             CombatSignature.Sentry => "sentry_hit", _ => "carbine_hit",
-                        }, contact, impactDelay);
+                        }, contact, impactDelay, visibilitySubject: damage.TargetId);
                         SpawnDamageNumber(
                             impact + new Vector3(0.0f, 1.48f, 0.0f),
                             damage.Amount,
                             color,
-                            impactDelay);
+                            impactDelay, damage.TargetId);
                     }
                     break;
                 case ActionInterruptedEventDetail interrupted:
@@ -131,7 +164,7 @@ public partial class GameHost
                         var interruptDelay = releasedProjectile is { } interruptRelease
                             && interruptRelease.Tick == gameEvent.Tick && interruptRelease.Source == interrupted.SourceId
                                 ? interruptRelease.FlightSeconds : 0;
-                        SpawnInterruptCue(interruptedPosition, interruptDelay);
+                        SpawnInterruptCue(interruptedPosition, interruptDelay, interrupted.ActorId);
                     }
                     break;
                 case BarrierEventDetail barrier when gameEvent.Type == GameplayEventType.BarrierDeployed:
@@ -151,7 +184,7 @@ public partial class GameHost
         }
     }
 
-    private void AdvanceCombatPresentationClock()
+    private void AdvanceCombatPresentationClock(StationRouteObservation route)
     {
         if (_stationAmbience is not null) { _stationAmbience.StreamPaused = _session!.IsPaused; }
         for (var index = _combatPresentationEffects.Count - 1; index >= 0; index--)
@@ -159,6 +192,19 @@ public partial class GameHost
             var effect = _combatPresentationEffects[index];
             if (!GodotObject.IsInstanceValid(effect.Node))
             {
+                ForgetCombatEffect(effect.Node);
+                _combatPresentationEffects.RemoveAt(index);
+                continue;
+            }
+            if (_effectVisibilitySubjects.TryGetValue(effect.Node, out var subjects)
+                && subjects.Any(id => !IsPresentationSubjectVisible(route, id)))
+            {
+                // Removed effects never replay when the hostile becomes visible.
+                // Node visibility alone cannot stop positional audio playback.
+                if (effect.Node is AudioStreamPlayer3D hiddenAudio) { hiddenAudio.Stop(); }
+                effect.Node.Visible = false;
+                ForgetCombatEffect(effect.Node);
+                effect.Node.QueueFree();
                 _combatPresentationEffects.RemoveAt(index);
                 continue;
             }
@@ -185,6 +231,7 @@ public partial class GameHost
                 continue;
             }
 
+            ForgetCombatEffect(effect.Node);
             effect.Node.QueueFree();
             _combatPresentationEffects.RemoveAt(index);
         }
@@ -202,7 +249,7 @@ public partial class GameHost
             return true;
         }
 
-        var hostile = route.Hostiles?.SingleOrDefault(candidate => candidate.Id == entityId);
+        var hostile = route.VisibleHostiles.SingleOrDefault(candidate => candidate.Id == entityId);
         if (hostile is not null)
         {
             position = ToGodot(hostile.Position);
@@ -220,35 +267,36 @@ public partial class GameHost
         return torso + torso.DirectionTo(source) * 0.22f;
     }
 
-    private float SpawnProjectile(Vector3 origin, Vector3 destination, Color color, Vector3 muzzleDirection, string cue = "carbine")
+    private float SpawnProjectile(Vector3 origin, Vector3 destination, Color color, Vector3 muzzleDirection, string cue = "carbine",
+        EntityId? sourceId = null, EntityId? targetId = null)
     {
         var node = new CarbineProjectile();
         node.Configure(origin, destination, color);
         AddChild(node);
-        _combatPresentationEffects.Add(new TimedPresentationEffect(node, node.FlightSeconds, _effectEventTick));
-        SpawnMuzzleSignature(origin, muzzleDirection, cue);
-        PlayCombatCue(cue, origin);
+        TrackCombatEffect(new TimedPresentationEffect(node, node.FlightSeconds, _effectEventTick), sourceId, targetId);
+        SpawnMuzzleSignature(origin, muzzleDirection, cue, sourceId);
+        PlayCombatCue(cue, origin, visibilitySubject: sourceId);
         return node.FlightSeconds;
     }
 
     private void SpawnSignature(CombatSignature signature, Vector3 position, Vector3 direction,
-        float delaySeconds = 0, float radius = 1)
+        float delaySeconds = 0, float radius = 1, EntityId? visibilitySubject = null)
     {
         var effect = new CombatContactEffect();
         effect.Configure(signature, position, direction, radius); AddChild(effect);
-        _combatPresentationEffects.Add(new TimedPresentationEffect(effect,
-            effect.DurationSeconds / AnimationPacing.Rate, _effectEventTick, delaySeconds));
+        TrackCombatEffect(new TimedPresentationEffect(effect,
+            effect.DurationSeconds / AnimationPacing.Rate, _effectEventTick, delaySeconds), visibilitySubject);
     }
 
-    private void SpawnMuzzleSignature(Vector3 origin, Vector3 direction, string cue)
+    private void SpawnMuzzleSignature(Vector3 origin, Vector3 direction, string cue, EntityId? sourceId = null)
     {
-        SpawnSignature(CombatSignature.Muzzle, origin + direction * .055f, direction);
+        SpawnSignature(CombatSignature.Muzzle, origin + direction * .055f, direction, visibilitySubject: sourceId);
         if (cue is "shotgun" or "burst")
         { SpawnSignature(cue == "shotgun" ? CombatSignature.Shotgun : CombatSignature.Burst,
-            origin + direction * .08f, direction); }
+            origin + direction * .08f, direction, visibilitySubject: sourceId); }
     }
 
-    private void SpawnDamageNumber(Vector3 position, int amount, Color color, float delaySeconds = 0)
+    private void SpawnDamageNumber(Vector3 position, int amount, Color color, float delaySeconds = 0, EntityId? visibilitySubject = null)
     {
         var node = new Label3D
         {
@@ -261,7 +309,7 @@ public partial class GameHost
             NoDepthTest = true,
         };
         AddChild(node);
-        _combatPresentationEffects.Add(new TimedPresentationEffect(node, 0.70f, _effectEventTick, delaySeconds));
+        TrackCombatEffect(new TimedPresentationEffect(node, 0.70f, _effectEventTick, delaySeconds), visibilitySubject);
     }
 
     private void SpawnSuppressionPulse(Vector3 position, float delaySeconds = 0)

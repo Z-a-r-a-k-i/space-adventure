@@ -1,0 +1,382 @@
+{
+  "revision": "station-layout-v2",
+  "clearance": 0.4,
+  "rooms": [
+    {
+      "id": "solo",
+      "name": "Damaged security deck",
+      "bounds": [
+        -15,
+        -5,
+        -4,
+        4
+      ],
+      "pits": [
+        [
+          -12.1,
+          -9.2,
+          -0.7,
+          0.9
+        ]
+      ],
+      "doors": [
+        [
+          "north",
+          -10
+        ],
+        [
+          "east",
+          0
+        ]
+      ],
+      "theme": "breach"
+    },
+    {
+      "id": "party",
+      "name": "Transit switchyard",
+      "bounds": [
+        -6,
+        6,
+        3,
+        13
+      ],
+      "pits": [
+        [
+          -0.9,
+          0.9,
+          7.1,
+          9.6
+        ]
+      ],
+      "doors": [
+        [
+          "south",
+          0
+        ],
+        [
+          "east",
+          8
+        ]
+      ],
+      "theme": "power"
+    },
+    {
+      "id": "service",
+      "name": "Coolant service loop",
+      "bounds": [
+        12,
+        24,
+        -1,
+        13
+      ],
+      "pits": [
+        [
+          17,
+          20,
+          4,
+          8
+        ]
+      ],
+      "doors": [
+        [
+          "west",
+          8
+        ],
+        [
+          "east",
+          3
+        ]
+      ],
+      "theme": "coolant"
+    },
+    {
+      "id": "security",
+      "name": "Scanner checkpoint",
+      "bounds": [
+        26,
+        38,
+        -4,
+        10
+      ],
+      "pits": [
+        [
+          30,
+          32,
+          -0.5,
+          2
+        ],
+        [
+          33,
+          35,
+          5,
+          7.5
+        ]
+      ],
+      "doors": [
+        [
+          "west",
+          3
+        ],
+        [
+          "east",
+          7
+        ]
+      ],
+      "theme": "scanner"
+    },
+    {
+      "id": "dock",
+      "name": "Freight transfer concourse",
+      "bounds": [
+        40,
+        52,
+        4,
+        18
+      ],
+      "pits": [
+        [
+          44,
+          48,
+          9,
+          12.5
+        ]
+      ],
+      "doors": [
+        [
+          "west",
+          7
+        ],
+        [
+          "east",
+          13
+        ]
+      ],
+      "theme": "freight"
+    },
+    {
+      "id": "launch",
+      "name": "Launch servicing bay",
+      "bounds": [
+        54,
+        72,
+        4,
+        20
+      ],
+      "pits": [
+        [
+          60,
+          62,
+          8,
+          12
+        ],
+        [
+          65,
+          68,
+          15,
+          17
+        ]
+      ],
+      "doors": [
+        [
+          "west",
+          13
+        ],
+        [
+          "east",
+          8
+        ]
+      ],
+      "theme": "launch"
+    },
+    {
+      "id": "apron",
+      "name": "Boarding apron",
+      "bounds": [
+        74,
+        92,
+        2,
+        14
+      ],
+      "pits": [],
+      "doors": [
+        [
+          "west",
+          8
+        ]
+      ],
+      "theme": "apron"
+    }
+  ],
+  "passages": [
+    [
+      25,
+      3
+    ],
+    [
+      39,
+      7
+    ],
+    [
+      53,
+      13
+    ],
+    [
+      73,
+      8
+    ]
+  ],
+  "encounters": {
+    "service": {
+      "trigger": [
+        14,
+        8
+      ],
+      "crew": [
+        [
+          14,
+          7
+        ],
+        [
+          14,
+          8
+        ],
+        [
+          14,
+          9
+        ]
+      ],
+      "enemies": [
+        [
+          17,
+          10.5
+        ],
+        [
+          20.8,
+          2
+        ],
+        [
+          21.5,
+          8.5
+        ]
+      ]
+    },
+    "security": {
+      "trigger": [
+        28,
+        3
+      ],
+      "crew": [
+        [
+          28,
+          2
+        ],
+        [
+          28,
+          3
+        ],
+        [
+          28,
+          4
+        ]
+      ],
+      "enemies": [
+        [
+          31,
+          3.5
+        ],
+        [
+          34,
+          -1.5
+        ],
+        [
+          35.8,
+          8.5
+        ],
+        [
+          36,
+          3.5
+        ]
+      ]
+    },
+    "dock": {
+      "trigger": [
+        42,
+        7
+      ],
+      "crew": [
+        [
+          42,
+          6
+        ],
+        [
+          42,
+          7
+        ],
+        [
+          42,
+          8
+        ]
+      ],
+      "enemies": [
+        [
+          45,
+          6.5
+        ],
+        [
+          44,
+          15
+        ],
+        [
+          49.5,
+          8
+        ],
+        [
+          49.5,
+          15
+        ]
+      ]
+    },
+    "launch": {
+      "trigger": [
+        56.5,
+        13
+      ],
+      "crew": [
+        [
+          56.5,
+          12
+        ],
+        [
+          56.5,
+          13
+        ],
+        [
+          56.5,
+          14
+        ]
+      ],
+      "enemies": [
+        [
+          61,
+          14
+        ],
+        [
+          64,
+          6.5
+        ],
+        [
+          67,
+          12.5
+        ],
+        [
+          69,
+          18
+        ],
+        [
+          69,
+          8
+        ]
+      ]
+    }
+  }
+}

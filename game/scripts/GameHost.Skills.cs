@@ -69,7 +69,7 @@ public partial class GameHost
         if (atPointer && route is not null)
         {
             foreach (var actor in route.Party) { AddActorObstacle(ToGodot(actor.Position), 2.2f); }
-            foreach (var enemy in route.Hostiles?.Where(enemy => !enemy.Combat.IsDefeated) ?? []) { AddActorObstacle(ToGodot(enemy.Position), 2.4f); }
+            foreach (var enemy in route.VisibleHostiles.Where(enemy => !enemy.Combat.IsDefeated)) { AddActorObstacle(ToGodot(enemy.Position), 2.4f); }
         }
         foreach (var offset in candidates)
         {
@@ -95,7 +95,10 @@ public partial class GameHost
     {
         foreach (var id in targetIds)
         {
-            var hostile = route.Hostiles!.First(enemy => enemy.Id == id);
+            var crew = route.Party.FirstOrDefault(candidate => candidate.Id == id);
+            var hostile = FindVisibleHostile(route, id);
+            if (crew is null && (hostile is null || !CanTargetVisibleHostile(route, hostile))) { continue; }
+            var position = crew?.Position ?? hostile!.Position;
             if (!_affectedTargetRings.TryGetValue(id, out var ring))
             {
                 ring = new MeshInstance3D { Mesh = new TorusMesh { InnerRadius = .49f, OuterRadius = .55f,
@@ -103,7 +106,7 @@ public partial class GameHost
                     CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
                 AddChild(ring); _affectedTargetRings.Add(id, ring);
             }
-            ring.Position = ToGodot(hostile.Position) + Vector3.Up * .06f;
+            ring.Position = ToGodot(position) + Vector3.Up * .06f;
             ring.Visible = true;
         }
     }
@@ -117,7 +120,9 @@ public partial class GameHost
         var id = slot == 0 ? actor.Loadout.ActiveAbilityId : actor.Loadout.SecondaryAbilityId;
         var name = slot == 0 ? actor.Loadout.ActiveAbilityName : actor.Loadout.SecondaryAbilityName;
         var combat = _definition!.Combat;
-        var detail = id == combat.Barrier.Id
+        var detail = IsHealingAbility(id) ? $"Restore {combat.DirectHeal.Healing} health to one living ally within {combat.DirectHeal.RangeMeters:0.#}m. You may heal yourself."
+            : IsHealingField(id) ? $"Place within {combat.HealingField.RangeMeters:0.#}m. Crew inside its {combat.HealingField.RadiusMeters:0.#}m radius recover {combat.HealingField.HealingPerPulse} health every {combat.HealingField.PulseIntervalTicks / 30.0:0.#}s for {combat.HealingField.DurationTicks / 30.0:0.#}s."
+            : id == combat.Barrier.Id
             ? $"Place within {combat.Barrier.RangeMeters:0.#}m. A {combat.Barrier.WidthMeters:0.#}m shield blocks projectiles for {combat.Barrier.DurationTicks / 30.0:0.#}s. Faces from Protector toward placement and stays there."
             : id == combat.Burst.Id
                 ? $"One enemy within {combat.Burst.RangeMeters:0.#}m. {combat.Burst.ShotCount} shots × {combat.Burst.DamagePerShot} damage. Assigned basic fire resumes afterward."
@@ -128,10 +133,10 @@ public partial class GameHost
         var timing = actor.Combat?.IsDefeated == true ? "Crew member down. Select living crew."
             : route.Encounter?.Phase is not (EncounterPhase.Readying or EncounterPhase.Active) ? "Available during combat."
             : cooldown > 0 ? $"Ready in {cooldown / 30.0:0.0}s of live combat."
-            : AbilityResumeText(observation, route, actor, id == combat.Barrier.Id || id == combat.Taunt.Id);
+            : AbilityResumeText(observation, route, actor, id == combat.Barrier.Id || id == combat.Taunt.Id || IsHealingAbility(id) || IsHealingField(id));
         if (id == combat.Taunt.Id && route.Encounter?.Phase is EncounterPhase.Readying or EncounterPhase.Active)
         {
-            var affected = route.Hostiles!.Where(enemy => !enemy.Combat.IsDefeated
+            var affected = PlayerVisibleHostiles(route).Where(enemy => CanTargetVisibleHostile(route, enemy)
                 && enemy.Position.DistanceTo(actor.Position) <= combat.Taunt.RadiusMeters).Select(enemy => enemy.Id).ToArray();
             timing = $"{affected.Length} {(affected.Length == 1 ? "enemy" : "enemies")} in reach now. " + timing;
             ShowAffectedTargets(route, affected);
@@ -148,11 +153,13 @@ public partial class GameHost
         var radius = (float)_definition!.Combat.Taunt.RadiusMeters;
         SpawnSignature(CombatSignature.Taunt, ToGodot(ability.TargetPosition) + Vector3.Up * .07f,
             Vector3.Up, radius: radius);
-        foreach (var hostile in _session!.Observe().StationRoute!.Hostiles!.Where(enemy => enemy.Combat.TauntedBy == ability.SourceId))
+        var route = _session!.Observe().StationRoute!;
+        foreach (var hostile in PlayerVisibleHostiles(route).Where(enemy => CanTargetVisibleHostile(route, enemy)
+            && enemy.Combat.TauntedBy == ability.SourceId))
         {
             var label = new Label3D { Text = "TAUNTED", Position = ToGodot(hostile.Position) + Vector3.Up * 2,
                 FontSize = 28, OutlineSize = 7, Modulate = new Color("efb263"), Billboard = BaseMaterial3D.BillboardModeEnum.Enabled };
-            AddChild(label); _combatPresentationEffects.Add(new TimedPresentationEffect(label, .9f, tick));
+            AddChild(label); TrackCombatEffect(new TimedPresentationEffect(label, .9f, tick), hostile.Id);
         }
         PlayCombatCue("taunt", ToGodot(ability.TargetPosition));
     }

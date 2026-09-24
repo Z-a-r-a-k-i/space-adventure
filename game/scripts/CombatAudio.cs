@@ -11,7 +11,7 @@ public static class CombatAudio
     private static readonly Dictionary<(string Cue, int Variant), AudioStreamWav> Streams = [];
     private static readonly System.Text.Json.JsonSerializerOptions ManifestOptions = new() { WriteIndented = true };
     internal static readonly string[] Cues = ["carbine", "shotgun", "sentry", "burst", "interrupt",
-        "carbine_hit", "shotgun_hit", "melee_hit", "sentry_hit", "block", "barrier", "taunt"];
+        "carbine_hit", "shotgun_hit", "melee_hit", "sentry_hit", "block", "barrier", "taunt", "heal", "departure"];
 
     public static AudioStreamWav Get(string cue, int variant = 0)
     {
@@ -20,7 +20,7 @@ public static class CombatAudio
         if (Streams.TryGetValue((cue, variant), out var stream)) { return stream; }
         var duration = cue switch
         {
-            "ambience" => 8, "shotgun" => .36, "barrier" => .5, "taunt" => .42,
+            "departure" => 4.8, "heal" => .45, "ambience" => 8, "shotgun" => .36, "barrier" => .5, "taunt" => .42,
             "block" => .3, "interrupt" => .3, "melee_hit" => .24, _ => .2,
         };
         var samples = (int)(duration * Rate);
@@ -60,6 +60,9 @@ public static class CombatAudio
                     + highNoise * .22 * Math.Exp(-t * 65),
                 "barrier" => (Chirp(t, 190, 310) + Chirp(t, 285, 465)) * .25
                     * Math.Min(1, t / .055),
+                "heal" => (Chirp(t, 520, 560) + Chirp(t, 780, 840)) * .2 * Math.Min(1, t / .035),
+                "departure" => (lowNoise * .45 + Chirp(t, 58, 24) * .3 + Chirp(t, 116, 48) * .12)
+                    * Math.Min(1, t / .8),
                 "taunt" => (Math.Sin(Math.Tau * 155 * t) + Math.Sin(Math.Tau * 233 * t)) * .3
                     * (.7 + .3 * Math.Cos(Math.Tau * 14 * t)),
                 // Whole-number partials and periodic modulation keep the station loop seamless.
@@ -86,7 +89,7 @@ public static class CombatAudio
 
     public static float VolumeDb(string cue) => cue switch
     {
-        "shotgun" => -9, "taunt" => -12, "barrier" => -12, "block" => -10,
+        "heal" => -14, "shotgun" => -9, "taunt" => -12, "barrier" => -12, "block" => -10,
         "carbine_hit" or "shotgun_hit" or "melee_hit" or "sentry_hit" => -12, _ => -10,
     };
 

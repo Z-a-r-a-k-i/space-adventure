@@ -146,7 +146,11 @@ public sealed record HostileObservation(
     WorldPosition Position,
     double MovementSpeedMetersPerSecond,
     CombatantStateObservation Combat,
-    PrimaryActionObservation? CurrentAction);
+    PrimaryActionObservation? CurrentAction,
+    EncounterId EncounterId = default,
+    EncounterPhase EncounterPhase = EncounterPhase.Dormant,
+    int EncounterAttempt = 0,
+    WorldPosition Facing = default);
 
 public sealed record EncounterObservation(
     EncounterId Id,
@@ -157,7 +161,17 @@ public sealed record EncounterObservation(
     IReadOnlyList<EntityId> HostileIds,
     long PhaseStartedTick = 0,
     BarrierObservation? Barrier = null,
-    IReadOnlyList<ProjectileObservation>? Projectiles = null);
+    IReadOnlyList<ProjectileObservation>? Projectiles = null,
+    HealingFieldObservation? HealingField = null);
+
+public sealed record HealingFieldObservation(EntityId SourceId, WorldPosition Position, double RadiusMeters,
+    long DeployedAtTick, int RemainingTicks, int TotalTicks, int PulseIntervalTicks);
+
+public sealed record HealingAppliedEventDetail(EntityId SourceId, EntityId TargetId, AbilityId AbilityId,
+    int Amount, int RemainingHealth) : GameplayEventDetail;
+
+public sealed record HealingFieldEventDetail(EntityId SourceId, AbilityId AbilityId, WorldPosition Position,
+    double RadiusMeters, int DurationTicks) : GameplayEventDetail;
 
 public sealed record BarrierObservation(EntityId SourceId, WorldPosition Position, WorldPosition Facing,
     int RemainingTicks, int TotalTicks, double WidthMeters, double HeightMeters, long DeployedAtTick);
@@ -215,7 +229,11 @@ public sealed record StationRouteObservation(
     IReadOnlyList<InteractionObservation> Interactions,
     DialogueObservation? ActiveDialogue,
     IReadOnlyList<HostileObservation>? Hostiles = null,
-    EncounterObservation? Encounter = null);
+    EncounterObservation? Encounter = null,
+    IReadOnlyList<EncounterId>? CompletedEncounterIds = null)
+{
+    public IReadOnlyList<HostileObservation> VisibleHostiles { get; init; } = [];
+}
 
 public enum GameplayEventType
 {
@@ -248,6 +266,8 @@ public enum GameplayEventType
     AttackReleased,
     AbilityReleased,
     DamageApplied,
+    HealingApplied,
+    HealingFieldDeployed,
     ActionInterrupted,
     CombatantDefeated,
 }
@@ -326,7 +346,8 @@ public sealed record AbilityReleasedEventDetail(
     EntityId SourceId,
     WorldPosition TargetPosition,
     AbilityId AbilityId,
-    bool Hit) : GameplayEventDetail;
+    bool Hit,
+    EntityId? TargetId = null) : GameplayEventDetail;
 
 public sealed record DamageAppliedEventDetail(
     EntityId SourceId,

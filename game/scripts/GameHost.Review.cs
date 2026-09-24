@@ -54,7 +54,7 @@ public partial class GameHost
             var size = GetWindow().Size;
             var recoil = ReviewArgument("review-recoil", "restrained");
             _vanguardPresentation.StrongRecoil = recoil == "strong";
-            _reviewOutput = Path.Combine(repositoryRoot, "artifacts", IsPartyReview ? "party-review" : "solo-review",
+            _reviewOutput = Path.Combine(repositoryRoot, "artifacts", IsVisionReview ? "vision-review" : IsEscapeReview ? "escape-review" : IsPartyReview ? "party-review" : "solo-review",
                 FormattableString.Invariant($"{_reviewMode}-{_reviewSequence}-{size.X:0}x{size.Y:0}-{distance:0.0}-{recoil}"));
             if (_reviewPitch.HasValue || _reviewYaw.HasValue)
                 _reviewOutput += FormattableString.Invariant($"-pitch{_reviewPitch ?? .90f:0.00}-yaw{_reviewYaw ?? .68f:0.00}");
@@ -63,6 +63,9 @@ public partial class GameHost
             {
                 schema_version = 1, passed = false, status = "running", mode = _reviewMode, sequence = _reviewSequence,
             }, CaptureManifestJsonOptions));
+            await CheckStationTacticalLayout();
+            if (IsVisionReview) { await RunVisionReviewAsync(); return; }
+            if (IsEscapeReview) { await RunEscapeReviewAsync(); return; }
             if (IsPartyReview) { await RunPartyReviewAsync(); return; }
             if (_reviewMode == "input") { await RunGraphicalInputReviewAsync(); return; }
             _reviewDrivesClock = true;
@@ -84,6 +87,7 @@ public partial class GameHost
             ReviewOrder(new MoveActorCommand(new CommandId("review.enter.arena"), _definition.Protagonist.Id,
                 new WorldPosition(-10, 0, 2.75)));
             await ReviewUntil(state => state.Encounter!.Phase == EncounterPhase.Readying, 300, fast: true);
+            CheckActiveEncounterPitCommands();
             _camera.DistanceMeters = distance;
             _camera.SnapOcclusionToDesiredState();
             if (await ReviewCapture("ready")) { return; }
@@ -271,6 +275,7 @@ public partial class GameHost
             throw new InvalidOperationException("Retry retained effects from the previous attempt.");
         }
         if (IsPartyReview) { ValidatePartyPresentation(checkpoint, diagnostics); }
+        if (IsEscapeReview) { ValidateEscapePresentation(diagnostics); }
         if (!IsPartyReview && checkpoint is "fire" or "recoil" or "late-fire")
         {
             static Vector3 Vector(JsonElement array) => new(array[0].GetSingle(), array[1].GetSingle(), array[2].GetSingle());

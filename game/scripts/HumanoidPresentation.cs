@@ -120,15 +120,32 @@ public partial class HumanoidPresentation : Node3D
 
     public void FaceDirection(Vector3 direction, float deltaSeconds = 1.0f / 60.0f)
     {
-        var planarDirection = new Vector3(direction.X, 0.0f, direction.Z);
-        if (planarDirection.LengthSquared() <= 0.000001f)
+        if (!TryLocalYaw(this, direction, out var targetYaw))
         {
             return;
         }
 
-        planarDirection = planarDirection.Normalized();
-        var targetYaw = Mathf.Atan2(planarDirection.X, planarDirection.Z);
         Rotation = new Vector3(0.0f, Mathf.LerpAngle(Rotation.Y, targetYaw, 1 - Mathf.Exp(-16 * AnimationPacing.Rate * deltaSeconds)), 0.0f);
+    }
+
+    public void SnapFacing(Vector3 direction)
+    {
+        if (TryLocalYaw(this, direction, out var yaw)) { Rotation = new Vector3(0.0f, yaw, 0.0f); }
+    }
+
+    // Headings are world-space. Subtract the parent's yaw so an authored,
+    // rotated view root is not applied a second time.
+    internal static bool TryLocalYaw(Node3D node, Vector3 direction, out float yaw)
+    {
+        yaw = 0.0f;
+        if (!direction.IsFinite() || new Vector2(direction.X, direction.Z).LengthSquared() <= 0.000001f)
+        {
+            return false;
+        }
+
+        // The accepted Mixamo rigs face local +Z after Blender/glTF conversion.
+        yaw = Mathf.Atan2(direction.X, direction.Z) - (node.GetParentOrNull<Node3D>()?.GlobalRotation.Y ?? 0.0f);
+        return true;
     }
 
     public double ClipLength(HumanoidPresentationAction action) =>

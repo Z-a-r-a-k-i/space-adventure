@@ -15,6 +15,9 @@ public enum StationInteractionEffect
 {
     BeginSurvivorDialogue,
     BeginRecruitmentDialogue,
+    BeginMedicRecruitmentDialogue,
+    OpenEvacuationAirlock,
+    OpenRouteDoor,
     RecordObservation,
     OpenEntryServiceDoor,
     OpenSoloExitServiceDoor,
@@ -26,6 +29,7 @@ public enum StationDialogueResponseEffect
     RerouteServicePower,
     PreserveShelterPower,
     RecruitProtector,
+    RecruitMedic,
 }
 
 public sealed record StationActorDefinition(
@@ -77,7 +81,8 @@ public sealed record StationInteractionDefinition(
     StationInteractionEffect Effect,
     string? ResultText,
     string? PreservedResultText,
-    StationDialogueDefinition? Dialogue);
+    StationDialogueDefinition? Dialogue,
+    EncounterId? RequiredEncounterId = null);
 
 public sealed class StationRouteDefinition
 {
@@ -97,13 +102,18 @@ public sealed class StationRouteDefinition
         StationObjectiveDefinition mainCombatObjective,
         StationObjectiveDefinition destinationObjective,
         IEnumerable<StationInteractionDefinition> interactions,
-        StationCombatDefinition combat)
+        StationCombatDefinition combat, StationActorDefinition medic,
+        StationObjectiveDefinition medicRecruitmentObjective, StationObjectiveDefinition boardingObjective,
+        StationVisionDefinition vision)
     {
         SchemaVersion = schemaVersion;
         ContentRevision = contentRevision;
         ScenarioId = scenarioId;
         Protagonist = protagonist;
         Companion = companion;
+        Medic = medic;
+        MedicRecruitmentObjective = medicRecruitmentObjective;
+        BoardingObjective = boardingObjective;
         ProtagonistKits = new ReadOnlyCollection<ProtagonistKitDefinition>(
             protagonistKits.ToArray());
         BriefingObjective = briefingObjective;
@@ -117,6 +127,7 @@ public sealed class StationRouteDefinition
         Interactions = new ReadOnlyCollection<StationInteractionDefinition>(
             interactions.ToArray());
         Combat = combat;
+        Vision = vision;
     }
 
     public int SchemaVersion { get; }
@@ -128,6 +139,9 @@ public sealed class StationRouteDefinition
     public StationActorDefinition Protagonist { get; }
 
     public StationActorDefinition Companion { get; }
+    public StationActorDefinition Medic { get; }
+    public StationObjectiveDefinition MedicRecruitmentObjective { get; }
+    public StationObjectiveDefinition BoardingObjective { get; }
 
     public IReadOnlyList<ProtagonistKitDefinition> ProtagonistKits { get; }
 
@@ -150,11 +164,13 @@ public sealed class StationRouteDefinition
     public IReadOnlyList<StationInteractionDefinition> Interactions { get; }
 
     public StationCombatDefinition Combat { get; }
+
+    public StationVisionDefinition Vision { get; }
 }
 
 public static class StationRouteContent
 {
-    public const int SupportedSchemaVersion = 9;
+    public const int SupportedSchemaVersion = 11;
 
     private const int MaximumIdLength = 128;
     private const int MaximumTextLength = 4096;
@@ -190,13 +206,17 @@ public static class StationRouteContent
         var scenarioId = new ScenarioId(RequireText(dto.ScenarioId, "scenario_id", MaximumIdLength));
         var protagonist = ParseActor(dto.Protagonist, "protagonist", requiresLoadout: false);
         var companion = ParseActor(dto.Companion, "companion", requiresLoadout: true);
-        if (protagonist.Id == companion.Id)
+        var medic = ParseActor(dto.Medic, "medic", requiresLoadout: true);
+        if (new[] { protagonist.Id, companion.Id, medic.Id }.Distinct().Count() != 3)
         {
-            throw new InvalidDataException("Protagonist and companion IDs must be distinct.");
+            throw new InvalidDataException("Crew IDs must be distinct.");
         }
 
         var kits = ParseKits(dto.ProtagonistKits);
         ValidatePartyLoadoutIdentifiers(kits, companion.Loadout!);
+        ValidatePartyLoadoutIdentifiers(kits, medic.Loadout!);
+        if (companion.Loadout!.BasicAttackId == medic.Loadout!.BasicAttackId)
+        { throw new InvalidDataException("Each crew member requires a distinct fixed weapon attack."); }
         var briefingObjective = ParseObjective(dto.BriefingObjective, "briefing_objective");
         var entryDoorObjective = ParseObjective(dto.EntryDoorObjective, "entry_door_objective");
         var combatThresholdObjective = ParseObjective(
@@ -209,19 +229,21 @@ public static class StationRouteContent
         var recruitmentObjective = ParseObjective(dto.RecruitmentObjective, "recruitment_objective");
         var mainCombatObjective = ParseObjective(dto.MainCombatObjective, "main_combat_objective");
         var destinationObjective = ParseObjective(dto.DestinationObjective, "destination_objective");
-        if (new[]
-            {
-                briefingObjective.Id,
-                entryDoorObjective.Id,
-                combatThresholdObjective.Id,
-                combatObjective.Id,
-                soloExitDoorObjective.Id,
-                recruitmentObjective.Id,
-                mainCombatObjective.Id,
-                destinationObjective.Id,
-            }
-            .Distinct()
-            .Count() != 8)
+        var medicObjective = ParseObjective(dto.MedicRecruitmentObjective, "medic_recruitment_objective");
+        var boardingObjective = ParseObjective(dto.BoardingObjective, "boarding_objective");
+        var routeObjectiveIds = new[]
+        {
+            briefingObjective.Id,
+            entryDoorObjective.Id,
+            combatThresholdObjective.Id,
+            combatObjective.Id,
+            soloExitDoorObjective.Id,
+            recruitmentObjective.Id,
+            mainCombatObjective.Id,
+            destinationObjective.Id,
+            medicObjective.Id, boardingObjective.Id,
+        };
+        if (routeObjectiveIds.Distinct().Count() != 10)
         {
             throw new InvalidDataException("Station route objective IDs must be distinct.");
         }
@@ -232,8 +254,31 @@ public static class StationRouteContent
         }
 
         var interactions = dto.Interactions.Select(ParseInteraction).ToArray();
-        var combat = ParseCombat(dto.Combat, kits, protagonist.Id, companion.Id, companion.Loadout!);
-        ValidateInteractionSet(protagonist.Id, companion.Id, combat.Hostiles.Select(hostile => hostile.Id), interactions);
+        var combat = ParseCombat(dto.Combat, kits, protagonist.Id, companion.Id, companion.Loadout!, medic);
+        // Encounters start only when the route has set their objective: the solo fight
+        // follows combat_objective, Protector recruitment sets main_combat_objective,
+        // and each later fight's objective is set by the preceding victory.
+        var encounterObjectiveIds = combat.Encounters.Select(encounter => encounter.Objective.Id).ToArray();
+        var extensionObjectiveIds = encounterObjectiveIds.Skip(2).ToArray();
+        if (encounterObjectiveIds[0] != combatObjective.Id || encounterObjectiveIds[1] != mainCombatObjective.Id
+            || extensionObjectiveIds.Distinct().Count() != extensionObjectiveIds.Length
+            || extensionObjectiveIds.Intersect(routeObjectiveIds).Any())
+        {
+            throw new InvalidDataException("Encounter objectives must be combat_objective, main_combat_objective, "
+                + "then distinct IDs unused by route objectives.");
+        }
+        if (dto.Vision is null) { throw new InvalidDataException("Station route content must define vision."); }
+        var vision = new StationVisionDefinition(
+            RequirePositiveBounded(dto.Vision.RangeMeters, "vision.range_meters", 100),
+            RequirePositiveBounded(dto.Vision.EyeHeightMeters, "vision.eye_height_meters", 5));
+        ValidateInteractionSet(protagonist.Id, companion.Id, combat.Hostiles.Select(hostile => hostile.Id).Append(medic.Id), interactions);
+        foreach (var interaction in interactions)
+        {
+            if (interaction.Effect == StationInteractionEffect.OpenRouteDoor
+                ? interaction.RequiredEncounterId is not { } required || !combat.Encounters.Any(encounter => encounter.Id == required)
+                : interaction.RequiredEncounterId is not null)
+            { throw new InvalidDataException("Only route doors require a known predecessor encounter."); }
+        }
 
         return new StationRouteDefinition(
             dto.SchemaVersion,
@@ -251,7 +296,7 @@ public static class StationRouteContent
             mainCombatObjective,
             destinationObjective,
             interactions,
-            combat);
+            combat, medic, medicObjective, boardingObjective, vision);
     }
 
     private static ProtagonistKitDefinition[] ParseKits(List<KitDto?>? kitDtos)
@@ -449,7 +494,7 @@ public static class StationRouteContent
             effect,
             resultText,
             preservedResultText,
-            dialogue);
+            dialogue, interaction.RequiredEncounterId is null ? null : new EncounterId(RequireText(interaction.RequiredEncounterId, "required_encounter_id", MaximumIdLength)));
     }
 
     private static StationInteractionKind ParseInteractionKind(string? value, EntityId id)
@@ -469,6 +514,9 @@ public static class StationRouteContent
         {
             "begin_survivor_dialogue" => StationInteractionEffect.BeginSurvivorDialogue,
             "begin_recruitment_dialogue" => StationInteractionEffect.BeginRecruitmentDialogue,
+            "begin_medic_recruitment_dialogue" => StationInteractionEffect.BeginMedicRecruitmentDialogue,
+            "open_evacuation_airlock" => StationInteractionEffect.OpenEvacuationAirlock,
+            "open_route_door" => StationInteractionEffect.OpenRouteDoor,
             "record_observation" => StationInteractionEffect.RecordObservation,
             "open_entry_service_door" => StationInteractionEffect.OpenEntryServiceDoor,
             "open_solo_exit_service_door" => StationInteractionEffect.OpenSoloExitServiceDoor,
@@ -486,6 +534,7 @@ public static class StationRouteContent
             "reroute_service_power" => StationDialogueResponseEffect.RerouteServicePower,
             "preserve_shelter_power" => StationDialogueResponseEffect.PreserveShelterPower,
             "recruit_protector" => StationDialogueResponseEffect.RecruitProtector,
+            "recruit_medic" => StationDialogueResponseEffect.RecruitMedic,
             _ => throw new InvalidDataException(
                 $"Interaction '{interactionId}' has unknown response effect '{value}'."),
         };
@@ -500,7 +549,7 @@ public static class StationRouteContent
         string? preservedResultText)
     {
         if (effect is StationInteractionEffect.BeginSurvivorDialogue
-            or StationInteractionEffect.BeginRecruitmentDialogue)
+            or StationInteractionEffect.BeginRecruitmentDialogue or StationInteractionEffect.BeginMedicRecruitmentDialogue)
         {
             if (kind != StationInteractionKind.Npc
                 || dialogue is null
@@ -531,6 +580,9 @@ public static class StationRouteContent
                     $"Recruitment interaction '{id}' requires exactly one recruit response.");
             }
 
+            if (effect == StationInteractionEffect.BeginMedicRecruitmentDialogue
+                && (responseEffects.Length != 1 || responseEffects[0] != StationDialogueResponseEffect.RecruitMedic))
+            { throw new InvalidDataException("Medic recruitment requires one recruit_medic response."); }
             return;
         }
 
@@ -553,7 +605,7 @@ public static class StationRouteContent
         }
 
         if (effect is StationInteractionEffect.OpenEntryServiceDoor
-            or StationInteractionEffect.OpenSoloExitServiceDoor)
+            or StationInteractionEffect.OpenSoloExitServiceDoor or StationInteractionEffect.OpenRouteDoor)
         {
             if (kind != StationInteractionKind.Environment
                 || preservedResultText is not null)
@@ -565,7 +617,7 @@ public static class StationRouteContent
             return;
         }
 
-        if (effect != StationInteractionEffect.CompleteScenario
+        if (effect is not (StationInteractionEffect.CompleteScenario or StationInteractionEffect.OpenEvacuationAirlock)
             || kind != StationInteractionKind.Destination
             || preservedResultText is not null)
         {
@@ -578,7 +630,7 @@ public static class StationRouteContent
         IReadOnlyList<ProtagonistKitDefinition> kits,
         EntityId protagonistId,
         EntityId companionId,
-        PartyMemberLoadoutDefinition companionLoadout)
+        PartyMemberLoadoutDefinition companionLoadout, StationActorDefinition medic)
     {
         if (combat is null)
         {
@@ -586,10 +638,10 @@ public static class StationRouteContent
         }
 
         if (combat.Attacks is null
-            || combat.Attacks.Count != 4
+            || combat.Attacks.Count is < 1 or > 16
             || combat.Attacks.Any(attack => attack is null))
         {
-            throw new InvalidDataException("Station combat requires exactly four attacks.");
+            throw new InvalidDataException("Station combat requires a bounded attack catalogue.");
         }
 
         var attacks = combat.Attacks.Select((attack, index) =>
@@ -622,10 +674,10 @@ public static class StationRouteContent
             RequirePositiveBounded(abilityDto.CooldownTicks, "combat.protagonist_ability.cooldown_ticks", 30000),
             abilityDto.InterruptsWindup);
 
-        if (combat.Hostiles is not { Count: 3 } || combat.Hostiles.Any(hostile => hostile is null)
-            || combat.Encounters is not { Count: 2 } || combat.Encounters.Any(encounter => encounter is null))
+        if (combat.Hostiles is not { Count: > 0 and <= 64 } || combat.Hostiles.Any(hostile => hostile is null)
+            || combat.Encounters is not { Count: 6 } || combat.Encounters.Any(encounter => encounter is null))
         {
-            throw new InvalidDataException("Station combat requires three hostiles across two encounters.");
+            throw new InvalidDataException("Station combat requires six authored encounters and bounded hostiles.");
         }
         var hostiles = combat.Hostiles.Select(value =>
         {
@@ -634,6 +686,7 @@ public static class StationRouteContent
             {
                 "melee" => HostileBehavior.Melee,
                 "sentry" => HostileBehavior.Sentry,
+                "ranged" => HostileBehavior.Ranged,
                 _ => throw new InvalidDataException("Unknown hostile behavior."),
             };
             var speed = hostile.MovementSpeedMetersPerSecond;
@@ -641,7 +694,7 @@ public static class StationRouteContent
             {
                 throw new InvalidDataException("Sentries must remain stationary.");
             }
-            if (behavior == HostileBehavior.Melee) { RequirePositiveBounded(speed, "hostile speed", 20); }
+            if (behavior != HostileBehavior.Sentry) { RequirePositiveBounded(speed, "hostile speed", 20); }
             return new HostileDefinition(
                 new EntityId(RequireText(hostile.Id, "hostile.id", MaximumIdLength)),
                 RequireText(hostile.DisplayName, "hostile.display_name", MaximumTextLength), speed,
@@ -651,7 +704,7 @@ public static class StationRouteContent
         var encounters = combat.Encounters.Select(value =>
         {
             var encounter = value!;
-            if (encounter.HostileIds is null || encounter.HostileIds.Count != (encounter.RequiresCompanion ? 2 : 1))
+            if (encounter.HostileIds is null || encounter.HostileIds.Count is < 1 or > 8)
             {
                 throw new InvalidDataException("Encounter has the wrong hostile count.");
             }
@@ -661,7 +714,10 @@ public static class StationRouteContent
                 RequirePositiveBounded(encounter.ProtagonistMaximumHealth, "encounter.protagonist_maximum_health", 10000),
                 RequirePositiveBounded(encounter.ReadyingTicks, "encounter.readying_ticks", 3000),
                 RequirePositiveBounded(encounter.SecuringTicks, "encounter.securing_ticks", 3000),
-                encounter.RequiresCompanion);
+                encounter.RequiresCompanion,
+                Array.AsReadOnly((encounter.RequiredCrewIds ?? throw new InvalidDataException("Encounter requires crew IDs."))
+                    .Select(id => new EntityId(RequireText(id, "encounter.required_crew_ids", MaximumIdLength))).ToArray()),
+                ParseObjective(encounter.Objective, "encounter.objective"));
         }).ToArray();
         var barrierDto = combat.Barrier ?? throw new InvalidDataException("Combat requires barrier.");
         var barrier = new BarrierDefinition(
@@ -692,22 +748,47 @@ public static class StationRouteContent
             RequirePositiveBounded(tauntDto.WindupTicks, "taunt.windup_ticks", 3000),
             RequirePositiveBounded(tauntDto.RecoveryTicks, "taunt.recovery_ticks", 3000),
             RequirePositiveBounded(tauntDto.CooldownTicks, "taunt.cooldown_ticks", 30000));
+        var heal = combat.DirectHeal ?? throw new InvalidDataException("Combat requires direct_heal.");
+        var directHeal = new DirectHealDefinition(new AbilityId(RequireText(heal.Id, "direct_heal.id", MaximumIdLength)),
+            RequirePositiveBounded(heal.RangeMeters, "heal range", 50), RequirePositiveBounded(heal.Healing, "healing", 10000),
+            RequirePositiveBounded(heal.WindupTicks, "heal windup", 3000), RequirePositiveBounded(heal.RecoveryTicks, "heal recovery", 3000),
+            RequirePositiveBounded(heal.CooldownTicks, "heal cooldown", 30000));
+        var field = combat.HealingField ?? throw new InvalidDataException("Combat requires healing_field.");
+        var healingField = new HealingFieldDefinition(new AbilityId(RequireText(field.Id, "healing_field.id", MaximumIdLength)),
+            RequirePositiveBounded(field.RangeMeters, "field range", 50), RequirePositiveBounded(field.RadiusMeters, "field radius", 20),
+            RequirePositiveBounded(field.Healing, "field healing", 10000), RequirePositiveBounded(field.PulseIntervalTicks, "field interval", 3000),
+            RequirePositiveBounded(field.DurationTicks, "field duration", 3000), RequirePositiveBounded(field.WindupTicks, "field windup", 3000),
+            RequirePositiveBounded(field.RecoveryTicks, "field recovery", 3000), RequirePositiveBounded(field.CooldownTicks, "field cooldown", 30000));
+        if (healingField.PulseIntervalTicks > healingField.DurationTicks)
+        { throw new InvalidDataException("Healing field duration must include at least one pulse."); }
+        if (medic.Loadout!.ActiveAbilityId != directHeal.Id || medic.Loadout.ActiveAbilityTargetKind != AbilityTargetKind.Entity
+            || medic.Loadout.SecondaryAbilityId != healingField.Id || medic.Loadout.SecondaryAbilityTargetKind != AbilityTargetKind.Position)
+        { throw new InvalidDataException("Medic requires allied direct heal and ground healing field."); }
+        var crewIds = new[] { protagonistId, companionId, medic.Id };
+        for (var index = 0; index < encounters.Length; index++)
+        {
+            var required = encounters[index].RequiredCrewIds!;
+            if (required.Count != Math.Min(index + 1, 3) || !required.SequenceEqual(crewIds.Take(required.Count))
+                || encounters[index].RequiresCompanion != (index > 0)
+                || (index == 0 ? encounters[index].HostileIds.Count != 1 : encounters[index].HostileIds.Count < 2))
+            { throw new InvalidDataException("Encounter crew requirements must follow solo, duo, then three crew."); }
+        }
         var hostileIds = hostiles.Select(hostile => hostile.Id).ToHashSet();
         var encounterHostiles = encounters.SelectMany(encounter => encounter.HostileIds).ToArray();
         var attackIds = attacks.Select(attack => attack.Id).ToHashSet();
-        if (hostileIds.Count != 3 || hostileIds.Contains(protagonistId) || hostileIds.Contains(companionId))
+        if (hostileIds.Count != hostiles.Length || hostileIds.Contains(protagonistId) || hostileIds.Contains(companionId) || hostileIds.Contains(medic.Id))
         { throw new InvalidDataException("combat.hostiles[].id must be unique and distinct from crew IDs."); }
-        if (encounters.Select(encounter => encounter.Id).Distinct().Count() != 2)
+        if (encounters.Select(encounter => encounter.Id).Distinct().Count() != encounters.Length)
         { throw new InvalidDataException("combat.encounters[].id must be unique."); }
-        if (encounters.Count(encounter => encounter.RequiresCompanion) != 1)
-        { throw new InvalidDataException("combat.encounters requires one solo and one party encounter."); }
-        if (encounterHostiles.Distinct().Count() != 3 || !hostileIds.SetEquals(encounterHostiles))
+        if (encounters.Count(encounter => !encounter.RequiresCompanion) != 1)
+        { throw new InvalidDataException("combat.encounters requires one solo encounter."); }
+        if (encounterHostiles.Distinct().Count() != encounterHostiles.Length || !hostileIds.SetEquals(encounterHostiles))
         { throw new InvalidDataException("combat.encounters[].hostile_ids must include every hostile exactly once."); }
         if (hostiles.Any(hostile => !attackIds.Contains(hostile.BasicAttackId)))
         { throw new InvalidDataException("combat.hostiles[].basic_attack_id must reference a defined attack."); }
-        if (!attackIds.Contains(kits.Single().BasicAttackId) || !attackIds.Contains(companionLoadout.BasicAttackId))
+        if (!attackIds.Contains(kits.Single().BasicAttackId) || !attackIds.Contains(companionLoadout.BasicAttackId) || !attackIds.Contains(medic.Loadout!.BasicAttackId))
         { throw new InvalidDataException("Crew loadout basic_attack_id must reference a defined attack."); }
-        if (new[] { barrier.Id, ability.Id, burst.Id, taunt.Id }.Distinct().Count() != 4)
+        if (new[] { barrier.Id, ability.Id, burst.Id, taunt.Id, directHeal.Id, healingField.Id }.Distinct().Count() != 6)
         { throw new InvalidDataException("Combat ability IDs must be distinct."); }
         if (kits.Single().ActiveAbilityId != ability.Id || ability.TargetKind != AbilityTargetKind.Position
             || kits.Single().ActiveAbilityTargetKind != AbilityTargetKind.Position)
@@ -719,17 +800,18 @@ public static class StationRouteContent
         if (companionLoadout.ActiveAbilityId != barrier.Id || companionLoadout.ActiveAbilityTargetKind != AbilityTargetKind.Barrier)
         { throw new InvalidDataException("Companion active ability must reference the directional Barrier."); }
         var solo = encounters.Single(encounter => !encounter.RequiresCompanion);
-        if (hostiles.Any(hostile => (hostile.Behavior == HostileBehavior.Sentry)
+        if (hostiles.Any(hostile => (hostile.Behavior != HostileBehavior.Melee)
             != (attacks.Single(attack => attack.Id == hostile.BasicAttackId).ProjectileSpeedMetersPerSecond > 0)))
-        { throw new InvalidDataException("Sentry attacks require projectile speed; melee attacks are immediate."); }
+        { throw new InvalidDataException("Ranged and sentry attacks require projectile speed; melee attacks are immediate."); }
         var soloHostile = hostiles.Single(hostile => hostile.Id == solo.HostileIds.Single());
-        if (soloHostile.Behavior != HostileBehavior.Melee || hostiles.Count(hostile => hostile.Behavior == HostileBehavior.Sentry) != 1)
+        if (soloHostile.Behavior != HostileBehavior.Melee)
         {
-            throw new InvalidDataException("The solo encounter uses melee; the party encounter adds one sentry.");
+            throw new InvalidDataException("The solo tutorial requires one melee hostile.");
         }
         return new StationCombatDefinition(Array.AsReadOnly(attacks), ability, Array.AsReadOnly(hostiles),
             Array.AsReadOnly(encounters), barrier,
-            RequirePositiveBounded(combat.CompanionMaximumHealth, "combat.companion_maximum_health", 10000), burst, taunt);
+            RequirePositiveBounded(combat.CompanionMaximumHealth, "combat.companion_maximum_health", 10000), burst, taunt, directHeal, healingField,
+            RequirePositiveBounded(combat.MedicMaximumHealth, "combat.medic_maximum_health", 10000));
     }
 
     private static int RequirePositiveBounded(int value, string field, int maximum)
@@ -769,6 +851,8 @@ public static class StationRouteContent
 
         RequireExactlyOne(interactions, StationInteractionEffect.BeginSurvivorDialogue);
         RequireExactlyOne(interactions, StationInteractionEffect.BeginRecruitmentDialogue);
+        RequireExactlyOne(interactions, StationInteractionEffect.BeginMedicRecruitmentDialogue);
+        RequireExactlyOne(interactions, StationInteractionEffect.OpenEvacuationAirlock);
         RequireExactlyOne(interactions, StationInteractionEffect.RecordObservation);
         RequireExactlyOne(interactions, StationInteractionEffect.OpenEntryServiceDoor);
         RequireExactlyOne(interactions, StationInteractionEffect.OpenSoloExitServiceDoor);
@@ -814,6 +898,9 @@ public static class StationRouteContent
 
     private sealed class StationRouteDto
     {
+        [JsonPropertyName("medic")] public ActorDto? Medic { get; init; }
+        [JsonPropertyName("medic_recruitment_objective")] public ObjectiveDto? MedicRecruitmentObjective { get; init; }
+        [JsonPropertyName("boarding_objective")] public ObjectiveDto? BoardingObjective { get; init; }
         [JsonPropertyName("schema_version")]
         public int SchemaVersion { get; init; }
 
@@ -861,6 +948,14 @@ public static class StationRouteContent
 
         [JsonPropertyName("combat")]
         public CombatDto? Combat { get; init; }
+
+        [JsonPropertyName("vision")] public VisionDto? Vision { get; init; }
+    }
+
+    private sealed class VisionDto
+    {
+        [JsonPropertyName("range_meters")] public double RangeMeters { get; init; }
+        [JsonPropertyName("eye_height_meters")] public double EyeHeightMeters { get; init; }
     }
 
     private sealed class ActorDto
@@ -942,6 +1037,7 @@ public static class StationRouteContent
 
     private sealed class InteractionDto
     {
+        [JsonPropertyName("required_encounter_id")] public string? RequiredEncounterId { get; init; }
         [JsonPropertyName("id")]
         public string? Id { get; init; }
 
@@ -991,8 +1087,24 @@ public static class StationRouteContent
         public string? Effect { get; init; }
     }
 
+    private sealed class HealingDto
+    {
+        [JsonPropertyName("id")] public string? Id { get; init; }
+        [JsonPropertyName("range_meters")] public double RangeMeters { get; init; }
+        [JsonPropertyName("radius_meters")] public double RadiusMeters { get; init; }
+        [JsonPropertyName("healing")] public int Healing { get; init; }
+        [JsonPropertyName("pulse_interval_ticks")] public int PulseIntervalTicks { get; init; }
+        [JsonPropertyName("duration_ticks")] public int DurationTicks { get; init; }
+        [JsonPropertyName("windup_ticks")] public int WindupTicks { get; init; }
+        [JsonPropertyName("recovery_ticks")] public int RecoveryTicks { get; init; }
+        [JsonPropertyName("cooldown_ticks")] public int CooldownTicks { get; init; }
+    }
+
     private sealed class CombatDto
     {
+        [JsonPropertyName("medic_maximum_health")] public int MedicMaximumHealth { get; init; }
+        [JsonPropertyName("direct_heal")] public HealingDto? DirectHeal { get; init; }
+        [JsonPropertyName("healing_field")] public HealingDto? HealingField { get; init; }
         [JsonPropertyName("attacks")]
         public List<AttackDto?>? Attacks { get; init; }
 
@@ -1121,6 +1233,8 @@ public static class StationRouteContent
 
     private sealed class EncounterDto
     {
+        [JsonPropertyName("required_crew_ids")] public List<string?>? RequiredCrewIds { get; init; }
+        [JsonPropertyName("objective")] public ObjectiveDto? Objective { get; init; }
         [JsonPropertyName("id")]
         public string? Id { get; init; }
 

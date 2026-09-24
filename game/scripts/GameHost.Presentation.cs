@@ -22,8 +22,8 @@ public partial class GameHost
         if (observation.StationRoute?.Encounter?.Phase == EncounterPhase.Defeat)
         {
             // Rules remain paused. Only the terminal fall and released effects settle.
-            var duration = Math.Max(_vanguardPresentation.DownDurationSeconds,
-                _protectorPartyPresentation.DownDurationSeconds) + .5;
+            var duration = Math.Max(_medicPresentation.DownDurationSeconds, Math.Max(_vanguardPresentation.DownDurationSeconds,
+                _protectorPartyPresentation.DownDurationSeconds)) + .5;
             _defeatPresentationSeconds = Math.Min(duration, _defeatPresentationSeconds + Math.Clamp(delta, 0, .25));
         }
         else if (_defeatPresentationSeconds > 0)
@@ -95,12 +95,16 @@ public partial class GameHost
         _framedEncounterId = encounter.Id;
         _motionSamples.Clear();
         _facingSamples.Clear();
-        var positions = route.Party.Select(actor => ToGodot(actor.Position)).Concat(route.Hostiles!.Select(hostile => ToGodot(hostile.Position))).ToArray();
+        var positions = route.Party.Select(actor => ToGodot(actor.Position))
+            .Concat(PlayerVisibleHostiles(route).Where(hostile => CanTargetVisibleHostile(route, hostile))
+                .Select(hostile => ToGodot(hostile.Position))).ToArray();
         var midpoint = positions.Aggregate(Vector3.Zero, (sum, position) => sum + position) / positions.Length;
         var viewDirection = _camera.ProjectRayNormal(GetViewport().GetVisibleRect().GetCenter());
         var towardCamera = new Vector3(-viewDirection.X, 0, -viewDirection.Z).Normalized();
         midpoint += towardCamera * 1.4f;
-        // One explicit frame at entry/retry. Subsequent player camera input is never overridden.
+        // Frame the crew and currently known threats without revealing other rooms.
+        // One explicit frame at entry/retry; later camera input remains under player control.
+        if (route.Party.Count == 3) { _camera.DistanceMeters = 20; }
         _camera.FocusOn(midpoint);
     }
 
@@ -143,7 +147,8 @@ public partial class GameHost
         foreach (var item in _session.EventsSince(_presentationEventSequence))
         {
             if (item.Tick > _presentationTick) { break; }
-            if (item.Detail is AttackEventDetail attack && item.Type == GameplayEventType.AttackReleased)
+            if (item.Detail is AttackEventDetail attack && item.Type == GameplayEventType.AttackReleased
+                && IsPresentationSubjectVisible(observation.StationRoute!, attack.SourceId))
             {
                 ArmedPresentation(attack.SourceId)?.NotifyShot(item.Tick);
             }
@@ -156,10 +161,10 @@ public partial class GameHost
         }
         RenderObservation(observation, timeAlreadyUpdated: true);
         ProcessCombatPresentationEvents(observation);
-        AdvanceCombatPresentationClock();
+        AdvanceCombatPresentationClock(observation.StationRoute!);
     }
 
-    private void PlayCombatCue(string cue, Vector3 position, float delaySeconds = 0)
+    private void PlayCombatCue(string cue, Vector3 position, float delaySeconds = 0, EntityId? visibilitySubject = null)
     {
         if (_reviewMode == "capture" || DisplayServer.GetName() == "headless") { return; }
         _audioVariants.TryGetValue(cue, out var variant);
@@ -171,11 +176,11 @@ public partial class GameHost
             UnitSize = 10, MaxDistance = 38,
         };
         AddChild(player);
-        _combatPresentationEffects.Add(new TimedPresentationEffect(player,
-            (float)player.Stream.GetLength(), _effectEventTick, delaySeconds));
+        TrackCombatEffect(new TimedPresentationEffect(player,
+            (float)player.Stream.GetLength(), _effectEventTick, delaySeconds), visibilitySubject);
     }
 
-    private void SpawnInterruptCue(Vector3 position, float delaySeconds = 0)
+    private void SpawnInterruptCue(Vector3 position, float delaySeconds = 0, EntityId? visibilitySubject = null)
     {
         var label = new Label3D
         {
@@ -183,7 +188,7 @@ public partial class GameHost
             Modulate = new Color("f2c879"), Billboard = BaseMaterial3D.BillboardModeEnum.Enabled, NoDepthTest = true,
         };
         AddChild(label);
-        _combatPresentationEffects.Add(new TimedPresentationEffect(label, 0.60f, _effectEventTick, delaySeconds));
+        TrackCombatEffect(new TimedPresentationEffect(label, 0.60f, _effectEventTick, delaySeconds), visibilitySubject);
     }
 
     public string GetPresentationDiagnosticsJson() => JsonSerializer.Serialize(new
@@ -195,6 +200,9 @@ public partial class GameHost
         enforcer_position = new[] { _securityEnforcerView.GlobalPosition.X, _securityEnforcerView.GlobalPosition.Y, _securityEnforcerView.GlobalPosition.Z },
         vanguard = _vanguardPresentation.GetDiagnostics(),
         protector = _protectorPartyPresentation.GetDiagnostics(),
+        medic = _medicPresentation.GetDiagnostics(),
+        ranged_enforcers = _enemyViews.Where(pair => pair.Value.Armed is not null).Select(pair => new { actor_id = pair.Key.Value, pose = pair.Value.Armed!.GetDiagnostics() }),
+        departure_seconds = _departureSeconds,
         sentry = _enemyViews.Values.FirstOrDefault(view => view.Sentry is not null)?.Sentry?.GetDiagnostics(),
         selected_actor_ids = _selectedActorIds.Select(id => id.Value),
         focused_actor_id = _focusedActorId?.Value,

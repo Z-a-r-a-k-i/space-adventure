@@ -195,7 +195,7 @@ public partial class GameHost
             {
                 if (actor.Combat!.RememberedAttackTargetId is null && actor.PendingAction is null)
                 {
-                    var target = route.Hostiles!.Where(hostile => !hostile.Combat.IsDefeated).OrderBy(hostile => hostile.Position.DistanceTo(actor.Position)).FirstOrDefault();
+                    var target = route.VisibleHostiles.Where(hostile => hostile.EncounterId == route.Encounter!.Id && !hostile.Combat.IsDefeated).OrderBy(hostile => hostile.Position.DistanceTo(actor.Position)).FirstOrDefault();
                     if (target is not null) { ReviewOrder(new AssignBasicAttackTargetCommand(new CommandId($"party.retarget.{actor.Id}.{_session.Tick}"), actor.Id, target.Id)); }
                 }
             }
@@ -205,8 +205,8 @@ public partial class GameHost
         await ReviewTicks(_definition.Combat.PartyEncounter.SecuringTicks / 2);
         if (await ReviewCapture("holster")) { return; }
         await ReviewTicks(_definition.Combat.PartyEncounter.SecuringTicks - _definition.Combat.PartyEncounter.SecuringTicks / 2);
-        InputCheck("main victory ends this slice while airlock remains deferred", ReviewState().Encounter!.Phase == EncounterPhase.Victory
-            && ReviewState().Objective.Status == ObjectiveStatus.Completed && ReviewState().Phase == ScenarioPhase.InProgress
+        InputCheck("main victory opens medic recruitment while airlock stays locked", ReviewState().Encounter!.Phase == EncounterPhase.Victory
+            && ReviewState().Objective.Id == _definition.MedicRecruitmentObjective.Id && ReviewState().Phase == ScenarioPhase.InProgress
             && ReviewState().Interactions.Single(item => item.Id.Value == "interaction.evacuation_airlock").State == InteractionState.Unavailable);
         if (await ReviewCapture("victory")) { return; }
         if (await ReviewCapture("slice-complete")) { return; }
@@ -266,7 +266,7 @@ public partial class GameHost
     private void CheckPartyHostilePlacementOrder()
     {
         var content = System.Text.Json.Nodes.JsonNode.Parse(Godot.FileAccess.GetFileAsString("res://content/station-route.json"))!;
-        var encounter = content["combat"]!["encounters"]!.AsArray().Single(item => item!["requires_companion"]!.GetValue<bool>())!;
+        var encounter = content["combat"]!["encounters"]!.AsArray().Single(item => item!["id"]!.GetValue<string>() == _definition!.Combat.PartyEncounter.Id.Value)!;
         var ids = encounter["hostile_ids"]!.AsArray().Select(item => item!.GetValue<string>()).Reverse().ToArray();
         encounter["hostile_ids"] = JsonSerializer.SerializeToNode(ids);
         var definition = StationRouteContent.ParseJson(content.ToJsonString());
@@ -283,7 +283,7 @@ public partial class GameHost
 
     private void CheckPartyAbilityEnvelope()
     {
-        string Command(object payload) => JsonSerializer.Serialize(new { schema_version = 9,
+        string Command(object payload) => JsonSerializer.Serialize(new { schema_version = 11,
             command_id = "party.adapter.barrier", type = "use_ability", payload });
         var actor = _definition!.Companion.Id.Value;
         var ability = _definition.Combat.Barrier.Id.Value;
@@ -304,7 +304,7 @@ public partial class GameHost
         }
         foreach (var removed in new[] { "set_auto_attack", "use_item", "face_actors" })
         {
-            var json = JsonSerializer.Serialize(new { schema_version = 9, command_id = $"party.adapter.removed.{removed}",
+            var json = JsonSerializer.Serialize(new { schema_version = 11, command_id = $"party.adapter.removed.{removed}",
                 type = removed, payload = new { actor_id = actor } });
             using var result = JsonDocument.Parse(_automationBridge.SubmitCommandJson(json));
             InputCheck("removed commands reject without replacing orders", !result.RootElement.GetProperty("accepted").GetBoolean()

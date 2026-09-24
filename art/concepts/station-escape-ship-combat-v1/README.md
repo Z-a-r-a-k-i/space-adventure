@@ -1,8 +1,9 @@
 # Station escape and ship-combat concept pack v1
 
-Status: preferred ship-combat composition approved as a Phase 7 visual anchor;
-the remaining images are exploratory, and none of the pack is an approved
-production roster, art brief, 3D source, or runtime asset
+Status: preferred ship-combat composition approved as a Phase 6 visual anchor.
+The 2026-09-12 station expansion also authorizes the launch-bay continuation and
+cutter exterior for production; other images remain exploratory. The pack
+preserves references, not production sources or runtime assets.
 
 Generated: 2026-07-29
 
@@ -21,7 +22,8 @@ frontier station into a small escape cutter and a later
 real-time-with-pause ship-combat prototype. It preserves the project's
 elevated 3D tactical camera, chunky
 retro-industrial construction, dark shell, purposeful state colors, and
-two-character party read.
+crew readability. The original two-character composition must accommodate
+Vanguard, Protector, and Medic in the approved continuation.
 
 The ship-combat image is FTL-inspired only at the level of readable
 compartments, crew positioning, subsystem pressure, targeting, and tactical
@@ -31,8 +33,9 @@ silhouettes, or room layouts.
 These images do not supersede `docs/PRODUCT.md`, `docs/ROADMAP.md`,
 or `docs/POC-ASSET-ROSTER.md`. The bounded gameplay
 scope and sequencing decision are now recorded in
-`docs/future/ship-combat-poc.md` and ADR 0021. Ship combat and humanoid enemies remain
-outside the approved station POC.
+`docs/future/ship-combat-poc.md` and ADRs 0021/0031. Ship combat and the exploratory
+boarder identity remain outside the station POC; its new ranged hostile is an
+existing Enforcer/carbine derivative.
 
 ## Outputs
 
@@ -71,9 +74,11 @@ composition:
 - a central divider makes clear that they are not physically side by side; and
 - no cyan, red, or other movement or trajectory lines connect the ships.
 
-The launch bay, dock props, humanoid boarder, cutter exterior, cutter interior,
-and hostile silhouette remain exploratory visual anchors. Their presence does
-not approve a production brief or implementation.
+On 2026-09-12 the owner authorized the station's connected launch-bay extension
+and existing cutter exterior design for the three-person station escape.
+Production must retain a separate brief and source/publication record. Dock
+prop families, humanoid boarder, cutter interior, and hostile ship silhouette
+remain exploratory visual anchors without production approval.
 
 ## Review boundary
 
@@ -90,8 +95,8 @@ Review:
   divider communicate distance, pause, crew placement, subsystem pressure,
   and damage without becoming UI-heavy.
 
-Approval of an image would authorize only a visual anchor. It would not define
+The recorded approvals apply only to their stated scope. Images do not define
 sapience, negotiation rules, attacks, abilities, ship systems, room topology,
 damage simulation, boarding, progression, encounter balance, or implementation
-order. Those decisions require updates to the authoritative project documents
-before gameplay work begins.
+order. The station expansion's gameplay boundary is recorded in Product and
+ADR 0031; the separate ship-combat specification owns its later battle.

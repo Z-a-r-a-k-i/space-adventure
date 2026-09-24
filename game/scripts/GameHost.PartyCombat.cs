@@ -9,6 +9,17 @@ public partial class GameHost
     private readonly Dictionary<EntityId, EnemyView> _enemyViews = [];
     private readonly Dictionary<EntityId, (MeshInstance3D Line, MeshInstance3D Ring)> _attackLinks = [];
     private readonly Dictionary<EntityId, EnemyIntentCue> _enemyIntentCues = [];
+    private readonly HashSet<EntityId> _visibleEnemyIds = [];
+
+    private static IReadOnlyList<HostileObservation> PlayerVisibleHostiles(StationRouteObservation route) => route.VisibleHostiles;
+
+    private static HostileObservation? FindVisibleHostile(StationRouteObservation route, EntityId? id) =>
+        PlayerVisibleHostiles(route).FirstOrDefault(hostile => hostile.Id == id);
+
+    private static bool CanTargetVisibleHostile(StationRouteObservation route, HostileObservation hostile) =>
+        !hostile.Combat.IsDefeated && route.Encounter is { Phase: EncounterPhase.Readying or EncounterPhase.Active } encounter
+        && hostile.EncounterId == encounter.Id && hostile.EncounterPhase is EncounterPhase.Readying or EncounterPhase.Active
+        && PlayerVisibleHostiles(route).Any(visible => visible.Id == hostile.Id);
 
     private void CachePartyCombatViews()
     {
@@ -19,9 +30,10 @@ public partial class GameHost
             _enemyViews.Add(new EntityId(GetStableId(root)), new EnemyView(root,
                 root.GetNode<CollisionObject3D>("TargetBody"), root.GetNode<MeshInstance3D>("ThreatRing"),
                 root.GetNodeOrNull<HumanoidPresentation>("Presentation"),
-                root.GetNodeOrNull<SentryPresentation>("Presentation")));
+                root.GetNodeOrNull<SentryPresentation>("Presentation"),
+                root.GetNodeOrNull<ArmedHumanoidPresentation>("Presentation")));
             var cue = new EnemyIntentCue(); AddChild(cue);
-            cue.Build(root.GetNodeOrNull<SentryPresentation>("Presentation") is not null);
+            cue.Build(root.GetNodeOrNull<SentryPresentation>("Presentation") is not null || root.GetNodeOrNull<ArmedHumanoidPresentation>("Presentation") is not null);
             _enemyIntentCues.Add(new EntityId(GetStableId(root)), cue);
         }
         foreach (var actor in _actorViews.Values)
@@ -40,7 +52,7 @@ public partial class GameHost
 
     private void ValidateCombatViews(StationRouteDefinition definition)
     {
-        foreach (var id in new[] { definition.Protagonist.Id, definition.Companion.Id })
+        foreach (var id in new[] { definition.Protagonist.Id, definition.Companion.Id, definition.Medic.Id })
         {
             if (!_actorViews.ContainsKey(id.Value))
             { throw new InvalidDataException($"The station scene has no crew view for '{id}'."); }
@@ -54,7 +66,9 @@ public partial class GameHost
 
     private void AttackWithSelectedCrew(EntityId targetId)
     {
-        var actors = SelectedLivingActors(_session!.Observe().StationRoute!).ToArray();
+        var route = _session!.Observe().StationRoute!;
+        if (FindVisibleHostile(route, targetId) is not { } hostile || !CanTargetVisibleHostile(route, hostile)) { return; }
+        var actors = SelectedLivingActors(route).ToArray();
         if (actors.Length == 0)
         { SetFeedback("Select a living crew member first.", TacticalUi.Danger); return; }
         foreach (var actor in actors)
@@ -89,9 +103,15 @@ public partial class GameHost
         if (actor.CurrentAction is { Kind: PrimaryActionKind.Ability } ability
             && ability.AbilityId == _definition!.Combat.ProtagonistAbility.Id)
         { return ToGodot(ability.Destination) - ToGodot(actor.Position); }
+        if (actor.CurrentAction is { Kind: PrimaryActionKind.Ability } support)
+        {
+            if (IsHealingField(support.AbilityId)) { return ToGodot(support.Destination) - ToGodot(actor.Position); }
+            if (IsHealingAbility(support.AbilityId) && route.Party.FirstOrDefault(crew => crew.Id == support.CombatTargetId) is { } ally)
+            { return ToGodot(ally.Position) - ToGodot(actor.Position); }
+        }
         var targetId = actor.CurrentAction?.CombatTargetId ?? actor.Combat?.RememberedAttackTargetId;
-        var target = route.Hostiles?.FirstOrDefault(hostile => hostile.Id == targetId)
-            ?? route.Hostiles?.Where(hostile => !hostile.Combat.IsDefeated)
+        var target = route.VisibleHostiles.FirstOrDefault(hostile => hostile.Id == targetId)
+            ?? route.VisibleHostiles.Where(hostile => CanTargetVisibleHostile(route, hostile))
                 .OrderBy(hostile => hostile.Position.DistanceTo(actor.Position)).FirstOrDefault();
         return target is null ? Vector3.Zero : ToGodot(target.Position) - ToGodot(actor.Position);
     }
@@ -100,40 +120,66 @@ public partial class GameHost
     {
         foreach (var (id, view) in _enemyViews)
         {
-            var hostile = route.Hostiles?.FirstOrDefault(candidate => candidate.Id == id);
-            var active = hostile is not null && route.Encounter?.Phase != EncounterPhase.Dormant;
-            view.Root.Visible = active;
-            view.Target.CollisionLayer = active && !hostile!.Combat.IsDefeated ? HostileCollisionLayer : 0;
+            var hostile = FindVisibleHostile(route, id);
+            view.Root.Visible = hostile is not null;
+            view.Target.CollisionLayer = hostile is not null && CanTargetVisibleHostile(route, hostile) ? HostileCollisionLayer : 0;
+            view.Threat.Visible = false;
             _enemyIntentCues[id].Visible = false;
-            if (!active) { continue; }
-            view.Root.GlobalPosition = SamplePosition(id, hostile!.Position, observation.Tick, route.Encounter!.Attempt);
-            var action = hostile.CurrentAction;
-            var target = route.Party.FirstOrDefault(actor => actor.Id == action?.CombatTargetId)
+            if (hostile is null)
+            {
+                _visibleEnemyIds.Remove(id);
+                _motionSamples.Remove(id);
+                continue;
+            }
+            var newlyVisible = _visibleEnemyIds.Add(id);
+            var encounter = route.Encounter?.Id == hostile.EncounterId ? route.Encounter : null;
+            var dormant = hostile.EncounterPhase == EncounterPhase.Dormant;
+            view.Root.GlobalPosition = SamplePosition(id, hostile.Position, observation.Tick, hostile.EncounterAttempt);
+            var action = dormant ? null : hostile.CurrentAction;
+            var target = dormant ? null : route.Party.FirstOrDefault(actor => actor.Id == action?.CombatTargetId)
                 ?? route.Party.Where(actor => actor.Combat?.IsDefeated == false)
                     .OrderBy(actor => actor.Position.DistanceTo(hostile.Position)).FirstOrDefault();
-            var targetPosition = target is null ? view.Root.GlobalPosition + Vector3.Forward : ToGodot(target.Position);
+            var authoredFacing = ToGodot(hostile.Facing);
+            var targetPosition = target is null ? view.Root.GlobalPosition + authoredFacing : ToGodot(target.Position);
             var direction = action?.HasRemainingMovement == true ? TravelDirection(id) : targetPosition - view.Root.GlobalPosition;
+            if (newlyVisible && action?.HasRemainingMovement == true && direction.LengthSquared() <= .000001f)
+            { direction = ToGodot(action.Destination) - view.Root.GlobalPosition; }
+            var authoredPose = dormant || hostile.EncounterPhase == EncounterPhase.Readying;
+            Vector3? revealedHeading = authoredPose ? authoredFacing : newlyVisible ? direction : null;
             var pose = hostile.Combat.IsDefeated ? HumanoidPresentationAction.Down
                 : action is { Kind: PrimaryActionKind.Attack, Phase: PrimaryActionPhase.Windup or PrimaryActionPhase.Recovery, Interrupted: false }
                     ? HumanoidPresentationAction.MeleeStrike
                     : action?.HasRemainingMovement == true ? HumanoidPresentationAction.Locomotion : HumanoidPresentationAction.Idle;
+            var clipSeconds = EnforcerClipSeconds(action);
+            if (hostile.Combat.IsDefeated && hostile.Combat.DefeatedAtTick is { } defeatedTick && view.Humanoid is { } fallen)
+            {
+                // A death may occur while this view is hidden. Reconstruct the
+                // corpse from its authoritative tick instead of replaying a fall.
+                clipSeconds = Math.Clamp((_presentationTick - defeatedTick) / GameSession.TicksPerSecond * AnimationPacing.Rate,
+                    0, fallen.ClipLength(HumanoidPresentationAction.Down));
+            }
             view.Humanoid?.Synchronize(true, pose, observation.Paused, direction,
-                presentationTick: _presentationTick, clipSeconds: EnforcerClipSeconds(action),
-                cycle: action?.InstanceId ?? route.Encounter.Attempt, turnDeltaSeconds: _presentationDeltaSeconds,
-                snapToPose: route.Encounter.Phase == EncounterPhase.Readying);
+                presentationTick: _presentationTick, clipSeconds: clipSeconds,
+                cycle: action?.InstanceId ?? hostile.EncounterAttempt, turnDeltaSeconds: _presentationDeltaSeconds,
+                snapToPose: newlyVisible || hostile.EncounterPhase == EncounterPhase.Readying);
+            if (revealedHeading is { } heading && !hostile.Combat.IsDefeated) { view.Humanoid?.SnapFacing(heading); }
             if (!hostile.Combat.IsDefeated && pose == HumanoidPresentationAction.MeleeStrike)
             { view.Humanoid?.FaceDirection(direction, _presentationDeltaSeconds); }
-            view.Sentry?.Synchronize(hostile, targetPosition + Vector3.Up * 1.1f, _presentationTick, _presentationDeltaSeconds);
-            view.Threat.Visible = false;
-            var winding = !hostile.Combat.IsDefeated && target?.Combat?.IsDefeated == false
+            view.Armed?.Synchronize(true, action?.HasRemainingMovement == true, observation.Paused, direction,
+                encounter, action, _presentationTick, _presentationDeltaSeconds,
+                hostile.Combat.IsDefeated, hostile.Combat.DefeatedAtTick, bodyFacing: revealedHeading);
+            if (authoredPose) { view.Sentry?.SynchronizeDormant(); }
+            else { view.Sentry?.Synchronize(hostile, targetPosition + Vector3.Up * 1.1f, _presentationTick, _presentationDeltaSeconds); }
+            var winding = CanTargetVisibleHostile(route, hostile) && target?.Combat?.IsDefeated == false
                 && action is { Phase: PrimaryActionPhase.Windup, Interrupted: false }
-                && route.Encounter.Phase == EncounterPhase.Active;
+                && hostile.EncounterPhase == EncounterPhase.Active;
             _enemyIntentCues[id].Sample(winding, view.Root.GlobalPosition,
                 target is null ? targetPosition : _actorViews[target.Id.Value].GlobalPosition,
                 action is null ? 0 : (float)Math.Clamp((_presentationTick - action.PhaseStartedTick) / Math.Max(1, action.PhaseTicksTotal), 0, 1));
             if (view.Root.GetNodeOrNull<Label3D>("Label") is Label3D label) { label.Visible = false; }
         }
         SynchronizeBarrier(route);
+        SynchronizeHealingField(route);
         SynchronizeAttackLinks(route);
     }
 
@@ -155,7 +201,7 @@ public partial class GameHost
                 AddChild(line); AddChild(ring); link = (line, ring); _attackLinks.Add(actor.Id, link);
             }
             var targetId = actor.CurrentAction?.CombatTargetId ?? actor.Combat?.RememberedAttackTargetId;
-            var target = route.Hostiles?.FirstOrDefault(hostile => hostile.Id == targetId && !hostile.Combat.IsDefeated);
+            var target = route.VisibleHostiles.FirstOrDefault(hostile => hostile.Id == targetId && CanTargetVisibleHostile(route, hostile));
             link.Line.Visible = link.Ring.Visible = target is not null && actor.Combat?.IsDefeated != true
                 && (actor.CurrentAction?.Kind == PrimaryActionKind.Attack || actor.CurrentAction?.AbilityId == _definition!.Combat.Burst.Id)
                 && route.Encounter?.Phase == EncounterPhase.Active;
@@ -171,8 +217,9 @@ public partial class GameHost
     }
 
     private ArmedHumanoidPresentation? ArmedPresentation(EntityId id) => id == _definition!.Protagonist.Id
-        ? _vanguardPresentation : id == _definition.Companion.Id ? _protectorPartyPresentation : null;
+        ? _vanguardPresentation : id == _definition.Companion.Id ? _protectorPartyPresentation
+        : id == _definition.Medic.Id ? _medicPresentation : _enemyViews.GetValueOrDefault(id)?.Armed;
 
     private sealed record EnemyView(Node3D Root, CollisionObject3D Target, MeshInstance3D Threat,
-        HumanoidPresentation? Humanoid, SentryPresentation? Sentry);
+        HumanoidPresentation? Humanoid, SentryPresentation? Sentry, ArmedHumanoidPresentation? Armed);
 }

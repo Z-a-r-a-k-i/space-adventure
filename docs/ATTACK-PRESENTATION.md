@@ -9,7 +9,7 @@ pause rules live in [Architecture](ARCHITECTURE.md).
 
 | Source | Current role | Required presentation |
 | --- | --- | --- |
-| Handheld | Vanguard carbine; Protector shotgun | Separate weapon, primary/support grips, muzzle, hand/holster attachments |
+| Handheld | Vanguard carbine; Protector shotgun; Medic pistol; ranged Enforcer rifle | Separate weapon, primary grip, optional support grip, muzzle, hand/holster attachments |
 | Body | Security Enforcer | Reinforced strike surface and contact socket |
 | Integrated | Rigid sentry | Muzzle with bounded aim and recoil pivots |
 
@@ -20,8 +20,10 @@ Character attachments are `socket.weapon.hand_primary` and
 published frames use local `-Z` outward and `+Y` up.
 
 Handheld profiles cover holstered idle/walk, draw, armed idle/walk, aim/recoil,
-recovery, holster, and down. Two-handed contact is required when armed, with
-authored one-handed transfer portions. Draw/holster landmarks may be named
+recovery, holster, and down. Rifles and shotgun require two-handed armed
+contact, with authored one-handed transfer portions. Medic's pistol is
+one-handed: keep her left hand clear and do not invent a support grip.
+Draw/holster landmarks may be named
 `event.weapon.transfer_to_hand` and `event.weapon.transfer_to_holster`.
 Attachments must reconstruct correctly after pause, seek, retry, or resync.
 World movement remains core-owned; combat animation is in-place.
@@ -43,8 +45,9 @@ do not inherit the animation multiplier.
 
 ## Current combat mapping
 
-- Both crew use `ArmedHumanoidPresentation`: fitted authored handling,
-  upper-body aim, release-driven recoil, and support-hand IK. Protector uses
+- Armed humanoids use `ArmedHumanoidPresentation`: fitted authored handling,
+  upper-body aim and release-driven recoil, with support-hand IK only for
+  two-handed weapons. Protector uses
   stronger shotgun recoil. The older Firing Rifle donor
   remains provenance, not the runtime shooting driver. Draw transfers at 25%,
   support joins over 60–90%, and holster transfers at 75% of observed duration.
@@ -60,14 +63,16 @@ do not inherit the animation multiplier.
   presents the remaining follow-through. The authoritative reaction window
   and contact tick are unchanged. Dashed ground links point from each winding
   hostile to its target; a contracting ring gains four corner marks in the final
-  quarter. Sentry uses an angular target ring to distinguish ranged threat.
+  quarter. Sentry and rifle Enforcer use ranged threat cues. The rifle
+  derivative must remain distinguishable from melee Enforcers by its armed
+  silhouette, even when several enemies overlap in the camera view.
 - Sentry aim turns around the gun mount with bounded yaw/pitch and turn speed;
   close or rear targets cannot flip the head. Its adapter corrects the retained
   GLB's floor-level empty pivots and reconstructs the barrel-tip muzzle.
 - Animation and effects share simulation tick/fraction time, including pause
   and exact stepping. Crew bolts launch from the actual muzzle; their impact
   effects wait for visual arrival while core damage resolves at release.
-  Sentry bolts instead follow core launch/block/arrival events. A barrier hit
+  Sentry and hostile rifle bolts instead follow core launch/block/arrival events. A barrier hit
   removes the bolt and flashes the shield without a damage number.
 - Barrier expands upward from its placed ground base. Its clipped outline
   matches the core hit plane. The preview faces from Protector toward the pointer
@@ -84,12 +89,22 @@ do not inherit the animation multiplier.
   remains in the barrier silhouette and overhead status. All geometry samples
   the shared presentation clock with resources warmed before combat.
   Taunt releases a body-centered pulse without weapon recoil.
+- Heal shows the actual healed recipient and amount from core events. Healing
+  Field's preview shows its radius and currently affected living crew; its
+  deployed shape follows observed world position and expiry. Healing uses
+  distinct restorative feedback without firearm recoil or resurrection cues.
+  Pause, replacement, encounter completion, defeat, and retry must leave no
+  stale field geometry or healing feedback.
 - Crew down clips retain the Rifle Death donor's pelvis rotation and bake
   evaluated mesh contact with the floor. They start at the observed defeat tick. Ordinary pause freezes
   them; after total defeat, a bounded presentation-only clock lets the final
   fall finish while the core stays paused. Retry resets that clock and pose.
   Hostile humanoids snap to their standing pose during encounter readying so
   retry cannot retain a frozen blend from a previous fall.
+
+Victory recovery returns fallen crew to travel presentation. The cutter's
+boarding entrance and engines use observed route completion to stage boarding,
+closure, and takeoff. That animation cannot complete gameplay or advance rules.
 
 Crew projectile speed/trail/delay details belong in
 [CarbineProjectile.cs](../game/scripts/CarbineProjectile.cs) and

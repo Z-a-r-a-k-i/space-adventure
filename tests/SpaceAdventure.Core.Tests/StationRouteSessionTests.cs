@@ -22,8 +22,8 @@ public sealed class StationRouteSessionTests
     {
         var definition = LoadDefinition();
 
-        Assert.Equal(9, definition.SchemaVersion);
-        Assert.Equal("station-route-v15", definition.ContentRevision);
+        Assert.Equal(11, definition.SchemaVersion);
+        Assert.Equal("station-route-v18", definition.ContentRevision);
         Assert.Equal(new ScenarioId("scenario.station_route"), definition.ScenarioId);
         Assert.Equal(ProtagonistId, definition.Protagonist.Id);
         Assert.Equal(ProtectorActorId, definition.Companion.Id);
@@ -35,7 +35,7 @@ public sealed class StationRouteSessionTests
         Assert.Equal(new AttackId("attack.crew.protector.shotgun"), definition.Companion.Loadout!.BasicAttackId);
         Assert.Equal(new AbilityId("ability.crew.protector.barrier"), definition.Companion.Loadout.ActiveAbilityId);
         Assert.Equal(AbilityTargetKind.Barrier, definition.Companion.Loadout.ActiveAbilityTargetKind);
-        Assert.Equal(4, definition.Combat.Attacks.Count);
+        Assert.Equal(6, definition.Combat.Attacks.Count);
         Assert.Equal(new EncounterId("encounter.station.solo_tutorial"), definition.Combat.SoloEncounter.Id);
         Assert.Equal(new EntityId("actor.enemy.security_enforcer.solo"), definition.Combat.SoloHostile.Id);
         Assert.Equal(75, definition.Combat.SoloHostile.MaximumHealth);
@@ -45,7 +45,7 @@ public sealed class StationRouteSessionTests
         Assert.Equal(VanguardKitId, vanguard.Id);
         Assert.Equal(new AttackId("attack.crew.vanguard.carbine"), vanguard.BasicAttackId);
         Assert.Equal(new AbilityId("ability.crew.vanguard.interrupt"), vanguard.ActiveAbilityId);
-        Assert.Equal(6, definition.Interactions.Count);
+        Assert.Equal(12, definition.Interactions.Count);
         Assert.Single(definition.Interactions, interaction =>
             interaction.Effect == StationInteractionEffect.OpenEntryServiceDoor);
         Assert.Single(definition.Interactions, interaction =>
@@ -61,12 +61,12 @@ public sealed class StationRouteSessionTests
     {
         var json = LoadContentJson();
         var unsupported = json.Replace(
-            "\"schema_version\": 9",
-            "\"schema_version\": 99",
+            "\"schema_version\": 11",
+            "\"schema_version\": 109",
             StringComparison.Ordinal);
         var unmapped = json.Replace(
-            "\"schema_version\": 9,",
-            "\"schema_version\": 9, \"unexpected\": true,",
+            "\"schema_version\": 11,",
+            "\"schema_version\": 11, \"unexpected\": true,",
             StringComparison.Ordinal);
 
         Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(unsupported));
@@ -462,19 +462,29 @@ public sealed class StationRouteSessionTests
                 new WorldPosition(-10, 0, 8.5),
                 CreateActorPlacements(),
                 CreateInteractionPlacements(),
-                CreateEncounterPlacement()),
+                CreateEncounterPlacement(),
+                // Every authored encounter must be placed for the route to be completable.
+                CombatSessionTests.CreatePartyPlacement(),
+                CombatSessionTests.ExtensionEncounterPlacements()),
             pathfinder ?? new DirectPathfinder());
     }
 
     private static StationActorPlacement[] CreateActorPlacements()
     {
-        return [new StationActorPlacement(ProtectorActorId, new WorldPosition(-1.5, 0, 0))];
+        return [new StationActorPlacement(ProtectorActorId, new WorldPosition(-1.5, 0, 0)),
+            new StationActorPlacement(new EntityId("actor.companion.medic"), new WorldPosition(9, 0, 8))];
     }
 
     private static StationInteractionPlacement[] CreateInteractionPlacements()
     {
         return
         [
+                new(new EntityId("interaction.medic"), new WorldPosition(9, 0, 8), new WorldPosition(8.15, 0, 8)),
+                new(new EntityId("interaction.escape_cutter.board"), new WorldPosition(81, 0, 8), new WorldPosition(80, 0, 8)),
+                new(new EntityId("interaction.service_door.service"), new WorldPosition(12, 0, 8), new WorldPosition(11.15, 0, 8)),
+                new(new EntityId("interaction.service_door.security"), new WorldPosition(25, 0, 8), new WorldPosition(24.15, 0, 8)),
+                new(new EntityId("interaction.service_door.dock"), new WorldPosition(39, 0, 8), new WorldPosition(38.15, 0, 8)),
+                new(new EntityId("interaction.service_door.launch"), new WorldPosition(53, 0, 8), new WorldPosition(52.15, 0, 8)),
             new(SurvivorId, new WorldPosition(-8.5, 0, 6.5), new WorldPosition(-9.3, 0, 6.5)),
             new(EntryDoorId, new WorldPosition(-10, 0, 4), new WorldPosition(-10, 0, 4.85)),
             new(SoloExitDoorId, new WorldPosition(-5, 0, 0), new WorldPosition(-5.85, 0, 0)),

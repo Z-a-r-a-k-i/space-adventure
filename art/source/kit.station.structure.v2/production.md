@@ -1,36 +1,34 @@
 # Production record — station structure kit v2
 
-Status: technically validated and integrated; owner visual approval pending
+Original dimensional Blender geometry and vertex colors derived from the
+approved station-structure reference. No external source or license was added.
+The owner's 2026-09-12 tactical-layout revision changes only the original solo
+and party inner decks and their route strips; other floors, all original walls,
+posts, and wall-landmark geometry remain retained. The four-fight extension is
+published separately as `kit.station.escape.v1`.
 
 | Field | Value |
 |---|---|
 | Asset ID | `kit.station.structure.v2` |
-| Builder | Blender 5.2.0 LTS, `tools/blender/build_station_environment_v2.py --asset structure` |
-| Source | `art/source/kit.station.structure.v2/structure-v2.blend` |
-| Publication | `game/Assets/Published/kit.station.structure.v2.glb` |
-| Source size | 232,745 bytes |
-| Publication size | 2,696,408 bytes |
-| Mesh objects | 42 |
-| Triangles | 27,212 / 30,000 |
-| Materials | 4 / 4 |
-| Godot-space bounds | `(-15.35, -0.20, -4.35)` to `(12.34, 2.80, 13.35)` |
-| Fresh Blender GLB reimport | Passed, including base factors and vertex colors |
-| Godot 4.7.1 import and headless traversal | Passed |
-| Contextual Godot inspection | Passed agent review at 7.5, 14.5, and 20 m in 720p/1080p, including sampled pitch/yaw limits, recruitment, arena, and wall cutaway |
+| Builder | Blender 5.2.0 LTS, `tools/blender/build_station_environment_v2.py --asset structure --replace` |
+| Shared dimensions | `tools/station-layout.json`, `station-layout-v2` |
+| Shared deck helper | `tools/blender/station_tactical_geometry.py` |
+| Source | `art/source/kit.station.structure.v2/structure-v2.blend` (327,077 bytes) |
+| Publication | `game/Assets/Published/kit.station.structure.v2.glb` (3,335,192 bytes) |
+| Geometry | 34,092 / 36,000 triangles; 46 meshes; four materials |
+| Godot bounds | `(-15.35, -1.42, -4.35)` to `(12.34, 2.80, 13.35)` |
+| Fresh GLB reimport | Passed topology, bounds, material factors, vertex colors, and all 23 original occluder IDs |
+| Open-deck check | Passed 25 interior ray probes per pit across the two revised floors |
+| Current visual review | Blender and contextual Godot inspection passed; owner acceptance remains open |
 
-The 2026-09-09 composition revision gives recruitment a warm three-locker wall
-assembly and the transit arena a teal twin-extractor bank. Large panel accents
-separate security, shelter, and evacuation; broad matte arena plates keep
-combat floors quiet. Worn threshold inserts identify crossings. The landmarks
-are joined into existing wall cutaways outside the navigable deck: five floors,
-23 unchanged `occluder_id` values, eight junction posts, and six route strips.
-The main landmark faces into the arena from the southeast wall so it stays
-behind the actors in ordinary camera framing.
-All geometry and vertex colors are authored locally from the approved structure
-reference; no third-party input was added. Reproduce with the builder above
-and `--replace`.
+The solo opening exposes a damaged power trunk; the party opening contains a
+central conduit trench. The floor slabs and panels are actually cut around
+these rectangles. Shaft linings and machinery stay below the deck, with coping
+tops at 0.09 m and caution paint at 0.097 m inside the 0.40 m navigation setback.
+Ten sparse route strips turn around openings. The retained recruitment lockers
+and arena extractor bank belong to their existing wall cutaways.
 
-The source contains no collision, navigation, light nodes, gameplay state,
-rig, or animation. Godot owns floor-trim/route emission tuning, localized light
-pools, and floor lettering in the station scene. Review captures remain ignored
-under `artifacts/party-review/` and `artifacts/visual/captures/`.
+The source contains no collision, navigation, lights, gameplay state, rig, or
+animation. Godot owns movement restrictions, floor picking, route emission,
+local lighting, and lettering. Openings do not introduce ballistic cover.
+Review media stays ignored under `artifacts/art-expansion/`.

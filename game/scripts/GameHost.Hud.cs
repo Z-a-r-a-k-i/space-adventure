@@ -23,6 +23,7 @@ public partial class GameHost
     private PanelContainer _outcomePanel = null!;
     private Label _outcomeTitle = null!;
     private Label _outcomeDetail = null!;
+    private Label _worldControlsHint = null!;
 
     private static PanelContainer HudPanel()
     {
@@ -143,7 +144,7 @@ public partial class GameHost
         _feedbackLabel.OffsetLeft = 330; _feedbackLabel.OffsetRight = -370;
         _feedbackLabel.OffsetTop = -99; _feedbackLabel.OffsetBottom = -43;
         canvas.AddChild(_feedbackLabel);
-        var help = TacticalUi.Label("RMB  Order    DRAG  Select    TAB  Ability focus", 11, "afc1c5");
+        var help = _worldControlsHint = TacticalUi.Label("RMB  Order    DRAG  Select    TAB  Ability focus", 11, "afc1c5");
         help.AnchorTop = help.AnchorBottom = 1;
         help.OffsetLeft = 20; help.OffsetTop = -27;
         canvas.AddChild(help);
@@ -184,10 +185,10 @@ public partial class GameHost
             if (!_partyButtons.ContainsKey(actor.Id.Value))
             {
                 var card = new CrewCard();
-                var portrait = actor.Id == route.Protagonist.Id ? "vanguard" : "protector";
+                var portrait = CrewPortrait(actor.Id);
                 card.Build($"res://ui/portraits/{portrait}.png");
                 var id = actor.Id;
-                card.Pressed += () => SelectActor(id, Input.IsKeyPressed(Key.Shift));
+                card.Pressed += () => { if (_abilityTargeting && IsHealingAbility(_targetAbilityId)) { ConfirmEntityAbility(id); } else { SelectActor(id, Input.IsKeyPressed(Key.Shift)); } };
                 _partyButtons.Add(actor.Id.Value, card);
                 _partyList.AddChild(card);
                 _selectedActorIds.Add(actor.Id);
@@ -250,20 +251,20 @@ public partial class GameHost
     }
 
     private static string AttackTargetName(StationRouteObservation route, PrimaryActionObservation? action) =>
-        action?.CombatTargetId is not null ? route.Hostiles?.FirstOrDefault(hostile => hostile.Id == action.CombatTargetId)?.DisplayName ?? "" : "";
+        action?.CombatTargetId is not null ? route.Party.FirstOrDefault(crew => crew.Id == action.CombatTargetId)?.DisplayName ?? route.VisibleHostiles.FirstOrDefault(hostile => hostile.Id == action.CombatTargetId)?.DisplayName ?? "" : "";
 
     private static int CrewNumber(StationRouteObservation route, EntityId id) =>
         route.Party.Select((actor, index) => (actor, index)).First(item => item.actor.Id == id).index + 1;
 
     private static Color CrewAccent(StationRouteObservation route, ActorObservation actor) =>
-        actor.Id == route.Protagonist.Id ? TacticalUi.Cyan : TacticalUi.Protector;
+        actor.Id == route.Protagonist.Id ? TacticalUi.Cyan : actor.Id.Value == "actor.companion.medic" ? MedicAccent : TacticalUi.Protector;
 
     private string ShortAction(PrimaryActionObservation? action) => action?.Kind switch
     {
         PrimaryActionKind.Attack => action.Phase == PrimaryActionPhase.Moving ? "Closing range" : action.Phase == PrimaryActionPhase.Windup ? "Firing" : "Recovering",
         PrimaryActionKind.Ability => action.AbilityId == _definition!.Combat.Barrier.Id ? "Deploying barrier"
             : action.AbilityId == _definition.Combat.Taunt.Id ? "Taunt"
-            : action.AbilityId == _definition.Combat.Burst.Id ? "Burst fire" : "Interrupt",
+            : action.AbilityId == _definition.Combat.Burst.Id ? "Burst fire" : IsHealingAbility(action.AbilityId) ? "Healing" : IsHealingField(action.AbilityId) ? "Deploying healing field" : "Interrupt",
         PrimaryActionKind.Move => "Moving",
         PrimaryActionKind.Interact => "Interacting", PrimaryActionKind.Stop => "Stop", _ => "Ready",
     };
@@ -280,53 +281,46 @@ public partial class GameHost
         _secondaryAbilityButton.SetAccent(accent);
         if (_displayedAbilityOwner != actor.Id)
         {
-            _abilityOwnerPortrait.Texture = ResourceLoader.Load<Texture2D>($"res://ui/portraits/{(actor.Id == route.Protagonist.Id ? "vanguard" : "protector")}.png");
+            _abilityOwnerPortrait.Texture = ResourceLoader.Load<Texture2D>($"res://ui/portraits/{(CrewPortrait(actor.Id))}.png");
             _actionPanel.AddThemeStyleboxOverride("panel", TacticalUi.FieldPanel(accent, bottom: true));
             _displayedAbilityOwner = actor.Id;
         }
-        _sectorLabel.Text = "FRONTIER STATION  /  " + (encounter.Id == _definition!.Combat.PartyEncounter.Id ? "TRANSIT HALL"
-            : route.Party.Count > 1 ? "CREW ACCESS" : encounter.Phase == EncounterPhase.Dormant ? "ARRIVALS" : "SECURITY");
-        _outcomePanel.Visible = encounter.Phase == EncounterPhase.Defeat || encounter.Phase == EncounterPhase.Victory
-            && (encounter.Id == _definition.Combat.PartyEncounter.Id || route.Objective.Id == _definition.SoloExitDoorObjective.Id);
-        _outcomeTitle.Text = encounter.Phase == EncounterPhase.Defeat ? "CREW LOST" : "AREA SECURED";
-        _outcomeTitle.AddThemeColorOverride("font_color", encounter.Phase == EncounterPhase.Defeat ? TacticalUi.Danger : TacticalUi.Cyan);
-        _outcomeDetail.Text = encounter.Phase == EncounterPhase.Defeat ? "Regroup and try again. Your route progress is safe."
-            : encounter.Id == _definition.Combat.PartyEncounter.Id ? "End of the playable chapter. Thanks for playing."
-            : "The service exit is unlocked. Find the other survivor.";
+        _sectorLabel.Text = "FRONTIER STATION  /  " + CurrentSector(route);
+        _outcomePanel.Visible = encounter.Phase == EncounterPhase.Defeat;
+        _outcomeTitle.Text = "CREW LOST";
+        _outcomeTitle.AddThemeColorOverride("font_color", TacticalUi.Danger);
+        _outcomeDetail.Text = "Regroup and try again. Your route progress is safe.";
         var cooldown = combat.Cooldowns.FirstOrDefault(value => value.AbilityId == actor.Loadout?.ActiveAbilityId);
         var secondaryCooldown = combat.Cooldowns.FirstOrDefault(value => value.AbilityId == actor.Loadout?.SecondaryAbilityId);
         var barrierAbility = actor.Loadout?.ActiveAbilityTargetKind == AbilityTargetKind.Barrier;
         var selectedLiving = SelectedLivingActors(route).ToArray();
         var ready = !combat.IsDefeated && active && route.ActiveDialogue is null;
         _abilityButton.Disabled = !ready || cooldown?.RemainingTicks > 0;
-        _abilityButton.SetState(barrierAbility ? "Barrier" : "Interrupt", barrierAbility ? "guard" : "suppression",
+        _abilityButton.SetState(actor.Loadout!.ActiveAbilityName, IsHealingAbility(actor.Loadout.ActiveAbilityId) ? "heal" : barrierAbility ? "guard" : "suppression",
             combat.IsDefeated ? "Down" : cooldown?.RemainingTicks > 0 ? $"{cooldown.RemainingTicks / 30.0:0.0}s" : _abilityTargeting && _targetAbilityId == actor.Loadout?.ActiveAbilityId ? barrierAbility ? "Place barrier" : "Aim + confirm" : actor.PendingAction?.AbilityId == actor.Loadout?.ActiveAbilityId ? "Queued" : active ? "Ready" : "In combat",
             cooldown is { TotalTicks: > 0 } ? 1 - (double)cooldown.RemainingTicks / cooldown.TotalTicks : 1);
         _secondaryAbilityButton.Disabled = !ready || secondaryCooldown?.RemainingTicks > 0;
-        _secondaryAbilityButton.SetState(barrierAbility ? "Taunt" : "Burst", barrierAbility ? "taunt" : "burst",
+        _secondaryAbilityButton.SetState(actor.Loadout!.SecondaryAbilityName, IsHealingField(actor.Loadout.SecondaryAbilityId) ? "healing_field" : barrierAbility ? "taunt" : "burst",
             combat.IsDefeated ? "Down" : secondaryCooldown?.RemainingTicks > 0 ? $"{secondaryCooldown.RemainingTicks / 30.0:0.0}s"
-                : _abilityTargeting && _targetAbilityId == actor.Loadout?.SecondaryAbilityId ? "Pick enemy" : actor.PendingAction?.AbilityId == actor.Loadout?.SecondaryAbilityId ? "Queued" : active ? "Ready" : "In combat",
+                : _abilityTargeting && _targetAbilityId == actor.Loadout?.SecondaryAbilityId ? IsHealingField(_targetAbilityId) ? "Place field" : "Pick enemy" : actor.PendingAction?.AbilityId == actor.Loadout?.SecondaryAbilityId ? "Queued" : active ? "Ready" : "In combat",
             secondaryCooldown is { TotalTicks: > 0 } ? 1 - (double)secondaryCooldown.RemainingTicks / secondaryCooldown.TotalTicks : 1);
         _stopButton.Disabled = selectedLiving.Length == 0 || encounter.Phase is EncounterPhase.Defeat or EncounterPhase.Securing || route.ActiveDialogue is not null;
         _abilityButton.Visible = _secondaryAbilityButton.Visible = _stopButton.Visible = encounter.Phase != EncounterPhase.Defeat;
-        _stopButton.SetState("Stop", "stop", selectedLiving.Length > 1 ? "Both crew" : selectedLiving.FirstOrDefault()?.DisplayName ?? "No crew", 1);
+        _stopButton.SetState("Stop", "stop", selectedLiving.Length > 1 ? $"{selectedLiving.Length} crew" : selectedLiving.FirstOrDefault()?.DisplayName ?? "No crew", 1);
         _pauseButton.Disabled = encounter.Phase == EncounterPhase.Defeat || route.ActiveDialogue is not null;
         _pauseButton.Text = encounter.Phase == EncounterPhase.Defeat ? "ENCOUNTER LOST"
             : observation.Paused ? "SPACE   Resume" : "SPACE   Pause";
         _pauseLabel.Text = encounter.Phase == EncounterPhase.Defeat ? "ENTER · RETRY FIGHT"
-            : encounter.Phase == EncounterPhase.Victory && encounter.Id == _definition.Combat.PartyEncounter.Id ? "ENCOUNTER COMPLETE"
+            : encounter.Phase == EncounterPhase.Victory ? "AREA SECURED · CREW RECOVERED"
             : observation.Paused ? "TACTICAL PAUSE · PLAN YOUR ORDERS" : active ? "LIVE COMBAT" : "EXPLORATION";
         _selectionCountLabel.Text = $"{selectedLiving.Length} selected";
-        var target = route.Hostiles?.FirstOrDefault(hostile => hostile.Id == combat.RememberedAttackTargetId);
+        var target = route.VisibleHostiles.FirstOrDefault(hostile => hostile.Id == combat.RememberedAttackTargetId);
         _combatLabel.Text = target is null ? "Awaiting target order" : $"Target · {target.DisplayName.Replace("Security ", "", StringComparison.Ordinal)}";
         if (barrierAbility && encounter.Barrier is { } barrier) { _combatLabel.Text = $"Barrier deployed · {barrier.RemainingTicks / 30.0:0.0}s"; }
-        if (_abilityTargeting) { _combatLabel.Text = _targetAbilityKind == AbilityTargetKind.Entity ? "Choose an enemy · Esc cancels" : "Choose a ground position · Esc cancels"; }
+        if (_abilityTargeting) { _combatLabel.Text = IsHealingAbility(_targetAbilityId) ? "Choose an ally or portrait · Esc cancels" : _targetAbilityKind == AbilityTargetKind.Entity ? "Choose an enemy · Esc cancels" : "Choose a ground position · Esc cancels"; }
         else if (actor.PendingAction is { } pending) { _combatLabel.Text = $"NEXT · {PendingOrderText(route, pending)}"; }
         if (combat.IsDefeated) { _combatLabel.Text = "Select a living crew member"; }
-        _objectiveLabel.Text = encounter.Phase == EncounterPhase.Securing ? "Threats neutralized"
-            : encounter.Id == _definition.Combat.PartyEncounter.Id && encounter.Phase == EncounterPhase.Victory ? "Transit hall secured"
-            : encounter.Id == _definition.Combat.PartyEncounter.Id && encounter.Phase is EncounterPhase.Readying or EncounterPhase.Active
-                ? "Defeat the station security units." : route.Objective.Text;
+        _objectiveLabel.Text = encounter.Phase == EncounterPhase.Securing ? "Threats neutralized" : route.Objective.Text;
         _crewCluster.Visible = route.ActiveDialogue is null;
         _actionPanel.Visible = route.ActiveDialogue is null && encounter.Phase != EncounterPhase.Defeat;
         _pauseButton.Visible = _pauseLabel.Visible = route.ActiveDialogue is null;

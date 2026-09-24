@@ -85,7 +85,7 @@ public partial class AutomationBridge : Node
             var root = document.RootElement;
 
             if (!root.TryGetProperty("schema_version", out var schemaVersion)
-                || schemaVersion.GetInt32() != 9)
+                || schemaVersion.GetInt32() != 11)
             {
                 return Error("unsupported_schema_version");
             }
@@ -370,7 +370,7 @@ public partial class AutomationBridge : Node
             return new BarrierAbilityTarget(ReadPosition(position), ReadPosition(facing));
         }
         if ((hasActor ? 1 : 0) + (hasPosition ? 1 : 0) + (hasSelf ? 1 : 0) != 1)
-        { throw new JsonException("Use one target: position, hostile actor, or self."); }
+        { throw new JsonException("Use one target: position, actor, or self."); }
         if (hasActor) { return new EntityAbilityTarget(new EntityId(actor.GetString()!)); }
         if (hasSelf)
         { if (!self.GetBoolean()) { throw new JsonException("target_self must be true."); } return new SelfAbilityTarget(); }
@@ -515,7 +515,9 @@ public partial class AutomationBridge : Node
                         response.Text,
                     }),
                 },
+            CompletedEncounterIds = route.CompletedEncounterIds?.Select(id => id.Value),
             Hostiles = route.Hostiles?.Select(ProjectHostile),
+            VisibleHostiles = route.VisibleHostiles.Select(ProjectHostile),
             Encounter = route.Encounter is null
                 ? null
                 : new
@@ -532,6 +534,7 @@ public partial class AutomationBridge : Node
                         SourceId = barrier.SourceId.Value, Position = ProjectPosition(barrier.Position), Facing = ProjectPosition(barrier.Facing),
                         barrier.RemainingTicks, barrier.TotalTicks, barrier.WidthMeters, barrier.HeightMeters, barrier.DeployedAtTick,
                     } : null,
+                    HealingField = route.Encounter.HealingField is { } field ? new { SourceId = field.SourceId.Value, Position = ProjectPosition(field.Position), field.RadiusMeters, field.DeployedAtTick, field.RemainingTicks, field.TotalTicks, field.PulseIntervalTicks } : null,
                     Projectiles = route.Encounter.Projectiles?.Select(projectile => new
                     {
                         projectile.Id, SourceId = projectile.SourceId.Value, TargetId = projectile.TargetId.Value,
@@ -576,6 +579,10 @@ public partial class AutomationBridge : Node
         {
             Id = hostile.Id.Value,
             hostile.DisplayName,
+            EncounterId = hostile.EncounterId.Value,
+            EncounterPhase = ToExternalName(hostile.EncounterPhase),
+            hostile.EncounterAttempt,
+            Facing = ProjectPosition(hostile.Facing),
             Position = ProjectPosition(hostile.Position),
             hostile.MovementSpeedMetersPerSecond,
             Combat = ProjectCombatant(hostile.Combat),
@@ -650,6 +657,8 @@ public partial class AutomationBridge : Node
     {
         return detail switch
         {
+            HealingAppliedEventDetail value => new { SourceId = value.SourceId.Value, TargetId = value.TargetId.Value, AbilityId = value.AbilityId.Value, value.Amount, value.RemainingHealth },
+            HealingFieldEventDetail value => new { SourceId = value.SourceId.Value, AbilityId = value.AbilityId.Value, Position = ProjectPosition(value.Position), value.RadiusMeters, value.DurationTicks },
             TauntEventDetail value => new { SourceId = value.SourceId.Value, TargetId = value.TargetId.Value, value.DurationTicks },
             BarrierEventDetail value => new
             {
@@ -747,6 +756,7 @@ public partial class AutomationBridge : Node
             AbilityReleasedEventDetail value => new
             {
                 SourceId = value.SourceId.Value,
+                TargetId = value.TargetId?.Value,
                 TargetPosition = ProjectPosition(value.TargetPosition),
                 AbilityId = value.AbilityId.Value,
                 value.Hit,
