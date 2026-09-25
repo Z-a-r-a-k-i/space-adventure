@@ -91,8 +91,10 @@ preserving recruitment, dialogue consequences, inspection, and prior victories.
 The final victory opens access to the evacuation airlock. Boarding requires
 all three crew in the boarding zone, including when approach movement
 completes. Completion occurs once, followed by boarding, entrance closure,
-takeoff, and the summary. This is an authored departure without ship interiors
-or ship-combat mechanics.
+takeoff, and the summary. This is an authored departure; station rules have no
+ship interiors or ship-combat mechanics. The ordinary game then enters the
+[ship battle](future/ship-combat-poc.md) once; station review profiles end at
+the summary.
 
 The finished POC requires five consecutive blocker-free owner-operated
 full-route playthroughs plus relevant automated and graphical checks. Controls,
@@ -108,7 +110,8 @@ boarding, or multiplayer belongs in the station POC. Bulk asset generation and
 unbounded variants are also outside scope.
 
 The approved [escape-cutter combat experiment](future/ship-combat-poc.md) is
-the next gameplay milestone and carries Vanguard, Protector, and Medic forward.
+implemented as the following gameplay milestone and carries Vanguard, Protector,
+and Medic forward; owner acceptance remains open.
 [Generated dialogue](future/dialogue-ai.md) remains a separate optional
 experiment. Model output may propose dialogue but never establish world facts
 or mutate rules directly. Larger adventures, progression, relationships, and

@@ -1,0 +1,44 @@
+{
+  "asset_id": "fx.ship_breach.v1",
+  "rights": "Original project-owned geometry, no external samples or textures",
+  "reference": "art/briefs/ship-battle-v1.md",
+  "status": "Owner visual acceptance pending",
+  "origin": "Floor contact; Godot +Y up; unit scale",
+  "authored": {
+    "triangles": 40,
+    "meshes": 8,
+    "blender_bounds": [
+      [
+        -0.3499999940395355,
+        0.3499999940395355
+      ],
+      [
+        -0.3199999928474426,
+        0.3199999928474426
+      ],
+      [
+        0.014000000432133675,
+        0.11500000208616257
+      ]
+    ]
+  },
+  "fresh_reimport": {
+    "triangles": 40,
+    "meshes": 8,
+    "blender_bounds": [
+      [
+        -0.3499999940395355,
+        0.3499999940395355
+      ],
+      [
+        -0.3199999928474426,
+        0.3199999928474426
+      ],
+      [
+        0.014000000432133675,
+        0.11500000208616257
+      ]
+    ]
+  },
+  "reproduce": "tools/blender/build_ship_hazards.py -- --replace --render"
+}

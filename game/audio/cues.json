@@ -1,0 +1,2571 @@
+{
+ "schema_version": 1,
+ "generator": "tools/audio/build_game_audio.py",
+ "sources": "tools/audio/sources.json",
+ "license": "All takes derive only from CC0 packs; see provenance per take.",
+ "cues": {
+  "ship.laser_fire": {
+   "bus": "Sfx",
+   "volume_db": -11,
+   "pitch_jitter": 0.05,
+   "max_voices": 6,
+   "min_interval_ms": 25,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_laser_fire_1.ogg",
+    "res://audio/sfx/ship_laser_fire_2.ogg",
+    "res://audio/sfx/ship_laser_fire_3.ogg",
+    "res://audio/sfx/ship_laser_fire_4.ogg",
+    "res://audio/sfx/ship_laser_fire_5.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_laser_fire_1.ogg",
+     "seconds": 0.256,
+     "rms_db": -10.0,
+     "mixed_peak_db": 1.4,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserRetro_000.ogg",
+       "pitch": 0.92
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserLarge_000.ogg",
+       "gain": -14,
+       "pitch": 1.3,
+       "dur": 0.3
+      }
+     ]
+    },
+    {
+     "file": "ship_laser_fire_2.ogg",
+     "seconds": 0.256,
+     "rms_db": -10.6,
+     "mixed_peak_db": 2.1,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserRetro_001.ogg",
+       "pitch": 0.92
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserLarge_001.ogg",
+       "gain": -14,
+       "pitch": 1.3,
+       "dur": 0.3
+      }
+     ]
+    },
+    {
+     "file": "ship_laser_fire_3.ogg",
+     "seconds": 0.277,
+     "rms_db": -16.2,
+     "mixed_peak_db": 1.6,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserRetro_002.ogg",
+       "pitch": 0.92
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserLarge_002.ogg",
+       "gain": -14,
+       "pitch": 1.3,
+       "dur": 0.3
+      }
+     ]
+    },
+    {
+     "file": "ship_laser_fire_4.ogg",
+     "seconds": 0.277,
+     "rms_db": -10.6,
+     "mixed_peak_db": 1.9,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserRetro_003.ogg",
+       "pitch": 0.92
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserLarge_003.ogg",
+       "gain": -14,
+       "pitch": 1.3,
+       "dur": 0.3
+      }
+     ]
+    },
+    {
+     "file": "ship_laser_fire_5.ogg",
+     "seconds": 0.303,
+     "rms_db": -12.9,
+     "mixed_peak_db": 0.3,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserRetro_004.ogg",
+       "pitch": 0.92
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserLarge_004.ogg",
+       "gain": -14,
+       "pitch": 1.3,
+       "dur": 0.3
+      }
+     ]
+    }
+   ]
+  },
+  "ship.missile_launch": {
+   "bus": "Sfx",
+   "volume_db": -8,
+   "pitch_jitter": 0.04,
+   "max_voices": 4,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_missile_launch_1.ogg",
+    "res://audio/sfx/ship_missile_launch_2.ogg",
+    "res://audio/sfx/ship_missile_launch_3.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_missile_launch_1.ogg",
+     "seconds": 0.783,
+     "rms_db": -16.1,
+     "mixed_peak_db": -3.0,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/thrusterFire_000.ogg",
+       "pitch": 1.15,
+       "start": 0.1,
+       "dur": 0.9,
+       "lp": 6000
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/lowFrequency_explosion_001.ogg",
+       "gain": -9,
+       "pitch": 1.4,
+       "dur": 0.35
+      }
+     ]
+    },
+    {
+     "file": "ship_missile_launch_2.ogg",
+     "seconds": 0.785,
+     "rms_db": -13.4,
+     "mixed_peak_db": -5.0,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/thrusterFire_001.ogg",
+       "pitch": 1.15,
+       "start": 0.1,
+       "dur": 0.9,
+       "lp": 6000
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/lowFrequency_explosion_001.ogg",
+       "gain": -9,
+       "pitch": 1.4,
+       "dur": 0.35
+      }
+     ]
+    },
+    {
+     "file": "ship_missile_launch_3.ogg",
+     "seconds": 0.783,
+     "rms_db": -16.2,
+     "mixed_peak_db": -3.0,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/thrusterFire_002.ogg",
+       "pitch": 1.15,
+       "start": 0.1,
+       "dur": 0.9,
+       "lp": 6000
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/lowFrequency_explosion_001.ogg",
+       "gain": -9,
+       "pitch": 1.4,
+       "dur": 0.35
+      }
+     ]
+    }
+   ]
+  },
+  "ship.shield_hit": {
+   "bus": "Sfx",
+   "volume_db": -13,
+   "pitch_jitter": 0.04,
+   "max_voices": 5,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_shield_hit_1.ogg",
+    "res://audio/sfx/ship_shield_hit_2.ogg",
+    "res://audio/sfx/ship_shield_hit_3.ogg",
+    "res://audio/sfx/ship_shield_hit_4.ogg",
+    "res://audio/sfx/ship_shield_hit_5.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_shield_hit_1.ogg",
+     "seconds": 0.5,
+     "rms_db": -9.3,
+     "mixed_peak_db": -0.9,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_000.ogg",
+       "pitch": 1.1,
+       "dur": 0.55
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactGlass_light_000.ogg",
+       "gain": -12
+      }
+     ]
+    },
+    {
+     "file": "ship_shield_hit_2.ogg",
+     "seconds": 0.5,
+     "rms_db": -9.3,
+     "mixed_peak_db": -0.9,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_001.ogg",
+       "pitch": 1.1,
+       "dur": 0.55
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactGlass_light_001.ogg",
+       "gain": -12
+      }
+     ]
+    },
+    {
+     "file": "ship_shield_hit_3.ogg",
+     "seconds": 0.5,
+     "rms_db": -9.3,
+     "mixed_peak_db": -0.9,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_002.ogg",
+       "pitch": 1.1,
+       "dur": 0.55
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactGlass_light_002.ogg",
+       "gain": -12
+      }
+     ]
+    },
+    {
+     "file": "ship_shield_hit_4.ogg",
+     "seconds": 0.5,
+     "rms_db": -9.3,
+     "mixed_peak_db": -0.9,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_003.ogg",
+       "pitch": 1.1,
+       "dur": 0.55
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactGlass_light_003.ogg",
+       "gain": -12
+      }
+     ]
+    },
+    {
+     "file": "ship_shield_hit_5.ogg",
+     "seconds": 0.5,
+     "rms_db": -9.3,
+     "mixed_peak_db": -0.9,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_004.ogg",
+       "pitch": 1.1,
+       "dur": 0.55
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactGlass_light_004.ogg",
+       "gain": -12
+      }
+     ]
+    }
+   ]
+  },
+  "ship.hull_hit": {
+   "bus": "Sfx",
+   "volume_db": -5,
+   "pitch_jitter": 0.04,
+   "max_voices": 5,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_hull_hit_1.ogg",
+    "res://audio/sfx/ship_hull_hit_2.ogg",
+    "res://audio/sfx/ship_hull_hit_3.ogg",
+    "res://audio/sfx/ship_hull_hit_4.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_hull_hit_1.ogg",
+     "seconds": 0.777,
+     "rms_db": -13.5,
+     "mixed_peak_db": -0.0,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/explosionCrunch_000.ogg",
+       "dur": 0.8
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_heavy_001.ogg",
+       "gain": -3
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/lowFrequency_explosion_001.ogg",
+       "gain": -6,
+       "pitch": 1.1,
+       "dur": 0.5
+      }
+     ]
+    },
+    {
+     "file": "ship_hull_hit_2.ogg",
+     "seconds": 0.8,
+     "rms_db": -13.3,
+     "mixed_peak_db": 1.6,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/explosionCrunch_001.ogg",
+       "dur": 0.8
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_heavy_002.ogg",
+       "gain": -3
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/lowFrequency_explosion_001.ogg",
+       "gain": -6,
+       "pitch": 1.1,
+       "dur": 0.5
+      }
+     ]
+    },
+    {
+     "file": "ship_hull_hit_3.ogg",
+     "seconds": 0.8,
+     "rms_db": -16.9,
+     "mixed_peak_db": 2.2,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/explosionCrunch_002.ogg",
+       "dur": 0.8
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_heavy_003.ogg",
+       "gain": -3
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/lowFrequency_explosion_001.ogg",
+       "gain": -6,
+       "pitch": 1.1,
+       "dur": 0.5
+      }
+     ]
+    },
+    {
+     "file": "ship_hull_hit_4.ogg",
+     "seconds": 0.8,
+     "rms_db": -12.8,
+     "mixed_peak_db": -0.1,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/explosionCrunch_003.ogg",
+       "dur": 0.8
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_heavy_004.ogg",
+       "gain": -3
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/lowFrequency_explosion_001.ogg",
+       "gain": -6,
+       "pitch": 1.1,
+       "dur": 0.5
+      }
+     ]
+    }
+   ]
+  },
+  "ship.explosion_heavy": {
+   "bus": "Sfx",
+   "volume_db": -3,
+   "pitch_jitter": 0.04,
+   "max_voices": 3,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_explosion_heavy_1.ogg",
+    "res://audio/sfx/ship_explosion_heavy_2.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_explosion_heavy_1.ogg",
+     "seconds": 1.553,
+     "rms_db": -15.3,
+     "mixed_peak_db": 2.0,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/explosionCrunch_003.ogg"
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/lowFrequency_explosion_000.ogg",
+       "gain": -3,
+       "dur": 1.2
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactPlate_heavy_002.ogg",
+       "gain": -6
+      }
+     ]
+    },
+    {
+     "file": "ship_explosion_heavy_2.ogg",
+     "seconds": 1.98,
+     "rms_db": -13.7,
+     "mixed_peak_db": -0.4,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/explosionCrunch_004.ogg"
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/lowFrequency_explosion_000.ogg",
+       "gain": -3,
+       "dur": 1.2
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactPlate_heavy_002.ogg",
+       "gain": -6
+      }
+     ]
+    }
+   ]
+  },
+  "ship.explosion_final": {
+   "bus": "Sfx",
+   "volume_db": -1,
+   "pitch_jitter": 0.04,
+   "max_voices": 1,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_explosion_final_1.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_explosion_final_1.ogg",
+     "seconds": 2.621,
+     "rms_db": -16.0,
+     "mixed_peak_db": 2.9,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/lowFrequency_explosion_000.ogg"
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/explosionCrunch_004.ogg",
+       "gain": -2
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/explosionCrunch_001.ogg",
+       "gain": -4,
+       "pitch": 0.85,
+       "delay": 0.25
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/explosionCrunch_003.ogg",
+       "gain": -6,
+       "pitch": 0.75,
+       "delay": 0.55
+      }
+     ]
+    }
+   ]
+  },
+  "ship.miss": {
+   "bus": "Sfx",
+   "volume_db": -15,
+   "pitch_jitter": 0.04,
+   "max_voices": 3,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_miss_1.ogg",
+    "res://audio/sfx/ship_miss_2.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_miss_1.ogg",
+     "seconds": 0.469,
+     "rms_db": -16.9,
+     "mixed_peak_db": -22.6,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/thrusterFire_001.ogg",
+       "pitch": 1.6,
+       "start": 0.3,
+       "dur": 0.75,
+       "hp": 700,
+       "lp": 7000
+      }
+     ]
+    },
+    {
+     "file": "ship_miss_2.ogg",
+     "seconds": 0.469,
+     "rms_db": -15.3,
+     "mixed_peak_db": -24.5,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/thrusterFire_003.ogg",
+       "pitch": 1.6,
+       "start": 0.3,
+       "dur": 0.75,
+       "hp": 700,
+       "lp": 7000
+      }
+     ]
+    }
+   ]
+  },
+  "ship.shield_down": {
+   "bus": "Sfx",
+   "volume_db": -6,
+   "pitch_jitter": 0.04,
+   "max_voices": 1,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_shield_down_1.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_shield_down_1.ogg",
+     "seconds": 1.327,
+     "rms_db": -13.4,
+     "mixed_peak_db": 1.1,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_002.ogg",
+       "pitch": 0.72
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactGlass_heavy_003.ogg",
+       "gain": -4
+      },
+      {
+       "src": "kenney_digital-audio/Audio/phaserDown1.ogg",
+       "gain": -10,
+       "pitch": 0.8
+      }
+     ]
+    }
+   ]
+  },
+  "ship.shield_up": {
+   "bus": "Sfx",
+   "volume_db": -17,
+   "pitch_jitter": 0.04,
+   "max_voices": 2,
+   "min_interval_ms": 120,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_shield_up_1.ogg",
+    "res://audio/sfx/ship_shield_up_2.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_shield_up_1.ogg",
+     "seconds": 0.333,
+     "rms_db": -10.1,
+     "mixed_peak_db": -1.3,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_001.ogg",
+       "pitch": 1.35,
+       "dur": 0.45
+      }
+     ]
+    },
+    {
+     "file": "ship_shield_up_2.ogg",
+     "seconds": 0.333,
+     "rms_db": -10.1,
+     "mixed_peak_db": -1.3,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_004.ogg",
+       "pitch": 1.35,
+       "dur": 0.45
+      }
+     ]
+    }
+   ]
+  },
+  "ship.fire_ignite": {
+   "bus": "Sfx",
+   "volume_db": -8,
+   "pitch_jitter": 0.04,
+   "max_voices": 2,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_fire_ignite_1.ogg",
+    "res://audio/sfx/ship_fire_ignite_2.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_fire_ignite_1.ogg",
+     "seconds": 0.9,
+     "rms_db": -17.7,
+     "mixed_peak_db": -0.1,
+     "layers": [
+      {
+       "src": "antumdeluge_fire/fire-1.wav",
+       "dur": 0.9
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactSoft_heavy_001.ogg",
+       "gain": -2,
+       "pitch": 0.7
+      }
+     ]
+    },
+    {
+     "file": "ship_fire_ignite_2.ogg",
+     "seconds": 0.9,
+     "rms_db": -18.1,
+     "mixed_peak_db": 0.3,
+     "layers": [
+      {
+       "src": "antumdeluge_fire/fire-1.wav",
+       "start": 1.2,
+       "dur": 0.9
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactSoft_heavy_001.ogg",
+       "gain": -2,
+       "pitch": 0.7
+      }
+     ]
+    }
+   ]
+  },
+  "ship.fire_loop": {
+   "bus": "Ambience",
+   "volume_db": -5,
+   "pitch_jitter": 0.04,
+   "max_voices": 4,
+   "min_interval_ms": 30,
+   "loop": true,
+   "files": [
+    "res://audio/sfx/ship_fire_loop_1.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_fire_loop_1.ogg",
+     "seconds": 2.471,
+     "rms_db": -25.8,
+     "mixed_peak_db": -8.1,
+     "layers": [
+      {
+       "src": "antumdeluge_fire/fire-1.wav",
+       "lp": 7000
+      }
+     ]
+    }
+   ]
+  },
+  "ship.breach": {
+   "bus": "Sfx",
+   "volume_db": -6,
+   "pitch_jitter": 0.04,
+   "max_voices": 1,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_breach_1.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_breach_1.ogg",
+     "seconds": 1.2,
+     "rms_db": -20.7,
+     "mixed_peak_db": 2.5,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_heavy_000.ogg"
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/lowFrequency_explosion_001.ogg",
+       "gain": -5,
+       "pitch": 0.9,
+       "dur": 0.4
+      },
+      {
+       "src": "rubberduck_sfx_loops/noise_02.ogg",
+       "gain": -6,
+       "dur": 1.2,
+       "hp": 1800
+      }
+     ]
+    }
+   ]
+  },
+  "ship.leak_loop": {
+   "bus": "Ambience",
+   "volume_db": -15,
+   "pitch_jitter": 0.04,
+   "max_voices": 4,
+   "min_interval_ms": 30,
+   "loop": true,
+   "files": [
+    "res://audio/sfx/ship_leak_loop_1.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_leak_loop_1.ogg",
+     "seconds": 3.363,
+     "rms_db": -16.8,
+     "mixed_peak_db": -8.4,
+     "layers": [
+      {
+       "src": "rubberduck_sfx_loops/noise_02.ogg",
+       "hp": 1400,
+       "lp": 9000
+      }
+     ]
+    }
+   ]
+  },
+  "ship.alarm": {
+   "bus": "Sfx",
+   "volume_db": -14,
+   "pitch_jitter": 0.04,
+   "max_voices": 1,
+   "min_interval_ms": 1500,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_alarm_1.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_alarm_1.ogg",
+     "seconds": 1.0,
+     "rms_db": -14.2,
+     "mixed_peak_db": -1.5,
+     "layers": [
+      {
+       "src": "rubberduck_sfx_loops/alarm_01.ogg"
+      }
+     ]
+    }
+   ]
+  },
+  "ship.oxygen_alarm": {
+   "bus": "Ambience",
+   "volume_db": -19,
+   "pitch_jitter": 0.04,
+   "max_voices": 4,
+   "min_interval_ms": 30,
+   "loop": true,
+   "files": [
+    "res://audio/sfx/ship_oxygen_alarm_1.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_oxygen_alarm_1.ogg",
+     "seconds": 1.004,
+     "rms_db": -17.2,
+     "mixed_peak_db": -4.0,
+     "layers": [
+      {
+       "src": "rubberduck_sfx_loops/alarm_03.ogg"
+      }
+     ]
+    }
+   ]
+  },
+  "ship.crew_hurt": {
+   "bus": "Sfx",
+   "volume_db": -13,
+   "pitch_jitter": 0.04,
+   "max_voices": 3,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_crew_hurt_1.ogg",
+    "res://audio/sfx/ship_crew_hurt_2.ogg",
+    "res://audio/sfx/ship_crew_hurt_3.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_crew_hurt_1.ogg",
+     "seconds": 0.527,
+     "rms_db": -17.6,
+     "mixed_peak_db": 3.1,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactPunch_medium_000.ogg"
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactSoft_heavy_000.ogg",
+       "gain": -6
+      }
+     ]
+    },
+    {
+     "file": "ship_crew_hurt_2.ogg",
+     "seconds": 0.569,
+     "rms_db": -18.6,
+     "mixed_peak_db": 3.4,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactPunch_medium_001.ogg"
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactSoft_heavy_001.ogg",
+       "gain": -6
+      }
+     ]
+    },
+    {
+     "file": "ship_crew_hurt_3.ogg",
+     "seconds": 0.569,
+     "rms_db": -18.0,
+     "mixed_peak_db": 2.1,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactPunch_medium_002.ogg"
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactSoft_heavy_002.ogg",
+       "gain": -6
+      }
+     ]
+    }
+   ]
+  },
+  "ship.crew_down": {
+   "bus": "Sfx",
+   "volume_db": -9,
+   "pitch_jitter": 0.04,
+   "max_voices": 1,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_crew_down_1.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_crew_down_1.ogg",
+     "seconds": 0.976,
+     "rms_db": -17.5,
+     "mixed_peak_db": 2.0,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactPunch_heavy_002.ogg"
+      },
+      {
+       "src": "kenney_digital-audio/Audio/lowDown.ogg",
+       "gain": -8,
+       "pitch": 0.8
+      }
+     ]
+    }
+   ]
+  },
+  "ship.repair_done": {
+   "bus": "Sfx",
+   "volume_db": -13,
+   "pitch_jitter": 0.04,
+   "max_voices": 2,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_repair_done_1.ogg",
+    "res://audio/sfx/ship_repair_done_2.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_repair_done_1.ogg",
+     "seconds": 0.539,
+     "rms_db": -16.8,
+     "mixed_peak_db": -1.7,
+     "layers": [
+      {
+       "src": "rubberduck_100-CC0-SFX/tools_01.ogg",
+       "gain": -2
+      },
+      {
+       "src": "kenney_interface-sounds/Audio/confirmation_002.ogg",
+       "gain": -6
+      }
+     ]
+    },
+    {
+     "file": "ship_repair_done_2.ogg",
+     "seconds": 0.63,
+     "rms_db": -21.0,
+     "mixed_peak_db": 2.0,
+     "layers": [
+      {
+       "src": "rubberduck_100-CC0-SFX/tools_03.ogg",
+       "gain": -2
+      },
+      {
+       "src": "kenney_interface-sounds/Audio/confirmation_002.ogg",
+       "gain": -6,
+       "pitch": 1.1
+      }
+     ]
+    }
+   ]
+  },
+  "ship.hazard_cleared": {
+   "bus": "Sfx",
+   "volume_db": -15,
+   "pitch_jitter": 0.04,
+   "max_voices": 1,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_hazard_cleared_1.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_hazard_cleared_1.ogg",
+     "seconds": 0.29,
+     "rms_db": -10.7,
+     "mixed_peak_db": -1.1,
+     "layers": [
+      {
+       "src": "kenney_interface-sounds/Audio/confirmation_001.ogg"
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_000.ogg",
+       "gain": -12,
+       "pitch": 1.5,
+       "dur": 0.3
+      }
+     ]
+    }
+   ]
+  },
+  "ship.vent": {
+   "bus": "Sfx",
+   "volume_db": -8,
+   "pitch_jitter": 0.04,
+   "max_voices": 1,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_vent_1.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_vent_1.ogg",
+     "seconds": 1.4,
+     "rms_db": -19.8,
+     "mixed_peak_db": -0.5,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/doorOpen_001.ogg"
+      },
+      {
+       "src": "rubberduck_sfx_loops/noise_01.ogg",
+       "gain": -3,
+       "dur": 1.4,
+       "hp": 1200
+      }
+     ]
+    }
+   ]
+  },
+  "ship.door": {
+   "bus": "Sfx",
+   "volume_db": -15,
+   "pitch_jitter": 0.04,
+   "max_voices": 3,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_door_1.ogg",
+    "res://audio/sfx/ship_door_2.ogg",
+    "res://audio/sfx/ship_door_3.ogg",
+    "res://audio/sfx/ship_door_4.ogg",
+    "res://audio/sfx/ship_door_5.ogg",
+    "res://audio/sfx/ship_door_6.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_door_1.ogg",
+     "seconds": 0.532,
+     "rms_db": -17.4,
+     "mixed_peak_db": -1.3,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/doorOpen_000.ogg"
+      }
+     ]
+    },
+    {
+     "file": "ship_door_2.ogg",
+     "seconds": 0.529,
+     "rms_db": -15.5,
+     "mixed_peak_db": -1.0,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/doorOpen_001.ogg"
+      }
+     ]
+    },
+    {
+     "file": "ship_door_3.ogg",
+     "seconds": 0.533,
+     "rms_db": -15.8,
+     "mixed_peak_db": -1.2,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/doorOpen_002.ogg"
+      }
+     ]
+    },
+    {
+     "file": "ship_door_4.ogg",
+     "seconds": 0.532,
+     "rms_db": -13.5,
+     "mixed_peak_db": -6.6,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/doorClose_000.ogg"
+      }
+     ]
+    },
+    {
+     "file": "ship_door_5.ogg",
+     "seconds": 0.529,
+     "rms_db": -11.4,
+     "mixed_peak_db": -6.5,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/doorClose_001.ogg"
+      }
+     ]
+    },
+    {
+     "file": "ship_door_6.ogg",
+     "seconds": 0.533,
+     "rms_db": -11.9,
+     "mixed_peak_db": -6.5,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/doorClose_002.ogg"
+      }
+     ]
+    }
+   ]
+  },
+  "ship.power_up": {
+   "bus": "Ui",
+   "volume_db": -16,
+   "pitch_jitter": 0.04,
+   "max_voices": 2,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_power_up_1.ogg",
+    "res://audio/sfx/ship_power_up_2.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_power_up_1.ogg",
+     "seconds": 0.615,
+     "rms_db": -27.8,
+     "mixed_peak_db": 2.1,
+     "layers": [
+      {
+       "src": "kenney_interface-sounds/Audio/switch_001.ogg"
+      }
+     ]
+    },
+    {
+     "file": "ship_power_up_2.ogg",
+     "seconds": 0.608,
+     "rms_db": -24.5,
+     "mixed_peak_db": 0.8,
+     "layers": [
+      {
+       "src": "kenney_interface-sounds/Audio/switch_002.ogg"
+      }
+     ]
+    }
+   ]
+  },
+  "ship.power_down": {
+   "bus": "Ui",
+   "volume_db": -16,
+   "pitch_jitter": 0.04,
+   "max_voices": 2,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_power_down_1.ogg",
+    "res://audio/sfx/ship_power_down_2.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_power_down_1.ogg",
+     "seconds": 0.761,
+     "rms_db": -21.8,
+     "mixed_peak_db": 0.7,
+     "layers": [
+      {
+       "src": "kenney_interface-sounds/Audio/switch_005.ogg",
+       "pitch": 0.8
+      }
+     ]
+    },
+    {
+     "file": "ship_power_down_2.ogg",
+     "seconds": 0.76,
+     "rms_db": -25.5,
+     "mixed_peak_db": -1.8,
+     "layers": [
+      {
+       "src": "kenney_interface-sounds/Audio/switch_006.ogg",
+       "pitch": 0.8
+      }
+     ]
+    }
+   ]
+  },
+  "ship.victory": {
+   "bus": "Ui",
+   "volume_db": -9,
+   "pitch_jitter": 0.04,
+   "max_voices": 1,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_victory_1.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_victory_1.ogg",
+     "seconds": 0.638,
+     "rms_db": -12.9,
+     "mixed_peak_db": -0.9,
+     "layers": [
+      {
+       "src": "kenney_interface-sounds/Audio/confirmation_004.ogg"
+      },
+      {
+       "src": "kenney_digital-audio/Audio/powerUp5.ogg",
+       "gain": -8,
+       "pitch": 0.9,
+       "delay": 0.12
+      }
+     ]
+    }
+   ]
+  },
+  "ship.defeat": {
+   "bus": "Ui",
+   "volume_db": -8,
+   "pitch_jitter": 0.04,
+   "max_voices": 1,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ship_defeat_1.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_defeat_1.ogg",
+     "seconds": 1.5,
+     "rms_db": -14.0,
+     "mixed_peak_db": 1.1,
+     "layers": [
+      {
+       "src": "kenney_digital-audio/Audio/lowDown.ogg"
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/lowFrequency_explosion_000.ogg",
+       "gain": -6,
+       "pitch": 0.8,
+       "dur": 1.2
+      }
+     ]
+    }
+   ]
+  },
+  "ship.ambience": {
+   "bus": "Ambience",
+   "volume_db": -17,
+   "pitch_jitter": 0.04,
+   "max_voices": 4,
+   "min_interval_ms": 30,
+   "loop": true,
+   "files": [
+    "res://audio/sfx/ship_ambience_1.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ship_ambience_1.ogg",
+     "seconds": 4.756,
+     "rms_db": -10.7,
+     "mixed_peak_db": -0.6,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/spaceEngineLow_002.ogg",
+       "lp": 2400
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/computerNoise_001.ogg",
+       "gain": -20,
+       "pitch": 0.9,
+       "lp": 3000
+      }
+     ]
+    }
+   ]
+  },
+  "ui.click": {
+   "bus": "Ui",
+   "volume_db": -15,
+   "pitch_jitter": 0.03,
+   "max_voices": 3,
+   "min_interval_ms": 20,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ui_click_1.ogg",
+    "res://audio/sfx/ui_click_2.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ui_click_1.ogg",
+     "seconds": 0.012,
+     "rms_db": -11.8,
+     "mixed_peak_db": -12.2,
+     "layers": [
+      {
+       "src": "kenney_interface-sounds/Audio/click_002.ogg"
+      }
+     ]
+    },
+    {
+     "file": "ui_click_2.ogg",
+     "seconds": 0.007,
+     "rms_db": -10.6,
+     "mixed_peak_db": -12.6,
+     "layers": [
+      {
+       "src": "kenney_interface-sounds/Audio/click_003.ogg"
+      }
+     ]
+    }
+   ]
+  },
+  "ui.select": {
+   "bus": "Ui",
+   "volume_db": -15,
+   "pitch_jitter": 0.02,
+   "max_voices": 2,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ui_select_1.ogg",
+    "res://audio/sfx/ui_select_2.ogg",
+    "res://audio/sfx/ui_select_3.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ui_select_1.ogg",
+     "seconds": 0.04,
+     "rms_db": -18.2,
+     "mixed_peak_db": -2.0,
+     "layers": [
+      {
+       "src": "kenney_interface-sounds/Audio/select_001.ogg"
+      }
+     ]
+    },
+    {
+     "file": "ui_select_2.ogg",
+     "seconds": 0.04,
+     "rms_db": -16.9,
+     "mixed_peak_db": -1.9,
+     "layers": [
+      {
+       "src": "kenney_interface-sounds/Audio/select_002.ogg"
+      }
+     ]
+    },
+    {
+     "file": "ui_select_3.ogg",
+     "seconds": 0.38,
+     "rms_db": -18.9,
+     "mixed_peak_db": -0.8,
+     "layers": [
+      {
+       "src": "kenney_interface-sounds/Audio/select_003.ogg"
+      }
+     ]
+    }
+   ]
+  },
+  "ui.deny": {
+   "bus": "Ui",
+   "volume_db": -13,
+   "pitch_jitter": 0.04,
+   "max_voices": 1,
+   "min_interval_ms": 120,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ui_deny_1.ogg",
+    "res://audio/sfx/ui_deny_2.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ui_deny_1.ogg",
+     "seconds": 0.104,
+     "rms_db": -15.4,
+     "mixed_peak_db": -0.1,
+     "layers": [
+      {
+       "src": "kenney_interface-sounds/Audio/error_004.ogg"
+      }
+     ]
+    },
+    {
+     "file": "ui_deny_2.ogg",
+     "seconds": 0.5,
+     "rms_db": -18.2,
+     "mixed_peak_db": -0.8,
+     "layers": [
+      {
+       "src": "kenney_interface-sounds/Audio/error_006.ogg"
+      }
+     ]
+    }
+   ]
+  },
+  "ui.aim": {
+   "bus": "Ui",
+   "volume_db": -15,
+   "pitch_jitter": 0.04,
+   "max_voices": 1,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ui_aim_1.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ui_aim_1.ogg",
+     "seconds": 0.115,
+     "rms_db": -14.7,
+     "mixed_peak_db": -3.8,
+     "layers": [
+      {
+       "src": "kenney_interface-sounds/Audio/tick_002.ogg"
+      },
+      {
+       "src": "kenney_interface-sounds/Audio/switch_003.ogg",
+       "gain": -8,
+       "pitch": 1.3,
+       "dur": 0.15
+      }
+     ]
+    }
+   ]
+  },
+  "ui.target": {
+   "bus": "Ui",
+   "volume_db": -13,
+   "pitch_jitter": 0.04,
+   "max_voices": 1,
+   "min_interval_ms": 60,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ui_target_1.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ui_target_1.ogg",
+     "seconds": 0.263,
+     "rms_db": -11.3,
+     "mixed_peak_db": -1.2,
+     "layers": [
+      {
+       "src": "kenney_interface-sounds/Audio/confirmation_001.ogg",
+       "pitch": 1.1
+      }
+     ]
+    }
+   ]
+  },
+  "ui.order": {
+   "bus": "Ui",
+   "volume_db": -15,
+   "pitch_jitter": 0.04,
+   "max_voices": 2,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ui_order_1.ogg",
+    "res://audio/sfx/ui_order_2.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ui_order_1.ogg",
+     "seconds": 0.38,
+     "rms_db": -19.5,
+     "mixed_peak_db": -0.7,
+     "layers": [
+      {
+       "src": "kenney_interface-sounds/Audio/select_004.ogg"
+      }
+     ]
+    },
+    {
+     "file": "ui_order_2.ogg",
+     "seconds": 0.38,
+     "rms_db": -18.4,
+     "mixed_peak_db": -1.3,
+     "layers": [
+      {
+       "src": "kenney_interface-sounds/Audio/select_005.ogg",
+       "dur": 0.4
+      }
+     ]
+    }
+   ]
+  },
+  "ui.pause": {
+   "bus": "Ui",
+   "volume_db": -14,
+   "pitch_jitter": 0.04,
+   "max_voices": 1,
+   "min_interval_ms": 100,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ui_pause_1.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ui_pause_1.ogg",
+     "seconds": 0.418,
+     "rms_db": -15.2,
+     "mixed_peak_db": -0.9,
+     "layers": [
+      {
+       "src": "kenney_interface-sounds/Audio/minimize_004.ogg"
+      }
+     ]
+    }
+   ]
+  },
+  "ui.resume": {
+   "bus": "Ui",
+   "volume_db": -14,
+   "pitch_jitter": 0.04,
+   "max_voices": 1,
+   "min_interval_ms": 100,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/ui_resume_1.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "ui_resume_1.ogg",
+     "seconds": 0.418,
+     "rms_db": -14.7,
+     "mixed_peak_db": -2.5,
+     "layers": [
+      {
+       "src": "kenney_interface-sounds/Audio/maximize_004.ogg"
+      }
+     ]
+    }
+   ]
+  },
+  "station.carbine": {
+   "bus": "Sfx",
+   "volume_db": -11,
+   "pitch_jitter": 0.04,
+   "max_voices": 4,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/station_carbine_1.ogg",
+    "res://audio/sfx/station_carbine_2.ogg",
+    "res://audio/sfx/station_carbine_3.ogg",
+    "res://audio/sfx/station_carbine_4.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "station_carbine_1.ogg",
+     "seconds": 0.278,
+     "rms_db": -16.1,
+     "mixed_peak_db": -2.8,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserSmall_000.ogg",
+       "pitch": 0.85
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_light_000.ogg",
+       "gain": -10,
+       "pitch": 1.3,
+       "dur": 0.12
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/lowFrequency_explosion_001.ogg",
+       "gain": -16,
+       "pitch": 1.6,
+       "dur": 0.18
+      }
+     ]
+    },
+    {
+     "file": "station_carbine_2.ogg",
+     "seconds": 0.288,
+     "rms_db": -21.2,
+     "mixed_peak_db": 2.0,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserSmall_001.ogg",
+       "pitch": 0.85
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_light_001.ogg",
+       "gain": -10,
+       "pitch": 1.3,
+       "dur": 0.12
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/lowFrequency_explosion_001.ogg",
+       "gain": -16,
+       "pitch": 1.6,
+       "dur": 0.18
+      }
+     ]
+    },
+    {
+     "file": "station_carbine_3.ogg",
+     "seconds": 0.405,
+     "rms_db": -18.3,
+     "mixed_peak_db": -1.7,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserSmall_002.ogg",
+       "pitch": 0.85
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_light_002.ogg",
+       "gain": -10,
+       "pitch": 1.3,
+       "dur": 0.12
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/lowFrequency_explosion_001.ogg",
+       "gain": -16,
+       "pitch": 1.6,
+       "dur": 0.18
+      }
+     ]
+    },
+    {
+     "file": "station_carbine_4.ogg",
+     "seconds": 0.35,
+     "rms_db": -17.4,
+     "mixed_peak_db": -1.7,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserSmall_003.ogg",
+       "pitch": 0.85
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_light_003.ogg",
+       "gain": -10,
+       "pitch": 1.3,
+       "dur": 0.12
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/lowFrequency_explosion_001.ogg",
+       "gain": -16,
+       "pitch": 1.6,
+       "dur": 0.18
+      }
+     ]
+    }
+   ]
+  },
+  "station.shotgun": {
+   "bus": "Sfx",
+   "volume_db": -8,
+   "pitch_jitter": 0.04,
+   "max_voices": 4,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/station_shotgun_1.ogg",
+    "res://audio/sfx/station_shotgun_2.ogg",
+    "res://audio/sfx/station_shotgun_3.ogg",
+    "res://audio/sfx/station_shotgun_4.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "station_shotgun_1.ogg",
+     "seconds": 0.649,
+     "rms_db": -17.4,
+     "mixed_peak_db": 3.3,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserLarge_000.ogg",
+       "pitch": 0.7,
+       "dur": 0.45
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/explosionCrunch_000.ogg",
+       "gain": -5,
+       "pitch": 1.25,
+       "dur": 0.35
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactPunch_heavy_000.ogg",
+       "gain": -6
+      }
+     ]
+    },
+    {
+     "file": "station_shotgun_2.ogg",
+     "seconds": 0.643,
+     "rms_db": -16.2,
+     "mixed_peak_db": 3.0,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserLarge_001.ogg",
+       "pitch": 0.7,
+       "dur": 0.45
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/explosionCrunch_001.ogg",
+       "gain": -5,
+       "pitch": 1.25,
+       "dur": 0.35
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactPunch_heavy_001.ogg",
+       "gain": -6
+      }
+     ]
+    },
+    {
+     "file": "station_shotgun_3.ogg",
+     "seconds": 0.643,
+     "rms_db": -17.2,
+     "mixed_peak_db": 3.8,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserLarge_002.ogg",
+       "pitch": 0.7,
+       "dur": 0.45
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/explosionCrunch_002.ogg",
+       "gain": -5,
+       "pitch": 1.25,
+       "dur": 0.35
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactPunch_heavy_002.ogg",
+       "gain": -6
+      }
+     ]
+    },
+    {
+     "file": "station_shotgun_4.ogg",
+     "seconds": 0.641,
+     "rms_db": -18.5,
+     "mixed_peak_db": 4.5,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserLarge_003.ogg",
+       "pitch": 0.7,
+       "dur": 0.45
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/explosionCrunch_003.ogg",
+       "gain": -5,
+       "pitch": 1.25,
+       "dur": 0.35
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactPunch_heavy_003.ogg",
+       "gain": -6
+      }
+     ]
+    }
+   ]
+  },
+  "station.sentry": {
+   "bus": "Sfx",
+   "volume_db": -11,
+   "pitch_jitter": 0.04,
+   "max_voices": 4,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/station_sentry_1.ogg",
+    "res://audio/sfx/station_sentry_2.ogg",
+    "res://audio/sfx/station_sentry_3.ogg",
+    "res://audio/sfx/station_sentry_4.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "station_sentry_1.ogg",
+     "seconds": 0.294,
+     "rms_db": -9.8,
+     "mixed_peak_db": 1.2,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserRetro_000.ogg",
+       "pitch": 0.8
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_medium_000.ogg",
+       "gain": -12,
+       "pitch": 1.4,
+       "dur": 0.1
+      }
+     ]
+    },
+    {
+     "file": "station_sentry_2.ogg",
+     "seconds": 0.294,
+     "rms_db": -10.0,
+     "mixed_peak_db": 1.5,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserRetro_001.ogg",
+       "pitch": 0.8
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_medium_001.ogg",
+       "gain": -12,
+       "pitch": 1.4,
+       "dur": 0.1
+      }
+     ]
+    },
+    {
+     "file": "station_sentry_3.ogg",
+     "seconds": 0.319,
+     "rms_db": -15.9,
+     "mixed_peak_db": 1.2,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserRetro_002.ogg",
+       "pitch": 0.8
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_medium_002.ogg",
+       "gain": -12,
+       "pitch": 1.4,
+       "dur": 0.1
+      }
+     ]
+    },
+    {
+     "file": "station_sentry_4.ogg",
+     "seconds": 0.318,
+     "rms_db": -10.5,
+     "mixed_peak_db": 1.8,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserRetro_003.ogg",
+       "pitch": 0.8
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_medium_003.ogg",
+       "gain": -12,
+       "pitch": 1.4,
+       "dur": 0.1
+      }
+     ]
+    }
+   ]
+  },
+  "station.burst": {
+   "bus": "Sfx",
+   "volume_db": -10,
+   "pitch_jitter": 0.04,
+   "max_voices": 4,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/station_burst_1.ogg",
+    "res://audio/sfx/station_burst_2.ogg",
+    "res://audio/sfx/station_burst_3.ogg",
+    "res://audio/sfx/station_burst_4.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "station_burst_1.ogg",
+     "seconds": 0.476,
+     "rms_db": -15.9,
+     "mixed_peak_db": -1.0,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserLarge_000.ogg",
+       "pitch": 1.05,
+       "dur": 0.5
+      }
+     ]
+    },
+    {
+     "file": "station_burst_2.ogg",
+     "seconds": 0.476,
+     "rms_db": -15.2,
+     "mixed_peak_db": -0.9,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserLarge_001.ogg",
+       "pitch": 1.05,
+       "dur": 0.5
+      }
+     ]
+    },
+    {
+     "file": "station_burst_3.ogg",
+     "seconds": 0.476,
+     "rms_db": -16.2,
+     "mixed_peak_db": 0.3,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserLarge_002.ogg",
+       "pitch": 1.05,
+       "dur": 0.5
+      }
+     ]
+    },
+    {
+     "file": "station_burst_4.ogg",
+     "seconds": 0.476,
+     "rms_db": -16.5,
+     "mixed_peak_db": -0.9,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/laserLarge_003.ogg",
+       "pitch": 1.05,
+       "dur": 0.5
+      }
+     ]
+    }
+   ]
+  },
+  "station.interrupt": {
+   "bus": "Sfx",
+   "volume_db": -11,
+   "pitch_jitter": 0.04,
+   "max_voices": 4,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/station_interrupt_1.ogg",
+    "res://audio/sfx/station_interrupt_2.ogg",
+    "res://audio/sfx/station_interrupt_3.ogg",
+    "res://audio/sfx/station_interrupt_4.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "station_interrupt_1.ogg",
+     "seconds": 0.179,
+     "rms_db": -10.2,
+     "mixed_peak_db": 0.8,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_000.ogg",
+       "pitch": 1.7,
+       "dur": 0.3
+      },
+      {
+       "src": "kenney_digital-audio/Audio/zap1.ogg",
+       "gain": -8,
+       "pitch": 1.4,
+       "dur": 0.25
+      }
+     ]
+    },
+    {
+     "file": "station_interrupt_2.ogg",
+     "seconds": 0.179,
+     "rms_db": -10.1,
+     "mixed_peak_db": 0.7,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_001.ogg",
+       "pitch": 1.7,
+       "dur": 0.3
+      },
+      {
+       "src": "kenney_digital-audio/Audio/zap1.ogg",
+       "gain": -8,
+       "pitch": 1.4,
+       "dur": 0.25
+      }
+     ]
+    },
+    {
+     "file": "station_interrupt_3.ogg",
+     "seconds": 0.179,
+     "rms_db": -9.8,
+     "mixed_peak_db": 0.4,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_002.ogg",
+       "pitch": 1.7,
+       "dur": 0.3
+      },
+      {
+       "src": "kenney_digital-audio/Audio/zap1.ogg",
+       "gain": -8,
+       "pitch": 1.4,
+       "dur": 0.25
+      }
+     ]
+    },
+    {
+     "file": "station_interrupt_4.ogg",
+     "seconds": 0.179,
+     "rms_db": -9.8,
+     "mixed_peak_db": 0.4,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_003.ogg",
+       "pitch": 1.7,
+       "dur": 0.3
+      },
+      {
+       "src": "kenney_digital-audio/Audio/zap1.ogg",
+       "gain": -8,
+       "pitch": 1.4,
+       "dur": 0.25
+      }
+     ]
+    }
+   ]
+  },
+  "station.carbine_hit": {
+   "bus": "Sfx",
+   "volume_db": -13,
+   "pitch_jitter": 0.04,
+   "max_voices": 4,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/station_carbine_hit_1.ogg",
+    "res://audio/sfx/station_carbine_hit_2.ogg",
+    "res://audio/sfx/station_carbine_hit_3.ogg",
+    "res://audio/sfx/station_carbine_hit_4.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "station_carbine_hit_1.ogg",
+     "seconds": 0.373,
+     "rms_db": -20.0,
+     "mixed_peak_db": 1.2,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_light_000.ogg"
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactGeneric_light_000.ogg",
+       "gain": -4
+      }
+     ]
+    },
+    {
+     "file": "station_carbine_hit_2.ogg",
+     "seconds": 0.249,
+     "rms_db": -22.9,
+     "mixed_peak_db": 5.0,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_light_001.ogg"
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactGeneric_light_001.ogg",
+       "gain": -4
+      }
+     ]
+    },
+    {
+     "file": "station_carbine_hit_3.ogg",
+     "seconds": 0.233,
+     "rms_db": -21.5,
+     "mixed_peak_db": 3.2,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_light_002.ogg"
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactGeneric_light_002.ogg",
+       "gain": -4
+      }
+     ]
+    },
+    {
+     "file": "station_carbine_hit_4.ogg",
+     "seconds": 0.482,
+     "rms_db": -21.1,
+     "mixed_peak_db": 2.6,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_light_003.ogg"
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactGeneric_light_003.ogg",
+       "gain": -4
+      }
+     ]
+    }
+   ]
+  },
+  "station.shotgun_hit": {
+   "bus": "Sfx",
+   "volume_db": -11,
+   "pitch_jitter": 0.04,
+   "max_voices": 4,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/station_shotgun_hit_1.ogg",
+    "res://audio/sfx/station_shotgun_hit_2.ogg",
+    "res://audio/sfx/station_shotgun_hit_3.ogg",
+    "res://audio/sfx/station_shotgun_hit_4.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "station_shotgun_hit_1.ogg",
+     "seconds": 0.489,
+     "rms_db": -19.6,
+     "mixed_peak_db": 2.5,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactPlate_heavy_000.ogg"
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactPunch_medium_000.ogg",
+       "gain": -4
+      }
+     ]
+    },
+    {
+     "file": "station_shotgun_hit_2.ogg",
+     "seconds": 0.402,
+     "rms_db": -16.3,
+     "mixed_peak_db": 1.8,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactPlate_heavy_001.ogg"
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactPunch_medium_001.ogg",
+       "gain": -4
+      }
+     ]
+    },
+    {
+     "file": "station_shotgun_hit_3.ogg",
+     "seconds": 0.541,
+     "rms_db": -18.9,
+     "mixed_peak_db": 1.4,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactPlate_heavy_002.ogg"
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactPunch_medium_002.ogg",
+       "gain": -4
+      }
+     ]
+    },
+    {
+     "file": "station_shotgun_hit_4.ogg",
+     "seconds": 0.455,
+     "rms_db": -17.7,
+     "mixed_peak_db": 2.4,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactPlate_heavy_003.ogg"
+      },
+      {
+       "src": "kenney_impact-sounds/Audio/impactPunch_medium_003.ogg",
+       "gain": -4
+      }
+     ]
+    }
+   ]
+  },
+  "station.melee_hit": {
+   "bus": "Sfx",
+   "volume_db": -11,
+   "pitch_jitter": 0.04,
+   "max_voices": 4,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/station_melee_hit_1.ogg",
+    "res://audio/sfx/station_melee_hit_2.ogg",
+    "res://audio/sfx/station_melee_hit_3.ogg",
+    "res://audio/sfx/station_melee_hit_4.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "station_melee_hit_1.ogg",
+     "seconds": 0.649,
+     "rms_db": -18.0,
+     "mixed_peak_db": 2.0,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactPunch_heavy_000.ogg"
+      }
+     ]
+    },
+    {
+     "file": "station_melee_hit_2.ogg",
+     "seconds": 0.536,
+     "rms_db": -17.3,
+     "mixed_peak_db": 1.8,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactPunch_heavy_001.ogg"
+      }
+     ]
+    },
+    {
+     "file": "station_melee_hit_3.ogg",
+     "seconds": 0.457,
+     "rms_db": -16.6,
+     "mixed_peak_db": 2.0,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactPunch_heavy_002.ogg"
+      }
+     ]
+    },
+    {
+     "file": "station_melee_hit_4.ogg",
+     "seconds": 0.474,
+     "rms_db": -17.3,
+     "mixed_peak_db": 2.1,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactPunch_heavy_003.ogg"
+      }
+     ]
+    }
+   ]
+  },
+  "station.sentry_hit": {
+   "bus": "Sfx",
+   "volume_db": -13,
+   "pitch_jitter": 0.04,
+   "max_voices": 4,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/station_sentry_hit_1.ogg",
+    "res://audio/sfx/station_sentry_hit_2.ogg",
+    "res://audio/sfx/station_sentry_hit_3.ogg",
+    "res://audio/sfx/station_sentry_hit_4.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "station_sentry_hit_1.ogg",
+     "seconds": 0.269,
+     "rms_db": -17.8,
+     "mixed_peak_db": -2.6,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_medium_000.ogg"
+      }
+     ]
+    },
+    {
+     "file": "station_sentry_hit_2.ogg",
+     "seconds": 0.141,
+     "rms_db": -17.3,
+     "mixed_peak_db": -1.4,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_medium_001.ogg"
+      }
+     ]
+    },
+    {
+     "file": "station_sentry_hit_3.ogg",
+     "seconds": 0.116,
+     "rms_db": -17.2,
+     "mixed_peak_db": -4.1,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_medium_002.ogg"
+      }
+     ]
+    },
+    {
+     "file": "station_sentry_hit_4.ogg",
+     "seconds": 0.251,
+     "rms_db": -18.7,
+     "mixed_peak_db": -2.0,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactMetal_medium_003.ogg"
+      }
+     ]
+    }
+   ]
+  },
+  "station.block": {
+   "bus": "Sfx",
+   "volume_db": -11,
+   "pitch_jitter": 0.04,
+   "max_voices": 4,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/station_block_1.ogg",
+    "res://audio/sfx/station_block_2.ogg",
+    "res://audio/sfx/station_block_3.ogg",
+    "res://audio/sfx/station_block_4.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "station_block_1.ogg",
+     "seconds": 0.219,
+     "rms_db": -13.8,
+     "mixed_peak_db": -2.5,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactBell_heavy_000.ogg",
+       "pitch": 1.6,
+       "dur": 0.35
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_000.ogg",
+       "gain": -8,
+       "pitch": 1.5,
+       "dur": 0.25
+      }
+     ]
+    },
+    {
+     "file": "station_block_2.ogg",
+     "seconds": 0.219,
+     "rms_db": -13.2,
+     "mixed_peak_db": -2.4,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactBell_heavy_001.ogg",
+       "pitch": 1.6,
+       "dur": 0.35
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_001.ogg",
+       "gain": -8,
+       "pitch": 1.5,
+       "dur": 0.25
+      }
+     ]
+    },
+    {
+     "file": "station_block_3.ogg",
+     "seconds": 0.219,
+     "rms_db": -14.1,
+     "mixed_peak_db": -2.1,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactBell_heavy_002.ogg",
+       "pitch": 1.6,
+       "dur": 0.35
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_002.ogg",
+       "gain": -8,
+       "pitch": 1.5,
+       "dur": 0.25
+      }
+     ]
+    },
+    {
+     "file": "station_block_4.ogg",
+     "seconds": 0.219,
+     "rms_db": -14.7,
+     "mixed_peak_db": -2.0,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactBell_heavy_003.ogg",
+       "pitch": 1.6,
+       "dur": 0.35
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_003.ogg",
+       "gain": -8,
+       "pitch": 1.5,
+       "dur": 0.25
+      }
+     ]
+    }
+   ]
+  },
+  "station.barrier": {
+   "bus": "Sfx",
+   "volume_db": -12,
+   "pitch_jitter": 0.04,
+   "max_voices": 4,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/station_barrier_1.ogg",
+    "res://audio/sfx/station_barrier_2.ogg",
+    "res://audio/sfx/station_barrier_3.ogg",
+    "res://audio/sfx/station_barrier_4.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "station_barrier_1.ogg",
+     "seconds": 1.06,
+     "rms_db": -11.6,
+     "mixed_peak_db": -0.9,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_000.ogg",
+       "pitch": 0.9
+      }
+     ]
+    },
+    {
+     "file": "station_barrier_2.ogg",
+     "seconds": 1.059,
+     "rms_db": -11.7,
+     "mixed_peak_db": -0.9,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_001.ogg",
+       "pitch": 0.9
+      }
+     ]
+    },
+    {
+     "file": "station_barrier_3.ogg",
+     "seconds": 1.061,
+     "rms_db": -11.7,
+     "mixed_peak_db": -0.9,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_002.ogg",
+       "pitch": 0.9
+      }
+     ]
+    },
+    {
+     "file": "station_barrier_4.ogg",
+     "seconds": 1.062,
+     "rms_db": -11.7,
+     "mixed_peak_db": -0.9,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_003.ogg",
+       "pitch": 0.9
+      }
+     ]
+    }
+   ]
+  },
+  "station.taunt": {
+   "bus": "Sfx",
+   "volume_db": -12,
+   "pitch_jitter": 0.04,
+   "max_voices": 4,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/station_taunt_1.ogg",
+    "res://audio/sfx/station_taunt_2.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "station_taunt_1.ogg",
+     "seconds": 1.29,
+     "rms_db": -21.8,
+     "mixed_peak_db": 1.9,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactBell_heavy_000.ogg",
+       "pitch": 0.62,
+       "dur": 0.8
+      },
+      {
+       "src": "kenney_digital-audio/Audio/lowThreeTone.ogg",
+       "gain": -10,
+       "pitch": 0.8,
+       "dur": 0.6
+      }
+     ]
+    },
+    {
+     "file": "station_taunt_2.ogg",
+     "seconds": 1.29,
+     "rms_db": -20.1,
+     "mixed_peak_db": 1.8,
+     "layers": [
+      {
+       "src": "kenney_impact-sounds/Audio/impactBell_heavy_001.ogg",
+       "pitch": 0.62,
+       "dur": 0.8
+      },
+      {
+       "src": "kenney_digital-audio/Audio/lowThreeTone.ogg",
+       "gain": -10,
+       "pitch": 0.8,
+       "dur": 0.6
+      }
+     ]
+    }
+   ]
+  },
+  "station.heal": {
+   "bus": "Sfx",
+   "volume_db": -14,
+   "pitch_jitter": 0.04,
+   "max_voices": 4,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/station_heal_1.ogg",
+    "res://audio/sfx/station_heal_2.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "station_heal_1.ogg",
+     "seconds": 0.55,
+     "rms_db": -16.5,
+     "mixed_peak_db": -1.7,
+     "layers": [
+      {
+       "src": "kenney_digital-audio/Audio/powerUp2.ogg",
+       "pitch": 0.85,
+       "lp": 5000
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_003.ogg",
+       "gain": -12,
+       "pitch": 1.6,
+       "dur": 0.3
+      }
+     ]
+    },
+    {
+     "file": "station_heal_2.ogg",
+     "seconds": 0.548,
+     "rms_db": -14.6,
+     "mixed_peak_db": -3.4,
+     "layers": [
+      {
+       "src": "kenney_digital-audio/Audio/powerUp5.ogg",
+       "pitch": 0.85,
+       "lp": 5000
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/forceField_003.ogg",
+       "gain": -12,
+       "pitch": 1.6,
+       "dur": 0.3
+      }
+     ]
+    }
+   ]
+  },
+  "station.departure": {
+   "bus": "Sfx",
+   "volume_db": -9,
+   "pitch_jitter": 0.04,
+   "max_voices": 1,
+   "min_interval_ms": 30,
+   "loop": false,
+   "files": [
+    "res://audio/sfx/station_departure_1.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "station_departure_1.ogg",
+     "seconds": 4.8,
+     "rms_db": -10.6,
+     "mixed_peak_db": -0.8,
+     "layers": [
+      {
+       "src": "kenney_sci-fi-sounds/Audio/thrusterFire_000.ogg",
+       "pitch": 0.8,
+       "lp": 5000
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/spaceEngineLarge_000.ogg",
+       "gain": -4,
+       "pitch": 0.9,
+       "delay": 0.8
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/lowFrequency_explosion_000.ogg",
+       "gain": -8,
+       "pitch": 0.7,
+       "delay": 0.2
+      }
+     ]
+    }
+   ]
+  },
+  "station.ambience": {
+   "bus": "Ambience",
+   "volume_db": -14,
+   "pitch_jitter": 0.04,
+   "max_voices": 4,
+   "min_interval_ms": 30,
+   "loop": true,
+   "files": [
+    "res://audio/sfx/station_ambience_1.ogg"
+   ],
+   "provenance": [
+    {
+     "file": "station_ambience_1.ogg",
+     "seconds": 7.434,
+     "rms_db": -13.4,
+     "mixed_peak_db": -8.1,
+     "layers": [
+      {
+       "src": "rubberduck_sfx_loops/ambient_01.ogg",
+       "lp": 6000
+      },
+      {
+       "src": "kenney_sci-fi-sounds/Audio/spaceEngineLow_000.ogg",
+       "gain": -9,
+       "pitch": 0.8,
+       "lp": 900
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

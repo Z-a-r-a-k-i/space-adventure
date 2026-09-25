@@ -109,3 +109,17 @@ and owner acceptance remain separate.
 The [station layout guide](../../docs/station-layout.md) owns the shared offline
 layout input and matching scene-wrapper rebuild command. Rebuild both structure
 kits and the spatial wrappers together when changing floor openings or door positions.
+
+## Ship battle publications
+
+`build_ship_battle.py -- --replace --render` builds the roof-off cutter and
+interceptor. `build_ship_hazards.py -- --replace --render` builds the fire and
+breach markers. Both stage native sources and GLBs, validate a fresh import,
+then promote the publications together. Omit `--replace` for first production.
+The [ship battle brief](../../art/briefs/ship-battle-v1.md) owns visual scope;
+each source manifest owns measured budgets and anchors. The station exterior
+and crew publications are preserved. The v2 builder keeps every cutter anchor
+and rebuilds the interceptor roof-off around `ENEMY_ROOMS`, which must match the
+enemy systems in `game/content/ship-battle.json`. Game sound is rebuilt with
+`python tools/audio/build_game_audio.py`. Run Godot import and the ship review
+after publication; technical checks do not establish owner acceptance.

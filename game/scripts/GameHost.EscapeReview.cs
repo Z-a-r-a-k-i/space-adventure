@@ -114,6 +114,7 @@ public partial class GameHost
             InputCheck("Departure blocks gameplay and manual shortcuts", !_controlsOverlay.Visible
                 && !_abilityTargeting && commands == _humanCommandSequence && !_camera.InputEnabled);
         }
+        if (ShipHandoffReview) { await RunShipHandoffAfterBoardingAsync(); return; }
         for (var frame = 0; frame < 480; frame++)
         {
             AdvanceDeparture(_session!.Observe(), 1.0 / 60);

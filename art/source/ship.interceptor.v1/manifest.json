@@ -1,0 +1,139 @@
+{
+  "asset_id": "ship.interceptor.v1",
+  "status": "v2 presentation (dark plated decks, light strips, roof-off interceptor); owner acceptance pending",
+  "rights": "original project-owned dimensional geometry; cutter nacelles from existing builder",
+  "reference": "art/briefs/ship-battle-v1.md",
+  "tool": "5.2.0 LTS",
+  "authored": {
+    "triangles": 17076,
+    "meshes": 12,
+    "materials": 10,
+    "crew_clearance": {},
+    "blender_bounds": {
+      "min": [
+        -2.629999876022339,
+        -4.409119129180908,
+        0.41999998688697815
+      ],
+      "max": [
+        2.629999876022339,
+        5.400000095367432,
+        1.965000033378601
+      ]
+    },
+    "anchors_godot": {
+      "effect_engines": [
+        0.0,
+        1.5,
+        2.25
+      ],
+      "effect_shields": [
+        0.0,
+        1.5,
+        -0.2
+      ],
+      "effect_weapons": [
+        0.0,
+        1.5,
+        -2.55
+      ],
+      "muzzle": [
+        0.25,
+        1.48,
+        -4.55
+      ],
+      "room_engines": [
+        0.0,
+        1.12,
+        2.25
+      ],
+      "room_shields": [
+        0.0,
+        1.12,
+        -0.2
+      ],
+      "room_weapons": [
+        0.0,
+        1.12,
+        -2.55
+      ]
+    }
+  },
+  "fresh_reimport": {
+    "triangles": 17076,
+    "meshes": 12,
+    "materials": 10,
+    "crew_clearance": {},
+    "blender_bounds": {
+      "min": [
+        -2.629999876022339,
+        -4.409119129180908,
+        0.41999998688697815
+      ],
+      "max": [
+        2.629999876022339,
+        5.400000095367432,
+        1.965000033378601
+      ]
+    },
+    "anchors_godot": {
+      "effect_engines": [
+        0.0,
+        1.5,
+        2.25
+      ],
+      "effect_shields": [
+        0.0,
+        1.5,
+        -0.2
+      ],
+      "effect_weapons": [
+        0.0,
+        1.5,
+        -2.55
+      ],
+      "muzzle": [
+        0.25,
+        1.48,
+        -4.55
+      ],
+      "room_engines": [
+        0.0,
+        1.12,
+        2.25
+      ],
+      "room_shields": [
+        0.0,
+        1.12,
+        -0.2
+      ],
+      "room_weapons": [
+        0.0,
+        1.12,
+        -2.55
+      ]
+    }
+  },
+  "floor_godot_y": 1.12,
+  "rooms": {
+    "weapons": [
+      0,
+      -2.55,
+      2.0,
+      1.9
+    ],
+    "shields": [
+      0,
+      -0.2,
+      2.5,
+      2.2
+    ],
+    "engines": [
+      0,
+      2.25,
+      2.7,
+      2.0
+    ]
+  },
+  "reproduce": "tools/blender/build_ship_battle.py -- --replace --render"
+}

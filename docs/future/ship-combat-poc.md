@@ -1,158 +1,153 @@
 # Escape-cutter ship-combat proof of concept
 
-Status: approved direction for Phase 6, the next gameplay milestone;
-implementation follows the expanded station POC and its integrated hardening
-and owner-acceptance exit.
+Status: Phase 6 gameplay milestone. The rule core, Godot battle, production
+cutter/interceptor publications and station handoff are implemented; owner
+handling, tuning, visual and audio acceptance are **open** (ADR 0033, 0034).
+The 2026-09-25 FTL rework (ADR 0034) replaced the single volley with mounted
+weapons, engines-as-evasion and room-damage rules, rebuilt the HUD and ship
+presentation, and moved the whole game to sampled CC0 sound.
 
 ## Purpose and boundary
 
-This proof of concept tests whether SpaceAdventure's party-control identity,
-fixed simulation tick, and active pause remain enjoyable when the party escapes
-the station aboard a small ship. It is a separate post-POC experiment, not an
-expansion of the current station POC.
+Test whether party control, the fixed tick and active pause stay enjoyable when
+Vanguard, Protector and Medic escape the station aboard the cutter, with
+decisions close to FTL: power, weapon timing and targeting, crew placement.
+One fixed battle follows the station departure; it is not a campaign, map or
+boarding system. The approved composition reference
+([separated overhead v4](../../art/concepts/station-escape-ship-combat-v1/ship-combat-separated-clean-direction-v4.png))
+sets two strict overhead views, player left and enemy right, bows up, a quiet
+divider and no cross-divider shot or trajectory lines.
 
-The station POC ends with all three crew boarding and departing in the cutter,
-then its completion summary. Ship combat continues that departure with one
-fixed battle. The station's exterior and short departure presentation do not
-activate ship systems or approve combat interiors. Carry Vanguard, Protector,
-and Medic forward; entering the cutter remains an authored handoff rather than
-a reusable boarding mechanic.
+## Lifecycle
 
-The approved composition reference is
-[ship-combat-separated-clean-direction-v4.png](../../art/concepts/station-escape-ship-combat-v1/ship-combat-separated-clean-direction-v4.png).
-It establishes a strict overhead view with the player ship on the left, the
-enemy ship on the right, both bows pointing upward, and a clear central
-tactical divider. The ships are not physically side by side. Cyan and red
-movement or trajectory lines are not part of the direction.
+- The ordinary game captures the station party once at completion, plays the
+  full 8 s departure, loads the battle on a thread and enters exactly once when
+  both have finished. The battle starts paused at tick 0; loading never
+  advances it. A load or entry failure discards any partial scene and stays
+  retryable (R). Station review/smoke profiles keep station-only completion
+  unless they opt in with `--review-continue=ship`.
+- Entry gives fresh full health and the authored ship state while preserving
+  crew identity; ground abilities and cooldowns do not carry over.
+- Retry is battle-only: ships, crew, hazards, oxygen, doors, power, weapons,
+  targets, ammunition, enemy repair reserve, shots and effects reset under a new
+  attempt number with a new random stream.
+- Player hull zero or all crew down is defeat, which wins over a simultaneous
+  enemy destruction. Victory restores downed crew. Terminal outcomes freeze
+  the simulation; a bounded presentation-only clock (4 s) lets the losing ship's
+  destruction finish. There is no stalemate timeout.
 
-The concept is a visual anchor only. It does not approve final geometry, room
-topology, UI, balance, 3D production, or live integration.
+## Rules
 
-## Player journey
+Rules live in `src/SpaceAdventure.Core/Ship/` (tick order is documented on
+`ShipCombatSession`); every number lives in `game/content/ship-battle.json`
+(schema 2).
 
-1. Begin in the escape cutter with Vanguard, Protector, and Medic and one fixed
-   hostile ship already detected.
-2. Inspect both ships, crew locations, hull state, system state, power
-   allocation, weapon target, and current threats.
-3. Enter combat in tactical pause.
-4. Allocate a fixed reactor budget among weapons, engines, and shields.
-5. Move any of the three party members between authored rooms to operate or repair a
-   system.
-6. Select one enemy system as the cutter's weapon target.
-7. Resume the fixed simulation tick and observe weapon charge, incoming fire,
-   shields, system damage, repairs, and hull damage.
-8. Pause and revise orders until the enemy is disabled, the cutter is
-   destroyed, or the encounter is restarted.
+- **Layout.** Weapons/cockpit, port shields, starboard life support, aft
+  engines and a central passage (with aft cross-passage). Each system room
+  connects only to the passage. The aft-starboard airlock vents the passage to
+  vacuum and is never walkable. IDs match the art contract (`door_*`,
+  `room_*`, `work_*`, `system_*`, `effect_*`, `muzzle`).
+- **Travel.** Deterministic authored routes through doorways; retargeting
+  finishes a doorway crossing first; crew pass without physics. A closed
+  internal door opens for one fixed traversal window with normal gas exchange
+  and fire spread. Manually opened doors stay open. Unsafe orders are legal
+  and produce a warning, never an automatic evacuation.
+- **Work.** Crew work their current room automatically: fire → breach →
+  (Medic) the most injured settled ally in the room, including the Medic →
+  repair → man. Explicit tasks (Extinguish, Seal, Repair, Man, Treat) persist in
+  danger until complete, cancelled or invalid; finished emergency tasks return
+  to Auto. Hold suppresses all automatic work. A second worker adds a reduced
+  rate; a third adds nothing. Treatment never outheals sustained fire and never
+  revives.
+- **Power.** Four player systems on a reactor that cannot power all of them.
+  Damage caps usable power while allocation stays visible. One healthy,
+  hazard-free operator adds a nonstacking bonus (faster charge, shield
+  recharge, oxygen, evasion). Power or pause toggling cannot create charge or
+  refill shields.
+- **Shields.** Layers, not percentages: one layer per usable shield bar. Each
+  non-piercing shot that reaches the ship removes one layer instead of hitting.
+  Layers regrow one at a time after a short post-hit delay while powered.
+  Damage to the shield generator room removes layers from the maximum.
+- **Weapons.** Each side mounts weapons that draw weapons-system power in
+  mounting order: an armed weapon is powered if its cost still fits, so damage
+  or a lower allocation unpowers the last ones first and repair restores them.
+  Each weapon charges on its own, fires its volley at its own target and keeps
+  that target. Missiles have finite ammunition, pierce shields and never miss.
+  Hold keeps charged weapons from firing so the player can release one
+  synchronized volley, FTL's shield-breaking move.
+- **Evasion.** Powered engines give a percentage chance for each evadable shot
+  to miss (a manned station boosts it). Rolls, and weapon fire/breach chances,
+  come from one seeded stream per attempt, so a seed, attempt and command log
+  replay exactly (ADR 0034).
+- **Hits.** A hit removes hull equal to the weapon's damage, damages the target
+  system by the same amount and injures every crew member in that room (15 per
+  damage point). Incendiary/breach payloads and chance rolls start fires and
+  breaches.
+- **Atmosphere and hazards.** Per-room oxygen with bounded exchange computed
+  from the previous tick: open doors equalize, breaches and the open airlock
+  leak to vacuum, crew and fires consume, powered life support restores. Fires
+  damage crew and the room's system, spread through open doors at fixed
+  intervals and die below a minimum oxygen level. Low oxygen suffocates crew.
+  Sealing a breach stops the leak and never refunds hull.
+- **Enemy.** An unmanned interceptor (weapons, shields, engines) with a pulse
+  laser and a hazard missile, each on an authored target/payload sequence that
+  the HUD telegraphs with a countdown. It has no crew, atmosphere or boarding,
+  and a finite visible repair reserve worked one system at a time in the order
+  weapons → shields → engines.
 
-The encounter is deliberately short and should support a complete
-pause-plan-resume-replan loop in roughly three to five minutes.
+The scripted pilots (suppress weapons; synchronize volleys into shields) win in
+roughly 100–135 unpaused seconds and passive play loses; `ship-balance` reports
+the spread across 40 seeds.
 
-## Content budget
+## Presentation
 
-- One authored player escape cutter.
-- One authored hostile interceptor.
-- Exactly three controllable party members: Vanguard, Protector, and Medic.
-- One deterministic enemy controller; enemy crew are not simulated.
-- Weapons, engines, and shields as the only authoritative ship systems.
-- A maximum of six readable rooms per ship.
-- One fixed weapon per ship.
-- One encounter, one victory state, one defeat state, and restart.
-- One readable visual damage state per system plus hull damage feedback.
+`scenes/ship_battle.tscn` (`ShipBattleHost`) is also runnable directly for
+development. Each side is an independent overhead SubViewport over a starfield,
+with bounded zoom/pan and a shared Frame Both. HUD panels sit in the corners of
+the two full-height views, and each camera frames its ship and shield bubble
+inside the HUD-safe area.
 
-The humanoid station-boarder concept is not part of this battle. Adding a
-boarding encounter or simulated enemy crew requires a later decision.
+- **Status.** Hull as one segment per point; shields as hexagon pips with a
+  recharge sliver (dim = unpowered, red = generator damage); evasion and ship
+  oxygen. The only percentages left are evasion and oxygen.
+- **Crew and power.** Crew cards (portrait, health, activity icon, room).
+  Reactor and system power are pip columns: left click adds a bar, right click
+  removes one. In-room system badges show usable/damaged bars, manning and
+  repair progress; oxygen shows as an FTL-style pink wash; doors change colour
+  and can be clicked; Open all / Close all and the airlock sit under the crew.
+- **Weapons.** One card per weapon (hotkeys 1-2) with power pips, a charge bar,
+  ammunition and target; click a card, then an enemy room. Right-click toggles a
+  weapon's power; right-click while aiming clears its target. H holds a volley.
+  The enemy column telegraphs each enemy weapon's charge, target, payload and
+  countdown, mirrored as reticles on the targeted player rooms.
+- **Combat feedback.** Projectiles leave the firing frame at the divider edge
+  and re-enter the other frame (never a line across the divider). Shots stop at
+  a shield bubble ripple, miss with a MISS marker, or strike the room with an
+  explosion, sparks, a scorch decal and (player ship) a brief shake. Damaged
+  systems spark; fires and breaches have particles and light. The losing ship
+  breaks up in a chain of explosions.
+- **Crew.** The existing full-size models, sampled from the battle tick with
+  small procedural work poses, over a role-colour ring (strict overhead camera).
+  Right-click a room to move selected crew (F1–F3, Tab or cards select).
+- **Audio.** Sampled CC0 cues through the shared `GameAudio` library
+  ([audio](../../game/audio/README.md)): weapons, impacts, shield hits, misses,
+  hazards, crew, doors, power and interface cues, panned by side, plus ship
+  ambience and hazard loops that pause with the battle. M mutes and -/+ step
+  the session Master volume the station manual also controls. No music yet.
 
-## Authoritative state
+Only contracted publications are used; missing ones are reported, never
+replaced by greybox. Ground abilities are hidden.
 
-The pure C# gameplay core owns:
+## Non-goals
 
-- stable ship, crew, room, system, and weapon identifiers;
-- the fixed reactor budget and validated system-power allocation;
-- crew room occupancy and movement progress;
-- hull, shield, system-damage, repair, and weapon-cooldown state;
-- the selected weapon target;
-- deterministic enemy decisions;
-- battle pause, tick, victory, defeat, and restart state; and
-- structured command rejections, gameplay events, and snapshots.
+Sector map, travel, free flight, ship physics, procedural encounters,
+progression, loot, saving, drones, beams, boarding, enemy crew, sensors,
+piloting as a separate system, permanent crew death, music and runtime model
+calls.
 
-The separated ship views are a presentation abstraction. They do not imply
-world-space proximity, free-flight navigation, collision, formation movement,
-or ship physics.
+## Exit gate
 
-## Command and simulation rules
-
-Human input, automation, CLI scenarios, and future replay support dispatch the
-same typed commands. The initial command surface is:
-
-- the existing `SetPauseCommand`;
-- `MoveCrewToShipRoomCommand`;
-- `SetShipSystemPowerCommand`;
-- `SetShipWeaponTargetCommand`; and
-- `RestartShipCombatCommand`.
-
-Every command is completely validated before mutation. Invalid crew, room,
-power, target, timing, or battle-state requests produce structured rejections
-and no partial effects.
-
-The prototype uses the existing explicit fixed tick. Combat automatically
-pauses once when the encounter begins; all later pause changes are manual.
-Pausing stops gameplay advancement while input, camera control, observation,
-command entry, and UI remain available.
-
-Initial combat resolution is deterministic and contains no random variance:
-
-- total assigned power cannot exceed the cutter's fixed reactor budget;
-- an unpowered or disabled system cannot provide its effect;
-- weapons require power, a valid target, and a completed cooldown before
-  firing;
-- powered engines reduce the deterministic rate of incoming weapon pressure;
-- shields absorb incoming damage before hull and recover only while powered;
-- system damage reduces or disables the owning system;
-- a party member in the affected room can repair its system over fixed ticks;
-  and
-- cutter hull depletion causes defeat, while hostile hull depletion causes
-  victory.
-
-Exact integer values and room adjacency belong in the authored encounter
-definition and tests, not in presentation scenes.
-
-## Presentation requirements
-
-- Strict overhead combat view.
-- Player ship on the left and hostile ship on the right.
-- Both ships point upward.
-- A visually quiet central divider communicates separation and distance.
-- No movement, trajectory, or decorative targeting lines between the ships.
-- All three player crew figures remain individually readable.
-- Rooms, occupied locations, powered systems, weapon target, shields, damage,
-  repairs, pause state, victory, and defeat are understandable without external
-  explanation.
-- Presentation reads authoritative snapshots and events and never mutates ship
-  state directly.
-
-## Explicit non-goals
-
-No sector map, travel simulation, free-flight controls, ship physics,
-procedural encounters, campaign integration, saving, progression, upgrades,
-loot, economy, multiple weapons, ammunition, missiles, drones, oxygen, fire,
-hull breaches, hostile-ship or generalized boarding mechanics, enemy-crew
-simulation, crew recruitment, generalized inventory, metagame, runtime model
-call, or multiplayer belongs in this proof of concept.
-
-## Verification and exit gate
-
-1. Pure .NET tests cover power, movement, targeting, cooldown, shields,
-   damage, repair, pause, victory, defeat, restart, and atomic rejection.
-2. A deterministic CLI scenario completes the real encounter through typed
-   commands, fixed ticks, events, and snapshots.
-3. Godot headless smoke proves scene, adapter, command, and observation
-   integration.
-4. A graphical playtest and direct inspection in Godot prove the approved
-   separated composition and the readability requirements above.
-5. The owner completes the encounter using physical input and confirms that
-   pausing to reassign crew, power, and target is clear and tactically useful.
-
-The slice passes only when all five layers pass. Final combat interiors,
-enemy-ship models, and production ship-combat UI remain blocked until the
-greybox proves the room layout and combat information hierarchy. The approved
-station cutter exterior may be reused without expanding this combat budget.
+Rule, CLI, headless, handoff, graphical capture/input/resize and performance
+profiles pass ([Testing](../testing.md)); the owner then plays the battle with
+physical input and accepts handling, tuning, readability, art and audio. The
+owner gate has not been run.

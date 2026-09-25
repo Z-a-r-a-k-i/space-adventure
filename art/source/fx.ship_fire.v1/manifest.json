@@ -1,0 +1,44 @@
+{
+  "asset_id": "fx.ship_fire.v1",
+  "rights": "Original project-owned geometry, no external samples or textures",
+  "reference": "art/briefs/ship-battle-v1.md",
+  "status": "Owner visual acceptance pending",
+  "origin": "Floor contact; Godot +Y up; unit scale",
+  "authored": {
+    "triangles": 376,
+    "meshes": 8,
+    "blender_bounds": [
+      [
+        -0.2988508939743042,
+        0.30382591485977173
+      ],
+      [
+        -0.2895728647708893,
+        0.2321205586194992
+      ],
+      [
+        0.006200000178068876,
+        0.8799999952316284
+      ]
+    ]
+  },
+  "fresh_reimport": {
+    "triangles": 376,
+    "meshes": 8,
+    "blender_bounds": [
+      [
+        -0.2988508939743042,
+        0.30382591485977173
+      ],
+      [
+        -0.2895728647708893,
+        0.2321205586194992
+      ],
+      [
+        0.006200000178068876,
+        0.8799999952316284
+      ]
+    ]
+  },
+  "reproduce": "tools/blender/build_ship_hazards.py -- --replace --render"
+}

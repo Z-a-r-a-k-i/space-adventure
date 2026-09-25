@@ -11,5 +11,8 @@
     <None Include="..\..\game\content\station-route.json"
           Link="content\station-route.json"
           CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\game\content\ship-battle.json"
+          Link="content\ship-battle.json"
+          CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

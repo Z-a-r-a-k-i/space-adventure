@@ -31,6 +31,31 @@ reports and protocols are retained in Git at `7172c1e` and in
 | 2026-09-22 | Agent shared crew vision, uncommitted main `0689682`, route v18/schema 11 | Remote main rechecked and unchanged. Build/import, 106 core tests (20 vision cases), five CLI scenarios, and seven Godot profiles passed. Actual-wall/door scouting, lost/reacquired sight, separate Protector/Medic viewers, hidden targeting/effect cleanup, and dormant/retry presentation verified. Inspected 720p vision captures and 1080p full escape input with security/launch defeat-retry. Launch 1080p/RTX 2070 SUPER sample: 1,800 intervals/30 s, p95 17.93 ms, p99 20.90 ms, max 26.69 ms, none above 33.33 ms, no unfocused frames. NuGet vulnerability feed remained unavailable; build/tests succeeded. Owner handling/listening acceptance and five consecutive owner full-route runs remain open. |
 | 2026-09-23 | Agent PR 23 review fixes, route v18/schema 11 | Repaired garbled UI/doc text, double-applied escape-enemy yaw, melee contact through walls, departure facing, missing rifle-miss shots, silent sight-loss order drops, and the party Enforcer's dormant heading; load now rejects mismatched encounter objectives, unplaced encounters, spawns inside sight blockers, and off-axis blockers. Build, 109 core tests, five CLI scenarios, and eight Godot profiles passed. Inspected a 1080p service capture (enemies face the crew) and departure frames from a full escape recording; rifle-miss shots were not caught on camera. CodeRabbit follow-up: pre-checked performance-mode abilities, eager escape placements, per-asset crew budgets, and pre-publication layout checks; a failing-hook Blender probe kept the accepted files and three station rebuilds passed (committed binaries restored). Launch 1080p sample: 1,800 intervals/30 s, p95 17.53 ms, p99 21.00 ms, max 25.34 ms, none over 33.33 ms, no unfocused frames, 25 commands with none rejected. Owner handling/listening acceptance and five consecutive owner full-route runs remain open. |
 
+Ship milestone, 2026-09-24: agent verification of uncommitted work on `4cb5d5d`
+passed build/import, 132 core tests, four ship CLI scenarios, ship victory/defeat,
+station-to-battle handoff and station escape headless checks. Graphical handoff,
+720p/1080p captures, 40 input/resize checks, and ordinary-command evacuation,
+vent/repressurization and two-worker breach sealing passed. Both authored
+strategies won in 204.8/220.4 simulation seconds. Fresh Blender/GLB inspections
+and Godot integration covered cutter, interceptor and hazards; an occluded
+breach marker was corrected with authored floor anchors. A 20-second 1080p
+window sample advanced 600 ticks; ship-host process p95 was 0.444 ms (not total
+GPU frame cost). Evidence: ignored `artifacts/ship-implementation/` and
+`artifacts/ship-review/`. Station and ship owner acceptance remain open.
+
+Ship FTL rework, 2026-09-25 (ADR 0034): agent verification of uncommitted work on
+PR 24's `98ff2b1` in a separate worktree passed build/import, 146 core tests, ten
+CLI scenarios, the `ship-balance` report (suppress 39/40 and synchronized-volley
+40/40 wins, medians 101/108 s; passive 0/40), ship victory/defeat/handoff
+headless, all ten station/gallery headless profiles, graphical ship capture at
+720p/1080p (24 checks), input/resize (41), handoff (21) and an escape station
+capture with the new project font. Rebuilt cutter/interceptor GLBs passed the
+Blender budget, anchor, floor and crew-clearance gates and were inspected in
+Blender and Godot. A 20-second 720p sample advanced 600 ticks; ship-host process
+p95 was 0.87 ms. The sampled CC0 library (49 cues, 116 takes) was level-checked
+by analysis only: this agent could not listen, so listening and owner
+handling/visual acceptance remain open.
+
 The solo reference is the September 7, 30-second sample:
 Godot 4.7.1 Forward+, RTX 2070 SUPER, 1920×1080, 1,799 render intervals;
 p95 **16.83 ms**, p99 **16.92 ms**, maximum **28.80 ms**, none above 33.33 ms.

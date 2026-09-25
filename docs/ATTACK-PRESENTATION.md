@@ -115,10 +115,10 @@ frame pacing. Asset production and publication follow [Art pipeline](ART-PIPELIN
 
 ## Audio
 
-[CombatAudio.cs](../game/scripts/CombatAudio.cs) synthesizes original PCM in
-memory from oscillator/noise recipes; no third-party recordings, samples,
-licenses, or generated asset files are required. Four deterministic variants
-per cue avoid identical repeats without touching simulation randomness.
+[CombatAudio.cs](../game/scripts/CombatAudio.cs) serves the `station.*` cues of
+the shared sampled CC0 library ([game audio](../game/audio/README.md)), built by
+`tools/audio/build_game_audio.py`. Up to four takes per cue rotate without
+touching simulation randomness.
 Carbine, shotgun, sentry, Burst, Interrupt, hit types, shield block, Barrier,
 and Taunt have separate recipes. Release cues start at the muzzle; hit cues
 start at visual contact with the same delay as effects and damage numbers.
@@ -128,8 +128,9 @@ periodic ventilation source locates the station's machinery. Tactical pause
 suspends it and active combat audio; released hit cues finish with the bounded
 fall animation after total defeat.
 
-For local listening evidence, set `SPACE_ADVENTURE_AUDIO_REVIEW` to an ignored
-directory under `artifacts/` before a normal development launch. Godot writes
-`combat-cues.wav`, `station-ambience.wav`, and `timing.json` from the exact
-runtime streams. The montage is dry, with intended in-game levels recorded in
-the timing manifest; judge the final spatial mix during live gameplay too.
+For local listening evidence, the library builder writes an ignored
+`artifacts/audio-review/audition.wav` montage of every take at its in-game
+level with `timing.json`. Setting `SPACE_ADVENTURE_AUDIO_REVIEW` to an ignored
+directory before a development launch writes an inventory of available station
+takes, levels, and buses to `timing.json`; it does not record playback events.
+Judge the final spatial mix during live gameplay too.

@@ -27,6 +27,10 @@ window/stretch/mode="canvas_items"
 
 project/assembly_name="SpaceAdventure.Game"
 
+[gui]
+
+theme/custom_font="res://ui/fonts/chakra_petch_semibold.ttf"
+
 [rendering]
 
 anti_aliasing/quality/msaa_3d=1

@@ -14,6 +14,9 @@ The [shared crew vision rules](ARCHITECTURE.md#shared-crew-vision) add enemy
 discovery during exploration without changing encounter entry conditions.
 
 **Next gate: owner acceptance and the remaining station hardening checks.**
+The owner-authorized Phase 6 ship battle is also implemented locally, including
+production assets and the ordinary departure handoff. Its handling, tuning,
+visual and audio acceptance remain open under the [ship spec](future/ship-combat-poc.md).
 Agent build, rule, CLI, headless and graphical checks are recorded in
 [prototype evidence](archive/prototype-history.md). Handling and listening
 acceptance remain open. Agent verification does not satisfy the five
@@ -32,10 +35,10 @@ instructions live with the [Blender tools](../tools/blender/README.md);
 | Phase | Work | Exit |
 | --- | --- | --- |
 | 5 — Complete and harden station POC | Recruit Medic, complete six fights, recover between victories, retry each encounter independently, and board/depart in the cutter. Finish three-person controls, production presentation, and station hardening. | Relevant automated and graphical checks pass; owner accepts visuals, handling, and sound and completes five consecutive blocker-free full-route runs. Another contributor can reproduce an accepted asset and author/verify a small encounter from a clean checkout; useful startup/frame-time/memory/tooling baselines are recorded. |
-| 6 — Ship combat | One escape-cutter battle with Vanguard, Protector, and Medic under the approved [spec](future/ship-combat-poc.md). Prove deterministic greybox before ship interiors, enemy-ship art, or production combat UI. | Rule, CLI, Godot, graphical, and owner-operated checks pass; pause-based crew/power/target decisions are useful. |
+| 6 — Ship combat | One escape-cutter battle with Vanguard, Protector, and Medic under the [spec](future/ship-combat-poc.md) (ADR 0033, 0034): manning, fire, breaches, oxygen, doors/venting, four powered systems, an unmanned repairing interceptor, and the ordinary station handoff. | Rule, CLI, Godot, graphical, and owner-operated checks pass; pause-based crew/power/target decisions are useful. |
 
 The former standalone hardening phase is part of Phase 5's completion gate;
-ship combat is the next gameplay milestone. Phases 0–4 established the C#
+ship combat extends that route without closing the station acceptance gate. Phases 0–4 established the C#
 foundation, production station/character bases, solo combat, and party combat.
 
 ## Scope discipline
@@ -47,6 +50,6 @@ are authorized for this route; unrelated exploratory concepts are not.
 Animation and effects are finalized with authoritative combat timings.
 
 Wall-utility integration, broader inventory/progression, procedural runs,
-generated dialogue, ship interiors/combat systems, and generalized boarding
-remain deferred. The cutter's authored boarding/departure closes the station
-route. Record consequential scope changes in [DECISIONS.md](DECISIONS.md).
+generated dialogue, and generalized boarding remain deferred. The cutter's
+authored boarding/departure closes the station route; the ordinary game then
+continues into the Phase 6 ship battle. Record consequential scope changes in [DECISIONS.md](DECISIONS.md).

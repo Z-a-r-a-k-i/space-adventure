@@ -43,7 +43,7 @@ public partial class GameHost
     {
         var button = new Button { Text = text, CustomMinimumSize = new Vector2(148, 38) };
         TacticalUi.Style(button);
-        button.Pressed += action;
+        button.Pressed += () => { GameAudio.Play("ui.click"); action(); };
         return button;
     }
 
@@ -51,7 +51,7 @@ public partial class GameHost
     {
         var tile = new ActionTile();
         tile.Build(key, caption, icon);
-        tile.Pressed += action;
+        tile.Pressed += () => { GameAudio.Play("ui.click"); action(); };
         return tile;
     }
 

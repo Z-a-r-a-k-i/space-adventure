@@ -23,6 +23,9 @@ hold unique design/budget requirements; source records/manifests hold provenance
 | `prop.station.wall_utility.v1` | Retained technical candidate; separate owner approval/integration remains pending | [Wall utility](../art/briefs/station-wall-utility-v1.md) |
 | `character.crew.operator.v1` / `weapon.crew.operator_pistol.v1` | Third recruit, Medic; fitted rig, one-handed pistol and live healing integrated | [Character](../art/briefs/operator-character-v1.md), [pistol](../art/briefs/operator-pistol-v1.md) |
 | `ship.escape_cutter.v1` | Approved exterior for station boarding and departure; entrance and engine presentation, no interior | [Cutter](../art/briefs/escape-cutter-v1.md) |
+| `ship.escape_cutter.combat.v1` | Roof-off combat derivative, four systems, five crew spaces; v2 plated decks and light lines, owner visual acceptance pending | [Ship battle](../art/briefs/ship-battle-v1.md) |
+| `ship.interceptor.v1` | Unmanned roof-off hostile with three targetable system rooms (v2); owner visual acceptance pending | [Ship battle](../art/briefs/ship-battle-v1.md) |
+| `fx.ship_fire.v1` / `fx.ship_breach.v1` | Fire and torn-deck breach presentation; owner visual acceptance pending | [Ship battle](../art/briefs/ship-battle-v1.md) |
 
 Humanoids use the [shared rig contract](../art/rigs/crew-humanoid-v1.md), with
 only the actions their role needs. Each human has one fixed outfit. Attack
@@ -34,8 +37,10 @@ reason to regenerate them. Exact sources and accepted exports are recorded
 under `art/source/<asset-id>/` and `art/generated/<asset-id>/`.
 
 The station extension and cutter exterior are approved by the 2026-09-12
-expansion. Other dock props, boarder identity, cutter interiors, and enemy ships
-remain exploratory in the [reference pack](../art/concepts/station-escape-ship-combat-v1/README.md).
-Ship-combat interiors and production UI follow the separately gated greybox.
+expansion. The owner requested ship battle implementation and parallel asset
+work on 2026-09-24; the two new ship publications have a separate brief above.
+Owner handling and visual acceptance remain open. Other dock props and boarder
+identity remain exploratory in the
+[reference pack](../art/concepts/station-escape-ship-combat-v1/README.md).
 
 The station extension uses `kit.station.escape.v1`: [brief](../art/briefs/station-escape-v1.md).
