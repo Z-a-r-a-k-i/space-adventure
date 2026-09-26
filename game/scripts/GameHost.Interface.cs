@@ -107,7 +107,7 @@ public partial class GameHost
         return view;
     }
 
-    private IEnumerable<Rect2> FieldHudBounds() => new Control[] { _objectivePanel, _pauseButton, _pauseLabel,
+    private IEnumerable<Rect2> FieldHudBounds() => new Control[] { _objectivePanel, _tipCard, _pauseButton, _pauseLabel,
         _crewCluster, _actionPanel, _controlsButton, _outcomePanel, _feedbackLabel }
         .Where(control => control.IsVisibleInTree()).Select(control => control.GetGlobalRect().Grow(8));
 
@@ -147,6 +147,9 @@ public partial class GameHost
             ShowWorldHealth(hostile.Id, enemy.Root, hostile.Combat.Health, hostile.Combat.MaximumHealth,
                 true, hostile.DisplayName.Replace("Security ", "", StringComparison.Ordinal), status,
                 enemy.Sentry is null ? 1.85f : 2.1f, occupied);
+            // The bar fades in with the model that sight has just revealed.
+            var reveal = RevealAlpha(hostile.Id);
+            _worldHealth[hostile.Id].Root.Modulate = _worldHealth[hostile.Id].Leader.Modulate = new Color(1, 1, 1, reveal);
         }
     }
 

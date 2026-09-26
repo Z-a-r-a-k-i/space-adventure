@@ -61,6 +61,14 @@ internal static class TacticalUi
         Color = color, CustomMinimumSize = new Vector2(0, 2), MouseFilter = Control.MouseFilterEnum.Ignore,
     };
 
+    /// <summary>Translucent tracker card with a left accent rule: objectives and tips that should not wall off the world.</summary>
+    public static StyleBoxFlat TrackerBox(Color accent, int horizontal = 14, int vertical = 9) => new()
+    {
+        BgColor = new Color("0a141b", .8f), BorderColor = accent, BorderWidthLeft = 2,
+        ContentMarginLeft = horizontal, ContentMarginRight = horizontal, ContentMarginTop = vertical, ContentMarginBottom = vertical + 1,
+        ShadowColor = new Color(0, 0, 0, .28f), ShadowSize = 6, ShadowOffset = new Vector2(0, 2),
+    };
+
     public static StyleBoxFlat FieldPanel(Color accent, bool bottom = false, int margin = 12)
     {
         var box = Box("101c22", accent.ToHtml(false), margin);

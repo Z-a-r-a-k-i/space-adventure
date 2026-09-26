@@ -101,6 +101,11 @@ do not inherit the animation multiplier.
   fall finish while the core stays paused. Retry resets that clock and pose.
   Hostile humanoids snap to their standing pose during encounter readying so
   retry cannot retain a frozen blend from a previous fall.
+- Hostiles and the sentry carry a warm screen-space silhouette outline and
+  crew a fainter cool one (crew weapons excluded), so dark armour reads against
+  the deck. It fades from the observed defeat tick and returns on retry or
+  victory recovery; tints and widths live in
+  [GameHost.Atmosphere.cs](../game/scripts/GameHost.Atmosphere.cs).
 
 Victory recovery returns fallen crew to travel presentation. The cutter's
 boarding entrance and engines use observed route completion to stage boarding,

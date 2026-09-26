@@ -16,31 +16,62 @@ public sealed partial class CombatSessionTests
         .Select((encounter, index) =>
         {
             double center = ExtensionCenters[index];
-            var crew = encounter.RequiredCrewIds!.Select((id, crewIndex) => new StationActorPlacement(id, new WorldPosition(center - 4, 0, 7 + crewIndex))).ToArray();
             var hostiles = encounter.HostileIds.Select((id, enemyIndex) => new StationHostilePlacement(id,
                 new WorldPosition(center + 1 + enemyIndex / 3 * 2, 0, 5.5 + enemyIndex % 3 * 2.5), new WorldPosition(-1, 0, 0))).ToArray();
-            return new StationEncounterPlacement(encounter.Id, new WorldPosition(center - 4, 0, 8), 3,
-                crew[0].Position, hostiles[0].Position, CrewRestartPositions: crew, HostilePlacements: hostiles);
+            return new StationEncounterPlacement(encounter.Id, hostiles[0].Position, HostilePlacements: hostiles);
         }).ToArray();
 
-    private static GameSession CreateAtMedicEncounter(StationEncounterPlacement? servicePlacement = null, StationRouteDefinition? definition = null, ISpatialPathfinder? pathfinder = null)
+    // The former authored restart line five metres in front of each extension room's hostiles.
+    private static CrewStart ExtensionCrewStart(int index)
+    {
+        var x = ExtensionCenters[index] - 4.0;
+        return new CrewStart(new WorldPosition(x, 0, 7), new WorldPosition(x, 0, 8), new WorldPosition(x, 0, 9));
+    }
+
+    private static GameSession CreateAtMedicEncounter(StationEncounterPlacement? servicePlacement = null, StationRouteDefinition? definition = null,
+        ISpatialPathfinder? pathfinder = null, CrewStart? crew = null)
+    {
+        crew ??= ExtensionCrewStart(0);
+        var session = CreateBeforeMedicRecruitment(servicePlacement, definition, pathfinder, crew);
+        RecruitMedic(session);
+        // Recruitment sets the service objective; the waiting team spots the crew on the next tick.
+        Assert.Equal(1, session.AdvanceTicks(1));
+        var route = Observe(session);
+        Assert.Equal(TestDefinition.Combat.Encounters[2].Id, route.Encounter!.Id);
+        Assert.Equal(EncounterPhase.Readying, route.Encounter.Phase);
+        Assert.True(session.IsPaused);
+        Assert.Equal(new[] { crew.Protagonist, crew.Protector, crew.Medic!.Value }, route.Party.Select(actor => actor.Position));
+        return session;
+    }
+
+    /// <summary>
+    /// Wins the party fight and stages the crew at <paramref name="crew"/>, with the Vanguard in dialogue with the
+    /// Medic. The service fight cannot start before she joins, so nothing is spotted while the crew take position.
+    /// </summary>
+    private static GameSession CreateBeforeMedicRecruitment(StationEncounterPlacement? servicePlacement, StationRouteDefinition? definition,
+        ISpatialPathfinder? pathfinder, CrewStart crew, IEnumerable<StationVisionBlocker>? blockers = null)
     {
         var placements = ExtensionEncounterPlacements();
         if (servicePlacement is not null) { placements[0] = servicePlacement; }
-        var session = CreateAtPartyEncounter(definition: definition, extensionPlacements: placements, pathfinder: pathfinder);
+        var session = CreateAtPartyEncounter(definition: definition, extensionPlacements: placements, pathfinder: pathfinder,
+            serviceCrew: crew, blockers: blockers);
         WinAuthoredEncounter(session);
+        MoveAndArrive(session, ProtectorId, crew.Protector);
         CompleteInteraction(session, MedicInteractionId, "medic.recruit");
-        Assert.True(session.Execute(new ChooseDialogueResponseCommand(new CommandId("medic.join"), ProtagonistId,
-            MedicInteractionId, new DialogueResponseId("response.recruit_medic"))).Accepted);
-        EnterExtensionEncounter(session, 0);
+        Assert.Equal(crew.Protagonist, Observe(session).Protagonist.Position);
         return session;
     }
+
+    private static void RecruitMedic(GameSession session) =>
+        Assert.True(session.Execute(new ChooseDialogueResponseCommand(new CommandId("medic.join"), ProtagonistId,
+            MedicInteractionId, new DialogueResponseId("response.recruit_medic"))).Accepted);
 
     private static void EnterExtensionEncounter(GameSession session, int index)
     {
         var placement = ExtensionEncounterPlacements()[index];
+        // Walk toward the next room; its guards stop the crew wherever they first see one of them.
         Assert.True(session.Execute(new MovePartyCommand(new CommandId($"extension.enter.{index}"),
-            [ProtagonistId, ProtectorId, MedicId], placement.TriggerCenter)).Accepted);
+            [ProtagonistId, ProtectorId, MedicId], ExtensionCrewStart(index).Protector)).Accepted);
         session.Execute(new SetPauseCommand(new CommandId("extension.travel.resume"), false));
         AdvanceUntil(session, route => route.Encounter!.Id == placement.EncounterId, 1000);
         Assert.Equal(EncounterPhase.Readying, Observe(session).Encounter!.Phase);
@@ -150,7 +181,7 @@ public sealed partial class CombatSessionTests
     }
 
     [Fact]
-    public void ThirdCrewMustReachTriggerAndFourVictoriesUnlockAirlockThenBoardingCompletesOnce()
+    public void SpottingAnyRecruitedCrewStartsTheFightForAllAndFourVictoriesUnlockAirlockThenBoardingCompletesOnce()
     {
         var session = CreateAtMedicEncounter();
         for (var index = 0; index < 4; index++)
@@ -166,11 +197,20 @@ public sealed partial class CombatSessionTests
                 Assert.All(actor.Combat.Cooldowns, cooldown => Assert.Equal(0, cooldown.RemainingTicks));
             });
             if (index == 3) { break; }
+            // Required crew need only be recruited and alive: the duo walking into view starts the
+            // next fight for all three, and the Medic fights from where she was left behind.
             var next = ExtensionEncounterPlacements()[index + 1];
-            session.Execute(new MovePartyCommand(new CommandId("duo.only"), [ProtagonistId, ProtectorId], next.TriggerCenter));
-            session.AdvanceTicks(600);
-            Assert.Equal(victory.Encounter!.Id, Observe(session).Encounter!.Id);
-            EnterExtensionEncounter(session, index + 1);
+            var medic = victory.Party.Single(actor => actor.Id == MedicId);
+            Assert.True(session.Execute(new MovePartyCommand(new CommandId($"duo.only.{index}"), [ProtagonistId, ProtectorId],
+                ExtensionCrewStart(index + 1).Protector)).Accepted);
+            AdvanceUntil(session, route => route.Encounter!.Id == next.EncounterId, 1000);
+            var started = Observe(session);
+            Assert.Equal(EncounterPhase.Readying, started.Encounter!.Phase);
+            Assert.True(session.IsPaused);
+            Assert.Contains(started.Encounter.SpottedActorId, new EntityId?[] { ProtagonistId, ProtectorId });
+            Assert.Equal(medic.Position, started.Party.Single(actor => actor.Id == MedicId).Position);
+            Assert.Equal(3, started.Party.Count);
+            Assert.All(started.Hostiles!, hostile => Assert.Equal(EncounterPhase.Readying, hostile.EncounterPhase));
         }
         Assert.True(FindInteraction(Observe(session), new EntityId("interaction.evacuation_airlock")).CanInteract);
         CompleteInteraction(session, new EntityId("interaction.evacuation_airlock"), "airlock.open");
@@ -185,11 +225,14 @@ public sealed partial class CombatSessionTests
     public void ExtensionDefeatRetryPreservesRecruitsProgressAndClearsFieldProjectilesAndOrders()
     {
         var session = CreateAtMedicEncounter();
+        var spotted = Observe(session).Party.Select(actor => (actor.Id, actor.Position, actor.Facing)).ToArray();
         ResumeIntoActiveCombat(session);
         var position = Observe(session).Party.Single(actor => actor.Id == MedicId).Position;
+        Assert.True(session.Execute(new MoveActorCommand(new CommandId("retry.fall.back"), ProtagonistId, new WorldPosition(10, 0, 4))).Accepted);
         Assert.True(session.Execute(new UseAbilityCommand(new CommandId("retry.field"), MedicId, FieldId, new PositionAbilityTarget(position))).Accepted);
         AdvanceUntil(session, route => route.Encounter!.HealingField is not null, 60);
         AdvanceUntil(session, route => route.Encounter!.Phase == EncounterPhase.Defeat, 1800);
+        Assert.NotEqual(spotted[0].Position, Observe(session).Protagonist.Position);
         var id = Observe(session).Encounter!.Id;
         Assert.True(session.Execute(new RestartEncounterCommand(new CommandId("extension.retry"), id)).Accepted);
         var retry = Observe(session);
@@ -199,8 +242,9 @@ public sealed partial class CombatSessionTests
         Assert.Null(retry.Encounter.HealingField);
         Assert.Empty(retry.Encounter.Projectiles!);
         Assert.Equal(RoutePowerMode.ServiceRerouted, retry.RoutePowerMode);
-        // The retry restores the authored start of this encounter only: every crew
-        // member and hostile is back at its placement with no carried-over orders.
+        // The retry restores the start of this encounter only: every crew member is back where the
+        // service team first saw it, every hostile at its placement, with no carried-over orders.
+        Assert.Equal(spotted, retry.Party.Select(actor => (actor.Id, actor.Position, actor.Facing)));
         var placement = ExtensionEncounterPlacements()[0];
         Assert.Equal(placement.HostilePlacements!.Select(hostile => hostile.ActorId.Value).Order(),
             retry.Hostiles!.Select(hostile => hostile.Id.Value).Order());
@@ -213,7 +257,6 @@ public sealed partial class CombatSessionTests
         });
         Assert.All(retry.Party, actor =>
         {
-            Assert.Equal(placement.CrewRestartPositions!.Single(item => item.ActorId == actor.Id).Position, actor.Position);
             Assert.Equal(actor.Combat!.MaximumHealth, actor.Combat.Health);
             Assert.Null(actor.CurrentAction);
             Assert.Null(actor.PendingAction);
@@ -242,13 +285,15 @@ public sealed partial class CombatSessionTests
 
         // The airlock needs every authored encounter, so each must be placed.
         Rejected(With(extensions.Skip(1)));
-        // Per-ID hostile placements still need somewhere to restart the crew on retry.
-        Rejected(With(extensions, full.PartyEncounter! with
+        // No crew placements are needed: retry restores the crew where a hostile first saw them.
+        var perIdParty = full.PartyEncounter! with
         {
-            CompanionRestartPosition = null,
             HostilePlacements = [new(MainEnforcerId, new WorldPosition(-2, 0, 8), new WorldPosition(0, 0, -1)),
                 new(SentryId, new WorldPosition(2.5, 0, 10.5), new WorldPosition(0, 0, -1))],
-        }));
+        };
+        Assert.NotNull(GameSession.CreateStationRoute(TestDefinition, With(extensions, perIdParty), new DirectPathfinder()));
+        // Every later encounter still needs a per-ID hostile placement.
+        Rejected(With(extensions.Select((placement, index) => index == 0 ? placement with { HostilePlacements = null } : placement)));
         // A hostile inside a sight blocker could never be seen, targeted, or defeated.
         var spawn = extensions[0].HostilePlacements![0].Position;
         Rejected(With(extensions, blockers: [new StationVisionBlocker("test.spawn.wall",

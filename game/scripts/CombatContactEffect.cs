@@ -11,6 +11,8 @@ public partial class CombatContactEffect : Node3D
     private readonly List<(MeshInstance3D View, Vector3 Direction)> _sparks = [];
     private MeshInstance3D _ring = null!;
     private MeshInstance3D _core = null!;
+    private OmniLight3D? _flash;
+    private float _flashEnergy;
     private CombatSignature _signature;
     private float _radius;
     private bool _floor;
@@ -46,6 +48,18 @@ public partial class CombatContactEffect : Node3D
             spark.Basis = new Basis(new Quaternion(Vector3.Up, ray));
             _sparks.Add((spark, ray));
         }
+        if (!floor)
+        {
+            // Brief local flash on muzzles and impacts; it decays with the shared presentation clock.
+            _flashEnergy = signature switch
+            {
+                CombatSignature.Shotgun => 2.4f, CombatSignature.Muzzle => 2.2f, CombatSignature.Block => 2f,
+                CombatSignature.Melee => 1.5f, _ => 1.8f,
+            };
+            _flash = new OmniLight3D { LightColor = new Color(Tint(signature)), LightEnergy = _flashEnergy,
+                OmniRange = signature == CombatSignature.Muzzle ? 1.6f : 2.2f, ShadowEnabled = false };
+            AddChild(_flash);
+        }
         Sample(0);
     }
 
@@ -64,6 +78,7 @@ public partial class CombatContactEffect : Node3D
         _core.Scale = Vector3.One * Math.Max(.01f, 1 - p * 2);
         _core.Transparency = Math.Clamp(p * 2, 0, 1);
         _ring.Visible = _signature is not CombatSignature.Muzzle;
+        if (_flash is not null) { _flash.LightEnergy = _flashEnergy * (1 - p) * (1 - p); }
         var size = floor ? _radius * (.15f + .85f * Mathf.Ease(p, .55f)) : reach * (.35f + p);
         _ring.Scale = new Vector3(size, 1, size);
         _ring.Transparency = p * p;
@@ -90,13 +105,7 @@ public partial class CombatContactEffect : Node3D
     private static (Mesh Spark, Mesh Ring, Mesh Core) GetResources(CombatSignature signature)
     {
         if (Resources.TryGetValue(signature, out var cached)) { return cached; }
-        var tint = signature switch
-        {
-            CombatSignature.Shotgun => "f5c581", CombatSignature.Melee => "ffd2ab",
-            CombatSignature.Sentry => "ff7659", CombatSignature.Block => "bbfff1",
-            CombatSignature.Interrupt => "d5b8ff", CombatSignature.Burst => "9efff5",
-            CombatSignature.Taunt => "f6bc72", CombatSignature.Barrier => "78dcff", _ => "86e9ff",
-        };
+        var tint = Tint(signature);
         var material = new StandardMaterial3D
         {
             ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
@@ -117,4 +126,12 @@ public partial class CombatContactEffect : Node3D
         var core = new SphereMesh { Radius = .065f, Height = .13f, RadialSegments = 8, Rings = 4, Material = material };
         cached = (spark, ring, core); Resources.Add(signature, cached); return cached;
     }
+
+    private static string Tint(CombatSignature signature) => signature switch
+    {
+        CombatSignature.Shotgun => "f5c581", CombatSignature.Melee => "ffd2ab",
+        CombatSignature.Sentry => "ff7659", CombatSignature.Block => "bbfff1",
+        CombatSignature.Interrupt => "d5b8ff", CombatSignature.Burst => "9efff5",
+        CombatSignature.Taunt => "f6bc72", CombatSignature.Barrier => "78dcff", _ => "86e9ff",
+    };
 }

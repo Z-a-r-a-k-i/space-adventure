@@ -74,27 +74,27 @@
   },
   "enemy": {
     "display_name": "Interceptor",
-    "hull": 22,
+    "hull": 16,
     "systems": [
       { "id": "weapons", "max_power": 4, "power": 4, "x": 0, "z": -2.55, "width": 2.0, "depth": 1.9 },
-      { "id": "shields", "max_power": 2, "power": 2, "x": 0, "z": -0.2, "width": 2.5, "depth": 2.2 },
+      { "id": "shields", "max_power": 2, "power": 1, "x": 0, "z": -0.2, "width": 2.5, "depth": 2.2 },
       { "id": "engines", "max_power": 2, "power": 2, "x": 0, "z": 2.25, "width": 2.7, "depth": 2.0 }
     ],
     "weapons": [
-      { "id": "pulse_laser", "display_name": "Pulse Laser", "kind": "laser", "power": 2, "charge_seconds": 8, "shots": 3, "damage": 1,
+      { "id": "pulse_laser", "display_name": "Pulse Laser", "kind": "laser", "power": 2, "charge_seconds": 11, "shots": 3, "damage": 1,
         "travel_seconds": 1.5, "shot_spacing_seconds": 0.22, "pierces_shields": false, "evadable": true, "ammo": -1,
-        "fire_chance_percent": 10, "breach_chance_percent": 0,
+        "fire_chance_percent": 5, "breach_chance_percent": 0,
         "target_sequence": [ "weapons", "shields", "engines", "life_support", "shields", "weapons" ],
         "payload_sequence": [ "normal" ] },
-      { "id": "hazard_missile", "display_name": "Hazard Missile", "kind": "missile", "power": 1, "charge_seconds": 14, "shots": 1, "damage": 1,
-        "travel_seconds": 2.2, "shot_spacing_seconds": 0, "pierces_shields": true, "evadable": false, "ammo": 6,
+      { "id": "hazard_missile", "display_name": "Hazard Missile", "kind": "missile", "power": 1, "charge_seconds": 12, "shots": 1, "damage": 1,
+        "travel_seconds": 2.2, "shot_spacing_seconds": 0, "pierces_shields": true, "evadable": false, "ammo": 2,
         "fire_chance_percent": 0, "breach_chance_percent": 0,
-        "target_sequence": [ "life_support", "shields", "weapons", "engines", "life_support", "shields" ],
-        "payload_sequence": [ "incendiary", "breach", "incendiary", "breach", "incendiary", "breach" ] }
+        "target_sequence": [ "engines", "shields" ],
+        "payload_sequence": [ "incendiary", "breach" ] }
     ],
     "shield": { "regen_seconds_per_layer": 2, "regen_delay_seconds": 1.5 },
     "evasion_percent_per_engine_power": 6,
     "evasion_max_percent": 30,
-    "repair": { "reserve_bars": 8, "seconds_per_bar": 4, "priority": [ "weapons", "shields", "engines" ] }
+    "repair": { "reserve_bars": 4, "seconds_per_bar": 6, "priority": [ "weapons", "shields", "engines" ] }
   }
 }

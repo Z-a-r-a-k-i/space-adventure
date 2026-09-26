@@ -1,4 +1,4 @@
-[gd_scene load_steps=125 format=3]
+[gd_scene load_steps=128 format=3]
 
 [ext_resource type="Script" path="res://scripts/GameHost.cs" id="1_host"]
 [ext_resource type="Script" path="res://scripts/TacticalCameraController.cs" id="2_camera"]
@@ -24,10 +24,19 @@
 [ext_resource type="PackedScene" path="res://Assets/Published/character.enemy.ranged_enforcer.v1.glb" id="escape_ranged"]
 [ext_resource type="PackedScene" path="res://Assets/Published/ship.escape_cutter.v1.glb" id="escape_cutter"]
 [ext_resource type="PackedScene" path="res://Assets/Published/kit.station.escape.v1.glb" id="escape_escape"]
+[ext_resource type="Shader" path="res://shaders/station_interior_sky.gdshader" id="station_sky_shader"]
+
+[sub_resource type="ShaderMaterial" id="SkyMaterial_station"]
+shader = ExtResource("station_sky_shader")
+
+[sub_resource type="Sky" id="Sky_station"]
+sky_material = SubResource("SkyMaterial_station")
+radiance_size = 2
 
 [sub_resource type="Environment" id="Environment_station"]
 background_mode = 1
 background_color = Color(0.026, 0.040, 0.057, 1)
+sky = SubResource("Sky_station")
 fog_enabled = true
 fog_mode = 1
 fog_light_color = Color(0.14, 0.18, 0.23, 1)
@@ -40,17 +49,26 @@ fog_depth_end = 85.0
 fog_depth_curve = 1.6
 ambient_light_source = 3
 ambient_light_color = Color(0.51, 0.53, 0.56, 1)
-ambient_light_energy = 0.55
-tonemap_mode = 2
+ambient_light_sky_contribution = 1.0
+ambient_light_energy = 0.8
+reflected_light_source = 2
+tonemap_mode = 4
+tonemap_exposure = 1.0
 ssao_enabled = true
 ssao_radius = 0.65
-ssao_intensity = 1.35
+ssao_intensity = 1.6
 ssao_detail = 0.5
+ssil_enabled = true
+ssil_radius = 4.0
+ssil_intensity = 1.2
 glow_enabled = true
-glow_intensity = 0.45
-glow_strength = 0.7
+glow_intensity = 0.55
+glow_strength = 0.85
 glow_bloom = 0.0
-glow_hdr_threshold = 1.6
+glow_hdr_threshold = 0.9
+adjustment_enabled = true
+adjustment_contrast = 1.08
+adjustment_saturation = 1.12
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_route"]
 vertices = PackedVector3Array(-12.7, 0, 4.3, -7.3, 0, 4.3, -7.3, 0, 9.7, -12.7, 0, 9.7, -4.7, 0, -2.7, 1.7, 0, -2.7, 1.7, 0, 3.3, -4.7, 0, 3.3, 5.7, 0, 5.3, 11.7, 0, 5.3, 11.7, 0, 10.7, 5.7, 0, 10.7, -14.7, 0, -3.7, -12.5, 0, -3.7, -12.5, 0, -1.1, -14.7, 0, -1.1, -12.5, 0, 1.3, -14.7, 0, 1.3, -12.5, 0, 3.7, -14.7, 0, 3.7, -8.8, 0, -3.7, -8.8, 0, -1.1, -8.8, 0, 1.3, -8.8, 0, 3.7, -5.3, 0, -3.7, -5.3, 0, -1.1, -5.3, 0, 1.3, -5.3, 0, 3.7, -5.7, 0, 3.3, -1.3, 0, 3.3, -1.3, 0, 6.7, -5.7, 0, 6.7, -1.3, 0, 10, -5.7, 0, 10, -1.3, 0, 12.7, -5.7, 0, 12.7, 1.3, 0, 3.3, 1.3, 0, 6.7, 1.3, 0, 10, 1.3, 0, 12.7, 5.7, 0, 3.3, 5.7, 0, 6.7, 5.7, 0, 10, 5.7, 0, 12.7, 12.4, 0, -0.6, 16.6, 0, -0.6, 16.6, 0, 3.6, 12.4, 0, 3.6, 16.6, 0, 8.4, 12.4, 0, 8.4, 16.6, 0, 12.6, 12.4, 0, 12.6, 20.4, 0, -0.6, 20.4, 0, 3.6, 20.4, 0, 8.4, 20.4, 0, 12.6, 23.6, 0, -0.6, 23.6, 0, 3.6, 23.6, 0, 8.4, 23.6, 0, 12.6, 26.4, 0, -3.6, 29.6, 0, -3.6, 29.6, 0, -0.9, 26.4, 0, -0.9, 29.6, 0, 2.4, 26.4, 0, 2.4, 29.6, 0, 4.6, 26.4, 0, 4.6, 29.6, 0, 7.9, 26.4, 0, 7.9, 29.6, 0, 9.6, 26.4, 0, 9.6, 32.4, 0, -3.6, 32.4, 0, -0.9, 32.4, 0, 2.4, 32.4, 0, 4.6, 32.4, 0, 7.9, 32.4, 0, 9.6, 32.6, 0, -3.6, 32.6, 0, -0.9, 32.6, 0, 2.4, 32.6, 0, 4.6, 32.6, 0, 7.9, 32.6, 0, 9.6, 35.4, 0, -3.6, 35.4, 0, -0.9, 35.4, 0, 2.4, 35.4, 0, 4.6, 35.4, 0, 7.9, 35.4, 0, 9.6, 37.6, 0, -3.6, 37.6, 0, -0.9, 37.6, 0, 2.4, 37.6, 0, 4.6, 37.6, 0, 7.9, 37.6, 0, 9.6, 40.4, 0, 4.4, 43.6, 0, 4.4, 43.6, 0, 8.6, 40.4, 0, 8.6, 43.6, 0, 12.9, 40.4, 0, 12.9, 43.6, 0, 17.6, 40.4, 0, 17.6, 48.4, 0, 4.4, 48.4, 0, 8.6, 48.4, 0, 12.9, 48.4, 0, 17.6, 51.6, 0, 4.4, 51.6, 0, 8.6, 51.6, 0, 12.9, 51.6, 0, 17.6, 54.4, 0, 4.4, 59.6, 0, 4.4, 59.6, 0, 7.6, 54.4, 0, 7.6, 59.6, 0, 12.4, 54.4, 0, 12.4, 59.6, 0, 14.6, 54.4, 0, 14.6, 59.6, 0, 17.4, 54.4, 0, 17.4, 59.6, 0, 19.6, 54.4, 0, 19.6, 62.4, 0, 4.4, 62.4, 0, 7.6, 62.4, 0, 12.4, 62.4, 0, 14.6, 62.4, 0, 17.4, 62.4, 0, 19.6, 64.6, 0, 4.4, 64.6, 0, 7.6, 64.6, 0, 12.4, 64.6, 0, 14.6, 64.6, 0, 17.4, 64.6, 0, 19.6, 68.4, 0, 4.4, 68.4, 0, 7.6, 68.4, 0, 12.4, 68.4, 0, 14.6, 68.4, 0, 17.4, 68.4, 0, 19.6, 71.6, 0, 4.4, 71.6, 0, 7.6, 71.6, 0, 12.4, 71.6, 0, 14.6, 71.6, 0, 17.4, 71.6, 0, 19.6, 74.4, 0, 2.4, 77.2, 0, 2.4, 77.2, 0, 13.6, 74.4, 0, 13.6)
@@ -366,7 +384,7 @@ environment = SubResource("Environment_station")
 [node name="KeyLight" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-55, -35, 0)
 light_color = Color(0.94, 0.94, 1, 1)
-light_energy = 0.70
+light_energy = 0.4
 shadow_enabled = true
 
 [node name="StartRoomLight" type="OmniLight3D" parent="."]
@@ -431,6 +449,148 @@ position = Vector3(-1.5, 2.1, -2.35)
 light_color = Color(1, 0.64, 0.32, 1)
 light_energy = 0.85
 omni_range = 3.0
+
+[node name="LightPools" type="Node3D" parent="."]
+
+[node name="ServicePoolWest" type="SpotLight3D" parent="LightPools"]
+position = Vector3(15.5, 6.5, 3)
+rotation_degrees = Vector3(-90, 0, 0)
+light_color = Color(1, 0.93, 0.82, 1)
+light_energy = 9.0
+spot_range = 9.0
+spot_angle = 34.0
+spot_angle_attenuation = 1.4
+
+[node name="ServicePoolEast" type="SpotLight3D" parent="LightPools"]
+position = Vector3(20.5, 6.5, 9.5)
+rotation_degrees = Vector3(-90, 0, 0)
+light_color = Color(1, 0.93, 0.82, 1)
+light_energy = 9.0
+spot_range = 9.0
+spot_angle = 34.0
+spot_angle_attenuation = 1.4
+
+[node name="SecurityPoolNorth" type="SpotLight3D" parent="LightPools"]
+position = Vector3(30, 6.5, 5.5)
+rotation_degrees = Vector3(-90, 0, 0)
+light_color = Color(1, 0.93, 0.82, 1)
+light_energy = 9.0
+spot_range = 9.0
+spot_angle = 34.0
+spot_angle_attenuation = 1.4
+
+[node name="SecurityPoolSouth" type="SpotLight3D" parent="LightPools"]
+position = Vector3(35, 6.5, 0)
+rotation_degrees = Vector3(-90, 0, 0)
+light_color = Color(1, 0.93, 0.82, 1)
+light_energy = 9.0
+spot_range = 9.0
+spot_angle = 34.0
+spot_angle_attenuation = 1.4
+
+[node name="DockPoolNorth" type="SpotLight3D" parent="LightPools"]
+position = Vector3(43.5, 6.5, 14.5)
+rotation_degrees = Vector3(-90, 0, 0)
+light_color = Color(1, 0.93, 0.82, 1)
+light_energy = 9.0
+spot_range = 9.0
+spot_angle = 34.0
+spot_angle_attenuation = 1.4
+
+[node name="DockPoolSouth" type="SpotLight3D" parent="LightPools"]
+position = Vector3(49, 6.5, 7.5)
+rotation_degrees = Vector3(-90, 0, 0)
+light_color = Color(1, 0.93, 0.82, 1)
+light_energy = 9.0
+spot_range = 9.0
+spot_angle = 34.0
+spot_angle_attenuation = 1.4
+
+[node name="LaunchPoolWest" type="SpotLight3D" parent="LightPools"]
+position = Vector3(58.5, 6.5, 15.5)
+rotation_degrees = Vector3(-90, 0, 0)
+light_color = Color(1, 0.93, 0.82, 1)
+light_energy = 9.0
+spot_range = 9.0
+spot_angle = 34.0
+spot_angle_attenuation = 1.4
+
+[node name="LaunchPoolCentre" type="SpotLight3D" parent="LightPools"]
+position = Vector3(65, 6.5, 9)
+rotation_degrees = Vector3(-90, 0, 0)
+light_color = Color(1, 0.93, 0.82, 1)
+light_energy = 9.0
+spot_range = 9.0
+spot_angle = 34.0
+spot_angle_attenuation = 1.4
+
+[node name="LaunchPoolEast" type="SpotLight3D" parent="LightPools"]
+position = Vector3(69.5, 6.5, 16)
+rotation_degrees = Vector3(-90, 0, 0)
+light_color = Color(1, 0.93, 0.82, 1)
+light_energy = 9.0
+spot_range = 9.0
+spot_angle = 34.0
+spot_angle_attenuation = 1.4
+
+[node name="ApronPoolCutter" type="SpotLight3D" parent="LightPools"]
+position = Vector3(82, 7.5, 8)
+rotation_degrees = Vector3(-90, 0, 0)
+light_color = Color(1, 0.93, 0.82, 1)
+light_energy = 9.0
+spot_range = 10.0
+spot_angle = 36.0
+spot_angle_attenuation = 1.4
+
+[node name="PitGlows" type="Node3D" parent="."]
+
+[node name="SoloPit" type="OmniLight3D" parent="PitGlows"]
+position = Vector3(-10.65, -0.7, 0.1)
+light_color = Color(1, 0.55, 0.24, 1)
+light_energy = 2.5
+omni_range = 3.0
+
+[node name="PartyPit" type="OmniLight3D" parent="PitGlows"]
+position = Vector3(0, -0.7, 8.35)
+light_color = Color(0.28, 0.82, 0.9, 1)
+light_energy = 2.5
+omni_range = 3.0
+
+[node name="ServicePit" type="OmniLight3D" parent="PitGlows"]
+position = Vector3(18.5, -0.7, 6)
+light_color = Color(0.28, 0.82, 0.9, 1)
+light_energy = 2.5
+omni_range = 3.2
+
+[node name="SecurityPitWest" type="OmniLight3D" parent="PitGlows"]
+position = Vector3(31, -0.7, 0.75)
+light_color = Color(1, 0.55, 0.24, 1)
+light_energy = 2.2
+omni_range = 2.6
+
+[node name="SecurityPitEast" type="OmniLight3D" parent="PitGlows"]
+position = Vector3(34, -0.7, 6.25)
+light_color = Color(1, 0.55, 0.24, 1)
+light_energy = 2.2
+omni_range = 2.6
+
+[node name="DockPit" type="OmniLight3D" parent="PitGlows"]
+position = Vector3(46, -0.7, 10.75)
+light_color = Color(0.28, 0.82, 0.9, 1)
+light_energy = 2.5
+omni_range = 3.2
+
+[node name="LaunchPitWest" type="OmniLight3D" parent="PitGlows"]
+position = Vector3(61, -0.7, 10)
+light_color = Color(1, 0.55, 0.24, 1)
+light_energy = 2.2
+omni_range = 3.0
+
+[node name="LaunchPitEast" type="OmniLight3D" parent="PitGlows"]
+position = Vector3(66.5, -0.7, 16)
+light_color = Color(0.28, 0.82, 0.9, 1)
+light_energy = 2.2
+omni_range = 2.6
 
 [node name="NavigationRegion" type="NavigationRegion3D" parent="."]
 navigation_mesh = SubResource("NavigationMesh_route")
@@ -569,27 +729,16 @@ metadata/stable_id = "interaction.service_terminal"
 [node name="AirlockApproach" type="Marker3D" parent="Markers"]
 position = Vector3(71.55, 0, 8)
 metadata/stable_id = "interaction.evacuation_airlock"
-[node name="SoloEncounterTrigger" type="Marker3D" parent="Markers"]
+[node name="SoloEncounterEntry" type="Marker3D" parent="Markers"]
 position = Vector3(-10, 0, 2.75)
 metadata/stable_id = "encounter.station.solo_tutorial"
-metadata/trigger_radius_meters = 0.75
-[node name="SoloEncounterRestart" type="Marker3D" parent="Markers"]
-position = Vector3(-10, 0, 2.35)
-metadata/stable_id = "encounter.station.solo_tutorial.restart"
 [node name="SecurityEnforcerSpawn" type="Marker3D" parent="Markers"]
 position = Vector3(-13.3, 0, 0.6)
 metadata/stable_id = "actor.enemy.security_enforcer.solo"
 
-[node name="PartyEncounterTrigger" type="Marker3D" parent="Markers"]
+[node name="PartyEncounterEntry" type="Marker3D" parent="Markers"]
 position = Vector3(0, 0, 5)
 metadata/stable_id = "encounter.station.party"
-metadata/trigger_radius_meters = 2.0
-[node name="PartyVanguardRestart" type="Marker3D" parent="Markers"]
-position = Vector3(-0.55, 0, 4.5)
-metadata/stable_id = "encounter.station.party.vanguard"
-[node name="PartyProtectorRestart" type="Marker3D" parent="Markers"]
-position = Vector3(0.55, 0, 4.5)
-metadata/stable_id = "encounter.station.party.protector"
 [node name="MainEnforcerSpawn" type="Marker3D" parent="Markers"]
 position = Vector3(-2, 0, 8)
 metadata/stable_id = "actor.enemy.security_enforcer.main"
@@ -908,7 +1057,7 @@ metadata/stable_id = "interaction.escape_cutter.board"
 [node name="EscapeLight_service" type="OmniLight3D" parent="."]
 position = Vector3(18, 4, 6)
 light_color = Color(0.68, 0.78, 0.9, 1)
-light_energy = 2.2
+light_energy = 1.5
 omni_range = 14
 shadow_enabled = true
 [node name="EscapeSign_service" type="Label3D" parent="Environment/Wayfinding"]
@@ -922,7 +1071,7 @@ modulate = Color(0.42, 0.62, 0.67, 1)
 [node name="EscapeLight_security" type="OmniLight3D" parent="."]
 position = Vector3(32, 4, 3)
 light_color = Color(0.68, 0.78, 0.9, 1)
-light_energy = 2.2
+light_energy = 1.5
 omni_range = 14
 shadow_enabled = true
 [node name="EscapeSign_security" type="Label3D" parent="Environment/Wayfinding"]
@@ -936,7 +1085,7 @@ modulate = Color(0.42, 0.62, 0.67, 1)
 [node name="EscapeLight_dock" type="OmniLight3D" parent="."]
 position = Vector3(46, 4, 11)
 light_color = Color(0.68, 0.78, 0.9, 1)
-light_energy = 2.2
+light_energy = 1.5
 omni_range = 14
 shadow_enabled = true
 [node name="EscapeSign_dock" type="Label3D" parent="Environment/Wayfinding"]
@@ -950,7 +1099,7 @@ modulate = Color(0.42, 0.62, 0.67, 1)
 [node name="EscapeLight_launch" type="OmniLight3D" parent="."]
 position = Vector3(63, 4, 12)
 light_color = Color(0.68, 0.78, 0.9, 1)
-light_energy = 2.2
+light_energy = 1.5
 omni_range = 18
 shadow_enabled = true
 [node name="EscapeSign_launch" type="Label3D" parent="Environment/Wayfinding"]
@@ -964,7 +1113,7 @@ modulate = Color(0.42, 0.62, 0.67, 1)
 [node name="EscapeLight_apron" type="OmniLight3D" parent="."]
 position = Vector3(83, 4, 8)
 light_color = Color(0.68, 0.78, 0.9, 1)
-light_energy = 2.2
+light_energy = 1.5
 omni_range = 18
 shadow_enabled = true
 [node name="EscapeSign_apron" type="Label3D" parent="Environment/Wayfinding"]
@@ -1135,22 +1284,9 @@ metadata/stable_id = "interaction.service_door.launch"
 enabled = false
 start_position = Vector3(71.3, 0, 8)
 end_position = Vector3(74.7, 0, 8)
-[node name="EscapeTrigger_service" type="Marker3D" parent="Markers"]
+[node name="EscapeEntry_service" type="Marker3D" parent="Markers"]
 position = Vector3(14, 0, 8)
 metadata/stable_id = "encounter.station.service"
-metadata/trigger_radius_meters = 3.0
-[node name="service_crew0" type="Marker3D" parent="Markers"]
-position = Vector3(14, 0, 7)
-metadata/stable_id = "marker.service.crew0"
-
-[node name="service_crew1" type="Marker3D" parent="Markers"]
-position = Vector3(14, 0, 8)
-metadata/stable_id = "marker.service.crew1"
-
-[node name="service_crew2" type="Marker3D" parent="Markers"]
-position = Vector3(14, 0, 9)
-metadata/stable_id = "marker.service.crew2"
-
 [node name="Spawn_Escape_service_0" type="Marker3D" parent="Markers"]
 position = Vector3(17, 0, 10.5)
 metadata/stable_id = "actor.enemy.security_enforcer.service.1"
@@ -1232,22 +1368,9 @@ shape = SubResource("CapsuleShape_enforcer")
 position = Vector3(0, 0.045, 0)
 mesh = SubResource("TorusMesh_hostile")
 material_override = SubResource("Material_hostile")
-[node name="EscapeTrigger_security" type="Marker3D" parent="Markers"]
+[node name="EscapeEntry_security" type="Marker3D" parent="Markers"]
 position = Vector3(28, 0, 3)
 metadata/stable_id = "encounter.station.security"
-metadata/trigger_radius_meters = 3.0
-[node name="security_crew0" type="Marker3D" parent="Markers"]
-position = Vector3(28, 0, 2)
-metadata/stable_id = "marker.security.crew0"
-
-[node name="security_crew1" type="Marker3D" parent="Markers"]
-position = Vector3(28, 0, 3)
-metadata/stable_id = "marker.security.crew1"
-
-[node name="security_crew2" type="Marker3D" parent="Markers"]
-position = Vector3(28, 0, 4)
-metadata/stable_id = "marker.security.crew2"
-
 [node name="Spawn_Escape_security_0" type="Marker3D" parent="Markers"]
 position = Vector3(31, 0, 3.5)
 metadata/stable_id = "actor.enemy.security_enforcer.security.1"
@@ -1350,22 +1473,9 @@ shape = SubResource("CapsuleShape_enforcer")
 position = Vector3(0, 0.045, 0)
 mesh = SubResource("TorusMesh_hostile")
 material_override = SubResource("Material_hostile")
-[node name="EscapeTrigger_dock" type="Marker3D" parent="Markers"]
+[node name="EscapeEntry_dock" type="Marker3D" parent="Markers"]
 position = Vector3(42, 0, 7)
 metadata/stable_id = "encounter.station.dock"
-metadata/trigger_radius_meters = 3.0
-[node name="dock_crew0" type="Marker3D" parent="Markers"]
-position = Vector3(42, 0, 6)
-metadata/stable_id = "marker.dock.crew0"
-
-[node name="dock_crew1" type="Marker3D" parent="Markers"]
-position = Vector3(42, 0, 7)
-metadata/stable_id = "marker.dock.crew1"
-
-[node name="dock_crew2" type="Marker3D" parent="Markers"]
-position = Vector3(42, 0, 8)
-metadata/stable_id = "marker.dock.crew2"
-
 [node name="Spawn_Escape_dock_0" type="Marker3D" parent="Markers"]
 position = Vector3(45, 0, 6.5)
 metadata/stable_id = "actor.enemy.security_enforcer.dock.1"
@@ -1472,22 +1582,9 @@ shape = SubResource("CapsuleShape_enforcer")
 position = Vector3(0, 0.045, 0)
 mesh = SubResource("TorusMesh_hostile")
 material_override = SubResource("Material_hostile")
-[node name="EscapeTrigger_launch" type="Marker3D" parent="Markers"]
+[node name="EscapeEntry_launch" type="Marker3D" parent="Markers"]
 position = Vector3(56.5, 0, 13)
 metadata/stable_id = "encounter.station.launch"
-metadata/trigger_radius_meters = 3.0
-[node name="launch_crew0" type="Marker3D" parent="Markers"]
-position = Vector3(56.5, 0, 12)
-metadata/stable_id = "marker.launch.crew0"
-
-[node name="launch_crew1" type="Marker3D" parent="Markers"]
-position = Vector3(56.5, 0, 13)
-metadata/stable_id = "marker.launch.crew1"
-
-[node name="launch_crew2" type="Marker3D" parent="Markers"]
-position = Vector3(56.5, 0, 14)
-metadata/stable_id = "marker.launch.crew2"
-
 [node name="Spawn_Escape_launch_0" type="Marker3D" parent="Markers"]
 position = Vector3(61, 0, 14)
 metadata/stable_id = "actor.enemy.security_enforcer.launch.1"

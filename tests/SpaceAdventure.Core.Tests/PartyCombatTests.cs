@@ -42,7 +42,7 @@ public sealed partial class CombatSessionTests
     [Fact]
     public void BarrierInterceptsAnAlreadyFlyingShotWithoutErasingRecovery()
     {
-        var session = CreateAtPartyEncounter(CreatePartyPlacement() with { CompanionRestartPosition = new WorldPosition(-.4, 0, 5) });
+        var session = CreateAtPartyEncounter(crew: PartyCrewStart with { Protector = new WorldPosition(-.4, 0, 5) });
         Assert.True(Attack(session, ProtectorId, MainEnforcerId).Accepted);
         ResumeIntoActiveCombat(session);
         AdvanceUntil(session, route => route.Encounter!.Projectiles!.Count > 0, 120);
@@ -107,7 +107,7 @@ public sealed partial class CombatSessionTests
     [InlineData(-3, 1)]
     public void ShotsPassTheWrongSideOrOutsideTheBarrierWidth(double x, double facingZ)
     {
-        var session = CreateAtPartyEncounter(CreatePartyPlacement() with { CompanionRestartPosition = new WorldPosition(-.4, 0, 5) });
+        var session = CreateAtPartyEncounter(crew: PartyCrewStart with { Protector = new WorldPosition(-.4, 0, 5) });
         Assert.True(Barrier(session, new WorldPosition(x, 0, facingZ)).Accepted);
         ResumeIntoActiveCombat(session);
         AdvanceUntil(session, _ => session.EventsSince(0).Any(item => item.Detail is DamageAppliedEventDetail d && d.SourceId == SentryId), 150);
@@ -140,6 +140,7 @@ public sealed partial class CombatSessionTests
     public void OneDownedMemberDoesNotEndTheFightAndRetryPreservesRouteProgress()
     {
         var session = CreateAtPartyEncounter();
+        var spotted = Observe(session).Party.Select(actor => (actor.Id, actor.Position, actor.Facing)).ToArray();
         ResumeIntoActiveCombat(session);
         AdvanceUntil(session, route => route.Party.Any(actor => actor.Combat!.IsDefeated), 900);
         Assert.Equal(EncounterPhase.Active, Observe(session).Encounter!.Phase);
@@ -152,6 +153,7 @@ public sealed partial class CombatSessionTests
         Assert.Equal(RoutePowerMode.ServiceRerouted, route.RoutePowerMode);
         Assert.Equal(InteractionState.Completed, FindInteraction(route, SoloExitDoorId).State);
         Assert.Equal(2, route.Party.Count);
+        Assert.Equal(spotted, route.Party.Select(actor => (actor.Id, actor.Position, actor.Facing)));
         Assert.All(route.Party, actor => Assert.Equal(actor.Combat!.MaximumHealth, actor.Combat.Health));
         Assert.All(route.Hostiles!, hostile => Assert.Equal(hostile.Combat.MaximumHealth, hostile.Combat.Health));
         Assert.Null(route.Encounter.Barrier);
@@ -281,9 +283,15 @@ public sealed partial class CombatSessionTests
             new BarrierAbilityTarget(position ?? new WorldPosition(Observe(session).Party[1].Position.X, Observe(session).Party[1].Position.Y, Observe(session).Party[1].Position.Z + .8), facing ?? new WorldPosition(0, 0, 1))));
 
     private static GameSession CreateAtPartyEncounter(StationEncounterPlacement? placement = null, ISpatialPathfinder? pathfinder = null,
-        StationRouteDefinition? definition = null, IReadOnlyList<StationEncounterPlacement>? extensionPlacements = null)
+        StationRouteDefinition? definition = null, IReadOnlyList<StationEncounterPlacement>? extensionPlacements = null,
+        CrewStart? crew = null, CrewStart? serviceCrew = null, IEnumerable<StationVisionBlocker>? blockers = null) =>
+        EnterPartyEncounter(CreateAtEncounter(CreateLayout(placement, extensionPlacements, crew, serviceCrew, blockers: blockers),
+            definition, pathfinder), crew);
+
+    /// <summary>Wins the solo fight, then recruits the Protector where <paramref name="crew"/> says the party fight begins.</summary>
+    private static GameSession EnterPartyEncounter(GameSession session, CrewStart? crew)
     {
-        var session = CreateAtEncounter(placement, pathfinder, definition, extensionPlacements);
+        crew ??= PartyCrewStart;
         Assert.True(Attack(session, ProtagonistId, EnforcerId).Accepted);
         ResumeIntoActiveCombat(session);
         AdvanceUntil(session, route => route.Encounter!.Phase == EncounterPhase.Victory, 1200);
@@ -291,14 +299,18 @@ public sealed partial class CombatSessionTests
         CompleteInteraction(session, ProtectorInteractionId, "party.recruit");
         Assert.True(session.Execute(new ChooseDialogueResponseCommand(new CommandId("party.join"), ProtagonistId,
             ProtectorInteractionId, new DialogueResponseId("response.recruit_protector"))).Accepted);
-        Assert.True(session.Execute(new MovePartyCommand(new CommandId("party.enter"), [ProtagonistId, ProtectorId],
-            new WorldPosition(0, 0, 5))).Accepted);
-        AdvanceUntil(session, route => route.Encounter!.Id == PartyEncounterId, 900);
+        // Recruitment sets the fight's objective; the security team spots the pair on the next tick.
+        Assert.Equal(1, session.AdvanceTicks(1));
+        var route = Observe(session);
+        Assert.Equal(PartyEncounterId, route.Encounter!.Id);
+        Assert.Equal(EncounterPhase.Readying, route.Encounter.Phase);
+        Assert.True(session.IsPaused);
+        Assert.Equal(crew.Protagonist, route.Protagonist.Position);
+        Assert.Equal(crew.Protector, route.Party.Single(actor => actor.Id == ProtectorId).Position);
         return session;
     }
 
     internal static StationEncounterPlacement CreatePartyPlacement() => new(PartyEncounterId,
-        new WorldPosition(0, 0, 5), 2, new WorldPosition(-0.55, 0, 4.5), new WorldPosition(-2, 0, 8),
-        new WorldPosition(0.55, 0, 4.5), [new StationActorPlacement(SentryId, new WorldPosition(2.5, 0, 10.5))],
+        new WorldPosition(-2, 0, 8), [new StationActorPlacement(SentryId, new WorldPosition(2.5, 0, 10.5))],
         new WorldPosition(0, 0, -1));
 }

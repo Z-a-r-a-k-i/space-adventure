@@ -22,8 +22,8 @@ public sealed class StationRouteSessionTests
     {
         var definition = LoadDefinition();
 
-        Assert.Equal(11, definition.SchemaVersion);
-        Assert.Equal("station-route-v18", definition.ContentRevision);
+        Assert.Equal(12, definition.SchemaVersion);
+        Assert.Equal("station-route-v19", definition.ContentRevision);
         Assert.Equal(new ScenarioId("scenario.station_route"), definition.ScenarioId);
         Assert.Equal(ProtagonistId, definition.Protagonist.Id);
         Assert.Equal(ProtectorActorId, definition.Companion.Id);
@@ -61,12 +61,12 @@ public sealed class StationRouteSessionTests
     {
         var json = LoadContentJson();
         var unsupported = json.Replace(
-            "\"schema_version\": 11",
+            "\"schema_version\": 12",
             "\"schema_version\": 109",
             StringComparison.Ordinal);
         var unmapped = json.Replace(
-            "\"schema_version\": 11,",
-            "\"schema_version\": 11, \"unexpected\": true,",
+            "\"schema_version\": 12,",
+            "\"schema_version\": 12, \"unexpected\": true,",
             StringComparison.Ordinal);
 
         Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(unsupported));
@@ -496,12 +496,12 @@ public sealed class StationRouteSessionTests
 
     private static StationEncounterPlacement CreateEncounterPlacement()
     {
+        // One metre beyond hostile detection from the entry door's approach (-10, 0, 4.85): opening the
+        // door alone does not start the fight, but walking on toward the arena does.
+        var detection = LoadDefinition().Vision.HostileDetectionMeters;
         return new StationEncounterPlacement(
             new EncounterId("encounter.station.solo_tutorial"),
-            new WorldPosition(-10, 0, 2.75),
-            0.75,
-            new WorldPosition(-10, 0, 2.5),
-            new WorldPosition(-10, 0, -1));
+            new WorldPosition(-10, 0, 4.85 - detection - 1));
     }
 
     private static StationRouteDefinition LoadDefinition()

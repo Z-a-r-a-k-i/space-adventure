@@ -20,13 +20,12 @@ public sealed partial class CombatSessionTests
     {
         var placement = QuietMedicPlacement() with
         {
-            CrewRestartPositions = [new(ProtagonistId, new WorldPosition(21.9, 0, 8)),
-                new(ProtectorId, new WorldPosition(14, 0, 7)), new(MedicId, new WorldPosition(14, 0, 8))],
-            // Keep the assigned enemy visible while isolating healing from incoming damage.
+            // Keep the assigned enemy visible (it spots the Vanguard) while isolating healing from incoming damage.
             HostilePlacements = QuietMedicPlacement().HostilePlacements!.Select((hostile, index) => index == 0
-                ? hostile with { Position = new WorldPosition(29, 0, 8) } : hostile).ToArray(),
+                ? hostile with { Position = new WorldPosition(27, 0, 8) } : hostile).ToArray(),
         };
-        var session = CreateAtMedicEncounter(placement);
+        var session = CreateAtMedicEncounter(placement, crew: new CrewStart(new WorldPosition(21.9, 0, 8),
+            new WorldPosition(14, 0, 7), new WorldPosition(14, 0, 8)));
         ResumeIntoActiveCombat(session);
         var enemyId = Observe(session).Hostiles![0].Id;
         Assert.True(Attack(session, MedicId, enemyId).Accepted);
@@ -43,7 +42,12 @@ public sealed partial class CombatSessionTests
     [Fact]
     public void FullHealthHealIsValidButNeverOverhealsAndPauseReplacesPendingHeal()
     {
-        var session = CreateAtMedicEncounter(QuietMedicPlacement());
+        // One melee guard at its usual post spots the crew but cannot reach anyone in this short window.
+        var session = CreateAtMedicEncounter(QuietMedicPlacement() with
+        {
+            HostilePlacements = QuietMedicPlacement().HostilePlacements!.Select((hostile, index) => index == 0
+                ? ExtensionEncounterPlacements()[0].HostilePlacements![0] : hostile).ToArray(),
+        });
         Assert.True(Heal(session, ProtagonistId).Accepted);
         Assert.True(Heal(session, MedicId).Accepted);
         Assert.Equal(MedicId, Observe(session).Party.Single(actor => actor.Id == MedicId).PendingAction!.CombatTargetId);
@@ -62,14 +66,13 @@ public sealed partial class CombatSessionTests
     {
         var placement = QuietMedicPlacement() with
         {
-            CrewRestartPositions = [new(ProtagonistId, new WorldPosition(14, 0, 8)),
-                new(ProtectorId, new WorldPosition(14, 0, 12)), new(MedicId, new WorldPosition(14, 0, 13))],
             HostilePlacements = QuietMedicPlacement().HostilePlacements!.Select((hostile, index) => index == 2
                 ? hostile with { Position = new WorldPosition(16, 0, 8) } : hostile).ToArray(),
         };
         var json = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "content", "station-route.json")))!;
         json["combat"]!["encounters"]![2]!["protagonist_maximum_health"] = 1;
-        var session = CreateAtMedicEncounter(placement, StationRouteContent.ParseJson(json.ToJsonString()));
+        var session = CreateAtMedicEncounter(placement, StationRouteContent.ParseJson(json.ToJsonString()),
+            crew: new CrewStart(new WorldPosition(14, 0, 8), new WorldPosition(14, 0, 12), new WorldPosition(14, 0, 13)));
         ResumeIntoActiveCombat(session);
         AdvanceUntil(session, route => route.Encounter!.Projectiles!.Count > 0, 60);
         Assert.True(Heal(session, ProtagonistId).Accepted);
@@ -86,14 +89,13 @@ public sealed partial class CombatSessionTests
     {
         var placement = QuietMedicPlacement() with
         {
-            CrewRestartPositions = [new(ProtagonistId, new WorldPosition(14, 0, 12)),
-                new(ProtectorId, new WorldPosition(14, 0, 13)), new(MedicId, new WorldPosition(14, 0, 8))],
             HostilePlacements = QuietMedicPlacement().HostilePlacements!.Select((hostile, index) => index == 2
                 ? hostile with { Position = new WorldPosition(16, 0, 8) } : hostile).ToArray(),
         };
         var json = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "content", "station-route.json")))!;
         json["combat"]!["medic_maximum_health"] = 1;
-        var session = CreateAtMedicEncounter(placement, StationRouteContent.ParseJson(json.ToJsonString()));
+        var session = CreateAtMedicEncounter(placement, StationRouteContent.ParseJson(json.ToJsonString()),
+            crew: new CrewStart(new WorldPosition(14, 0, 12), new WorldPosition(14, 0, 13), new WorldPosition(14, 0, 8)));
         ResumeIntoActiveCombat(session);
         // Centre the field between Medic (14, 8) and Vanguard (14, 12) so both stand inside it.
         Assert.True(session.Execute(new UseAbilityCommand(new CommandId("field.after.death"), MedicId, FieldId,

@@ -15,12 +15,9 @@ public sealed partial class CombatSessionTests
     }
 
     private static StationRouteLayout VisionLayout(IEnumerable<StationVisionBlocker>? blockers = null,
-        StationEncounterPlacement? solo = null, StationEncounterPlacement? party = null, WorldPosition? start = null)
-    {
-        var layout = CreateLayout(party);
-        return new StationRouteLayout(start ?? layout.ProtagonistStart, layout.Actors, layout.Interactions,
-            solo ?? layout.Encounter, layout.PartyEncounter, layout.Encounters.Skip(2), blockers);
-    }
+        StationEncounterPlacement? solo = null, StationEncounterPlacement? party = null, WorldPosition? start = null,
+        CrewStart? partyCrew = null) =>
+        CreateLayout(party, partyCrew: partyCrew, solo: solo, blockers: blockers, start: start);
 
     private static GameSession NewVisionSession(StationRouteLayout layout, StationRouteDefinition? definition = null, ISpatialPathfinder? pathfinder = null)
     {
@@ -29,32 +26,13 @@ public sealed partial class CombatSessionTests
         return session;
     }
 
-    private static GameSession VisionAtSolo(StationRouteLayout layout, StationRouteDefinition? definition = null, ISpatialPathfinder? pathfinder = null)
-    {
-        var session = NewVisionSession(layout, definition, pathfinder);
-        CompleteInteraction(session, new EntityId("interaction.survivor"), "vision.survivor");
-        Assert.True(session.Execute(new ChooseDialogueResponseCommand(new CommandId("vision.choice"), ProtagonistId,
-            new EntityId("interaction.survivor"), new DialogueResponseId("response.reroute_service_power"))).Accepted);
-        CompleteInteraction(session, new EntityId("interaction.service_door.entry"), "vision.entry");
-        Assert.True(session.Execute(new MoveActorCommand(new CommandId("vision.enter"), ProtagonistId, layout.Encounter!.TriggerCenter)).Accepted);
-        AdvanceUntil(session, route => route.Encounter!.Phase == EncounterPhase.Readying, 300);
-        return session;
-    }
+    // The crew start of a party fight is where the Protector is recruited; pass the same crew to the layout.
+    private static GameSession VisionAtParty(StationRouteLayout layout, StationRouteDefinition? definition = null,
+        ISpatialPathfinder? pathfinder = null, CrewStart? crew = null) =>
+        EnterPartyEncounter(CreateAtEncounter(layout, definition, pathfinder), crew);
 
-    private static GameSession VisionAtParty(StationRouteLayout layout, StationRouteDefinition? definition = null, ISpatialPathfinder? pathfinder = null)
-    {
-        var session = VisionAtSolo(layout, definition, pathfinder);
-        Assert.True(Attack(session, ProtagonistId, EnforcerId).Accepted);
-        ResumeIntoActiveCombat(session);
-        AdvanceUntil(session, route => route.Encounter!.Phase == EncounterPhase.Victory, 1200);
-        CompleteInteraction(session, SoloExitDoorId, "vision.exit");
-        CompleteInteraction(session, ProtectorInteractionId, "vision.protector");
-        Assert.True(session.Execute(new ChooseDialogueResponseCommand(new CommandId("vision.join"), ProtagonistId,
-            ProtectorInteractionId, new DialogueResponseId("response.recruit_protector"))).Accepted);
-        Assert.True(session.Execute(new MovePartyCommand(new CommandId("vision.party"), [ProtagonistId, ProtectorId], layout.PartyEncounter!.TriggerCenter)).Accepted);
-        AdvanceUntil(session, route => route.Encounter!.Id == PartyEncounterId, 900);
-        return session;
-    }
+    // Out of the Sentry's forward firing arc, but close enough for it to spot crew standing at (0, 4).
+    private static StationActorPlacement LookoutSentry => new(SentryId, new WorldPosition(0, 0, 1));
 
     private static string VisionState(GameSession session) => JsonSerializer.Serialize(Observe(session));
     private static bool Sees(GameSession session, EntityId id) => Observe(session).VisibleHostiles.Any(enemy => enemy.Id == id);
@@ -119,7 +97,10 @@ public sealed partial class CombatSessionTests
     {
         var door = new EntityId("interaction.service_door.entry");
         var blocker = new StationVisionBlocker("entry", new WorldPosition(-11, 0, 3.8), new WorldPosition(-9, 3, 4.2), door);
-        var session = NewVisionSession(VisionLayout([blocker]));
+        // Within crew sight of the doorway, but beyond hostile detection, so revealing it does not start the fight.
+        var hostile = new WorldPosition(-10, 0, -6);
+        Assert.InRange(SoloDoorApproach.DistanceTo(hostile), TestDefinition.Vision.HostileDetectionMeters + .01, TestDefinition.Vision.RangeMeters);
+        var session = NewVisionSession(VisionLayout([blocker], CreateSoloPlacement(hostile)));
         Assert.False(Sees(session, EnforcerId));
         CompleteInteraction(session, new EntityId("interaction.survivor"), "vision.door.survivor");
         Assert.True(session.Execute(new ChooseDialogueResponseCommand(new CommandId("vision.door.choice"), ProtagonistId,
@@ -152,11 +133,11 @@ public sealed partial class CombatSessionTests
     [Fact]
     public void SharedVisionUsesLivingCrewUnionAndClearsTargetsWhenTheOnlyViewerFalls()
     {
-        var party = CreatePartyPlacement() with { ProtagonistRestartPosition = new WorldPosition(-30, 0, 5),
-            CompanionRestartPosition = new WorldPosition(0, 0, 5), HostileSpawnPosition = new WorldPosition(0, 0, 5.5),
+        var party = CreatePartyPlacement() with { HostileSpawnPosition = new WorldPosition(0, 0, 5.5),
             AdditionalHostiles = [new(SentryId, new WorldPosition(100, 0, 5))] };
+        var crew = new CrewStart(new WorldPosition(-30, 0, 5), new WorldPosition(0, 0, 5));
         var definition = VisionDefinition(json => json["combat"]!["companion_maximum_health"] = 1);
-        var session = VisionAtParty(VisionLayout(party: party), definition);
+        var session = VisionAtParty(VisionLayout(party: party, partyCrew: crew), definition, crew: crew);
         Assert.True(Sees(session, MainEnforcerId));
         Assert.True(Attack(session, ProtagonistId, MainEnforcerId).Accepted);
         ResumeIntoActiveCombat(session);
@@ -174,9 +155,9 @@ public sealed partial class CombatSessionTests
     [Fact]
     public void SharedVisionFromTeammateDoesNotPermitFiringThroughAWall()
     {
-        var party = CreatePartyPlacement() with { ProtagonistRestartPosition = new WorldPosition(0, 0, 4),
-            CompanionRestartPosition = new WorldPosition(3, 0, 4), HostileSpawnPosition = new WorldPosition(0, 0, 8) };
-        var session = VisionAtParty(VisionLayout([VisionWall()], party: party), pathfinder: new VisionDetourPathfinder());
+        var party = CreatePartyPlacement() with { HostileSpawnPosition = new WorldPosition(0, 0, 8) };
+        var crew = new CrewStart(new WorldPosition(0, 0, 4), new WorldPosition(3, 0, 4));
+        var session = VisionAtParty(VisionLayout([VisionWall()], party: party, partyCrew: crew), pathfinder: new VisionDetourPathfinder(), crew: crew);
         ResumeIntoActiveCombat(session);
         Assert.True(Sees(session, MainEnforcerId));
         var before = VisionState(session);
@@ -196,9 +177,9 @@ public sealed partial class CombatSessionTests
     [Fact]
     public void SharedVisionLossKeepsUnrelatedSupportActionAndClearsRememberedOffense()
     {
-        var party = CreatePartyPlacement() with { ProtagonistRestartPosition = new WorldPosition(2, 0, 4),
-            CompanionRestartPosition = new WorldPosition(0, 0, 4), HostileSpawnPosition = new WorldPosition(0, 0, 8) };
-        var session = VisionAtParty(VisionLayout([VisionWall()], party: party));
+        var party = CreatePartyPlacement() with { HostileSpawnPosition = new WorldPosition(0, 0, 8) };
+        var crew = new CrewStart(new WorldPosition(2, 0, 4), new WorldPosition(0, 0, 4));
+        var session = VisionAtParty(VisionLayout([VisionWall()], party: party, partyCrew: crew), crew: crew);
         ResumeIntoActiveCombat(session);
         Assert.True(Attack(session, ProtectorId, MainEnforcerId).Accepted);
         Assert.True(Barrier(session, position: new WorldPosition(0, 0, 4)).Accepted);
@@ -213,12 +194,12 @@ public sealed partial class CombatSessionTests
     [Fact]
     public void SharedVisionBurstRevalidatesPersonalSightAfterFirstShotWithoutRefundingCooldownOrRecovery()
     {
-        var party = CreatePartyPlacement() with { ProtagonistRestartPosition = new WorldPosition(1, 0, 4),
-            CompanionRestartPosition = new WorldPosition(-3, 0, 8), HostileSpawnPosition = new WorldPosition(0, 0, 8),
+        var party = CreatePartyPlacement() with { HostileSpawnPosition = new WorldPosition(0, 0, 8),
             AdditionalHostiles = [new(SentryId, new WorldPosition(100, 0, 8))] };
+        var crew = new CrewStart(new WorldPosition(1, 0, 4), new WorldPosition(-3, 0, 8));
         var definition = VisionDefinition(json => json["combat"]!["hostiles"]!.AsArray()
             .Single(enemy => enemy!["id"]!.GetValue<string>() == MainEnforcerId.Value)!["movement_speed_meters_per_second"] = 3);
-        var session = VisionAtParty(VisionLayout([VisionWall(-.2, .2)], party: party), definition);
+        var session = VisionAtParty(VisionLayout([VisionWall(-.2, .2)], party: party, partyCrew: crew), definition, crew: crew);
         ResumeIntoActiveCombat(session);
         var sequence = session.Observe().LatestEventSequence;
         Assert.True(Burst(session, MainEnforcerId).Accepted);
@@ -249,16 +230,18 @@ public sealed partial class CombatSessionTests
     [Fact]
     public void SharedVisionAreaSkillsAffectOnlyVisibleActiveEnemies()
     {
-        var party = CreatePartyPlacement() with { ProtagonistRestartPosition = new WorldPosition(0, 0, 4),
-            CompanionRestartPosition = new WorldPosition(0, 0, 4), HostileSpawnPosition = new WorldPosition(0, 0, 8),
+        var party = CreatePartyPlacement() with { HostileSpawnPosition = new WorldPosition(0, 0, 8),
             AdditionalHostiles = [new(SentryId, new WorldPosition(4, 0, 8))] };
-        var layout = VisionLayout([VisionWall()], party: party);
+        var crew = new CrewStart(new WorldPosition(0, 0, 4), new WorldPosition(0, 0, 4));
+        var layout = VisionLayout([VisionWall()], party: party, partyCrew: crew);
         var extensions = layout.Encounters.Skip(2).Select((encounter, index) => index == 0
             ? encounter with { HostilePlacements = encounter.HostilePlacements!.Select(hostile => hostile with { Position = new WorldPosition(2, 0, 4) }).ToArray() }
             : encounter).ToArray();
         layout = new StationRouteLayout(layout.ProtagonistStart, layout.Actors, layout.Interactions,
             layout.Encounter, layout.PartyEncounter, extensions, layout.VisionBlockers);
-        var session = VisionAtParty(layout);
+        // The Sentry's clear line to the crew spots them; the walled-off Enforcer and the next room do not.
+        var session = VisionAtParty(layout, crew: crew);
+        Assert.Equal(SentryId, Observe(session).Encounter!.SpotterId);
         ResumeIntoActiveCombat(session);
         Assert.False(Sees(session, MainEnforcerId));
         var dormant = Observe(session).VisibleHostiles.Where(enemy => enemy.EncounterId == extensions[0].EncounterId).ToArray();
@@ -283,10 +266,12 @@ public sealed partial class CombatSessionTests
     [Fact]
     public void SharedVisionSentryWaitsBehindWallAndRechecksSightAtRelease()
     {
-        var party = CreatePartyPlacement() with { ProtagonistRestartPosition = new WorldPosition(0, 0, 4),
-            CompanionRestartPosition = new WorldPosition(0, 0, 4), HostileSpawnPosition = new WorldPosition(100, 0, 8),
+        var party = CreatePartyPlacement() with { HostileSpawnPosition = new WorldPosition(100, 0, 8),
             AdditionalHostiles = [new(SentryId, new WorldPosition(0, 0, 8))] };
-        var session = VisionAtParty(VisionLayout([VisionWall()], party: party));
+        // The Sentry spots the Protector just behind it, outside its forward firing arc; the Vanguard is behind the wall.
+        var crew = new CrewStart(new WorldPosition(0, 0, 4), new WorldPosition(0, 0, 10));
+        var session = VisionAtParty(VisionLayout([VisionWall()], party: party, partyCrew: crew), crew: crew);
+        Assert.Equal(ProtectorId, Observe(session).Encounter!.SpottedActorId);
         ResumeIntoActiveCombat(session);
         var sequence = session.Observe().LatestEventSequence;
         session.AdvanceTicks(90);
@@ -303,10 +288,10 @@ public sealed partial class CombatSessionTests
     [Fact]
     public void SharedVisionLossDoesNotEraseAlreadyLaunchedHostileProjectiles()
     {
-        var party = CreatePartyPlacement() with { ProtagonistRestartPosition = new WorldPosition(1.01, 0, 4),
-            CompanionRestartPosition = new WorldPosition(0, 0, 4), HostileSpawnPosition = new WorldPosition(100, 0, 8),
+        var party = CreatePartyPlacement() with { HostileSpawnPosition = new WorldPosition(100, 0, 8),
             AdditionalHostiles = [new(SentryId, new WorldPosition(0, 0, 8))] };
-        var session = VisionAtParty(VisionLayout([VisionWall()], party: party));
+        var crew = new CrewStart(new WorldPosition(1.01, 0, 4), new WorldPosition(0, 0, 4));
+        var session = VisionAtParty(VisionLayout([VisionWall()], party: party, partyCrew: crew), crew: crew);
         ResumeIntoActiveCombat(session);
         AdvanceUntil(session, route => route.Encounter!.Projectiles!.Count > 0, 80);
         var projectile = Assert.Single(Observe(session).Encounter!.Projectiles!);
@@ -322,9 +307,9 @@ public sealed partial class CombatSessionTests
     [Fact]
     public void SharedVisionLossDropsPendingOffenseDuringSpentRecovery()
     {
-        var party = CreatePartyPlacement() with { ProtagonistRestartPosition = new WorldPosition(1, 0, 4),
-            CompanionRestartPosition = new WorldPosition(-1, 0, 8), HostileSpawnPosition = new WorldPosition(0, 0, 8),
+        var party = CreatePartyPlacement() with { HostileSpawnPosition = new WorldPosition(0, 0, 8),
             AdditionalHostiles = [new(SentryId, new WorldPosition(3, 0, 8))] };
+        var crew = new CrewStart(new WorldPosition(1, 0, 4), new WorldPosition(-1, 0, 8));
         var definition = VisionDefinition(json =>
         {
             json["combat"]!["companion_maximum_health"] = 1;
@@ -334,7 +319,7 @@ public sealed partial class CombatSessionTests
             attacks.Add(quick);
             json["combat"]!["hostiles"]!.AsArray().Single(enemy => enemy!["id"]!.GetValue<string>() == MainEnforcerId.Value)!["basic_attack_id"] = "attack.enemy.vision.quick";
         });
-        var session = VisionAtParty(VisionLayout([VisionWall()], party: party), definition);
+        var session = VisionAtParty(VisionLayout([VisionWall()], party: party, partyCrew: crew), definition, crew: crew);
         ResumeIntoActiveCombat(session);
         Assert.True(Attack(session, ProtagonistId, SentryId).Accepted);
         session.AdvanceTicks(CarbineTuning.WindupTicks);
@@ -354,15 +339,16 @@ public sealed partial class CombatSessionTests
     [Fact]
     public void SharedVisionRifleApproachesAroundWallEvenWhileWithinWeaponRange()
     {
-        var party = CreatePartyPlacement() with { ProtagonistRestartPosition = new WorldPosition(0, 0, 4),
-            CompanionRestartPosition = new WorldPosition(0, 0, 4), HostileSpawnPosition = new WorldPosition(0, 0, 8),
-            AdditionalHostiles = [new(SentryId, new WorldPosition(100, 0, 8))] };
+        // The walled-off rifleman cannot see the crew; the Sentry below them spots them from outside its firing arc.
+        var party = CreatePartyPlacement() with { HostileSpawnPosition = new WorldPosition(0, 0, 8), AdditionalHostiles = [LookoutSentry] };
+        var crew = new CrewStart(new WorldPosition(0, 0, 4), new WorldPosition(0, 0, 4));
         var definition = VisionDefinition(json =>
         {
             var enemy = json["combat"]!["hostiles"]!.AsArray().Single(item => item!["id"]!.GetValue<string>() == MainEnforcerId.Value)!;
             enemy["behavior"] = "ranged"; enemy["basic_attack_id"] = "attack.enemy.ranged_enforcer.rifle";
         });
-        var session = VisionAtParty(VisionLayout([VisionWall()], party: party), definition, new VisionDetourPathfinder());
+        var session = VisionAtParty(VisionLayout([VisionWall()], party: party, partyCrew: crew), definition, new VisionDetourPathfinder(), crew);
+        Assert.Equal(SentryId, Observe(session).Encounter!.SpotterId);
         ResumeIntoActiveCombat(session);
         var sequence = session.Observe().LatestEventSequence;
         session.AdvanceTicks(2);
@@ -375,11 +361,12 @@ public sealed partial class CombatSessionTests
     [Fact]
     public void SharedVisionMeleeApproachesAroundWallInsteadOfStrikingThroughIt()
     {
-        // Within the 1.5 m body-strike reach, but the wall separates the two.
-        var party = CreatePartyPlacement() with { ProtagonistRestartPosition = new WorldPosition(0, 0, 4.7),
-            CompanionRestartPosition = new WorldPosition(0, 0, 4.7), HostileSpawnPosition = new WorldPosition(0, 0, 6.1),
-            AdditionalHostiles = [new(SentryId, new WorldPosition(100, 0, 8))] };
-        var session = VisionAtParty(VisionLayout([VisionWall()], party: party), pathfinder: new VisionDetourPathfinder());
+        // Within the 1.5 m body-strike reach, but the wall separates the two. The Sentry below the
+        // crew spots them from outside its firing arc.
+        var party = CreatePartyPlacement() with { HostileSpawnPosition = new WorldPosition(0, 0, 6.1), AdditionalHostiles = [LookoutSentry] };
+        var crew = new CrewStart(new WorldPosition(0, 0, 4.7), new WorldPosition(0, 0, 4.7));
+        var session = VisionAtParty(VisionLayout([VisionWall()], party: party, partyCrew: crew), pathfinder: new VisionDetourPathfinder(), crew: crew);
+        Assert.Equal(SentryId, Observe(session).Encounter!.SpotterId);
         ResumeIntoActiveCombat(session);
         var sequence = session.Observe().LatestEventSequence;
         session.AdvanceTicks(2);
@@ -395,12 +382,12 @@ public sealed partial class CombatSessionTests
     {
         // Vanguard (party order 0) is the only viewer. When its move breaks sight, the
         // Protector's attack is dropped later in that same tick and must still report why.
-        var party = CreatePartyPlacement() with { ProtagonistRestartPosition = new WorldPosition(2, 0, 4),
-            CompanionRestartPosition = new WorldPosition(0, 0, 4), HostileSpawnPosition = new WorldPosition(0, 0, 8),
+        var party = CreatePartyPlacement() with { HostileSpawnPosition = new WorldPosition(0, 0, 8),
             AdditionalHostiles = [new(SentryId, new WorldPosition(100, 0, 8))] };
+        var crew = new CrewStart(new WorldPosition(2, 0, 4), new WorldPosition(0, 0, 4));
         var definition = VisionDefinition(json => json["combat"]!["hostiles"]!.AsArray()
             .Single(enemy => enemy!["id"]!.GetValue<string>() == MainEnforcerId.Value)!["movement_speed_meters_per_second"] = .01);
-        var session = VisionAtParty(VisionLayout([VisionWall()], party: party), definition, new ProtectorBehindWallPathfinder());
+        var session = VisionAtParty(VisionLayout([VisionWall()], party: party, partyCrew: crew), definition, new ProtectorBehindWallPathfinder(), crew);
         ResumeIntoActiveCombat(session);
         Assert.True(Sees(session, MainEnforcerId));
         Assert.True(Attack(session, ProtectorId, MainEnforcerId).Accepted);

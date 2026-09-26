@@ -33,6 +33,7 @@ public partial class ShipBattleHost
         SynchronizeHud(observation, tick);
         UpdateEffects(observation, tick);
         SynchronizeOverlays(observation, tick);
+        UpdateTips(observation);
     }
 
     private void SynchronizeCrew(ShipBattleObservation observation)

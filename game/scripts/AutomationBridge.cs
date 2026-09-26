@@ -85,7 +85,7 @@ public partial class AutomationBridge : Node
             var root = document.RootElement;
 
             if (!root.TryGetProperty("schema_version", out var schemaVersion)
-                || schemaVersion.GetInt32() != 11)
+                || schemaVersion.GetInt32() != StationRouteContent.SupportedSchemaVersion)
             {
                 return Error("unsupported_schema_version");
             }
@@ -528,6 +528,8 @@ public partial class AutomationBridge : Node
                     route.Encounter.TransitionTicksRemaining,
                     route.Encounter.TransitionTicksTotal,
                     route.Encounter.PhaseStartedTick,
+                    SpotterId = route.Encounter.SpotterId?.Value,
+                    SpottedActorId = route.Encounter.SpottedActorId?.Value,
                     HostileIds = route.Encounter.HostileIds.Select(id => id.Value),
                     Barrier = route.Encounter.Barrier is { } barrier ? new
                     {
@@ -745,6 +747,8 @@ public partial class AutomationBridge : Node
             {
                 EncounterId = value.EncounterId.Value,
                 value.Attempt,
+                SpotterId = value.SpotterId?.Value,
+                SpottedActorId = value.SpottedActorId?.Value,
             },
             AttackEventDetail value => new
             {

@@ -1,6 +1,7 @@
 namespace SpaceAdventure.Core;
 
-public sealed record StationVisionDefinition(double RangeMeters, double EyeHeightMeters);
+/// <summary>Crew sight range and eye height, and the shorter range at which a hostile notices a crew member it can see.</summary>
+public sealed record StationVisionDefinition(double RangeMeters, double EyeHeightMeters, double HostileDetectionMeters);
 
 public sealed class StationVisionBlocker
 {

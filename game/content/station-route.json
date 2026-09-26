@@ -1,7 +1,7 @@
 {
-  "schema_version": 11,
-  "content_revision": "station-route-v18",
-  "vision": { "range_meters": 18, "eye_height_meters": 1.4 },
+  "schema_version": 12,
+  "content_revision": "station-route-v19",
+  "vision": { "range_meters": 18, "eye_height_meters": 1.4, "hostile_detection_meters": 7 },
   "scenario_id": "scenario.station_route",
   "protagonist": {
     "id": "actor.protagonist",

@@ -7,7 +7,8 @@ same treatment as the four encounters after Medic recruitment.
 
 [`tools/station-layout.json`](../tools/station-layout.json) is the shared offline
 authoring input for room bounds, floor openings, doors, and the four new
-encounters' entry, crew, and enemy placements. It is not a runtime quest or map
+encounters' enemy placements and review entry points (where automated reviews
+lead the crew in; fights start wherever an enemy first sees them). It is not a runtime quest or map
 framework. Generated scene navigation and placements remain authoritative at
 the Godot adapter boundary; [Product](PRODUCT.md) owns progression and kits.
 
@@ -24,8 +25,9 @@ These are open deck cuts with machinery below walking height. They constrain
 movement; firearms can shoot across them. Low rims and floor markings identify
 the edges without suggesting ballistic cover. Preserve readable characters,
 health bars, targeting previews, and wall cutaways at the supported camera
-distances. Three-person encounters frame a wider overview at entry and retry;
-subsequent camera movement and zoom remain player-controlled. The evacuation airlock remains the final station exit.
+distances. The camera never reframes at a fight's start: it eases toward the
+contact only when the spotting enemy or spotted crew is off-screen, and camera
+movement and zoom otherwise remain player-controlled. The evacuation airlock remains the final station exit.
 
 ## References
 

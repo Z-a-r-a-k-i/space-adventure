@@ -170,7 +170,7 @@ public sealed class StationRouteDefinition
 
 public static class StationRouteContent
 {
-    public const int SupportedSchemaVersion = 11;
+    public const int SupportedSchemaVersion = 12;
 
     private const int MaximumIdLength = 128;
     private const int MaximumTextLength = 4096;
@@ -268,9 +268,12 @@ public static class StationRouteContent
                 + "then distinct IDs unused by route objectives.");
         }
         if (dto.Vision is null) { throw new InvalidDataException("Station route content must define vision."); }
+        var visionRange = RequirePositiveBounded(dto.Vision.RangeMeters, "vision.range_meters", 100);
         var vision = new StationVisionDefinition(
-            RequirePositiveBounded(dto.Vision.RangeMeters, "vision.range_meters", 100),
-            RequirePositiveBounded(dto.Vision.EyeHeightMeters, "vision.eye_height_meters", 5));
+            visionRange,
+            RequirePositiveBounded(dto.Vision.EyeHeightMeters, "vision.eye_height_meters", 5),
+            // Crew usually spot a room before its occupants notice them.
+            RequirePositiveBounded(dto.Vision.HostileDetectionMeters, "vision.hostile_detection_meters", visionRange));
         ValidateInteractionSet(protagonist.Id, companion.Id, combat.Hostiles.Select(hostile => hostile.Id).Append(medic.Id), interactions);
         foreach (var interaction in interactions)
         {
@@ -956,6 +959,7 @@ public static class StationRouteContent
     {
         [JsonPropertyName("range_meters")] public double RangeMeters { get; init; }
         [JsonPropertyName("eye_height_meters")] public double EyeHeightMeters { get; init; }
+        [JsonPropertyName("hostile_detection_meters")] public double HostileDetectionMeters { get; init; }
     }
 
     private sealed class ActorDto

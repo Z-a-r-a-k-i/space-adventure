@@ -77,20 +77,15 @@ public partial class GameHost
 
     private StationEncounterPlacement CreatePartyPlacement(StationRouteDefinition definition)
     {
-        var trigger = GetNode<Marker3D>("Markers/PartyEncounterTrigger");
         var enforcer = GetNode<Marker3D>("Markers/MainEnforcerSpawn");
         var sentry = GetNode<Marker3D>("Markers/SentrySpawn");
-        ValidateStableId(trigger, definition.Combat.PartyEncounter.Id.Value);
         var markers = new[] { enforcer, sentry }.ToDictionary(marker => new EntityId(GetStableId(marker)));
         if (!markers.Keys.ToHashSet().SetEquals(definition.Combat.PartyEncounter.HostileIds))
         { throw new InvalidDataException("Party hostile markers do not match content."); }
         var hostiles = definition.Combat.PartyEncounter.HostileIds
             .Select(id => new StationActorPlacement(id, ToCore(markers[id].GlobalPosition))).ToArray();
         return new StationEncounterPlacement(definition.Combat.PartyEncounter.Id,
-            ToCore(trigger.GlobalPosition), trigger.GetMeta("trigger_radius_meters").AsDouble(),
-            ToCore(GetNode<Marker3D>("Markers/PartyVanguardRestart").GlobalPosition),
             hostiles[0].Position,
-            ToCore(GetNode<Marker3D>("Markers/PartyProtectorRestart").GlobalPosition),
             hostiles.Skip(1).ToArray(),
             ToCore(-sentry.GlobalBasis.Z.Normalized()));
     }
@@ -128,10 +123,14 @@ public partial class GameHost
             if (hostile is null)
             {
                 _visibleEnemyIds.Remove(id);
+                EndHostileReveal(id);
                 _motionSamples.Remove(id);
                 continue;
             }
+            SetOutlineStrength(id.Value, hostile.Combat);
             var newlyVisible = _visibleEnemyIds.Add(id);
+            if (newlyVisible) { BeginHostileReveal(id, view); }
+            RevealAlpha(id);
             var encounter = route.Encounter?.Id == hostile.EncounterId ? route.Encounter : null;
             var dormant = hostile.EncounterPhase == EncounterPhase.Dormant;
             view.Root.GlobalPosition = SamplePosition(id, hostile.Position, observation.Tick, hostile.EncounterAttempt);

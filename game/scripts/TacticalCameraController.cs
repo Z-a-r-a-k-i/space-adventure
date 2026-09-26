@@ -59,6 +59,7 @@ public partial class TacticalCameraController : Camera3D
     });
 
     private Vector3 _focus = InitialFocus;
+    private CameraGlide? _glide;
     private Vector3 _followTarget;
     private float _yaw = DefaultYaw;
     private float _pitch = DefaultPitch;
@@ -101,6 +102,7 @@ public partial class TacticalCameraController : Camera3D
         set
         {
             ArgumentOutOfRangeException.ThrowIfEqual(value.IsFinite(), false, nameof(value));
+            _glide = null;
             _focus = value;
             UpdateTransform();
         }
@@ -183,6 +185,14 @@ public partial class TacticalCameraController : Camera3D
     public override void _Process(double delta)
     {
         var seconds = (float)delta;
+        if (_glide is { } glide)
+        {
+            // Real time, so a glide started as the game auto-pauses still completes.
+            glide.Elapsed += seconds;
+            var progress = Mathf.Clamp(glide.Elapsed / glide.Duration, 0, 1);
+            _focus = glide.From.Lerp(glide.To, Mathf.SmoothStep(0, 1, progress));
+            if (progress >= 1) { _glide = null; }
+        }
         if (InputEnabled)
         {
             ProcessCameraInput(seconds);
@@ -238,7 +248,32 @@ public partial class TacticalCameraController : Camera3D
     public void FocusOn(Vector3 worldPosition)
     {
         ArgumentOutOfRangeException.ThrowIfEqual(worldPosition.IsFinite(), false, nameof(worldPosition));
+        _glide = null;
         FocusPoint = new Vector3(worldPosition.X, 0.0f, worldPosition.Z);
+    }
+
+    /// <summary>Eases the focus to a point over <paramref name="seconds"/>; any pan, focus or reset cancels it.</summary>
+    public void GlideTo(Vector3 worldPosition, float seconds = .7f)
+    {
+        ArgumentOutOfRangeException.ThrowIfEqual(worldPosition.IsFinite(), false, nameof(worldPosition));
+        _glide = new CameraGlide(_focus, new Vector3(worldPosition.X, 0.0f, worldPosition.Z), Math.Max(.05f, seconds));
+    }
+
+    internal bool IsGliding => _glide is not null;
+
+    /// <summary>True when a ground point projects inside the viewport shrunk by <paramref name="margin"/> pixels.</summary>
+    public bool IsOnScreen(Vector3 worldPosition, float margin = 0)
+    {
+        if (IsPositionBehind(worldPosition)) { return false; }
+        return GetViewport().GetVisibleRect().Grow(-margin).HasPoint(UnprojectPosition(worldPosition));
+    }
+
+    private sealed class CameraGlide(Vector3 from, Vector3 to, float duration)
+    {
+        public Vector3 From { get; } = from;
+        public Vector3 To { get; } = to;
+        public float Duration { get; } = duration;
+        public float Elapsed { get; set; }
     }
 
     public void ResetOrientation()
@@ -364,6 +399,7 @@ public partial class TacticalCameraController : Camera3D
 
         if (!movement.IsZeroApprox())
         {
+            _glide = null; // The player's own panning always wins over a scripted glide.
             _focus += movement.LimitLength() * (5.5f + (_distance * 0.2f)) * seconds;
         }
 

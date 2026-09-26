@@ -162,7 +162,9 @@ public sealed record EncounterObservation(
     long PhaseStartedTick = 0,
     BarrierObservation? Barrier = null,
     IReadOnlyList<ProjectileObservation>? Projectiles = null,
-    HealingFieldObservation? HealingField = null);
+    HealingFieldObservation? HealingField = null,
+    EntityId? SpotterId = null,
+    EntityId? SpottedActorId = null);
 
 public sealed record HealingFieldObservation(EntityId SourceId, WorldPosition Position, double RadiusMeters,
     long DeployedAtTick, int RemainingTicks, int TotalTicks, int PulseIntervalTicks);
@@ -332,9 +334,12 @@ public sealed record ScenarioCompletedEventDetail(
     CommandId CommandId,
     ScenarioId ScenarioId) : GameplayEventDetail;
 
+/// <summary>Encounter lifecycle event; a start also names the hostile that noticed the crew and whom it saw.</summary>
 public sealed record EncounterEventDetail(
     EncounterId EncounterId,
-    int Attempt) : GameplayEventDetail;
+    int Attempt,
+    EntityId? SpotterId = null,
+    EntityId? SpottedActorId = null) : GameplayEventDetail;
 
 public sealed record AttackEventDetail(
     EntityId SourceId,

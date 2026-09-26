@@ -39,6 +39,8 @@ public partial class CarbineProjectile : Node3D
             CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
         };
         AddChild(_trail);
+        // A small travelling light lets each bolt tint the dark deck and nearby armour in flight.
+        AddChild(new OmniLight3D { LightColor = color, LightEnergy = 1.2f, OmniRange = 1.7f, ShadowEnabled = false });
         Sample(0);
     }
 

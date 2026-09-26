@@ -46,8 +46,9 @@ console executable; an editor plugin is optional. `help` lists all commands.
 | F1; Escape | Open the field manual; close it. Opening the manual pauses play; Space resumes after closing |
 | Within field manual: −/+; M | Change session sound volume; mute/unmute. Tab focuses controls; Enter confirms |
 
-Stop is unavailable during dialogue, defeat, and victory securing. Combat
-pauses when readying starts; resume to play the draw. Crew only attack assigned
+Stop is unavailable during dialogue, defeat, and victory securing. A fight
+starts, paused, the moment an enemy spots the crew, wherever they stand; resume
+to play the draw. Crew only attack assigned
 targets. Basic fire resumes after an ability; movement, interaction,
 and Stop clear the target. Crew turn automatically as they move and fight.
 Move, attack, and Stop apply to the selected living

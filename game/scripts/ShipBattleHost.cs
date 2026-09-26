@@ -63,6 +63,7 @@ public partial class ShipBattleHost : Control
     /// <summary>Crew handed over by the station continuation; the direct dev scene uses the station trio.</summary>
     public IReadOnlyList<ShipCrewSeed>? CrewSeeds { get; set; }
 
+    /// <summary>Set by the station handoff; plays the arrival intro instead of opening straight on the HUD.</summary>
     public bool EnteredFromStation { get; set; }
 
     /// <summary>Set by the station handoff review profile ("smoke" or "capture") to verify the entered battle.</summary>
@@ -114,6 +115,7 @@ public partial class ShipBattleHost : Control
         else { SetFeedback("Paused. Space resumes. Click a weapon, then an enemy room.", TacticalUi.Muted); }
         if (DisplayServer.GetName() != "headless") { DisplayServer.WindowSetMinSize(MinimumWindowSize); }
         CallDeferred(MethodName.FrameBoth);
+        if (EnteredFromStation) { StartIntro(); }
         StartAutomationIfRequested();
     }
 
@@ -137,6 +139,7 @@ public partial class ShipBattleHost : Control
         if (!ReviewDrivesClock) { _session.Advance(TimeSpan.FromSeconds(delta)); }
         AdvanceTerminalClock(delta);
         Synchronize();
+        AdvanceIntro(delta);
         MeasureProcess(started, delta);
     }
 
@@ -148,14 +151,14 @@ public partial class ShipBattleHost : Control
         views.AddThemeConstantOverride("separation", 0);
         views.SetAnchorsPreset(LayoutPreset.FullRect);
         AddChild(views);
-        _playerView = new ShipBattleView("PlayerView", PlayerModelPath, new Vector2(7, 12.5f), TacticalUi.Shield, 1.3f)
+        _playerView = new ShipBattleView("PlayerView", PlayerModelPath, new Vector2(7, 12.5f), TacticalUi.Shield)
         { SafeInsets = new Vector4(SideColumn, 74, 12, 88) };
-        _enemyView = new ShipBattleView("EnemyView", EnemyModelPath, new Vector2(6, 12), new Color("ff9a6b"), 7.9f)
+        _enemyView = new ShipBattleView("EnemyView", EnemyModelPath, new Vector2(6, 12), new Color("ff9a6b"))
         { SafeInsets = new Vector4(12, 74, SideColumn, 16) };
         _playerView.Frame.SizeFlagsStretchRatio = 1.08f;
         _enemyView.Frame.SizeFlagsStretchRatio = .92f;
         views.AddChild(_playerView.Frame);
-        views.AddChild(new ColorRect { Name = "Divider", Color = new Color("1b2a36"), CustomMinimumSize = new Vector2(2, 0), MouseFilter = MouseFilterEnum.Ignore });
+        views.AddChild(new ColorRect { Name = "Divider", Color = new Color("2a4152", .85f), CustomMinimumSize = new Vector2(2, 0), MouseFilter = MouseFilterEnum.Ignore });
         views.AddChild(_enemyView.Frame);
         _playerView.Container.GuiInput += input => ViewInput(_playerView, input);
         _enemyView.Container.GuiInput += input => ViewInput(_enemyView, input);
@@ -241,6 +244,7 @@ public partial class ShipBattleHost : Control
         _enemyRepair.CustomMinimumSize = new Vector2(176, 30);
         _enemyRepair.AutowrapMode = TextServer.AutowrapMode.WordSmart;
         enemyColumn.AddChild(_enemyRepair);
+        BuildTips(enemyColumn);
 
         // Battle controls (bottom right).
         var controls = new VBoxContainer { Name = "BattleControls", MouseFilter = MouseFilterEnum.Ignore, Position = new Vector2(1280 - 186, 720 - 116), Size = new Vector2(176, 108) };

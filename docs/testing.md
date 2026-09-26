@@ -41,7 +41,7 @@ establish animation quality, camera feel, or physical input usability.
 `station-escape-defeat` CLI/headless profiles force defeat and retry in security
 checkpoint and launch bay while preserving previous victories and recruitment.
 
-Ship profiles: `ShipCombatTests` pin tick order, chunking, power and pause exploits, manning/Hold, auto priority, door traversal gas exchange, single-breach recovery, Medic interruption/no revival, defeat precedence, per-weapon telegraphs, wins inside the pilot band (`ShipBattlePilot.MinimumWinSeconds`–`MaximumWinSeconds`) for two distinct pilots with the repair reserve exhausted, retry and continuation orderings/failures. `ShipFtlRulesTests` pin shield layers versus piercing missiles, crew injury by damage, seeded per-attempt evasion (missiles never miss), mounting-order weapon power, synchronized held volleys, missile ammunition and Medic auto-treatment. `ship-balance` reports win rate, duration and hull spread per pilot across 40 seeds; it informs tuning and asserts nothing. CLI and `ship-battle` headless use the same scripted typed-command pilot. `ship-handoff` runs the escape pilot through the real 8 s departure and threaded load into the battle (paused tick 0, crew identity, one instance, battle-only retry). Ship reviews write `artifacts/ship-review/*.png/json` and check publication bounds/anchors (including enemy room anchors), that each ship and its shield bubble fit the HUD-safe area, that HUD panels neither overlap each other nor the hulls, on-screen controls, projectiles in flight (`ship-combat-*` capture), weapon-card/room aiming, power-column clicks, volley hold, the bounded destruction clock and retry cleanup; the project stretches a 1280x720 logical layout, so resize evidence records the real window size. Missing hazard publications are reported in the manifests. None of this is owner acceptance of art, handling or audio.
+Ship profiles: `ShipCombatTests` pin tick order, chunking, power and pause exploits, manning/Hold, auto priority, door traversal gas exchange, single-breach recovery, Medic interruption/no revival, defeat precedence, per-weapon telegraphs, wins inside the pilot band (`ShipBattlePilot.MinimumWinSeconds`–`MaximumWinSeconds`) for two distinct pilots with the repair reserve exhausted, retry and continuation orderings/failures. `ShipFtlRulesTests` pin shield layers versus piercing missiles, crew injury by damage, seeded per-attempt evasion (missiles never miss), mounting-order weapon power, synchronized held volleys, missile ammunition and Medic auto-treatment. `ship-balance` reports win rate, duration and hull spread per pilot across 40 seeds; it informs tuning and asserts nothing. CLI and `ship-battle` headless use the same scripted typed-command pilot. `ship-handoff` runs the escape pilot through the real departure (camera follow, fade and title card) and threaded load into the battle, then waits for the arrival intro to settle (paused tick 0 throughout, crew identity, one instance, battle-only retry); the graphical handoff also writes a mid-intro `ship-intro-*` capture. Ship reviews write `artifacts/ship-review/*.png/json` and check publication bounds/anchors (including enemy room anchors), that each ship and its shield bubble fit the HUD-safe area, that HUD panels neither overlap each other nor the hulls, on-screen controls, projectiles in flight (`ship-combat-*` capture), weapon-card/room aiming, power-column clicks, volley hold, the bounded destruction clock and retry cleanup; the project stretches a 1280x720 logical layout, so resize evidence records the real window size. Missing hazard publications are reported in the manifests. None of this is owner acceptance of art, handling or audio.
 
 `station-vision` checks perception against the actual Godot station layout.
 Keep pure rule fixtures separate: their synthetic paths and blockers cannot
@@ -117,13 +117,14 @@ For [shared crew vision](ARCHITECTURE.md#shared-crew-vision), run:
 pwsh -NoProfile -File scripts/dev.ps1 review -Encounter vision -Mode capture -Checkpoint all
 ```
 
-The checkpoints are `vision-hidden`, `vision-revealed`, `vision-occluded`, and
-`vision-shared` (Medic scouting while the other two crew remain out of range).
+The checkpoints are `vision-hidden`, `vision-revealed` (the opened door reveals the
+Enforcer, which spots the Vanguard on the spot), `vision-shared` (Protector alone
+seeing the dormant arena from the junction) and `vision-occluded` (nobody seeing it).
 Live mode starts at `vision-hidden`; the vision profile has no performance mode.
 `review` rejects a checkpoint that the chosen encounter's profile never captures.
 The profile also checks Protector sharing sight from the earlier junction.
-Review closed and completed doors, dormant discovery before
-the all-crew trigger, loss of sight behind full walls, and a scouting companion
+Review closed and completed doors, dormant discovery before any enemy notices
+the crew, sight-range starts without repositioning, loss of sight behind full walls, and a scouting companion
 sharing sight while another crew member is selected. Check range boundaries,
 hidden enemy models/picking/health bars, and rejection of unseen target orders.
 Pan, rotate, and zoom while paused: camera changes must not change perception.
@@ -206,8 +207,9 @@ flicker. Live Godot inspection is required for lintel and camera changes.
 Use a fresh `dev.ps1 run` process with physical pointer/keyboard input. Agent
 input injection is separate evidence. The [roadmap](ROADMAP.md) owns gate status.
 
-1. Complete either survivor response, inspect the optional terminal, and cross
-   the entry door. Combat must start and auto-pause once; resume to finish draw.
+1. Complete either survivor response, inspect the optional terminal, and open
+   the entry door. The Enforcer must notice the Vanguard where he stands: combat
+   auto-pauses once without moving him or snapping the camera; resume to finish draw.
 2. Queue and replace an order while paused. Resume attack, then repeatedly
    click the same enemy: cadence must remain stable. Check move/Stop cancellation
    and that released-shot recovery cannot be bypassed.
@@ -228,8 +230,10 @@ input injection is separate evidence. The [roadmap](ROADMAP.md) owns gate status
 6. Win the two-person fight and recruit Medic at the safe junction. Select and
    issue independent orders to all three crew through portraits, world picking,
    group drag, and Tab. Complete service access, security checkpoint, dock
-   concourse, and launch bay in order. Each fight must wait for the recruited
-   crew in its entry zone, pause once, and remain completed after victory.
+   concourse, and launch bay in order. Each fight must start where an enemy first
+   sees the crew (enemies fade in when revealed; the spotter briefly shows its line
+   of sight), pause once, and remain completed after victory. Retry must return
+   the crew to where they were spotted.
 7. Heal a wounded ally and Medic through world/portrait targeting; try invalid,
    fallen, and out-of-range recipients. Place Healing Field, move crew into/out
    of it, pause mid-pulse, move Medic, and replace the field. Check healing
@@ -244,7 +248,8 @@ input injection is separate evidence. The [roadmap](ROADMAP.md) owns gate status
    is unavailable in dialogue, defeat, or securing.
 9. After final victory, reach the evacuation airlock and board the cutter.
    Boarding must require all three crew, including at approach completion.
-   Inspect entrance closure, takeoff, and exactly one completion summary.
+   Inspect entrance closure, the camera following the takeoff, the fade to the
+   title card, and the battle arriving from black (skip with any key).
 10. Pan at each window edge and with the keyboard; edge scrolling must stop
    over HUD, during a selection drag, and when the game loses focus. Yaw/pitch/zoom
    throughout the connected route; inspect wall/lintel restoration and
@@ -266,10 +271,10 @@ at 3,000 ticks. Read events/acknowledgements after injected input; injection
 success alone is not command acceptance. The bridge exposes no arbitrary
 property setters or code evaluation.
 
-Example schema-v11 adapter command:
+Example schema-v12 adapter command:
 
 ```json
-{"schema_version":11,"command_id":"review.pause","type":"set_pause","payload":{"paused":true}}
+{"schema_version":12,"command_id":"review.pause","type":"set_pause","payload":{"paused":true}}
 ```
 
 `use_ability` takes `target_position` for Interrupt or Healing Field,
@@ -283,8 +288,9 @@ diagnostic `hostiles`, `encounter.hostile_ids`, and events may include enemies
 the player cannot see. Hostile projections include `encounter_id`,
 `encounter_phase`, `encounter_attempt`, and `facing`. Use the hostile's own
 metadata when presenting discovered enemies outside the active encounter.
-Both input paths use the same commands and shared-sight validation. Schema 11
-migrates content, fixtures, and tools together for crew vision;
+Both input paths use the same commands and shared-sight validation. Schema 12
+adds `vision.hostile_detection_meters` and the encounter's `spotter_id` and
+`spotted_actor_id` (also on its start event); content, fixtures, and tools migrate together;
 the schema-9 removal of manual-facing commands and held/pending heading fields
 remains in force.
 

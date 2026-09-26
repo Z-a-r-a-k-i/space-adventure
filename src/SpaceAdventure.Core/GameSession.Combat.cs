@@ -186,18 +186,24 @@ public sealed partial class GameSession
         if (combat.Phase != EncounterPhase.Dormant) { return; }
         var objective = combat.Definition.Id == station.Definition.Combat.SoloEncounter.Id
             ? station.Definition.CombatThresholdObjective : combat.Definition.Objective!;
+        // The route objective still orders the fights; sight, not an entry zone, starts the next one.
         if (station.CurrentObjective.Id != objective.Id
-            || combat.Definition.RequiredCrewIds!.Any(id => !station.Actors.TryGetValue(id, out var actor)
-                || actor.Health <= 0 || actor.Position.DistanceTo(combat.Placement.TriggerCenter) > combat.Placement.TriggerRadiusMeters))
+            || combat.Definition.RequiredCrewIds!.Any(id => !station.Actors.TryGetValue(id, out var actor) || actor.Health <= 0)
+            || FindDetection(station, combat) is not { } detection)
         { return; }
         station.Combat = combat;
         combat.Attempt = 1;
+        combat.SpotterId = detection.Hostile.Id;
+        combat.SpottedActorId = detection.Actor.Id;
+        // Everyone fights from where they stand; retry returns to this moment.
+        combat.CrewSnapshot = station.Actors.Values.ToDictionary(actor => actor.Id, actor => (actor.Position, actor.Facing));
         ResetEncounterAttempt(station);
         var commandId = new CommandId($"system.{combat.Definition.Id}.start");
         ChangeObjective(station, commandId, combat.Definition.Objective!);
         IsPaused = true;
         _accumulatedSeconds = 0;
-        Record(GameplayEventType.EncounterStarted, detail: new EncounterEventDetail(combat.Definition.Id, combat.Attempt));
+        Record(GameplayEventType.EncounterStarted, detail: new EncounterEventDetail(combat.Definition.Id, combat.Attempt,
+            combat.SpotterId, combat.SpottedActorId));
         Record(GameplayEventType.PauseChanged, paused: true);
     }
 
@@ -214,16 +220,13 @@ public sealed partial class GameSession
         combat.TransitionTicksRemaining = combat.TransitionTicksTotal;
         foreach (var actor in station.Actors.Values)
         {
-            actor.Position = combat.Placement.CrewRestartPositions is { } crew
-                ? crew.Single(placement => placement.ActorId == actor.Id).Position
-                : actor.Id == station.Protagonist.Id ? combat.Placement.ProtagonistRestartPosition
-                : combat.Placement.CompanionRestartPosition!.Value;
+            if (combat.CrewSnapshot.TryGetValue(actor.Id, out var snapshot))
+            { actor.Position = snapshot.Position; actor.Facing = snapshot.Facing; }
             actor.MaximumHealth = actor.Id == station.Protagonist.Id
                 ? combat.Definition.ProtagonistMaximumHealth : actor.Id == station.Definition.Medic.Id
                     ? station.Definition.Combat.MedicMaximumHealth : station.Definition.Combat.CompanionMaximumHealth;
             actor.Health = actor.MaximumHealth;
             actor.DefeatedAtTick = null;
-            actor.Facing = DirectionTo(actor.Position, combat.Placement.HostileSpawnPosition) ?? new WorldPosition(0, 0, 1);
             actor.CurrentAction = null;
             actor.PendingAction = null;
             ClearAttackIntent(actor);
@@ -865,6 +868,10 @@ public sealed partial class GameSession
         public EncounterDefinition Definition { get; }
         public StationEncounterPlacement Placement { get; }
         public Dictionary<EntityId, HostileRuntime> Hostiles { get; }
+        /// <summary>Recruited crew positions and headings when a hostile first saw them; retry restores them.</summary>
+        public Dictionary<EntityId, (WorldPosition Position, WorldPosition Facing)> CrewSnapshot { get; set; } = [];
+        public EntityId? SpotterId { get; set; }
+        public EntityId? SpottedActorId { get; set; }
         public BarrierRuntime? Barrier { get; set; }
         public HealingFieldRuntime? HealingField { get; set; }
         public List<ProjectileRuntime> Projectiles { get; } = [];

@@ -13,16 +13,15 @@ public sealed record StationInteractionPlacement(
 
 public sealed record StationHostilePlacement(EntityId ActorId, WorldPosition Position, WorldPosition Forward);
 
+/// <summary>
+/// Where an encounter's hostiles wait. Encounters start where the crew stand when a hostile sees them,
+/// so there are no entry zones or crew restart spots; retry restores the crew as they were at that moment.
+/// </summary>
 public sealed record StationEncounterPlacement(
     EncounterId EncounterId,
-    WorldPosition TriggerCenter,
-    double TriggerRadiusMeters,
-    WorldPosition ProtagonistRestartPosition,
     WorldPosition HostileSpawnPosition,
-    WorldPosition? CompanionRestartPosition = null,
     IReadOnlyList<StationActorPlacement>? AdditionalHostiles = null,
     WorldPosition? SentryForward = null,
-    IReadOnlyList<StationActorPlacement>? CrewRestartPositions = null,
     IReadOnlyList<StationHostilePlacement>? HostilePlacements = null);
 
 public sealed class StationRouteLayout
@@ -98,26 +97,16 @@ public sealed class StationRouteLayout
         _interactionList = new ReadOnlyCollection<StationInteractionPlacement>(
             interactionDictionary.Values.ToArray());
 
-        if (encounter is not null
-            && (!encounter.TriggerCenter.IsFinite
-                || !encounter.ProtagonistRestartPosition.IsFinite
-                || !encounter.HostileSpawnPosition.IsFinite
-                || !double.IsFinite(encounter.TriggerRadiusMeters)
-                || encounter.TriggerRadiusMeters <= 0
-                || encounter.TriggerRadiusMeters > 20))
+        if (encounter is not null && !encounter.HostileSpawnPosition.IsFinite)
         {
             throw new ArgumentOutOfRangeException(
                 nameof(encounter),
-                "Encounter placement positions and trigger radius must be finite and bounded.");
+                "Encounter placement positions must be finite.");
         }
 
         Encounter = encounter;
         if (partyEncounter is not null && partyEncounter.HostilePlacements is null &&
-            (!partyEncounter.TriggerCenter.IsFinite || !partyEncounter.ProtagonistRestartPosition.IsFinite
-             || !partyEncounter.HostileSpawnPosition.IsFinite
-             || partyEncounter.CompanionRestartPosition is not { IsFinite: true }
-             || !double.IsFinite(partyEncounter.TriggerRadiusMeters)
-             || partyEncounter.TriggerRadiusMeters <= 0 || partyEncounter.TriggerRadiusMeters > 20
+            (!partyEncounter.HostileSpawnPosition.IsFinite
              || partyEncounter.AdditionalHostiles is null
              || partyEncounter.AdditionalHostiles.Any(actor => !actor.Position.IsFinite)
              || partyEncounter.AdditionalHostiles.Select(actor => actor.ActorId).Distinct().Count() != partyEncounter.AdditionalHostiles.Count
@@ -134,10 +123,7 @@ public sealed class StationRouteLayout
         { throw new ArgumentException("Encounter placement IDs must be unique.", nameof(additionalEncounters)); }
         foreach (var item in placements)
         {
-            if (!item.TriggerCenter.IsFinite || !double.IsFinite(item.TriggerRadiusMeters)
-                || item.TriggerRadiusMeters is <= 0 or > 20
-                || item.CrewRestartPositions is { } crew && (crew.Any(actor => !actor.Position.IsFinite)
-                    || crew.Select(actor => actor.ActorId).Distinct().Count() != crew.Count)
+            if (!item.HostileSpawnPosition.IsFinite
                 || item.HostilePlacements is { } hostiles && (hostiles.Any(hostile => !hostile.Position.IsFinite
                     || !hostile.Forward.IsFinite || Math.Abs(hostile.Forward.Y) > .001
                     || Math.Abs(hostile.Forward.X * hostile.Forward.X + hostile.Forward.Z * hostile.Forward.Z - 1) > .001)

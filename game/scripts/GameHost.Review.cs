@@ -154,6 +154,8 @@ public partial class GameHost
             ReviewOrder(new InteractCommand(new CommandId("review.exit"), _definition.Protagonist.Id,
                 new EntityId("interaction.service_door.solo_exit")));
             await ReviewUntil(state => state.Objective.Id.Value == "objective.recruit_protector", 300, fast: true);
+            // The exit door just opened; wait until navigation publishes its link before ordering the walk.
+            await ReviewWaitForPath(ReviewState().Interactions.Single(item => item.Id.Value == "interaction.protector").ApproachPosition);
             ReviewOrder(new InteractCommand(new CommandId("review.protector"), _definition.Protagonist.Id,
                 new EntityId("interaction.protector")));
             await ReviewUntil(state => state.ActiveDialogue is not null, 300, fast: true);

@@ -4,8 +4,8 @@
 
 **Phase 5 — The station escape slice is implemented; owner acceptance remains open.**
 The owner approved the three-person crew and station escape expansion on
-2026-09-12. The current revision is `station-route-v18`, with content and
-automation schema 11.
+2026-09-12. The current revision is `station-route-v19`, with content and
+automation schema 12 (sight-based encounter starts, ADR 0035).
 The accepted solo/Protector baseline remains the opening; Operator joins as
 Medic before four new connected fights and a short cutter departure.
 [Product](PRODUCT.md) owns the route and kits. The [tactical layout](station-layout.md)

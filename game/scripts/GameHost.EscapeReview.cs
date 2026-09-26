@@ -67,8 +67,10 @@ public partial class GameHost
         {
             var area = placement.EncounterId.Value.Split('.').Last();
             await EscapeInteract($"interaction.service_door.{area}");
-            await ReviewWaitForPath(placement.TriggerCenter);
-            ReviewOrder(new MovePartyCommand(NextHumanCommandId("escape.travel"), ReviewState().Party.Select(actor => actor.Id), placement.TriggerCenter));
+            // Lead the crew into the room; its hostiles notice them on the way and the fight starts there.
+            var entry = EncounterEntry(placement.EncounterId);
+            await ReviewWaitForPath(entry);
+            ReviewOrder(new MovePartyCommand(NextHumanCommandId("escape.travel"), ReviewState().Party.Select(actor => actor.Id), entry));
             await ReviewUntil(state => state.Encounter!.Id == placement.EncounterId, 1200, fast: true);
             _camera.DistanceMeters = float.Parse(ReviewArgument("review-distance", "14.5"), System.Globalization.CultureInfo.InvariantCulture);
             InputCheck($"{area} starts paused with all crew recovered", _session!.IsPaused
@@ -115,7 +117,7 @@ public partial class GameHost
                 && !_abilityTargeting && commands == _humanCommandSequence && !_camera.InputEnabled);
         }
         if (ShipHandoffReview) { await RunShipHandoffAfterBoardingAsync(); return; }
-        for (var frame = 0; frame < 480; frame++)
+        for (var frame = 0; frame < (int)(DepartureDuration * 60); frame++)
         {
             AdvanceDeparture(_session!.Observe(), 1.0 / 60);
             if (_reviewMode != "smoke") { await InputFrame(); }

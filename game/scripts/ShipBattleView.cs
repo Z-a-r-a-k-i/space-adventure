@@ -15,11 +15,12 @@ public sealed class ShipBattleView
     public const float EffectMargin = .9f;
     private const float MinimumZoomFraction = .3f;
     private const float BubbleHeight = 2.9f;
-    private static Shader? _shieldShader, _starShader, _glowShader;
+    private const float StarParallax = .004f;
+    private static Shader? _shieldShader, _starShader, _glowShader, _skyShader;
     private readonly Dictionary<string, Node3D> _doorLeaves = new(StringComparer.Ordinal);
     private Vector2 _shake;
 
-    public ShipBattleView(string name, string publishedPath, Vector2 contractMaximum, Color shieldColor, float starSeed)
+    public ShipBattleView(string name, string publishedPath, Vector2 contractMaximum, Color shieldColor)
     {
         ContractMaximum = contractMaximum;
         Frame = new Control { Name = name, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill,
@@ -34,11 +35,15 @@ public sealed class ShipBattleView
         Container.AddChild(Viewport);
         World = new Node3D { Name = "World" };
         Viewport.AddChild(World);
+        _skyShader ??= ResourceLoader.Load<Shader>("res://shaders/ship_space_sky.gdshader");
         var environment = new Godot.Environment
         {
             BackgroundMode = Godot.Environment.BGMode.Color, BackgroundColor = new Color("02050a"),
-            AmbientLightSource = Godot.Environment.AmbientSource.Color, AmbientLightColor = new Color("5d7593"), AmbientLightEnergy = .34f,
-            ReflectedLightSource = Godot.Environment.ReflectionSource.Disabled,
+            // The sky is never drawn; it only feeds ambient and reflections so metal hulls catch light.
+            Sky = new Sky { SkyMaterial = new ShaderMaterial { Shader = _skyShader }, RadianceSize = Sky.RadianceSizeEnum.Size128 },
+            AmbientLightSource = Godot.Environment.AmbientSource.Sky, AmbientLightColor = new Color("5d7593"), AmbientLightEnergy = .6f,
+            AmbientLightSkyContribution = .7f,
+            ReflectedLightSource = Godot.Environment.ReflectionSource.Sky,
             TonemapMode = Godot.Environment.ToneMapper.Agx, TonemapExposure = 1f,
             GlowEnabled = true, GlowIntensity = .6f, GlowStrength = 1f, GlowBloom = 0, GlowHdrThreshold = 1f,
             GlowBlendMode = Godot.Environment.GlowBlendModeEnum.Additive,
@@ -54,10 +59,10 @@ public sealed class ShipBattleView
         Camera = new Camera3D { Projection = Camera3D.ProjectionType.Orthogonal, Rotation = new Vector3(-Mathf.Pi / 2, 0, 0), Far = 80 };
         World.AddChild(Camera);
         _starShader ??= ResourceLoader.Load<Shader>("res://shaders/ship_starfield.gdshader");
-        var stars = new ShaderMaterial { Shader = _starShader };
-        stars.SetShaderParameter("seed", starSeed);
+        // Both frames share one sky; each frame only shifts it by its own screen offset.
+        Stars = new ShaderMaterial { Shader = _starShader };
         World.AddChild(new MeshInstance3D { Name = "Starfield", Mesh = new PlaneMesh { Size = new Vector2(160, 160) }, Position = new Vector3(0, -12, 0),
-            MaterialOverride = stars, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off });
+            MaterialOverride = Stars, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off });
         Ship = new Node3D { Name = "Ship" };
         World.AddChild(Ship);
         Overlay = new Node3D { Name = "Overlay3D" };
@@ -99,6 +104,7 @@ public sealed class ShipBattleView
     public Node3D Overlay { get; }
     public Camera3D Camera { get; }
     public MeshInstance3D Bubble { get; }
+    private ShaderMaterial Stars { get; }
     public string? LoadError { get; }
     public Vector2 ContractMaximum { get; }
     public Rect2 Bounds { get; private set; } = new(-3, -6, 6, 12);
@@ -170,6 +176,10 @@ public sealed class ShipBattleView
         var offset = (safe.GetCenter() - frame / 2) * metresPerPixel;
         var centre = FramedExtent.GetCenter() + Pan - offset + _shake;
         Camera.Position = new Vector3(centre.X, 30, centre.Y);
+        // Place this frame in the shared sky (in this SubViewport's pixels) and drift it slightly with the camera.
+        var pixelScale = Viewport.Size.Y / Math.Max(1, frame.Y);
+        Stars.SetShaderParameter("sky_offset", Frame.GlobalPosition * pixelScale);
+        Stars.SetShaderParameter("parallax", (Pan + _shake) * StarParallax);
     }
 
     public float MetresPerPixel => Camera.Size / Math.Max(1, Container.Size.Y);
