@@ -8,8 +8,9 @@ public sealed class GodotSpatialPathfinder(Rid navigationMap) : ISpatialPathfind
     private const float MaximumStartSnapDistance = 0.8f;
     private const float MaximumDestinationSnapDistance = 0.9f;
     private const float MaximumEndpointError = 0.35f;
-    // Half-width of the walkable corridor along an enabled door link.
+    // Half-width and vertical allowance of the walkable corridor along an enabled door link.
     private const float LinkCorridorHalfWidth = 0.6f;
+    private const float LinkCorridorHeightTolerance = 0.5f;
     private const float OffMeshTolerance = 0.05f;
     private const int MaximumWaypointCount = 128;
 
@@ -98,7 +99,8 @@ public sealed class GodotSpatialPathfinder(Rid navigationMap) : ISpatialPathfind
             var start = NavigationServer3D.LinkGetStartPosition(link);
             var end = NavigationServer3D.LinkGetEndPosition(link);
             var along = Geometry3D.GetClosestPointToSegment(point, start, end);
-            if (new Vector2(along.X - point.X, along.Z - point.Z).Length() > LinkCorridorHalfWidth) { continue; }
+            if (new Vector2(along.X - point.X, along.Z - point.Z).Length() > LinkCorridorHalfWidth
+                || Math.Abs(along.Y - point.Y) > LinkCorridorHeightTolerance) { continue; }
             return point.DistanceTo(start) <= point.DistanceTo(end) ? start : end;
         }
         return null;
