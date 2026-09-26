@@ -1,0 +1,25 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://Assets/Published/assembly.station.evacuation_airlock.v1.glb" id="1_asset"]
+
+[sub_resource type="BoxShape3D" id="BoxShape_airlock"]
+size = Vector3(2.9, 2.7, 0.5)
+
+[node name="EvacuationAirlock" type="StaticBody3D"]
+collision_layer = 2
+collision_mask = 0
+
+[node name="ProductionAsset" parent="." instance=ExtResource("1_asset")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 1.35, 0)
+shape = SubResource("BoxShape_airlock")
+
+[node name="Label" type="Label3D" parent="."]
+position = Vector3(0, 2.95, 0)
+text = "EVACUATION AIRLOCK"
+font_size = 36
+outline_size = 8
+modulate = Color(0.4, 1, 0.62, 1)
+billboard = 1
+no_depth_test = true

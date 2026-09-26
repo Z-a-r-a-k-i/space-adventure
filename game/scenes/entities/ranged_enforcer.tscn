@@ -1,0 +1,44 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/ArmedHumanoidPresentation.cs" id="1_presentation"]
+[ext_resource type="PackedScene" path="res://Assets/Published/character.enemy.ranged_enforcer.v1.glb" id="2_model"]
+[ext_resource type="PackedScene" path="res://Assets/Published/weapon.crew.vanguard_carbine.v1.glb" id="3_weapon"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_enforcer"]
+radius = 0.44
+height = 1.9
+
+[sub_resource type="TorusMesh" id="TorusMesh_hostile"]
+inner_radius = 0.52
+outer_radius = 0.61
+rings = 8
+ring_segments = 32
+
+[sub_resource type="StandardMaterial3D" id="Material_hostile"]
+transparency = 1
+albedo_color = Color(0.95, 0.12, 0.08, 0.82)
+emission_enabled = true
+emission = Color(0.75, 0.03, 0.02, 1)
+emission_energy_multiplier = 3.0
+
+[node name="RangedEnforcer" type="Node3D"]
+
+[node name="Presentation" type="Node3D" parent="."]
+script = ExtResource("1_presentation")
+
+[node name="Model" parent="Presentation" instance=ExtResource("2_model")]
+
+[node name="Weapon" parent="Presentation" instance=ExtResource("3_weapon")]
+
+[node name="TargetBody" type="StaticBody3D" parent="."]
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TargetBody"]
+position = Vector3(0, 0.95, 0)
+shape = SubResource("CapsuleShape_enforcer")
+
+[node name="ThreatRing" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_hostile")
+material_override = SubResource("Material_hostile")

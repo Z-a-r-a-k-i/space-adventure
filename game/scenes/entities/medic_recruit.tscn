@@ -1,0 +1,33 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/HumanoidPresentation.cs" id="1_presentation"]
+[ext_resource type="PackedScene" path="res://Assets/Published/character.crew.operator.v1.glb" id="2_model"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_protector"]
+radius = 0.45
+height = 2.1
+
+[node name="MedicRecruit" type="StaticBody3D"]
+collision_layer = 2
+collision_mask = 0
+
+[node name="MedicPresentation" type="Node3D" parent="."]
+rotation_degrees = Vector3(0, -90, 0)
+script = ExtResource("1_presentation")
+IdleAnimationName = "anim_humanoid_idle_holstered"
+LocomotionAnimationName = "anim_humanoid_walk_holstered"
+
+[node name="Model" parent="MedicPresentation" instance=ExtResource("2_model")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 1.05, 0)
+shape = SubResource("CapsuleShape_protector")
+
+[node name="Label" type="Label3D" parent="."]
+position = Vector3(0, 2.45, 0)
+text = "MEDIC"
+font_size = 36
+outline_size = 8
+modulate = Color(0.42, 1, 0.72, 1)
+billboard = 1
+no_depth_test = true
