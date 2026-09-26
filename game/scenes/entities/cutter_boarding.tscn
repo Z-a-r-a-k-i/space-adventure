@@ -1,0 +1,20 @@
+[gd_scene load_steps=2 format=3]
+
+[sub_resource type="BoxShape3D" id="BoxShape_boarding"]
+size = Vector3(0.9, 1.6, 0.7)
+
+[node name="CutterBoarding" type="StaticBody3D"]
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.8, 0)
+shape = SubResource("BoxShape_boarding")
+
+[node name="Label" type="Label3D" parent="."]
+position = Vector3(0, 2.4, 0)
+text = "BOARD ESCAPE CUTTER"
+font_size = 30
+outline_size = 7
+billboard = 1
+no_depth_test = true

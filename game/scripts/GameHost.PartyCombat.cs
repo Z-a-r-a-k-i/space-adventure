@@ -27,8 +27,11 @@ public partial class GameHost
         // encounter changes only toggle visibility; ValidateCombatViews checks coverage.
         foreach (var root in GetNode<Node3D>("Hostiles").GetChildren().OfType<Node3D>())
         {
+            // Hostile views are shared entity scenes; picking reads the instance's ID from its target body.
+            var target = root.GetNode<CollisionObject3D>("TargetBody");
+            target.SetMeta("stable_id", GetStableId(root));
             _enemyViews.Add(new EntityId(GetStableId(root)), new EnemyView(root,
-                root.GetNode<CollisionObject3D>("TargetBody"), root.GetNode<MeshInstance3D>("ThreatRing"),
+                target, root.GetNode<MeshInstance3D>("ThreatRing"),
                 root.GetNodeOrNull<HumanoidPresentation>("Presentation"),
                 root.GetNodeOrNull<SentryPresentation>("Presentation"),
                 root.GetNodeOrNull<ArmedHumanoidPresentation>("Presentation")));
@@ -175,7 +178,6 @@ public partial class GameHost
             _enemyIntentCues[id].Sample(winding, view.Root.GlobalPosition,
                 target is null ? targetPosition : _actorViews[target.Id.Value].GlobalPosition,
                 action is null ? 0 : (float)Math.Clamp((_presentationTick - action.PhaseStartedTick) / Math.Max(1, action.PhaseTicksTotal), 0, 1));
-            if (view.Root.GetNodeOrNull<Label3D>("Label") is Label3D label) { label.Visible = false; }
         }
         SynchronizeBarrier(route);
         SynchronizeHealingField(route);

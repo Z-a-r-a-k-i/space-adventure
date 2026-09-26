@@ -1,30 +1,26 @@
-[gd_scene load_steps=128 format=3]
+[gd_scene load_steps=114 format=3]
 
 [ext_resource type="Script" path="res://scripts/GameHost.cs" id="1_host"]
 [ext_resource type="Script" path="res://scripts/TacticalCameraController.cs" id="2_camera"]
 [ext_resource type="PackedScene" path="res://Assets/Published/kit.station.structure.v2.glb" id="3_structure"]
-[ext_resource type="PackedScene" path="res://Assets/Published/assembly.station.evacuation_airlock.v1.glb" id="4_airlock"]
-[ext_resource type="PackedScene" path="res://Assets/Published/prop.station.service_terminal.v1.glb" id="5_terminal"]
-[ext_resource type="PackedScene" path="res://Assets/Published/character.crew.vanguard.v1.glb" id="6_vanguard"]
-[ext_resource type="Script" path="res://scripts/ArmedHumanoidPresentation.cs" id="7_vanguard_presentation"]
-[ext_resource type="PackedScene" path="res://Assets/Published/assembly.station.service_door.v1.glb" id="8_service_door"]
-[ext_resource type="PackedScene" path="res://Assets/Published/character.npc.station_survivor.v1.glb" id="9_survivor"]
-[ext_resource type="PackedScene" path="res://Assets/Published/character.crew.protector.v1.glb" id="10_protector"]
-[ext_resource type="Script" path="res://scripts/HumanoidPresentation.cs" id="11_humanoid_presentation"]
-[ext_resource type="PackedScene" path="res://Assets/Published/character.enemy.security_enforcer.v1.glb" id="12_enforcer"]
-[ext_resource type="PackedScene" path="res://Assets/Published/weapon.crew.vanguard_carbine.v1.glb" id="13_carbine"]
-
-[ext_resource type="PackedScene" path="res://Assets/Published/weapon.crew.protector_shotgun.v1.glb" id="15_shotgun"]
-[ext_resource type="PackedScene" path="res://Assets/Published/machine.security.gun_sentry.v1.glb" id="16_sentry"]
-[ext_resource type="Script" path="res://scripts/SentryPresentation.cs" id="17_sentry_presentation"]
 [ext_resource type="PackedScene" path="res://Assets/Published/assembly.station.service_surround.v1.glb" id="18_surround"]
-
-[ext_resource type="PackedScene" path="res://Assets/Published/character.crew.operator.v1.glb" id="escape_medic"]
-[ext_resource type="PackedScene" path="res://Assets/Published/weapon.crew.operator_pistol.v1.glb" id="escape_pistol"]
-[ext_resource type="PackedScene" path="res://Assets/Published/character.enemy.ranged_enforcer.v1.glb" id="escape_ranged"]
 [ext_resource type="PackedScene" path="res://Assets/Published/ship.escape_cutter.v1.glb" id="escape_cutter"]
 [ext_resource type="PackedScene" path="res://Assets/Published/kit.station.escape.v1.glb" id="escape_escape"]
 [ext_resource type="Shader" path="res://shaders/station_interior_sky.gdshader" id="station_sky_shader"]
+
+[ext_resource type="PackedScene" path="res://scenes/entities/vanguard.tscn" id="entity_vanguard"]
+[ext_resource type="PackedScene" path="res://scenes/entities/protector.tscn" id="entity_protector"]
+[ext_resource type="PackedScene" path="res://scenes/entities/medic.tscn" id="entity_medic"]
+[ext_resource type="PackedScene" path="res://scenes/entities/security_enforcer.tscn" id="entity_security_enforcer"]
+[ext_resource type="PackedScene" path="res://scenes/entities/ranged_enforcer.tscn" id="entity_ranged_enforcer"]
+[ext_resource type="PackedScene" path="res://scenes/entities/gun_sentry.tscn" id="entity_gun_sentry"]
+[ext_resource type="PackedScene" path="res://scenes/entities/survivor.tscn" id="entity_survivor"]
+[ext_resource type="PackedScene" path="res://scenes/entities/protector_recruit.tscn" id="entity_protector_recruit"]
+[ext_resource type="PackedScene" path="res://scenes/entities/medic_recruit.tscn" id="entity_medic_recruit"]
+[ext_resource type="PackedScene" path="res://scenes/entities/service_door.tscn" id="entity_service_door"]
+[ext_resource type="PackedScene" path="res://scenes/entities/service_terminal.tscn" id="entity_service_terminal"]
+[ext_resource type="PackedScene" path="res://scenes/entities/evacuation_airlock.tscn" id="entity_evacuation_airlock"]
+[ext_resource type="PackedScene" path="res://scenes/entities/cutter_boarding.tscn" id="entity_cutter_boarding"]
 
 [sub_resource type="ShaderMaterial" id="SkyMaterial_station"]
 shader = ExtResource("station_sky_shader")
@@ -87,46 +83,6 @@ size = Vector3(7, 0.2, 6)
 size = Vector3(6, 0.2, 6)
 [sub_resource type="BoxShape3D" id="BoxShape_floor_final"]
 size = Vector3(6, 0.2, 6)
-
-[sub_resource type="CapsuleShape3D" id="CapsuleShape_survivor"]
-radius = 0.35
-height = 1.8
-[sub_resource type="CapsuleShape3D" id="CapsuleShape_protector"]
-radius = 0.45
-height = 2.1
-[sub_resource type="CapsuleShape3D" id="CapsuleShape_enforcer"]
-radius = 0.44
-height = 1.9
-[sub_resource type="BoxShape3D" id="BoxShape_terminal"]
-size = Vector3(0.9, 1.6, 0.7)
-[sub_resource type="BoxShape3D" id="BoxShape_door_interaction"]
-size = Vector3(2.7, 2.35, 0.45)
-[sub_resource type="BoxShape3D" id="BoxShape_door_blocker"]
-size = Vector3(2.5, 2.35, 0.3)
-[sub_resource type="BoxShape3D" id="BoxShape_airlock"]
-size = Vector3(2.9, 2.7, 0.5)
-[sub_resource type="TorusMesh" id="TorusMesh_beacon"]
-inner_radius = 0.31
-outer_radius = 0.38
-rings = 8
-ring_segments = 24
-[sub_resource type="StandardMaterial3D" id="Material_beacon"]
-transparency = 1
-albedo_color = Color(0.08, 0.70, 0.95, 0.72)
-emission_enabled = true
-emission = Color(0.04, 0.45, 0.72, 1)
-emission_energy_multiplier = 2.2
-[sub_resource type="TorusMesh" id="TorusMesh_hostile"]
-inner_radius = 0.52
-outer_radius = 0.61
-rings = 8
-ring_segments = 32
-[sub_resource type="StandardMaterial3D" id="Material_hostile"]
-transparency = 1
-albedo_color = Color(0.95, 0.12, 0.08, 0.82)
-emission_enabled = true
-emission = Color(0.75, 0.03, 0.02, 1)
-emission_energy_multiplier = 3.0
 
 [sub_resource type="BoxShape3D" id="escape_passage_25"]
 size = Vector3(2, 0.2, 3)
@@ -747,251 +703,59 @@ position = Vector3(2.5, 0, 10.5)
 metadata/stable_id = "actor.enemy.gun_sentry.main"
 
 [node name="Actors" type="Node3D" parent="."]
-[node name="Protagonist" type="Node3D" parent="Actors"]
+[node name="Protagonist" parent="Actors" instance=ExtResource("entity_vanguard")]
 position = Vector3(-10, 0, 8.5)
 metadata/stable_id = "actor.protagonist"
-[node name="VanguardPresentation" type="Node3D" parent="Actors/Protagonist"]
-visible = false
-script = ExtResource("7_vanguard_presentation")
-[node name="Model" parent="Actors/Protagonist/VanguardPresentation" instance=ExtResource("6_vanguard")]
-[node name="Weapon" parent="Actors/Protagonist/VanguardPresentation" instance=ExtResource("13_carbine")]
-[node name="SelectionBeacon" type="MeshInstance3D" parent="Actors/Protagonist"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_beacon")
-material_override = SubResource("Material_beacon")
 
-[node name="Protector" type="Node3D" parent="Actors"]
+[node name="Protector" parent="Actors" instance=ExtResource("entity_protector")]
 position = Vector3(-1.5, 0, 0)
 visible = false
 metadata/stable_id = "actor.companion.protector"
-[node name="ProtectorPresentation" type="Node3D" parent="Actors/Protector"]
-script = ExtResource("7_vanguard_presentation")
-[node name="Model" parent="Actors/Protector/ProtectorPresentation" instance=ExtResource("10_protector")]
-[node name="Weapon" parent="Actors/Protector/ProtectorPresentation" instance=ExtResource("15_shotgun")]
-[node name="SelectionBeacon" type="MeshInstance3D" parent="Actors/Protector"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_beacon")
-material_override = SubResource("Material_beacon")
 
 [node name="Hostiles" type="Node3D" parent="."]
-[node name="SecurityEnforcer" type="Node3D" parent="Hostiles"]
+[node name="SecurityEnforcer" parent="Hostiles" instance=ExtResource("entity_security_enforcer")]
 position = Vector3(-13.3, 0, 0.6)
 visible = false
 metadata/stable_id = "actor.enemy.security_enforcer.solo"
-[node name="Presentation" type="Node3D" parent="Hostiles/SecurityEnforcer"]
-rotation_degrees = Vector3(0, 180, 0)
-script = ExtResource("11_humanoid_presentation")
-IdleAnimationName = "anim_humanoid_idle_holstered"
-LocomotionAnimationName = "anim_humanoid_walk_holstered"
-MeleeStrikeAnimationName = "anim_humanoid_melee_strike"
-DownAnimationName = "anim_humanoid_down"
-[node name="Model" parent="Hostiles/SecurityEnforcer/Presentation" instance=ExtResource("12_enforcer")]
-[node name="TargetBody" type="StaticBody3D" parent="Hostiles/SecurityEnforcer"]
-collision_layer = 8
-collision_mask = 0
-metadata/stable_id = "actor.enemy.security_enforcer.solo"
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/SecurityEnforcer/TargetBody"]
-position = Vector3(0, 0.95, 0)
-shape = SubResource("CapsuleShape_enforcer")
-[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/SecurityEnforcer"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_hostile")
-material_override = SubResource("Material_hostile")
-[node name="Label" type="Label3D" parent="Hostiles/SecurityEnforcer"]
-position = Vector3(0, 2.25, 0)
-text = "SECURITY ENFORCER"
-font_size = 34
-outline_size = 8
-modulate = Color(1, 0.25, 0.18, 1)
-billboard = 1
-no_depth_test = true
 
-[node name="MainEnforcer" type="Node3D" parent="Hostiles"]
+[node name="MainEnforcer" parent="Hostiles" instance=ExtResource("entity_security_enforcer")]
 position = Vector3(-2, 0, 8)
 visible = false
 metadata/stable_id = "actor.enemy.security_enforcer.main"
-[node name="Presentation" type="Node3D" parent="Hostiles/MainEnforcer"]
-rotation_degrees = Vector3(0, 180, 0)
-script = ExtResource("11_humanoid_presentation")
-IdleAnimationName = "anim_humanoid_idle_holstered"
-LocomotionAnimationName = "anim_humanoid_walk_holstered"
-MeleeStrikeAnimationName = "anim_humanoid_melee_strike"
-DownAnimationName = "anim_humanoid_down"
-[node name="Model" parent="Hostiles/MainEnforcer/Presentation" instance=ExtResource("12_enforcer")]
-[node name="TargetBody" type="StaticBody3D" parent="Hostiles/MainEnforcer"]
-collision_layer = 8
-collision_mask = 0
-metadata/stable_id = "actor.enemy.security_enforcer.main"
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/MainEnforcer/TargetBody"]
-position = Vector3(0, 0.95, 0)
-shape = SubResource("CapsuleShape_enforcer")
-[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/MainEnforcer"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_hostile")
-material_override = SubResource("Material_hostile")
-[node name="Label" type="Label3D" parent="Hostiles/MainEnforcer"]
-position = Vector3(0, 2.25, 0)
-text = "SECURITY ENFORCER"
-font_size = 34
-outline_size = 8
-modulate = Color(1, 0.25, 0.18, 1)
-billboard = 1
-no_depth_test = true
 
-[node name="Sentry" type="Node3D" parent="Hostiles"]
+[node name="Sentry" parent="Hostiles" instance=ExtResource("entity_gun_sentry")]
 position = Vector3(2.5, 0, 10.5)
 visible = false
 metadata/stable_id = "actor.enemy.gun_sentry.main"
-[node name="Presentation" type="Node3D" parent="Hostiles/Sentry"]
-script = ExtResource("17_sentry_presentation")
-[node name="Model" parent="Hostiles/Sentry/Presentation" instance=ExtResource("16_sentry")]
-[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Sentry"]
-collision_layer = 0
-collision_mask = 0
-metadata/stable_id = "actor.enemy.gun_sentry.main"
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Sentry/TargetBody"]
-position = Vector3(0, 1.1, 0)
-shape = SubResource("CapsuleShape_enforcer")
-[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Sentry"]
-position = Vector3(0, 0.04, 0)
-mesh = SubResource("TorusMesh_hostile")
-material_override = SubResource("Material_hostile")
 
 [node name="Interactions" type="Node3D" parent="."]
 
-[node name="Survivor" type="StaticBody3D" parent="Interactions"]
+[node name="Survivor" parent="Interactions" instance=ExtResource("entity_survivor")]
 position = Vector3(-8.5, 0, 6.5)
-collision_layer = 2
-collision_mask = 0
 metadata/stable_id = "interaction.survivor"
-[node name="SurvivorPresentation" type="Node3D" parent="Interactions/Survivor"]
-rotation_degrees = Vector3(0, -90, 0)
-script = ExtResource("11_humanoid_presentation")
-IdleAnimationName = "anim_humanoid_dialogue_idle"
-DialogueSpeakAnimationName = "anim_humanoid_dialogue_speak"
-DialogueListenAnimationName = "anim_humanoid_dialogue_listen"
-[node name="Model" parent="Interactions/Survivor/SurvivorPresentation" instance=ExtResource("9_survivor")]
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Survivor"]
-position = Vector3(0, 0.9, 0)
-shape = SubResource("CapsuleShape_survivor")
-[node name="Label" type="Label3D" parent="Interactions/Survivor"]
-position = Vector3(0, 2.15, 0)
-text = "SURVIVOR"
-font_size = 36
-outline_size = 8
-modulate = Color(1, 0.72, 0.32, 1)
-billboard = 1
-no_depth_test = true
 
-[node name="EntryServiceDoor" type="StaticBody3D" parent="Interactions"]
+[node name="EntryServiceDoor" parent="Interactions" instance=ExtResource("entity_service_door")]
 position = Vector3(-10, 0, 4)
-collision_layer = 2
-collision_mask = 0
 metadata/stable_id = "interaction.service_door.entry"
-[node name="ProductionAsset" parent="Interactions/EntryServiceDoor" instance=ExtResource("8_service_door")]
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/EntryServiceDoor"]
-position = Vector3(0, 1.18, 0)
-shape = SubResource("BoxShape_door_interaction")
-[node name="DoorBlocker" type="StaticBody3D" parent="Interactions/EntryServiceDoor"]
-collision_layer = 4
-collision_mask = 0
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/EntryServiceDoor/DoorBlocker"]
-position = Vector3(0, 1.18, 0)
-shape = SubResource("BoxShape_door_blocker")
-[node name="Label" type="Label3D" parent="Interactions/EntryServiceDoor"]
-position = Vector3(0, 2.95, 0)
-text = "ENTRY SERVICE DOOR"
-font_size = 34
-outline_size = 8
-modulate = Color(1, 0.65, 0.25, 1)
-billboard = 1
-no_depth_test = true
 
-[node name="SoloExitServiceDoor" type="StaticBody3D" parent="Interactions"]
+[node name="SoloExitServiceDoor" parent="Interactions" instance=ExtResource("entity_service_door")]
 position = Vector3(-5, 0, 0)
 rotation_degrees = Vector3(0, 90, 0)
-collision_layer = 2
-collision_mask = 0
 metadata/stable_id = "interaction.service_door.solo_exit"
-[node name="ProductionAsset" parent="Interactions/SoloExitServiceDoor" instance=ExtResource("8_service_door")]
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/SoloExitServiceDoor"]
-position = Vector3(0, 1.18, 0)
-shape = SubResource("BoxShape_door_interaction")
-[node name="DoorBlocker" type="StaticBody3D" parent="Interactions/SoloExitServiceDoor"]
-collision_layer = 4
-collision_mask = 0
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/SoloExitServiceDoor/DoorBlocker"]
-position = Vector3(0, 1.18, 0)
-shape = SubResource("BoxShape_door_blocker")
-[node name="Label" type="Label3D" parent="Interactions/SoloExitServiceDoor"]
-position = Vector3(0, 2.95, 0)
-text = "ARENA EXIT"
-font_size = 34
-outline_size = 8
-modulate = Color(1, 0.55, 0.18, 1)
-billboard = 1
-no_depth_test = true
 
-[node name="Protector" type="StaticBody3D" parent="Interactions"]
+[node name="Protector" parent="Interactions" instance=ExtResource("entity_protector_recruit")]
 position = Vector3(-1.5, 0, 0)
-collision_layer = 2
-collision_mask = 0
 metadata/stable_id = "interaction.protector"
-[node name="ProtectorPresentation" type="Node3D" parent="Interactions/Protector"]
-rotation_degrees = Vector3(0, -90, 0)
-script = ExtResource("11_humanoid_presentation")
-IdleAnimationName = "anim_humanoid_idle_holstered"
-LocomotionAnimationName = "anim_humanoid_walk_holstered"
-[node name="Model" parent="Interactions/Protector/ProtectorPresentation" instance=ExtResource("10_protector")]
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Protector"]
-position = Vector3(0, 1.05, 0)
-shape = SubResource("CapsuleShape_protector")
-[node name="Label" type="Label3D" parent="Interactions/Protector"]
-position = Vector3(0, 2.45, 0)
-text = "PROTECTOR"
-font_size = 36
-outline_size = 8
-modulate = Color(0.42, 1, 0.72, 1)
-billboard = 1
-no_depth_test = true
 
-[node name="ServiceTerminal" type="StaticBody3D" parent="Interactions"]
+[node name="ServiceTerminal" parent="Interactions" instance=ExtResource("entity_service_terminal")]
 position = Vector3(-11.5, 0, 6.5)
 rotation_degrees = Vector3(0, -90, 0)
-collision_layer = 2
-collision_mask = 0
 metadata/stable_id = "interaction.service_terminal"
-[node name="ProductionAsset" parent="Interactions/ServiceTerminal" instance=ExtResource("5_terminal")]
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/ServiceTerminal"]
-position = Vector3(0, 0.8, 0)
-shape = SubResource("BoxShape_terminal")
-[node name="Label" type="Label3D" parent="Interactions/ServiceTerminal"]
-position = Vector3(0, 1.95, 0)
-text = "SERVICE TERMINAL"
-font_size = 34
-outline_size = 8
-modulate = Color(0.76, 0.55, 1, 1)
-billboard = 1
-no_depth_test = true
 
-[node name="EvacuationAirlock" type="StaticBody3D" parent="Interactions"]
+[node name="EvacuationAirlock" parent="Interactions" instance=ExtResource("entity_evacuation_airlock")]
 position = Vector3(73, 0, 8)
 rotation_degrees = Vector3(0, 90, 0)
-collision_layer = 2
-collision_mask = 0
 metadata/stable_id = "interaction.evacuation_airlock"
-[node name="ProductionAsset" parent="Interactions/EvacuationAirlock" instance=ExtResource("4_airlock")]
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/EvacuationAirlock"]
-position = Vector3(0, 1.35, 0)
-shape = SubResource("BoxShape_airlock")
-[node name="Label" type="Label3D" parent="Interactions/EvacuationAirlock"]
-position = Vector3(0, 2.95, 0)
-text = "EVACUATION AIRLOCK"
-font_size = 36
-outline_size = 8
-modulate = Color(0.4, 1, 0.62, 1)
-billboard = 1
-no_depth_test = true
 
 [node name="TacticalCamera" type="Camera3D" parent="."]
 fov = 48.0
@@ -1005,42 +769,14 @@ script = ExtResource("2_camera")
 [node name="EscapeCutter" parent="Environment" instance=ExtResource("escape_cutter")]
 position = Vector3(83, 0, 8)
 rotation_degrees = Vector3(0, -90, 0)
-[node name="Medic" type="Node3D" parent="Actors"]
+[node name="Medic" parent="Actors" instance=ExtResource("entity_medic")]
 position = Vector3(9, 0, 7)
 visible = false
 metadata/stable_id = "actor.companion.medic"
-[node name="MedicPresentation" type="Node3D" parent="Actors/Medic"]
-script = ExtResource("7_vanguard_presentation")
-OneHanded = true
-[node name="Model" parent="Actors/Medic/MedicPresentation" instance=ExtResource("escape_medic")]
-[node name="Weapon" parent="Actors/Medic/MedicPresentation" instance=ExtResource("escape_pistol")]
-[node name="SelectionBeacon" type="MeshInstance3D" parent="Actors/Medic"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_beacon")
-material_override = SubResource("Material_beacon")
 
-[node name="Medic" type="StaticBody3D" parent="Interactions"]
+[node name="Medic" parent="Interactions" instance=ExtResource("entity_medic_recruit")]
 position = Vector3(9, 0, 7)
-collision_layer = 2
-collision_mask = 0
 metadata/stable_id = "interaction.medic"
-[node name="MedicPresentation" type="Node3D" parent="Interactions/Medic"]
-rotation_degrees = Vector3(0, -90, 0)
-script = ExtResource("11_humanoid_presentation")
-IdleAnimationName = "anim_humanoid_idle_holstered"
-LocomotionAnimationName = "anim_humanoid_walk_holstered"
-[node name="Model" parent="Interactions/Medic/MedicPresentation" instance=ExtResource("escape_medic")]
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Medic"]
-position = Vector3(0, 1.05, 0)
-shape = SubResource("CapsuleShape_protector")
-[node name="Label" type="Label3D" parent="Interactions/Medic"]
-position = Vector3(0, 2.45, 0)
-text = "PROTECTOR"
-font_size = 36
-outline_size = 8
-modulate = Color(0.42, 1, 0.72, 1)
-billboard = 1
-no_depth_test = true
 
 [node name="MedicPlacement" type="Marker3D" parent="Markers"]
 position = Vector3(9, 0, 7)
@@ -1152,30 +888,10 @@ shape = SubResource("escape_passage_73")
 enabled = false
 start_position = Vector3(11.3, 0, 8)
 end_position = Vector3(12.7, 0, 8)
-[node name="Escape_service" type="StaticBody3D" parent="Interactions"]
+[node name="Escape_service" parent="Interactions" instance=ExtResource("entity_service_door")]
 position = Vector3(12, 0, 8)
 rotation_degrees = Vector3(0, 90, 0)
-collision_layer = 2
-collision_mask = 0
 metadata/stable_id = "interaction.service_door.service"
-[node name="ProductionAsset" parent="Interactions/Escape_service" instance=ExtResource("8_service_door")]
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Escape_service"]
-position = Vector3(0, 1.18, 0)
-shape = SubResource("BoxShape_door_interaction")
-[node name="DoorBlocker" type="StaticBody3D" parent="Interactions/Escape_service"]
-collision_layer = 4
-collision_mask = 0
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Escape_service/DoorBlocker"]
-position = Vector3(0, 1.18, 0)
-shape = SubResource("BoxShape_door_blocker")
-[node name="Label" type="Label3D" parent="Interactions/Escape_service"]
-position = Vector3(0, 2.95, 0)
-text = "SERVICE"
-font_size = 34
-outline_size = 8
-modulate = Color(1, 0.55, 0.18, 1)
-billboard = 1
-no_depth_test = true
 
 [node name="EscapeDoor_service" type="Marker3D" parent="Markers"]
 position = Vector3(11.15, 0, 8)
@@ -1185,30 +901,10 @@ metadata/stable_id = "interaction.service_door.service"
 enabled = false
 start_position = Vector3(23.3, 0, 3)
 end_position = Vector3(26.7, 0, 3)
-[node name="Escape_security" type="StaticBody3D" parent="Interactions"]
+[node name="Escape_security" parent="Interactions" instance=ExtResource("entity_service_door")]
 position = Vector3(25, 0, 3)
 rotation_degrees = Vector3(0, 90, 0)
-collision_layer = 2
-collision_mask = 0
 metadata/stable_id = "interaction.service_door.security"
-[node name="ProductionAsset" parent="Interactions/Escape_security" instance=ExtResource("8_service_door")]
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Escape_security"]
-position = Vector3(0, 1.18, 0)
-shape = SubResource("BoxShape_door_interaction")
-[node name="DoorBlocker" type="StaticBody3D" parent="Interactions/Escape_security"]
-collision_layer = 4
-collision_mask = 0
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Escape_security/DoorBlocker"]
-position = Vector3(0, 1.18, 0)
-shape = SubResource("BoxShape_door_blocker")
-[node name="Label" type="Label3D" parent="Interactions/Escape_security"]
-position = Vector3(0, 2.95, 0)
-text = "SECURITY"
-font_size = 34
-outline_size = 8
-modulate = Color(1, 0.55, 0.18, 1)
-billboard = 1
-no_depth_test = true
 
 [node name="EscapeDoor_security" type="Marker3D" parent="Markers"]
 position = Vector3(23.55, 0, 3)
@@ -1218,30 +914,10 @@ metadata/stable_id = "interaction.service_door.security"
 enabled = false
 start_position = Vector3(37.3, 0, 7)
 end_position = Vector3(40.7, 0, 7)
-[node name="Escape_dock" type="StaticBody3D" parent="Interactions"]
+[node name="Escape_dock" parent="Interactions" instance=ExtResource("entity_service_door")]
 position = Vector3(39, 0, 7)
 rotation_degrees = Vector3(0, 90, 0)
-collision_layer = 2
-collision_mask = 0
 metadata/stable_id = "interaction.service_door.dock"
-[node name="ProductionAsset" parent="Interactions/Escape_dock" instance=ExtResource("8_service_door")]
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Escape_dock"]
-position = Vector3(0, 1.18, 0)
-shape = SubResource("BoxShape_door_interaction")
-[node name="DoorBlocker" type="StaticBody3D" parent="Interactions/Escape_dock"]
-collision_layer = 4
-collision_mask = 0
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Escape_dock/DoorBlocker"]
-position = Vector3(0, 1.18, 0)
-shape = SubResource("BoxShape_door_blocker")
-[node name="Label" type="Label3D" parent="Interactions/Escape_dock"]
-position = Vector3(0, 2.95, 0)
-text = "DOCK"
-font_size = 34
-outline_size = 8
-modulate = Color(1, 0.55, 0.18, 1)
-billboard = 1
-no_depth_test = true
 
 [node name="EscapeDoor_dock" type="Marker3D" parent="Markers"]
 position = Vector3(37.55, 0, 7)
@@ -1251,30 +927,10 @@ metadata/stable_id = "interaction.service_door.dock"
 enabled = false
 start_position = Vector3(51.3, 0, 13)
 end_position = Vector3(54.7, 0, 13)
-[node name="Escape_launch" type="StaticBody3D" parent="Interactions"]
+[node name="Escape_launch" parent="Interactions" instance=ExtResource("entity_service_door")]
 position = Vector3(53, 0, 13)
 rotation_degrees = Vector3(0, 90, 0)
-collision_layer = 2
-collision_mask = 0
 metadata/stable_id = "interaction.service_door.launch"
-[node name="ProductionAsset" parent="Interactions/Escape_launch" instance=ExtResource("8_service_door")]
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Escape_launch"]
-position = Vector3(0, 1.18, 0)
-shape = SubResource("BoxShape_door_interaction")
-[node name="DoorBlocker" type="StaticBody3D" parent="Interactions/Escape_launch"]
-collision_layer = 4
-collision_mask = 0
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/Escape_launch/DoorBlocker"]
-position = Vector3(0, 1.18, 0)
-shape = SubResource("BoxShape_door_blocker")
-[node name="Label" type="Label3D" parent="Interactions/Escape_launch"]
-position = Vector3(0, 2.95, 0)
-text = "LAUNCH"
-font_size = 34
-outline_size = 8
-modulate = Color(1, 0.55, 0.18, 1)
-billboard = 1
-no_depth_test = true
 
 [node name="EscapeDoor_launch" type="Marker3D" parent="Markers"]
 position = Vector3(51.55, 0, 13)
@@ -1291,83 +947,32 @@ metadata/stable_id = "encounter.station.service"
 position = Vector3(17, 0, 10.5)
 metadata/stable_id = "actor.enemy.security_enforcer.service.1"
 rotation_degrees = Vector3(0, 50.1944, 0)
-[node name="Escape_service_0" type="Node3D" parent="Hostiles"]
+[node name="Escape_service_0" parent="Hostiles" instance=ExtResource("entity_security_enforcer")]
 position = Vector3(17, 0, 10.5)
 visible = false
 metadata/stable_id = "actor.enemy.security_enforcer.service.1"
 rotation_degrees = Vector3(0, 50.1944, 0)
 
-[node name="Presentation" type="Node3D" parent="Hostiles/Escape_service_0"]
-script = ExtResource("11_humanoid_presentation")
-IdleAnimationName = "anim_humanoid_idle_holstered"
-LocomotionAnimationName = "anim_humanoid_walk_holstered"
-MeleeStrikeAnimationName = "anim_humanoid_melee_strike"
-DownAnimationName = "anim_humanoid_down"
-[node name="Model" parent="Hostiles/Escape_service_0/Presentation" instance=ExtResource("12_enforcer")]
-[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_service_0"]
-collision_layer = 0
-collision_mask = 0
-metadata/stable_id = "actor.enemy.security_enforcer.service.1"
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_service_0/TargetBody"]
-position = Vector3(0, 0.95, 0)
-shape = SubResource("CapsuleShape_enforcer")
-[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_service_0"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_hostile")
-material_override = SubResource("Material_hostile")
 [node name="Spawn_Escape_service_1" type="Marker3D" parent="Markers"]
 position = Vector3(20.8, 0, 2)
 metadata/stable_id = "actor.enemy.security_enforcer.service.2"
 rotation_degrees = Vector3(0, 131.424, 0)
-[node name="Escape_service_1" type="Node3D" parent="Hostiles"]
+[node name="Escape_service_1" parent="Hostiles" instance=ExtResource("entity_security_enforcer")]
 position = Vector3(20.8, 0, 2)
 visible = false
 metadata/stable_id = "actor.enemy.security_enforcer.service.2"
 rotation_degrees = Vector3(0, 131.424, 0)
 
-[node name="Presentation" type="Node3D" parent="Hostiles/Escape_service_1"]
-script = ExtResource("11_humanoid_presentation")
-IdleAnimationName = "anim_humanoid_idle_holstered"
-LocomotionAnimationName = "anim_humanoid_walk_holstered"
-MeleeStrikeAnimationName = "anim_humanoid_melee_strike"
-DownAnimationName = "anim_humanoid_down"
-[node name="Model" parent="Hostiles/Escape_service_1/Presentation" instance=ExtResource("12_enforcer")]
-[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_service_1"]
-collision_layer = 0
-collision_mask = 0
-metadata/stable_id = "actor.enemy.security_enforcer.service.2"
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_service_1/TargetBody"]
-position = Vector3(0, 0.95, 0)
-shape = SubResource("CapsuleShape_enforcer")
-[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_service_1"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_hostile")
-material_override = SubResource("Material_hostile")
 [node name="Spawn_Escape_service_2" type="Marker3D" parent="Markers"]
 position = Vector3(21.5, 0, 8.5)
 metadata/stable_id = "actor.enemy.ranged_enforcer.service.3"
 rotation_degrees = Vector3(0, 86.1859, 0)
-[node name="Escape_service_2" type="Node3D" parent="Hostiles"]
+[node name="Escape_service_2" parent="Hostiles" instance=ExtResource("entity_ranged_enforcer")]
 position = Vector3(21.5, 0, 8.5)
 visible = false
 metadata/stable_id = "actor.enemy.ranged_enforcer.service.3"
 rotation_degrees = Vector3(0, 86.1859, 0)
 
-[node name="Presentation" type="Node3D" parent="Hostiles/Escape_service_2"]
-script = ExtResource("7_vanguard_presentation")
-[node name="Model" parent="Hostiles/Escape_service_2/Presentation" instance=ExtResource("escape_ranged")]
-[node name="Weapon" parent="Hostiles/Escape_service_2/Presentation" instance=ExtResource("13_carbine")]
-[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_service_2"]
-collision_layer = 0
-collision_mask = 0
-metadata/stable_id = "actor.enemy.ranged_enforcer.service.3"
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_service_2/TargetBody"]
-position = Vector3(0, 0.95, 0)
-shape = SubResource("CapsuleShape_enforcer")
-[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_service_2"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_hostile")
-material_override = SubResource("Material_hostile")
 [node name="EscapeEntry_security" type="Marker3D" parent="Markers"]
 position = Vector3(28, 0, 3)
 metadata/stable_id = "encounter.station.security"
@@ -1375,104 +980,42 @@ metadata/stable_id = "encounter.station.security"
 position = Vector3(31, 0, 3.5)
 metadata/stable_id = "actor.enemy.security_enforcer.security.1"
 rotation_degrees = Vector3(0, 80.5377, 0)
-[node name="Escape_security_0" type="Node3D" parent="Hostiles"]
+[node name="Escape_security_0" parent="Hostiles" instance=ExtResource("entity_security_enforcer")]
 position = Vector3(31, 0, 3.5)
 visible = false
 metadata/stable_id = "actor.enemy.security_enforcer.security.1"
 rotation_degrees = Vector3(0, 80.5377, 0)
 
-[node name="Presentation" type="Node3D" parent="Hostiles/Escape_security_0"]
-script = ExtResource("11_humanoid_presentation")
-IdleAnimationName = "anim_humanoid_idle_holstered"
-LocomotionAnimationName = "anim_humanoid_walk_holstered"
-MeleeStrikeAnimationName = "anim_humanoid_melee_strike"
-DownAnimationName = "anim_humanoid_down"
-[node name="Model" parent="Hostiles/Escape_security_0/Presentation" instance=ExtResource("12_enforcer")]
-[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_security_0"]
-collision_layer = 0
-collision_mask = 0
-metadata/stable_id = "actor.enemy.security_enforcer.security.1"
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_security_0/TargetBody"]
-position = Vector3(0, 0.95, 0)
-shape = SubResource("CapsuleShape_enforcer")
-[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_security_0"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_hostile")
-material_override = SubResource("Material_hostile")
 [node name="Spawn_Escape_security_1" type="Marker3D" parent="Markers"]
 position = Vector3(34, 0, -1.5)
 metadata/stable_id = "actor.enemy.ranged_enforcer.security.2"
 rotation_degrees = Vector3(0, 126.87, 0)
-[node name="Escape_security_1" type="Node3D" parent="Hostiles"]
+[node name="Escape_security_1" parent="Hostiles" instance=ExtResource("entity_ranged_enforcer")]
 position = Vector3(34, 0, -1.5)
 visible = false
 metadata/stable_id = "actor.enemy.ranged_enforcer.security.2"
 rotation_degrees = Vector3(0, 126.87, 0)
 
-[node name="Presentation" type="Node3D" parent="Hostiles/Escape_security_1"]
-script = ExtResource("7_vanguard_presentation")
-[node name="Model" parent="Hostiles/Escape_security_1/Presentation" instance=ExtResource("escape_ranged")]
-[node name="Weapon" parent="Hostiles/Escape_security_1/Presentation" instance=ExtResource("13_carbine")]
-[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_security_1"]
-collision_layer = 0
-collision_mask = 0
-metadata/stable_id = "actor.enemy.ranged_enforcer.security.2"
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_security_1/TargetBody"]
-position = Vector3(0, 0.95, 0)
-shape = SubResource("CapsuleShape_enforcer")
-[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_security_1"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_hostile")
-material_override = SubResource("Material_hostile")
 [node name="Spawn_Escape_security_2" type="Marker3D" parent="Markers"]
 position = Vector3(35.8, 0, 8.5)
 metadata/stable_id = "actor.enemy.ranged_enforcer.security.3"
 rotation_degrees = Vector3(0, 54.8113, 0)
-[node name="Escape_security_2" type="Node3D" parent="Hostiles"]
+[node name="Escape_security_2" parent="Hostiles" instance=ExtResource("entity_ranged_enforcer")]
 position = Vector3(35.8, 0, 8.5)
 visible = false
 metadata/stable_id = "actor.enemy.ranged_enforcer.security.3"
 rotation_degrees = Vector3(0, 54.8113, 0)
 
-[node name="Presentation" type="Node3D" parent="Hostiles/Escape_security_2"]
-script = ExtResource("7_vanguard_presentation")
-[node name="Model" parent="Hostiles/Escape_security_2/Presentation" instance=ExtResource("escape_ranged")]
-[node name="Weapon" parent="Hostiles/Escape_security_2/Presentation" instance=ExtResource("13_carbine")]
-[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_security_2"]
-collision_layer = 0
-collision_mask = 0
-metadata/stable_id = "actor.enemy.ranged_enforcer.security.3"
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_security_2/TargetBody"]
-position = Vector3(0, 0.95, 0)
-shape = SubResource("CapsuleShape_enforcer")
-[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_security_2"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_hostile")
-material_override = SubResource("Material_hostile")
 [node name="Spawn_Escape_security_3" type="Marker3D" parent="Markers"]
 position = Vector3(36, 0, 3.5)
 metadata/stable_id = "actor.enemy.gun_sentry.security.4"
 rotation_degrees = Vector3(0, 86.4237, 0)
-[node name="Escape_security_3" type="Node3D" parent="Hostiles"]
+[node name="Escape_security_3" parent="Hostiles" instance=ExtResource("entity_gun_sentry")]
 position = Vector3(36, 0, 3.5)
 visible = false
 metadata/stable_id = "actor.enemy.gun_sentry.security.4"
 rotation_degrees = Vector3(0, 86.4237, 0)
 
-[node name="Presentation" type="Node3D" parent="Hostiles/Escape_security_3"]
-script = ExtResource("17_sentry_presentation")
-[node name="Model" parent="Hostiles/Escape_security_3/Presentation" instance=ExtResource("16_sentry")]
-[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_security_3"]
-collision_layer = 0
-collision_mask = 0
-metadata/stable_id = "actor.enemy.gun_sentry.security.4"
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_security_3/TargetBody"]
-position = Vector3(0, 0.95, 0)
-shape = SubResource("CapsuleShape_enforcer")
-[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_security_3"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_hostile")
-material_override = SubResource("Material_hostile")
 [node name="EscapeEntry_dock" type="Marker3D" parent="Markers"]
 position = Vector3(42, 0, 7)
 metadata/stable_id = "encounter.station.dock"
@@ -1480,108 +1023,42 @@ metadata/stable_id = "encounter.station.dock"
 position = Vector3(45, 0, 6.5)
 metadata/stable_id = "actor.enemy.security_enforcer.dock.1"
 rotation_degrees = Vector3(0, 99.4623, 0)
-[node name="Escape_dock_0" type="Node3D" parent="Hostiles"]
+[node name="Escape_dock_0" parent="Hostiles" instance=ExtResource("entity_security_enforcer")]
 position = Vector3(45, 0, 6.5)
 visible = false
 metadata/stable_id = "actor.enemy.security_enforcer.dock.1"
 rotation_degrees = Vector3(0, 99.4623, 0)
 
-[node name="Presentation" type="Node3D" parent="Hostiles/Escape_dock_0"]
-script = ExtResource("11_humanoid_presentation")
-IdleAnimationName = "anim_humanoid_idle_holstered"
-LocomotionAnimationName = "anim_humanoid_walk_holstered"
-MeleeStrikeAnimationName = "anim_humanoid_melee_strike"
-DownAnimationName = "anim_humanoid_down"
-[node name="Model" parent="Hostiles/Escape_dock_0/Presentation" instance=ExtResource("12_enforcer")]
-[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_dock_0"]
-collision_layer = 0
-collision_mask = 0
-metadata/stable_id = "actor.enemy.security_enforcer.dock.1"
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_dock_0/TargetBody"]
-position = Vector3(0, 0.95, 0)
-shape = SubResource("CapsuleShape_enforcer")
-[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_dock_0"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_hostile")
-material_override = SubResource("Material_hostile")
 [node name="Spawn_Escape_dock_1" type="Marker3D" parent="Markers"]
 position = Vector3(44, 0, 15)
 metadata/stable_id = "actor.enemy.security_enforcer.dock.2"
 rotation_degrees = Vector3(0, 14.0362, 0)
-[node name="Escape_dock_1" type="Node3D" parent="Hostiles"]
+[node name="Escape_dock_1" parent="Hostiles" instance=ExtResource("entity_security_enforcer")]
 position = Vector3(44, 0, 15)
 visible = false
 metadata/stable_id = "actor.enemy.security_enforcer.dock.2"
 rotation_degrees = Vector3(0, 14.0362, 0)
 
-[node name="Presentation" type="Node3D" parent="Hostiles/Escape_dock_1"]
-script = ExtResource("11_humanoid_presentation")
-IdleAnimationName = "anim_humanoid_idle_holstered"
-LocomotionAnimationName = "anim_humanoid_walk_holstered"
-MeleeStrikeAnimationName = "anim_humanoid_melee_strike"
-DownAnimationName = "anim_humanoid_down"
-[node name="Model" parent="Hostiles/Escape_dock_1/Presentation" instance=ExtResource("12_enforcer")]
-[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_dock_1"]
-collision_layer = 0
-collision_mask = 0
-metadata/stable_id = "actor.enemy.security_enforcer.dock.2"
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_dock_1/TargetBody"]
-position = Vector3(0, 0.95, 0)
-shape = SubResource("CapsuleShape_enforcer")
-[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_dock_1"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_hostile")
-material_override = SubResource("Material_hostile")
 [node name="Spawn_Escape_dock_2" type="Marker3D" parent="Markers"]
 position = Vector3(49.5, 0, 8)
 metadata/stable_id = "actor.enemy.ranged_enforcer.dock.3"
 rotation_degrees = Vector3(0, 82.4054, 0)
-[node name="Escape_dock_2" type="Node3D" parent="Hostiles"]
+[node name="Escape_dock_2" parent="Hostiles" instance=ExtResource("entity_ranged_enforcer")]
 position = Vector3(49.5, 0, 8)
 visible = false
 metadata/stable_id = "actor.enemy.ranged_enforcer.dock.3"
 rotation_degrees = Vector3(0, 82.4054, 0)
 
-[node name="Presentation" type="Node3D" parent="Hostiles/Escape_dock_2"]
-script = ExtResource("7_vanguard_presentation")
-[node name="Model" parent="Hostiles/Escape_dock_2/Presentation" instance=ExtResource("escape_ranged")]
-[node name="Weapon" parent="Hostiles/Escape_dock_2/Presentation" instance=ExtResource("13_carbine")]
-[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_dock_2"]
-collision_layer = 0
-collision_mask = 0
-metadata/stable_id = "actor.enemy.ranged_enforcer.dock.3"
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_dock_2/TargetBody"]
-position = Vector3(0, 0.95, 0)
-shape = SubResource("CapsuleShape_enforcer")
-[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_dock_2"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_hostile")
-material_override = SubResource("Material_hostile")
 [node name="Spawn_Escape_dock_3" type="Marker3D" parent="Markers"]
 position = Vector3(49.5, 0, 15)
 metadata/stable_id = "actor.enemy.ranged_enforcer.dock.4"
 rotation_degrees = Vector3(0, 43.1524, 0)
-[node name="Escape_dock_3" type="Node3D" parent="Hostiles"]
+[node name="Escape_dock_3" parent="Hostiles" instance=ExtResource("entity_ranged_enforcer")]
 position = Vector3(49.5, 0, 15)
 visible = false
 metadata/stable_id = "actor.enemy.ranged_enforcer.dock.4"
 rotation_degrees = Vector3(0, 43.1524, 0)
 
-[node name="Presentation" type="Node3D" parent="Hostiles/Escape_dock_3"]
-script = ExtResource("7_vanguard_presentation")
-[node name="Model" parent="Hostiles/Escape_dock_3/Presentation" instance=ExtResource("escape_ranged")]
-[node name="Weapon" parent="Hostiles/Escape_dock_3/Presentation" instance=ExtResource("13_carbine")]
-[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_dock_3"]
-collision_layer = 0
-collision_mask = 0
-metadata/stable_id = "actor.enemy.ranged_enforcer.dock.4"
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_dock_3/TargetBody"]
-position = Vector3(0, 0.95, 0)
-shape = SubResource("CapsuleShape_enforcer")
-[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_dock_3"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_hostile")
-material_override = SubResource("Material_hostile")
 [node name="EscapeEntry_launch" type="Marker3D" parent="Markers"]
 position = Vector3(56.5, 0, 13)
 metadata/stable_id = "encounter.station.launch"
@@ -1589,147 +1066,56 @@ metadata/stable_id = "encounter.station.launch"
 position = Vector3(61, 0, 14)
 metadata/stable_id = "actor.enemy.security_enforcer.launch.1"
 rotation_degrees = Vector3(0, 77.4712, 0)
-[node name="Escape_launch_0" type="Node3D" parent="Hostiles"]
+[node name="Escape_launch_0" parent="Hostiles" instance=ExtResource("entity_security_enforcer")]
 position = Vector3(61, 0, 14)
 visible = false
 metadata/stable_id = "actor.enemy.security_enforcer.launch.1"
 rotation_degrees = Vector3(0, 77.4712, 0)
 
-[node name="Presentation" type="Node3D" parent="Hostiles/Escape_launch_0"]
-script = ExtResource("11_humanoid_presentation")
-IdleAnimationName = "anim_humanoid_idle_holstered"
-LocomotionAnimationName = "anim_humanoid_walk_holstered"
-MeleeStrikeAnimationName = "anim_humanoid_melee_strike"
-DownAnimationName = "anim_humanoid_down"
-[node name="Model" parent="Hostiles/Escape_launch_0/Presentation" instance=ExtResource("12_enforcer")]
-[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_launch_0"]
-collision_layer = 0
-collision_mask = 0
-metadata/stable_id = "actor.enemy.security_enforcer.launch.1"
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_launch_0/TargetBody"]
-position = Vector3(0, 0.95, 0)
-shape = SubResource("CapsuleShape_enforcer")
-[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_launch_0"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_hostile")
-material_override = SubResource("Material_hostile")
 [node name="Spawn_Escape_launch_1" type="Marker3D" parent="Markers"]
 position = Vector3(64, 0, 6.5)
 metadata/stable_id = "actor.enemy.security_enforcer.launch.2"
 rotation_degrees = Vector3(0, 130.914, 0)
-[node name="Escape_launch_1" type="Node3D" parent="Hostiles"]
+[node name="Escape_launch_1" parent="Hostiles" instance=ExtResource("entity_security_enforcer")]
 position = Vector3(64, 0, 6.5)
 visible = false
 metadata/stable_id = "actor.enemy.security_enforcer.launch.2"
 rotation_degrees = Vector3(0, 130.914, 0)
 
-[node name="Presentation" type="Node3D" parent="Hostiles/Escape_launch_1"]
-script = ExtResource("11_humanoid_presentation")
-IdleAnimationName = "anim_humanoid_idle_holstered"
-LocomotionAnimationName = "anim_humanoid_walk_holstered"
-MeleeStrikeAnimationName = "anim_humanoid_melee_strike"
-DownAnimationName = "anim_humanoid_down"
-[node name="Model" parent="Hostiles/Escape_launch_1/Presentation" instance=ExtResource("12_enforcer")]
-[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_launch_1"]
-collision_layer = 0
-collision_mask = 0
-metadata/stable_id = "actor.enemy.security_enforcer.launch.2"
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_launch_1/TargetBody"]
-position = Vector3(0, 0.95, 0)
-shape = SubResource("CapsuleShape_enforcer")
-[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_launch_1"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_hostile")
-material_override = SubResource("Material_hostile")
 [node name="Spawn_Escape_launch_2" type="Marker3D" parent="Markers"]
 position = Vector3(67, 0, 12.5)
 metadata/stable_id = "actor.enemy.ranged_enforcer.launch.3"
 rotation_degrees = Vector3(0, 92.7263, 0)
-[node name="Escape_launch_2" type="Node3D" parent="Hostiles"]
+[node name="Escape_launch_2" parent="Hostiles" instance=ExtResource("entity_ranged_enforcer")]
 position = Vector3(67, 0, 12.5)
 visible = false
 metadata/stable_id = "actor.enemy.ranged_enforcer.launch.3"
 rotation_degrees = Vector3(0, 92.7263, 0)
 
-[node name="Presentation" type="Node3D" parent="Hostiles/Escape_launch_2"]
-script = ExtResource("7_vanguard_presentation")
-[node name="Model" parent="Hostiles/Escape_launch_2/Presentation" instance=ExtResource("escape_ranged")]
-[node name="Weapon" parent="Hostiles/Escape_launch_2/Presentation" instance=ExtResource("13_carbine")]
-[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_launch_2"]
-collision_layer = 0
-collision_mask = 0
-metadata/stable_id = "actor.enemy.ranged_enforcer.launch.3"
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_launch_2/TargetBody"]
-position = Vector3(0, 0.95, 0)
-shape = SubResource("CapsuleShape_enforcer")
-[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_launch_2"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_hostile")
-material_override = SubResource("Material_hostile")
 [node name="Spawn_Escape_launch_3" type="Marker3D" parent="Markers"]
 position = Vector3(69, 0, 18)
 metadata/stable_id = "actor.enemy.ranged_enforcer.launch.4"
 rotation_degrees = Vector3(0, 68.1986, 0)
-[node name="Escape_launch_3" type="Node3D" parent="Hostiles"]
+[node name="Escape_launch_3" parent="Hostiles" instance=ExtResource("entity_ranged_enforcer")]
 position = Vector3(69, 0, 18)
 visible = false
 metadata/stable_id = "actor.enemy.ranged_enforcer.launch.4"
 rotation_degrees = Vector3(0, 68.1986, 0)
 
-[node name="Presentation" type="Node3D" parent="Hostiles/Escape_launch_3"]
-script = ExtResource("7_vanguard_presentation")
-[node name="Model" parent="Hostiles/Escape_launch_3/Presentation" instance=ExtResource("escape_ranged")]
-[node name="Weapon" parent="Hostiles/Escape_launch_3/Presentation" instance=ExtResource("13_carbine")]
-[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_launch_3"]
-collision_layer = 0
-collision_mask = 0
-metadata/stable_id = "actor.enemy.ranged_enforcer.launch.4"
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_launch_3/TargetBody"]
-position = Vector3(0, 0.95, 0)
-shape = SubResource("CapsuleShape_enforcer")
-[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_launch_3"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_hostile")
-material_override = SubResource("Material_hostile")
 [node name="Spawn_Escape_launch_4" type="Marker3D" parent="Markers"]
 position = Vector3(69, 0, 8)
 metadata/stable_id = "actor.enemy.gun_sentry.launch.5"
 rotation_degrees = Vector3(0, 111.801, 0)
-[node name="Escape_launch_4" type="Node3D" parent="Hostiles"]
+[node name="Escape_launch_4" parent="Hostiles" instance=ExtResource("entity_gun_sentry")]
 position = Vector3(69, 0, 8)
 visible = false
 metadata/stable_id = "actor.enemy.gun_sentry.launch.5"
 rotation_degrees = Vector3(0, 111.801, 0)
 
-[node name="Presentation" type="Node3D" parent="Hostiles/Escape_launch_4"]
-script = ExtResource("17_sentry_presentation")
-[node name="Model" parent="Hostiles/Escape_launch_4/Presentation" instance=ExtResource("16_sentry")]
-[node name="TargetBody" type="StaticBody3D" parent="Hostiles/Escape_launch_4"]
-collision_layer = 0
-collision_mask = 0
-metadata/stable_id = "actor.enemy.gun_sentry.launch.5"
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Hostiles/Escape_launch_4/TargetBody"]
-position = Vector3(0, 0.95, 0)
-shape = SubResource("CapsuleShape_enforcer")
-[node name="ThreatRing" type="MeshInstance3D" parent="Hostiles/Escape_launch_4"]
-position = Vector3(0, 0.045, 0)
-mesh = SubResource("TorusMesh_hostile")
-material_override = SubResource("Material_hostile")
-[node name="BoardCutter" type="StaticBody3D" parent="Interactions"]
+[node name="BoardCutter" parent="Interactions" instance=ExtResource("entity_cutter_boarding")]
 position = Vector3(76.5, 0, 8)
-collision_layer = 2
-collision_mask = 0
 metadata/stable_id = "interaction.escape_cutter.board"
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactions/BoardCutter"]
-position = Vector3(0, 0.8, 0)
-shape = SubResource("BoxShape_terminal")
-[node name="Label" type="Label3D" parent="Interactions/BoardCutter"]
-position = Vector3(0, 2.4, 0)
-text = "BOARD ESCAPE CUTTER"
-font_size = 30
-outline_size = 7
-billboard = 1
-no_depth_test = true
+
 [node name="Layout_solo_0" type="StaticBody3D" parent="Environment/Floors"]
 position = Vector3(-13.55, -0.1, -2.35)
 collision_layer = 1

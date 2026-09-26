@@ -97,7 +97,8 @@ enemies to their placements, and clears its temporary combat state.
 stats/timings, loadouts, ordered encounters, individual crew health,
 required crew IDs, authored dialogue, interactions, and objectives.
 [station_route.tscn](../game/scenes/station_route.tscn) owns spatial placement,
-navigation, collision, lights, and presentation. Its [offline layout input](station-layout.md)
+navigation, collision, lights, and presentation. It instances crew, hostile, and
+interaction views from reusable scenes in [`game/scenes/entities/`](../game/scenes/entities/). Its [offline layout input](station-layout.md)
 also rebuilds the matching Blender decks and recessed foundations. Both validate and join through
 stable IDs; node paths and object IDs never identify gameplay entities.
 Loading also rejects routes that could not be completed: encounter objectives
