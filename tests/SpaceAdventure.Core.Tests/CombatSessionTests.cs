@@ -145,6 +145,7 @@ public sealed partial class CombatSessionTests
     public void DefeatRetryRestoresOnlyCombatState()
     {
         var session = CreateAtEncounter();
+        var spotted = Observe(session).Protagonist;
         ResumeIntoActiveCombat(session);
         AdvanceUntil(
             session,
@@ -166,6 +167,9 @@ public sealed partial class CombatSessionTests
         Assert.Equal(EncounterPhase.Readying, retried.Encounter!.Phase);
         Assert.Equal(2, retried.Encounter.Attempt);
         Assert.Equal(100, retried.Protagonist.Combat!.Health);
+        // Retry returns the Vanguard to where the Enforcer first saw it, not to an authored spot.
+        Assert.Equal(spotted.Position, retried.Protagonist.Position);
+        Assert.Equal(spotted.Facing, retried.Protagonist.Facing);
         Assert.Equal(retried.Hostiles![0].Combat.MaximumHealth, retried.Hostiles[0].Combat.Health);
         Assert.Equal(routePower, retried.RoutePowerMode);
         Assert.Equal(entryState, FindInteraction(
@@ -174,12 +178,12 @@ public sealed partial class CombatSessionTests
         Assert.False(FindInteraction(retried, SoloExitDoorId).CanInteract);
     }
 
-    private static GameSession CreateAtEncounter(StationEncounterPlacement? partyPlacement = null, ISpatialPathfinder? pathfinder = null,
-        StationRouteDefinition? definition = null, IReadOnlyList<StationEncounterPlacement>? extensionPlacements = null)
+    private static GameSession CreateAtEncounter(StationRouteLayout? layout = null, StationRouteDefinition? definition = null,
+        ISpatialPathfinder? pathfinder = null)
     {
         var session = GameSession.CreateStationRoute(
             definition ?? TestDefinition,
-            CreateLayout(partyPlacement, extensionPlacements),
+            layout ?? CreateLayout(),
             pathfinder ?? new DirectPathfinder());
         Assert.True(session.Execute(new ChooseProtagonistKitCommand(
             new CommandId("kit.vanguard"),
@@ -190,12 +194,11 @@ public sealed partial class CombatSessionTests
             ProtagonistId,
             new EntityId("interaction.survivor"),
             new DialogueResponseId("response.reroute_service_power"))).Accepted);
+        // Opening the entry door sets the fight's objective; the Enforcer waiting 3.5 m
+        // beyond it spots the Vanguard at the door on that same tick.
         CompleteInteraction(session, new EntityId("interaction.service_door.entry"), "entry");
-        Assert.True(session.Execute(new MoveActorCommand(
-            new CommandId("move.to.combat"),
-            ProtagonistId,
-            new WorldPosition(-10, 0, 2.75))).Accepted);
         AdvanceUntil(session, observation => observation.Encounter!.Phase == EncounterPhase.Readying, 300);
+        Assert.Equal(SoloDoorApproach, Observe(session).Protagonist.Position);
         return session;
     }
 
@@ -218,38 +221,64 @@ public sealed partial class CombatSessionTests
             session,
             observation => FindInteraction(observation, id).State is
                 InteractionState.DialogueActive or InteractionState.Completed,
-            300);
+            600);
     }
 
-    private static StationRouteLayout CreateLayout(StationEncounterPlacement? partyPlacement = null, IReadOnlyList<StationEncounterPlacement>? extensionPlacements = null)
+    /// <summary>
+    /// Where the crew stand when a hostile first sees them. Fights start from wherever that is, so the test
+    /// layout recruits each companion at the spot its first fight should begin: recruitment is what opens
+    /// that fight's objective, and the waiting hostiles spot the crew on the next tick.
+    /// </summary>
+    private sealed record CrewStart(WorldPosition Protagonist, WorldPosition Protector, WorldPosition? Medic = null);
+
+    private static readonly WorldPosition SoloDoorApproach = new(-10, 0, 4.85);
+
+    // The former authored party restart spots, now reached by recruiting the Protector there.
+    private static readonly CrewStart PartyCrewStart = new(new WorldPosition(-0.55, 0, 4.5), new WorldPosition(0.55, 0, 4.5));
+
+    private static StationEncounterPlacement CreateSoloPlacement(WorldPosition? hostile = null) =>
+        new(new EncounterId("encounter.station.solo_tutorial"), hostile ?? new WorldPosition(-10, 0, 1.35));
+
+    private static StationRouteLayout CreateLayout(StationEncounterPlacement? partyPlacement = null,
+        IReadOnlyList<StationEncounterPlacement>? extensionPlacements = null, CrewStart? partyCrew = null,
+        CrewStart? serviceCrew = null, StationEncounterPlacement? solo = null,
+        IEnumerable<StationVisionBlocker>? blockers = null, WorldPosition? start = null)
     {
+        partyCrew ??= PartyCrewStart;
+        // The Protector interaction sits where the Vanguard should stand; the Protector joins at its own spot.
+        var protectorInteraction = new StationInteractionPlacement(ProtectorInteractionId, partyCrew.Protagonist, partyCrew.Protagonist);
+        var medicInteraction = serviceCrew is null
+            ? new StationInteractionPlacement(MedicInteractionId, new WorldPosition(9, 0, 8), new WorldPosition(8.15, 0, 8))
+            : new StationInteractionPlacement(MedicInteractionId, serviceCrew.Protagonist, serviceCrew.Protagonist);
         return new StationRouteLayout(
-            new WorldPosition(-10, 0, 8.5),
-            [new StationActorPlacement(
-                new EntityId("actor.companion.protector"),
-                new WorldPosition(-1.5, 0, 0)), new StationActorPlacement(new EntityId("actor.companion.medic"), new WorldPosition(9, 0, 8))],
+            start ?? new WorldPosition(-10, 0, 8.5),
+            [new StationActorPlacement(ProtectorId, partyCrew.Protector),
+                new StationActorPlacement(MedicId, serviceCrew?.Medic ?? new WorldPosition(9, 0, 8))],
             [
-                new(new EntityId("interaction.medic"), new WorldPosition(9, 0, 8), new WorldPosition(8.15, 0, 8)),
+                medicInteraction,
                 new(new EntityId("interaction.escape_cutter.board"), new WorldPosition(76.5, 0, 8), new WorldPosition(76.5, 0, 8)),
                 new(new EntityId("interaction.service_door.service"), new WorldPosition(12, 0, 8), new WorldPosition(11.15, 0, 8)),
                 new(new EntityId("interaction.service_door.security"), new WorldPosition(25, 0, 8), new WorldPosition(24.15, 0, 8)),
                 new(new EntityId("interaction.service_door.dock"), new WorldPosition(39, 0, 8), new WorldPosition(38.15, 0, 8)),
                 new(new EntityId("interaction.service_door.launch"), new WorldPosition(53, 0, 8), new WorldPosition(52.15, 0, 8)),
                 new(new EntityId("interaction.survivor"), new WorldPosition(-8.5, 0, 6.5), new WorldPosition(-9.3, 0, 6.5)),
-                new(new EntityId("interaction.service_door.entry"), new WorldPosition(-10, 0, 4), new WorldPosition(-10, 0, 4.85)),
+                new(new EntityId("interaction.service_door.entry"), new WorldPosition(-10, 0, 4), SoloDoorApproach),
                 new(SoloExitDoorId, new WorldPosition(-5, 0, 0), new WorldPosition(-5.85, 0, 0)),
-                new(ProtectorInteractionId, new WorldPosition(-1.5, 0, 0), new WorldPosition(-2.35, 0, 0)),
+                protectorInteraction,
                 new(new EntityId("interaction.service_terminal"), new WorldPosition(-11.5, 0, 6.5), new WorldPosition(-10.65, 0, 6.5)),
                 new(new EntityId("interaction.evacuation_airlock"), new WorldPosition(73, 0, 8), new WorldPosition(72.15, 0, 8)),
             ],
-            new StationEncounterPlacement(
-                new EncounterId("encounter.station.solo_tutorial"),
-                new WorldPosition(-10, 0, 2.75),
-                0.75,
-                new WorldPosition(-10, 0, 2.5),
-                new WorldPosition(-10, 0, -1)),
+            solo ?? CreateSoloPlacement(),
             partyPlacement ?? CreatePartyPlacement(),
-            extensionPlacements ?? ExtensionEncounterPlacements());
+            extensionPlacements ?? ExtensionEncounterPlacements(),
+            blockers);
+    }
+
+    private static void MoveAndArrive(GameSession session, EntityId actorId, WorldPosition destination)
+    {
+        Assert.True(session.Execute(new MoveActorCommand(
+            new CommandId($"stage.{actorId}.{session.Tick}"), actorId, destination)).Accepted);
+        AdvanceUntil(session, route => route.Party.Single(actor => actor.Id == actorId).Position == destination, 600);
     }
 
     private static void AdvanceUntil(

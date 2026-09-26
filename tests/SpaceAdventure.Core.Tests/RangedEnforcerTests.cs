@@ -8,16 +8,18 @@ public sealed partial class CombatSessionTests
 {
     private static StationEncounterPlacement RangedOnlyPlacement(double rangedX = 26) => QuietMedicPlacement() with
     {
-        CrewRestartPositions = [new(ProtagonistId, new WorldPosition(14, 0, 12)),
-            new(ProtectorId, new WorldPosition(14, 0, 8)), new(MedicId, new WorldPosition(14, 0, 13))],
         HostilePlacements = QuietMedicPlacement().HostilePlacements!.Select((hostile, index) => index == 2
             ? hostile with { Position = new WorldPosition(rangedX, 0, 8) } : hostile).ToArray(),
     };
 
+    private static readonly CrewStart RangedOnlyCrew = new(new WorldPosition(14, 0, 12), new WorldPosition(14, 0, 8), new WorldPosition(14, 0, 13));
+
     [Fact]
     public void RangedEnforcerAdvancesToRangeStopsForWindupAndBarrierBlocksItsReleasedProjectile()
     {
-        var session = CreateAtMedicEncounter(RangedOnlyPlacement());
+        // The rifleman must notice the Protector 12 m away, beyond its 8 m rifle range, to show the advance.
+        var definition = VisionDefinition(json => json["vision"]!["hostile_detection_meters"] = 12.5);
+        var session = CreateAtMedicEncounter(RangedOnlyPlacement(), definition, crew: RangedOnlyCrew);
         ResumeIntoActiveCombat(session);
         var rangedId = Observe(session).Hostiles![2].Id;
         AdvanceUntil(session, route => route.Hostiles!.Single(enemy => enemy.Id == rangedId).CurrentAction?.Phase == PrimaryActionPhase.Windup, 180);
@@ -43,17 +45,14 @@ public sealed partial class CombatSessionTests
     [Fact]
     public void RangedProjectileKeepsDestinationAfterSourceDeathAndCanBeDodged()
     {
-        var placement = RangedOnlyPlacement(21) with
-        {
-            CrewRestartPositions = [new(ProtagonistId, new WorldPosition(15, 0, 10)),
-                new(ProtectorId, new WorldPosition(15, 0, 8)), new(MedicId, new WorldPosition(14, 0, 13))],
-        };
+        var placement = RangedOnlyPlacement(21);
         var json = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "content", "station-route.json")))!;
         var rifle = json["combat"]!["attacks"]!.AsArray().Single(attack => attack!["id"]!.GetValue<string>() == "attack.enemy.ranged_enforcer.rifle")!;
         rifle["projectile_speed_meters_per_second"] = 4;
         var enemy = json["combat"]!["hostiles"]!.AsArray().Single(hostile => hostile!["id"]!.GetValue<string>() == "actor.enemy.ranged_enforcer.service.3")!;
         enemy["maximum_health"] = 18;
-        var session = CreateAtMedicEncounter(placement, StationRouteContent.ParseJson(json.ToJsonString()));
+        var session = CreateAtMedicEncounter(placement, StationRouteContent.ParseJson(json.ToJsonString()),
+            crew: new CrewStart(new WorldPosition(15, 0, 10), new WorldPosition(15, 0, 8), new WorldPosition(14, 0, 13)));
         ResumeIntoActiveCombat(session);
         AdvanceUntil(session, route => route.Encounter!.Projectiles!.Count > 0, 60);
         var projectile = Assert.Single(Observe(session).Encounter!.Projectiles!);
@@ -82,12 +81,8 @@ public sealed partial class CombatSessionTests
     [Fact]
     public void FieldPulsesUseCurrentMembershipRatherThanCastTimeTargets()
     {
-        var placement = RangedOnlyPlacement(16) with
-        {
-            CrewRestartPositions = [new(ProtagonistId, new WorldPosition(14, 0, 8)),
-                new(ProtectorId, new WorldPosition(14, 0, 12)), new(MedicId, new WorldPosition(14, 0, 13))],
-        };
-        var session = CreateAtMedicEncounter(placement);
+        var session = CreateAtMedicEncounter(RangedOnlyPlacement(16),
+            crew: new CrewStart(new WorldPosition(14, 0, 8), new WorldPosition(14, 0, 12), new WorldPosition(14, 0, 13)));
         ResumeIntoActiveCombat(session);
         AdvanceUntil(session, route => route.Protagonist.Combat!.Health < 100, 90);
         var center = new WorldPosition(14, 0, 13);

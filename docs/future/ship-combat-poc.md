@@ -21,9 +21,12 @@ divider and no cross-divider shot or trajectory lines.
 ## Lifecycle
 
 - The ordinary game captures the station party once at completion, plays the
-  full 8 s departure, loads the battle on a thread and enters exactly once when
-  both have finished. The battle starts paused at tick 0; loading never
-  advances it. A load or entry failure discards any partial scene and stays
+  full departure (camera follows the takeoff, fades to a title card on black),
+  loads the battle on a thread and enters exactly once when both have finished.
+  The battle starts paused at tick 0 and arrives from black: the cutter's view
+  eases out, a hostile-contact warning sounds and the interceptor warps in before
+  the HUD settles (any key or click skips it). Loading and the intro never
+  advance it. A load or entry failure discards any partial scene and stays
   retryable (R). Station review/smoke profiles keep station-only completion
   unless they opt in with `--review-continue=ship`.
 - Entry gives fresh full health and the authored ship state while preserving
@@ -95,15 +98,22 @@ Rules live in `src/SpaceAdventure.Core/Ship/` (tick order is documented on
   and a finite visible repair reserve worked one system at a time in the order
   weapons → shields → engines.
 
-The scripted pilots (suppress weapons; synchronize volleys into shields) win in
-roughly 100–135 unpaused seconds and passive play loses; `ship-balance` reports
+This is the player's first ship fight (owner request, 2026-09-26), so it is
+short and forgiving while keeping every mechanic: one enemy shield layer, a slow
+laser, and two hazard missiles that introduce one fire (empty engines room) and
+one breach (shields). Step-by-step tips under the INCOMING column introduce
+aiming, resuming, incoming fire, fire, breaches, damage, injuries, lowered shields
+and power, once each. The scripted pilots (suppress weapons; synchronize volleys
+into shields) win in roughly 45–75 unpaused seconds, silencing the interceptor
+early avoids its hazards, and passive play still loses; `ship-balance` reports
 the spread across 40 seeds.
 
 ## Presentation
 
 `scenes/ship_battle.tscn` (`ShipBattleHost`) is also runnable directly for
-development. Each side is an independent overhead SubViewport over a starfield,
-with bounded zoom/pan and a shared Frame Both. HUD panels sit in the corners of
+development. Each side is an independent overhead SubViewport over one
+screen-space starfield continuous across both frames, with bounded zoom/pan and
+a shared Frame Both. HUD panels sit in the corners of
 the two full-height views, and each camera frames its ship and shield bubble
 inside the HUD-safe area.
 

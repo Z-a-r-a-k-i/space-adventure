@@ -98,7 +98,7 @@ public partial class GameHost
             if (_shipContinuation?.State == Core.ShipContinuationState.Entered)
             {
                 GD.Print($"[ship-handoff] entered frame={frame} departure_seconds={_departureSeconds:0.00} resources_ready_frame={resourcesReadyFrame}");
-                InputCheck("Handoff waits for the full 8 s departure", _departureSeconds >= DepartureDuration);
+                InputCheck("Handoff waits for the full departure and title card", _departureSeconds >= DepartureDuration);
                 InputCheck("Station completed exactly once before handoff",
                     _session.EventsSince(0).Count(item => item.Type == GameplayEventType.ScenarioCompleted) == 1);
                 return;

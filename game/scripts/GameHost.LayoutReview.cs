@@ -61,27 +61,20 @@ public partial class GameHost
         foreach (var actor in layout.Actors) { CheckLayoutStandingPoint(actor.Position, actor.ActorId.Value); }
         foreach (var encounter in layout.Encounters)
         {
-            CheckLayoutStandingPoint(encounter.TriggerCenter, $"{encounter.EncounterId} trigger");
-            var crew = encounter.CrewRestartPositions?.ToArray()
-                ?? (encounter.CompanionRestartPosition is { } companion
-                    ? [new StationActorPlacement(crewId, encounter.ProtagonistRestartPosition),
-                       new StationActorPlacement(_definition.Companion.Id, companion)]
-                    : [new StationActorPlacement(crewId, encounter.ProtagonistRestartPosition)]);
+            // Fights start wherever a hostile sees the crew; the area entry stands in for "the crew inside the room".
+            var entry = EncounterEntry(encounter.EncounterId);
+            CheckLayoutStandingPoint(entry, $"{encounter.EncounterId} entry");
             var enemies = encounter.HostilePlacements?.Select(enemy => new StationActorPlacement(enemy.ActorId, enemy.Position)).ToArray()
                 ?? new[] { new StationActorPlacement(_definition.Combat.Encounters.Single(item => item.Id == encounter.EncounterId).HostileIds[0],
                     encounter.HostileSpawnPosition) }.Concat(encounter.AdditionalHostiles ?? []).ToArray();
-            foreach (var actor in crew.Concat(enemies))
-            { CheckLayoutStandingPoint(actor.Position, $"{encounter.EncounterId} {actor.ActorId}"); }
-            foreach (var actor in crew)
             foreach (var enemy in enemies)
             {
-                CheckLayoutPath(pathfinder, actor.ActorId, actor.Position, enemy.Position,
-                    $"{encounter.EncounterId} crew approach {actor.ActorId}/{enemy.ActorId}");
-                CheckLayoutPath(pathfinder, enemy.ActorId, enemy.Position, actor.Position,
-                    $"{encounter.EncounterId} hostile approach {enemy.ActorId}/{actor.ActorId}");
+                CheckLayoutStandingPoint(enemy.Position, $"{encounter.EncounterId} {enemy.ActorId}");
+                CheckLayoutPath(pathfinder, crewId, entry, enemy.Position, $"{encounter.EncounterId} crew approach {enemy.ActorId}");
+                CheckLayoutPath(pathfinder, enemy.ActorId, enemy.Position, entry, $"{encounter.EncounterId} hostile approach {enemy.ActorId}");
             }
         }
-        InputCheck("All encounter triggers, crew restarts, and hostile spawns stand on connected navigable floor without snapping", true);
+        InputCheck("All encounter entries and hostile spawns stand on connected navigable floor without snapping", true);
 
         var route = ReviewState();
         foreach (var (id, door) in _serviceDoors)

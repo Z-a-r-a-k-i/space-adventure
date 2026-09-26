@@ -29,11 +29,13 @@ public partial class GameHost
             new EntityId("interaction.survivor"), new DialogueResponseId("response.reroute_service_power")));
         InputCheck("An available but unopened door still conceals the Enforcer", FindVisibleHostile(ReviewState(), solo) is null);
         await EscapeInteract("interaction.service_door.entry");
-        InputCheck("Opening the door reveals the Enforcer before combat entry",
-            FindVisibleHostile(ReviewState(), solo) is { EncounterPhase: EncounterPhase.Dormant }
-            && ReviewState().Encounter!.Phase == EncounterPhase.Dormant);
+        var doorway = ReviewState().Protagonist.Position;
+        // The open door reveals an Enforcer close enough to notice the Vanguard: the fight starts on the spot.
+        InputCheck("Opening the door reveals the Enforcer, which spots the Vanguard where he stands",
+            FindVisibleHostile(ReviewState(), solo) is not null && _session!.IsPaused
+            && ReviewState().Encounter is { Phase: EncounterPhase.Readying, SpotterId: { } spotter, SpottedActorId: { } spotted }
+            && spotter == solo && spotted == protagonist && ReviewState().Protagonist.Position == doorway);
         CheckVisionPresentation();
-        var facing = FindVisibleHostile(ReviewState(), solo)!.Facing;
         var before = ReviewState().VisibleHostiles.Select(enemy => enemy.Id).ToArray();
         _camera.YawRadians += 1.2f;
         _camera.SnapOcclusionToDesiredState();
@@ -43,62 +45,40 @@ public partial class GameHost
             && fullWalls.SequenceEqual(_camera.FullWallBounds));
         _camera.YawRadians -= 1.2f;
         if (await ReviewCapture("vision-revealed")) { return; }
-
-        await VisionMove(protagonist, new WorldPosition(-12.3, 0, 8.5));
-        InputCheck("The solid arrival wall hides an enemy despite the open door",
-            FindVisibleHostile(ReviewState(), solo) is null);
-        CheckVisionPresentation();
-        if (await ReviewCapture("vision-occluded")) { return; }
-        await VisionMove(protagonist, new WorldPosition(-10, 0, 4.85));
-        InputCheck("Reacquired dormant enemies retain their authored heading and remain idle",
-            FindVisibleHostile(ReviewState(), solo) is { CurrentAction: null } reacquired
-            && reacquired.Facing == facing && reacquired.EncounterPhase == EncounterPhase.Dormant);
-        await ReviewWaitForPath(new WorldPosition(-10, 0, 2.75));
-        ReviewOrder(new MoveActorCommand(NextHumanCommandId("vision.enter"), protagonist, new WorldPosition(-10, 0, 2.75)));
-        await ReviewUntil(state => state.Encounter!.Phase == EncounterPhase.Readying, 600, fast: true);
-        InputCheck("Scouting preserves the authored tactical-pause entry", _session!.IsPaused);
         await FightEscapeEncounter();
         await EscapeInteract("interaction.service_door.solo_exit");
         await EscapeInteract("interaction.protector", dialogue: true);
         ReviewOrder(new ChooseDialogueResponseCommand(NextHumanCommandId("vision.recruit"), protagonist,
             new EntityId("interaction.protector"), new DialogueResponseId("response.recruit_protector")));
-        await VisionMove(protagonist, new WorldPosition(-10, 0, 2));
         bool SeesNextFight() => ReviewState().VisibleHostiles.Any(enemy =>
             enemy.EncounterId == _definition.Combat.PartyEncounter.Id && !enemy.Combat.IsDefeated);
+        bool NextFightDormant() => ReviewState().VisibleHostiles.Where(enemy => enemy.EncounterId == _definition.Combat.PartyEncounter.Id)
+            .All(enemy => enemy.EncounterPhase == EncounterPhase.Dormant && enemy.CurrentAction is null);
+        InputCheck("The crew see the arena before its enemies notice them", SeesNextFight() && NextFightDormant());
+        var facing = ReviewState().VisibleHostiles.First(enemy => enemy.EncounterId == _definition.Combat.PartyEncounter.Id).Facing;
+        await VisionMove(protagonist, new WorldPosition(-10, 0, 2));
         InputCheck("Protector shares sight from the junction while Vanguard is behind the arena wall", SeesNextFight());
         CheckVisionPresentation();
+        _camera.FocusOn(new Vector3(-4, 0, 3));
+        if (await ReviewCapture("vision-shared")) { return; }
         await VisionMove(_definition.Companion.Id, new WorldPosition(-10, 0, 2));
         InputCheck("Enemies disappear when the last seeing crew member leaves the junction", !SeesNextFight());
         CheckVisionPresentation();
+        if (await ReviewCapture("vision-occluded")) { return; }
         await VisionMove(_definition.Companion.Id, new WorldPosition(-1.5, 0, 0));
         InputCheck("Returning one teammate restores shared sight without starting the next encounter", SeesNextFight()
-            && ReviewState().Encounter!.Phase == EncounterPhase.Victory);
+            && NextFightDormant() && ReviewState().Encounter!.Phase == EncounterPhase.Victory);
+        InputCheck("Reacquired dormant enemies retain their authored heading and remain idle",
+            ReviewState().VisibleHostiles.First(enemy => enemy.EncounterId == _definition.Combat.PartyEncounter.Id).Facing == facing);
         await ReviewWaitForPath(new WorldPosition(0, 0, 5));
         ReviewOrder(new MovePartyCommand(NextHumanCommandId("vision.party.enter"),
             ReviewState().Party.Select(actor => actor.Id), new WorldPosition(0, 0, 5)));
         await ReviewUntil(state => state.Encounter!.Id == _definition.Combat.PartyEncounter.Id, 1200, fast: true);
-        await FightEscapeEncounter();
-        await EscapeInteract("interaction.medic", dialogue: true);
-        ReviewOrder(new ChooseDialogueResponseCommand(NextHumanCommandId("vision.medic.recruit"), protagonist,
-            new EntityId("interaction.medic"), new DialogueResponseId("response.recruit_medic")));
-        await EscapeInteract("interaction.service_door.service");
-        await VisionMove(protagonist, new WorldPosition(-3, 0, 6));
-        await VisionMove(_definition.Companion.Id, new WorldPosition(-3, 0, 6));
-        var serviceId = _definition.Combat.Encounters[2].Id;
-        var scouted = ReviewState().VisibleHostiles.Where(enemy => enemy.EncounterId == serviceId).ToArray();
-        InputCheck("Medic alone shares sight with the three-person crew before service combat",
-            scouted.Length > 0 && scouted.All(enemy => enemy.EncounterPhase == EncounterPhase.Dormant
-                && ReviewState().Party.Where(actor => actor.Id != _definition.Medic.Id)
-                    .All(actor => actor.Position.DistanceTo(enemy.Position) > _definition.Vision.RangeMeters)));
-        CheckVisionPresentation();
-        _camera.FocusOn(new Vector3(12, 0, 7));
-        _camera.DistanceMeters = 20;
-        if (await ReviewCapture("vision-shared")) { return; }
-        await VisionMove(_definition.Medic.Id, new WorldPosition(-3, 0, 6));
-        InputCheck("Service enemies vanish when Medic also leaves sight range",
-            !ReviewState().VisibleHostiles.Any(enemy => enemy.EncounterId == serviceId));
-        CheckVisionPresentation();
-        await FinishSoloReview();
+        InputCheck("Walking into sight range starts the fight paused where the crew were noticed", _session!.IsPaused
+            && ReviewState().Encounter is { Phase: EncounterPhase.Readying, SpotterId: not null }
+            && ReviewState().Party.Any(actor => actor.Position.DistanceTo(ReviewState().VisibleHostiles
+                .First(enemy => enemy.Id == ReviewState().Encounter!.SpotterId).Position) <= _definition.Vision.HostileDetectionMeters + .01));
+        await FightEscapeEncounter();        await FinishSoloReview();
     }
 
     private async Task VisionMove(EntityId actorId, WorldPosition destination)

@@ -70,7 +70,9 @@ public partial class GameHost : Node3D
     private Node3D? _airlockSouthLeaf;
     private Node3D? _airlockCenterLock;
     private StandardMaterial3D _serviceDoorLockedMaterial = null!;
+    private StandardMaterial3D _serviceDoorUnlockedMaterial = null!;
     private StandardMaterial3D _serviceDoorOpenMaterial = null!;
+    private readonly Dictionary<string, InteractionState> _serviceDoorStates = new(StringComparer.Ordinal);
     private ArmedHumanoidPresentation _vanguardPresentation = null!;
     private HumanoidPresentation _survivorPresentation = null!;
     private ArmedHumanoidPresentation _protectorPartyPresentation = null!;
@@ -91,7 +93,7 @@ public partial class GameHost : Node3D
     private Label _dialogueSpeaker = null!;
     private Label _dialogueLine = null!;
     private VBoxContainer _dialogueResponses = null!;
-    private CenterContainer _completionOverlay = null!;
+    private CenterContainer _completionOverlay = null!; // Departure title card (see StationEscape).
     private string[] _developmentArguments = [];
     private string? _visibleDialogueInteractionId;
     private string? _visibleDialogueResponseSignature;
@@ -151,8 +153,10 @@ public partial class GameHost : Node3D
         }
         CacheMedicViews();
         CachePartyCombatViews();
+        CreateCharacterOutlines();
         CreateDestinationMarker();
         CreateAbilityTargetPreview();
+        CreateVignette();
         CreateHud();
         CreateOnboardingHint();
         try
@@ -459,12 +463,8 @@ public partial class GameHost : Node3D
                 $"Scene marker for companion '{definition.Companion.Id}' is missing.");
         }
 
-        var triggerMarker = GetNode<Marker3D>("Markers/SoloEncounterTrigger");
-        var restartMarker = GetNode<Marker3D>("Markers/SoloEncounterRestart");
         var hostileMarker = GetNode<Marker3D>("Markers/SecurityEnforcerSpawn");
-        ValidateStableId(triggerMarker, definition.Combat.SoloEncounter.Id.Value);
         ValidateStableId(hostileMarker, definition.Combat.SoloHostile.Id.Value);
-        var triggerRadius = triggerMarker.GetMeta("trigger_radius_meters").AsDouble();
 
         return new StationRouteLayout(
             ToCore(WithGroundHeight(startMarker.GlobalPosition)),
@@ -475,9 +475,6 @@ public partial class GameHost : Node3D
             placements,
             new StationEncounterPlacement(
                 definition.Combat.SoloEncounter.Id,
-                ToCore(WithGroundHeight(triggerMarker.GlobalPosition)),
-                triggerRadius,
-                ToCore(WithGroundHeight(restartMarker.GlobalPosition)),
                 ToCore(WithGroundHeight(hostileMarker.GlobalPosition))),
             CreatePartyPlacement(definition),
             CreateEscapePlacements(definition),
@@ -506,6 +503,7 @@ public partial class GameHost : Node3D
     private void CacheServiceDoorPresentationNodes()
     {
         _serviceDoorLockedMaterial = CreateServiceDoorStatusMaterial(new Color("f58f29"));
+        _serviceDoorUnlockedMaterial = CreateServiceDoorStatusMaterial(new Color("57e37f"));
         _serviceDoorOpenMaterial = CreateServiceDoorStatusMaterial(new Color("19bde8"));
         CacheServiceDoorPresentation(
             "interaction.service_door.entry",
@@ -657,26 +655,7 @@ public partial class GameHost : Node3D
         CreateFieldDialogue(canvas);
         CreateControlsOverlay(canvas);
 
-        _completionOverlay = new CenterContainer
-        {
-            Name = "CompletionOverlay",
-            AnchorRight = 1,
-            AnchorBottom = 1,
-            MouseFilter = Control.MouseFilterEnum.Stop,
-            Visible = false,
-            ZIndex = 20,
-        };
-        canvas.AddChild(_completionOverlay);
-        var completionPanel = HudPanel();
-        completionPanel.CustomMinimumSize = new Vector2(650, 0);
-        _completionOverlay.AddChild(completionPanel);
-        var completion = new Label
-        {
-            Text = "STATION ESCAPED\nThree crew aboard. Six encounters cleared.\n\nNext: spaceship combat.",
-            HorizontalAlignment = HorizontalAlignment.Center,
-        };
-        completion.AddThemeFontSizeOverride("font_size", 28);
-        completionPanel.AddChild(completion);
+        CreateDepartureCinematic();
     }
 
     private void RenderObservation(GameObservation observation, bool timeAlreadyUpdated = false)
@@ -699,6 +678,7 @@ public partial class GameHost : Node3D
             if (actor is not null)
             {
                 actorView.Value.GlobalPosition = SamplePosition(actor.Id, actor.Position, observation.Tick, route.Encounter?.Attempt ?? 0);
+                SetOutlineStrength(actor.Id.Value, actor.Combat);
                 if (actorView.Value.GetNodeOrNull<Node3D>("SelectionBeacon") is Node3D beacon)
                 {
                     beacon.Visible = _selectedActorIds.Contains(actor.Id);
@@ -709,6 +689,7 @@ public partial class GameHost : Node3D
         SynchronizeProtagonistPresentation(observation, route);
         SynchronizeProductionHumanoids(observation, route, definition);
         SynchronizeCombatPresentation(observation, route);
+        AdvanceSpottedCue(route);
 
         var selectedActors = SelectedLivingActors(route).ToArray();
         if (selectedActors.Length == 0)
@@ -921,7 +902,7 @@ public partial class GameHost : Node3D
             _visibleDialogueResponseSignature = null;
         }
 
-        _completionOverlay.Visible = route.Phase == ScenarioPhase.Completed && _departureSeconds >= DepartureDuration;
+        _completionOverlay.Visible = route.Phase == ScenarioPhase.Completed && _departureSeconds >= TitleCardStartSeconds;
         UpdateDialogueInput(route.ActiveDialogue is not null);
         SynchronizeServiceDoorAuthority(route);
         var airlockOpen = route.Interactions.Any(item => item.Id.Value == "interaction.evacuation_airlock" && item.State == InteractionState.Completed);
@@ -951,7 +932,15 @@ public partial class GameHost : Node3D
             }
             door.StatusStrip.MaterialOverride = open
                 ? _serviceDoorOpenMaterial
-                : _serviceDoorLockedMaterial;
+                : unlocked ? _serviceDoorUnlockedMaterial : _serviceDoorLockedMaterial;
+            // Announce the moment a locked door becomes usable, not doors already unlocked on load.
+            if (_serviceDoorStates.TryGetValue(interactionId, out var previous)
+                && previous == InteractionState.Unavailable && interaction.State == InteractionState.Available
+                && _interactionDefinitions[interactionId].UnlockedText is { } unlockedText)
+            {
+                SetFeedback(unlockedText, new Color("72f2a8"));
+            }
+            _serviceDoorStates[interactionId] = interaction.State;
 
             if (door.TargetOpen is null)
             {
@@ -1132,12 +1121,25 @@ public partial class GameHost : Node3D
         }
 
         var occluderIds = new HashSet<string>(StringComparer.Ordinal);
+        var polishedDecks = new Dictionary<StandardMaterial3D, StandardMaterial3D>();
         foreach (var importedNode in EnumerateDescendants(structure).Concat(EnumerateDescendants(GetNode<Node3D>("Environment/EscapeStructure"))))
         {
             if (importedNode is MeshInstance3D mesh)
             {
                 for (var surface = 0; surface < mesh.GetSurfaceOverrideMaterialCount(); surface++)
                 {
+                    // A little sheen lets the ceiling pools and interior reflections read on the dark deck.
+                    if (mesh.GetActiveMaterial(surface) is StandardMaterial3D deck
+                        && deck.ResourceName.EndsWith(".deck", StringComparison.Ordinal))
+                    {
+                        if (!polishedDecks.TryGetValue(deck, out var polished))
+                        {
+                            polished = (StandardMaterial3D)deck.Duplicate();
+                            polished.Roughness = .58f;
+                            polishedDecks.Add(deck, polished);
+                        }
+                        mesh.SetSurfaceOverrideMaterial(surface, polished);
+                    }
                     if (mesh.Name.ToString().StartsWith("Floor_", StringComparison.Ordinal)
                         && mesh.GetActiveMaterial(surface) is StandardMaterial3D floorMaterial
                         && floorMaterial.ResourceName.EndsWith(".armor", StringComparison.Ordinal))
@@ -1351,6 +1353,13 @@ public partial class GameHost : Node3D
                 _ => "Order accepted.",
             };
             SetFeedback(message, new Color("8fe6ff"));
+        }
+        else if (command is InteractCommand interact
+            && acknowledgement.RejectionCode == CommandRejectionCode.InteractionUnavailable
+            && _interactionDefinitions.TryGetValue(interact.TargetId.Value, out var locked))
+        {
+            // A locked door or a not-yet-relevant interaction is route state, not an input error.
+            SetFeedback(locked.LockedText ?? $"{locked.Prompt} · not available right now.", TacticalUi.Amber);
         }
         else
         {
@@ -2079,7 +2088,7 @@ public partial class GameHost : Node3D
     {
         var result = _automationBridge!.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 11,
+            schema_version = 12,
             command_id = "godot.bootstrap.pause",
             type = "set_pause",
             payload = new { paused = true },
@@ -2091,7 +2100,7 @@ public partial class GameHost : Node3D
             GameSession.MaximumDirectTickAdvance + 1);
         var oversizedMove = _automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 11,
+            schema_version = 12,
             command_id = "godot.bootstrap.oversized-move",
             type = "move_actor",
             payload = new
@@ -2151,6 +2160,13 @@ public partial class GameHost : Node3D
             new WorldPosition(11.0, 0.0, 8.0));
 
         var pause = automationBridge.SetPaused(true);
+        // Before the briefing, a human order on the entry door explains the lock instead of an error code.
+        RenderObservation(_session!.Observe());
+        Dispatch(new InteractCommand(new CommandId("godot.route.entry-locked"), definition.Protagonist.Id, entryDoor.Id));
+        var entryDoorLockedBeforeBriefing = _feedbackLabel.Text == entryDoor.LockedText
+            && _serviceDoors[entryDoor.Id.Value].StatusStrip.MaterialOverride == _serviceDoorLockedMaterial
+            && _session.Observe().StationRoute!.Interactions.Single(item => item.Id == entryDoor.Id).State
+                == InteractionState.Unavailable;
         var survivorOrder = SubmitInteraction("godot.route.survivor", actorId, survivor.Id.Value);
         var survivorSequence = _session!.Observe().LatestEventSequence;
         var dialogueWait = automationBridge.AdvanceUntilEventJson(
@@ -2170,7 +2186,7 @@ public partial class GameHost : Node3D
             && !GetNode<Node3D>("Actors/Protector").Visible;
         var response = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 11,
+            schema_version = 12,
             command_id = "godot.route.response",
             type = "choose_dialogue_response",
             payload = new
@@ -2182,6 +2198,7 @@ public partial class GameHost : Node3D
             },
         }));
         RenderObservation(_session.Observe());
+        var entryDoorUnlockAnnounced = _feedbackLabel.Text == entryDoor.UnlockedText;
         await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         var survivorReturnedToIdle =
@@ -2213,7 +2230,7 @@ public partial class GameHost : Node3D
                 entryDoorPresentation.ClosedLeftPosition)
             && entryDoorPresentation.Right.Position.IsEqualApprox(
                 entryDoorPresentation.ClosedRightPosition)
-            && entryDoorPresentation.StatusStrip.MaterialOverride == _serviceDoorLockedMaterial
+            && entryDoorPresentation.StatusStrip.MaterialOverride == _serviceDoorUnlockedMaterial
             && !soloExitPresentation.NavigationLink.Enabled;
 
         var terminalOrder = SubmitInteraction("godot.route.terminal", actorId, terminal.Id.Value);
@@ -2226,7 +2243,7 @@ public partial class GameHost : Node3D
         var arenaSequence = _session.Observe().LatestEventSequence;
         var arenaMove = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 11,
+            schema_version = 12,
             command_id = "godot.route.enter-solo-arena",
             type = "move_actor",
             payload = new
@@ -2269,7 +2286,7 @@ public partial class GameHost : Node3D
             definition.Combat.SoloEncounter.ReadyingTicks);
         var ability = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 11,
+            schema_version = 12,
             command_id = "godot.route.suppress-enforcer",
             type = "use_ability",
             payload = new
@@ -2295,7 +2312,7 @@ public partial class GameHost : Node3D
             {
                 var attack = automationBridge.SubmitCommandJson(JsonSerializer.Serialize(new
                 {
-                    schema_version = 11,
+                    schema_version = 12,
                     command_id = "godot.route.attack-enforcer",
                     type = "assign_basic_attack_target",
                     payload = new
@@ -2339,6 +2356,8 @@ public partial class GameHost : Node3D
 
         var final = _session.Observe().StationRoute!;
         var passed = IsAccepted(pause)
+            && entryDoorLockedBeforeBriefing
+            && entryDoorUnlockAnnounced
             && IsAccepted(survivorOrder)
             && IsReached(dialogueWait)
             && survivorDialoguePresentation
@@ -2391,6 +2410,8 @@ public partial class GameHost : Node3D
             objective = final.Objective.Id.Value,
             entry_door_open = final.Interactions.Single(
                 interaction => interaction.Id == entryDoor.Id).State == InteractionState.Completed,
+            entry_door_locked_before_briefing = entryDoorLockedBeforeBriefing,
+            entry_door_unlock_announced = entryDoorUnlockAnnounced,
             entry_door_navigation_unlocked_before_open = doorNavigationUnlocked,
             entry_door_auto_opened_before_encounter = entryDoorOpened is not null
                 && encounterStarted is not null
@@ -2452,7 +2473,7 @@ public partial class GameHost : Node3D
     {
         return _automationBridge!.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 11,
+            schema_version = 12,
             command_id = commandId,
             type = "interact",
             payload = new { actor_id = actorId, target_id = targetId },
@@ -2602,10 +2623,9 @@ public partial class GameHost : Node3D
         AdvanceServiceDoorPresentation(ServiceDoorAnimationSeconds);
         await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-        var arenaSequence = session.Observe().LatestEventSequence;
         var arenaMove = bridge.SubmitCommandJson(JsonSerializer.Serialize(new
         {
-            schema_version = 11,
+            schema_version = 12,
             command_id = "defeat.enter-arena",
             type = "move_actor",
             payload = new
@@ -2614,8 +2634,9 @@ public partial class GameHost : Node3D
                 destination = new { x = -10.0, y = 0.0, z = 2.75 },
             },
         }));
+        // The Enforcer notices the Vanguard as the door opens, so the fight may already have started.
         var arenaWait = bridge.AdvanceUntilEventJson(
-            arenaSequence,
+            entrySequence,
             "encounter_started",
             maximumTicks: 600);
         var resume = session.Execute(new SetPauseCommand(

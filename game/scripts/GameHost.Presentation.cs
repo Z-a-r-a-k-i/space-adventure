@@ -62,7 +62,7 @@ public partial class GameHost
             {
                 Name = "StationVentilation", Stream = CombatAudio.Get("ambience"), Bus = CombatAudio.Bus("ambience"),
                 VolumeDb = CombatAudio.VolumeDb("ambience"), UnitSize = 14, MaxDistance = 60, MaxDb = CombatAudio.VolumeDb("ambience"),
-                Position = GetNode<Marker3D>("Markers/PartyEncounterTrigger").GlobalPosition + Vector3.Up * 3,
+                Position = GetNode<Marker3D>("Markers/PartyEncounterEntry").GlobalPosition + Vector3.Up * 3,
             };
             AddChild(_stationAmbience);
             _stationAmbience.Play();
@@ -94,19 +94,24 @@ public partial class GameHost
             || encounter.Attempt == _framedEncounterAttempt && encounter.Id == _framedEncounterId) { return; }
         _framedEncounterAttempt = encounter.Attempt;
         _framedEncounterId = encounter.Id;
-        _motionSamples.Clear();
-        _facingSamples.Clear();
-        var positions = route.Party.Select(actor => ToGodot(actor.Position))
-            .Concat(PlayerVisibleHostiles(route).Where(hostile => CanTargetVisibleHostile(route, hostile))
-                .Select(hostile => ToGodot(hostile.Position))).ToArray();
-        var midpoint = positions.Aggregate(Vector3.Zero, (sum, position) => sum + position) / positions.Length;
-        var viewDirection = _camera.ProjectRayNormal(GetViewport().GetVisibleRect().GetCenter());
-        var towardCamera = new Vector3(-viewDirection.X, 0, -viewDirection.Z).Normalized();
-        midpoint += towardCamera * 1.4f;
-        // Frame the crew and currently known threats without revealing other rooms.
-        // One explicit frame at entry/retry; later camera input remains under player control.
-        if (route.Party.Count == 3) { _camera.DistanceMeters = 20; }
-        _camera.FocusOn(midpoint);
+        if (encounter.Attempt > 1)
+        {
+            // Retry returns the crew to where they were spotted; drop stale interpolation and headings.
+            _motionSamples.Clear();
+            _facingSamples.Clear();
+        }
+        // A fight starts where the crew stand: never snap or zoom the view. Only when the enemy that
+        // noticed the crew is off-screen does the camera ease over so the threat can be read.
+        if (encounter.SpotterId is not { } spotterId || !_enemyViews.TryGetValue(spotterId, out var spotter)) { return; }
+        var threat = spotter.Root.GlobalPosition;
+        var spotted = route.Party.FirstOrDefault(actor => actor.Id == encounter.SpottedActorId);
+        var crew = spotted is null ? threat : ToGodot(spotted.Position);
+        if (encounter.Attempt == 1) { ShowSpottedCue(threat, spotted is null ? null : crew); }
+        if (!_camera.IsOnScreen(threat + Vector3.Up, 110) || !_camera.IsOnScreen(crew + Vector3.Up, 110))
+        {
+            // Stills sample one exact frame, so reviews frame the contact directly.
+            if (_reviewMode == "capture") { _camera.FocusOn((threat + crew) / 2); } else { _camera.GlideTo((threat + crew) / 2); }
+        }
     }
 
     private sealed record MotionSample(Vector3 Previous, Vector3 Current, long PreviousTick, long Tick, int Attempt);

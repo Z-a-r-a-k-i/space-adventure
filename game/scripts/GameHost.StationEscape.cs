@@ -5,7 +5,19 @@ namespace SpaceAdventure.Game;
 
 public partial class GameHost
 {
-    private const double DepartureDuration = 8;
+    // Boarding 0-3.2 s, closure and engines 3.3-4.4 s, takeoff 4.4-8.0 s, fade to black 6.8-8.2 s, then a title
+    // card on black until the battle (which fades in from black) takes over.
+    private const double DepartureDuration = 9.6;
+    private const double FadeStartSeconds = 6.8;
+    private const double TitleCardStartSeconds = 8.2;
+    private const float LetterboxHeight = 62;
+    private ColorRect _letterboxTop = null!;
+    private ColorRect _letterboxBottom = null!;
+    private ColorRect _departureFade = null!;
+    private Label _departureCaption = null!;
+    private VBoxContainer _titleCard = null!;
+    private Vector3 _departureFocus;
+    private float _departureYaw;
     private double _departureSeconds;
     private Node3D? _departureRamp;
     private Node3D? _departureDoor;
@@ -23,19 +35,20 @@ public partial class GameHost
         var placements = new List<StationEncounterPlacement>();
         foreach (var encounter in definition.Combat.Encounters.Skip(2))
         {
-            var area = encounter.Id.Value.Split('.').Last();
-            var trigger = markers[encounter.Id.Value];
-            var crew = encounter.RequiredCrewIds.Select((id, index) => new StationActorPlacement(id,
-                ToCore(GetNode<Marker3D>($"Markers/{area}_crew{index}").GlobalPosition))).ToArray();
             var enemies = encounter.HostileIds.Select(id => new StationHostilePlacement(id,
                 ToCore(markers[id.Value].GlobalPosition), ToCore(-markers[id.Value].GlobalBasis.Z.Normalized()))).ToArray();
-            placements.Add(new StationEncounterPlacement(encounter.Id, ToCore(trigger.GlobalPosition),
-                trigger.GetMeta("trigger_radius_meters").AsDouble(), crew[0].Position, enemies[0].Position,
-                crew[1].Position, enemies.Skip(1).Select(enemy => new StationActorPlacement(enemy.ActorId, enemy.Position)).ToArray(),
-                new WorldPosition(-1, 0, 0), crew, enemies));
+            placements.Add(new StationEncounterPlacement(encounter.Id, enemies[0].Position, HostilePlacements: enemies));
         }
         return placements.ToArray();
     }
+
+    /// <summary>
+    /// Walkable point just inside an encounter's area (marker whose stable ID is the encounter ID). Rules never
+    /// read it: reviews and layout checks use it to lead the crew in until a hostile notices them.
+    /// </summary>
+    private WorldPosition EncounterEntry(EncounterId encounterId) =>
+        ToCore(WithGroundHeight(GetNode<Node3D>("Markers").GetChildren().OfType<Marker3D>()
+            .Single(marker => GetStableId(marker) == encounterId.Value).GlobalPosition));
 
     private string CurrentSector(StationRouteObservation route)
     {
@@ -60,6 +73,9 @@ public partial class GameHost
             CancelAbilityTargeting(); CancelSelectionGesture();
             _camera.FocusOn(new Vector3(82, 0, 8));
             _camera.DistanceMeters = 20;
+            _departureFocus = _camera.FocusPoint;
+            _departureYaw = _camera.YawRadians;
+            _objectiveColumn.Visible = false;
             foreach (var actor in route.Party) { _boardingOrigins[actor.Id] = _actorViews[actor.Id.Value].GlobalPosition; }
             _departureDoor = EnumerateDescendants(cutter).OfType<Node3D>().FirstOrDefault(node => node.Name.ToString().Replace('_', '.') == "pivot.door");
             _departureRamp = EnumerateDescendants(cutter).OfType<Node3D>()
@@ -111,14 +127,79 @@ public partial class GameHost
         { plume.Visible = thrust > 0; plume.Scale = new Vector3(thrust, .3f + thrust * 1.7f, thrust); }
         cutter.Position = new Vector3(83 + takeoff * takeoff * 24, takeoff * 6, 8);
         _crewCluster.Visible = _actionPanel.Visible = _pauseButton.Visible = _pauseLabel.Visible = _controlsButton.Visible = false;
-        _worldControlsHint.Visible = false;
+        _worldControlsHint.Visible = _tipCard.Visible = false;
+        _pauseFrame.Shown = false;
         _destinationMarker.Visible = false;
         foreach (var actor in route.Party)
         {
             _actorViews[actor.Id.Value].GetNode<Node3D>("SelectionBeacon").Visible = false;
         }
         _objectiveLabel.Text = takeoff > 0 ? "Escape cutter departing" : "All crew boarding";
-        _completionOverlay.Visible = _departureSeconds >= DepartureDuration;
-        if (_completionOverlay.Visible) { _departureAudio?.Stop(); }
+        AdvanceDepartureCinematic(cutter, takeoff);
+        _completionOverlay.Visible = _departureSeconds >= TitleCardStartSeconds;
+        if (_departureSeconds >= DepartureDuration) { _departureAudio?.Stop(); }
+    }
+
+    /// <summary>
+    /// Letterbox, cutter-following camera with a slow orbit, fade to black and the title card. Driven by the
+    /// departure clock, so reviews that step it reproduce the same frames.
+    /// </summary>
+    private void AdvanceDepartureCinematic(Node3D cutter, float takeoff)
+    {
+        var bars = (float)Mathf.SmoothStep(0, 1, Math.Clamp(_departureSeconds / .6, 0, 1)) * LetterboxHeight;
+        _letterboxTop.OffsetBottom = bars;
+        _letterboxBottom.OffsetTop = -bars;
+        _letterboxTop.Visible = _letterboxBottom.Visible = true;
+        var follow = Mathf.SmoothStep(0, 1, takeoff);
+        var target = new Vector3(cutter.GlobalPosition.X, 0, cutter.GlobalPosition.Z);
+        _camera.FocusPoint = _departureFocus.Lerp(target, follow);
+        _camera.YawRadians = _departureYaw + .42f * follow;
+        _departureCaption.Visible = _departureSeconds < TitleCardStartSeconds;
+        _departureCaption.Text = takeoff > 0 ? "ESCAPE CUTTER  ·  DEPARTING FRONTIER STATION" : "ALL CREW ABOARD";
+        _departureCaption.Modulate = new Color(1, 1, 1, (float)Math.Clamp((_departureSeconds - .4) / .5, 0, 1));
+        var fade = (float)Math.Clamp((_departureSeconds - FadeStartSeconds) / (TitleCardStartSeconds - FadeStartSeconds), 0, 1);
+        _departureFade.Color = new Color(0, 0, 0, fade * fade);
+        _titleCard.Modulate = new Color(1, 1, 1, (float)Math.Clamp((_departureSeconds - TitleCardStartSeconds) / .45, 0, 1));
+    }
+
+    private void CreateDepartureCinematic()
+    {
+        var cinematic = new CanvasLayer { Name = "Cinematic", Layer = 2 };
+        AddChild(cinematic);
+        _letterboxTop = new ColorRect { Name = "LetterboxTop", Color = Colors.Black, AnchorRight = 1, MouseFilter = Control.MouseFilterEnum.Ignore, Visible = false };
+        _letterboxBottom = new ColorRect { Name = "LetterboxBottom", Color = Colors.Black, AnchorTop = 1, AnchorRight = 1, AnchorBottom = 1,
+            MouseFilter = Control.MouseFilterEnum.Ignore, Visible = false };
+        cinematic.AddChild(_letterboxTop);
+        cinematic.AddChild(_letterboxBottom);
+        _departureCaption = TacticalUi.Label("", 13, "a0efd8");
+        _departureCaption.HorizontalAlignment = HorizontalAlignment.Center;
+        _departureCaption.AnchorTop = _departureCaption.AnchorBottom = 1;
+        _departureCaption.AnchorRight = 1;
+        _departureCaption.OffsetTop = -LetterboxHeight / 2 - 10; _departureCaption.OffsetBottom = -LetterboxHeight / 2 + 10;
+        _departureCaption.Visible = false;
+        cinematic.AddChild(_departureCaption);
+        _departureFade = new ColorRect { Name = "DepartureFade", Color = new Color(0, 0, 0, 0), AnchorRight = 1, AnchorBottom = 1,
+            MouseFilter = Control.MouseFilterEnum.Ignore };
+        cinematic.AddChild(_departureFade);
+        _completionOverlay = new CenterContainer { Name = "CompletionOverlay", AnchorRight = 1, AnchorBottom = 1,
+            MouseFilter = Control.MouseFilterEnum.Stop, Visible = false };
+        cinematic.AddChild(_completionOverlay);
+        _titleCard = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        _titleCard.AddThemeConstantOverride("separation", 10);
+        _completionOverlay.AddChild(_titleCard);
+        var title = TacticalUi.Label("STATION ESCAPED", 34, "a0efd8");
+        title.AddThemeFontOverride("font", TacticalUi.BoldFont);
+        title.HorizontalAlignment = HorizontalAlignment.Center;
+        _titleCard.AddChild(title);
+        var rule = TacticalUi.Rule(new Color(TacticalUi.Cyan, .55f));
+        rule.CustomMinimumSize = new Vector2(360, 1);
+        rule.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
+        _titleCard.AddChild(rule);
+        var detail = TacticalUi.Label("Three crew aboard. Six encounters cleared.", 15, "c3d0d4");
+        detail.HorizontalAlignment = HorizontalAlignment.Center;
+        _titleCard.AddChild(detail);
+        var teaser = TacticalUi.Label("Unknown contact closing on the cutter...", 13, "e5bc7d");
+        teaser.HorizontalAlignment = HorizontalAlignment.Center;
+        _titleCard.AddChild(teaser);
     }
 }

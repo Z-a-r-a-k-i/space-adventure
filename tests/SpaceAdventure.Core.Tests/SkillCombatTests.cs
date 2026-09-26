@@ -135,8 +135,7 @@ public sealed partial class CombatSessionTests
     public void MovingTheOwnerDoesNotSweepTheBarrierAcrossAProjectile()
     {
         // Walking into the shot must not drag the deployed plane into its path.
-        var session = CreateAtPartyEncounter(CreatePartyPlacement() with
-        { CompanionRestartPosition = new WorldPosition(-.4, 0, 4.8833333333) });
+        var session = CreateAtPartyEncounter(crew: PartyCrewStart with { Protector = new WorldPosition(-.4, 0, 4.8833333333) });
         Assert.True(Barrier(session, position: new WorldPosition(-1.5, 0, 6)).Accepted); ResumeIntoActiveCombat(session);
         AdvanceUntil(session, state => state.Encounter!.Projectiles!.Count > 0, 90);
         var shot = Assert.Single(Observe(session).Encounter!.Projectiles!);

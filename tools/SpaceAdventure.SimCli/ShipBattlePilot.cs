@@ -15,9 +15,12 @@ public enum ShipBattleStrategy
 /// </summary>
 public sealed class ShipBattlePilot(ShipCombatSession session, ShipBattleStrategy strategy)
 {
-    /// <summary>Unpaused length band for the scripted winning pilots (competent play without pause planning).</summary>
-    public const int MinimumWinSeconds = 80;
-    public const int MaximumWinSeconds = 200;
+    /// <summary>
+    /// Unpaused length band for the scripted winning pilots (competent play without pause planning). The first
+    /// battle is deliberately short and forgiving; a new player's slower orders stretch it well past the minimum.
+    /// </summary>
+    public const int MinimumWinSeconds = 35;
+    public const int MaximumWinSeconds = 150;
 
     private int _commands;
 

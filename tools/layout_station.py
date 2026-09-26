@@ -102,10 +102,9 @@ def main():
             update('Interactions', f'Escape_{area}', position=vector(x,0,z))
             update('Markers', f'EscapeDoor_{area}', position=vector(x-1.45,0,z))
     for area, encounter in LAYOUT['encounters'].items():
-        tx,tz = encounter['trigger']
-        update('Markers', f'EscapeTrigger_{area}', position=vector(tx,0,tz))
-        for index,(x,z) in enumerate(encounter['crew']):
-            update('Markers', f'{area}_crew{index}', position=vector(x,0,z))
+        # Review-only entry point; fights start wherever a hostile first sees the crew.
+        tx,tz = encounter['entry']
+        update('Markers', f'EscapeEntry_{area}', position=vector(tx,0,tz))
         for index,(x,z) in enumerate(encounter['enemies']):
             yaw = math.degrees(math.atan2(x-tx,z-tz))
             update('Markers', f'Spawn_Escape_{area}_{index}', position=vector(x,0,z), rotation_degrees=vector(0,yaw,0))

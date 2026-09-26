@@ -57,8 +57,8 @@ public sealed partial class CombatSessionTests
     public void BarrierNormalizesFacingWithoutOverflowAndOutlivesItsOwner()
     {
         var placement = CreatePartyPlacement() with { HostileSpawnPosition = new WorldPosition(.55, 0, 5),
-            ProtagonistRestartPosition = new WorldPosition(-4, 0, 4.5), SentryForward = new WorldPosition(0, 0, 1) };
-        var session = CreateAtPartyEncounter(placement);
+            SentryForward = new WorldPosition(0, 0, 1) };
+        var session = CreateAtPartyEncounter(placement, crew: PartyCrewStart with { Protagonist = new WorldPosition(-4, 0, 4.5) });
         ResumeIntoActiveCombat(session);
         AdvanceUntil(session, state => state.Party[1].Combat!.Health == 15, 1000);
         Assert.True(Barrier(session, new WorldPosition(1e308, 0, 1e308)).Accepted);

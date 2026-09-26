@@ -57,12 +57,11 @@ public sealed partial class CombatSessionTests
     {
         var placement = CreatePartyPlacement() with
         {
-            ProtagonistRestartPosition = new WorldPosition(-1.2, 0, 4.5),
-            CompanionRestartPosition = new WorldPosition(0, 0, 5),
             HostileSpawnPosition = new WorldPosition(-4, 0, 9),
             AdditionalHostiles = [new StationActorPlacement(SentryId, new WorldPosition(0, 0, 10.5))],
         };
-        var session = CreateAtPartyEncounter(placement);
+        var session = CreateAtPartyEncounter(placement,
+            crew: new CrewStart(new WorldPosition(-1.2, 0, 4.5), new WorldPosition(0, 0, 5)));
         Assert.True(Barrier(session).Accepted); ResumeIntoActiveCombat(session);
         AdvanceUntil(session, _ => session.EventsSince(0).Any(item => item.Type == GameplayEventType.ProjectileBlocked), 100);
         var impact = (ProjectileEventDetail)session.EventsSince(0).First(item => item.Type == GameplayEventType.ProjectileBlocked).Detail!;
@@ -76,11 +75,8 @@ public sealed partial class CombatSessionTests
     [InlineData(false)]
     public void MovingTheOwnerDoesNotChangeInterceptionOfAnAlreadyFlyingShot(bool barrierFacesAway)
     {
-        var session = CreateAtPartyEncounter(CreatePartyPlacement() with
-        {
-            CompanionRestartPosition = new WorldPosition(-.4, 0, 5),
-            HostileSpawnPosition = new WorldPosition(-4, 0, 9),
-        });
+        var session = CreateAtPartyEncounter(CreatePartyPlacement() with { HostileSpawnPosition = new WorldPosition(-4, 0, 9) },
+            crew: PartyCrewStart with { Protector = new WorldPosition(-.4, 0, 5) });
         Assert.True(Barrier(session, new WorldPosition(0, 0, barrierFacesAway ? -1 : 1)).Accepted);
         ResumeIntoActiveCombat(session);
         AdvanceUntil(session, route => route.Encounter!.Projectiles!.Count > 0, 100);

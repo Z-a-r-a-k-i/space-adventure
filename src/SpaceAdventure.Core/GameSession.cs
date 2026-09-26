@@ -1080,7 +1080,9 @@ public sealed partial class GameSession
                     station.Definition.Combat.Barrier.WidthMeters, station.Definition.Combat.Barrier.HeightMeters,
                     barrier.DeployedAtTick) : null,
                 station.Combat.Projectiles.Select(projectile => projectile.Observe()).ToArray(),
-                ObserveHealingField(station)),
+                ObserveHealingField(station),
+                station.Combat.SpotterId,
+                station.Combat.SpottedActorId),
             station.CompletedEncounterIds.ToArray())
         {
             VisibleHostiles = station.Encounters.SelectMany(encounter => encounter.Hostiles.Values
@@ -1280,17 +1282,10 @@ public sealed partial class GameSession
         {
             var encounter = definition.Combat.Encounters.SingleOrDefault(item => item.Id == placement.EncounterId)
                 ?? throw new InvalidDataException("Unknown encounter placement.");
-            if (placement.CrewRestartPositions is { } crew && !crew.Select(actor => actor.ActorId).ToHashSet().SetEquals(encounter.RequiredCrewIds!))
-            { throw new InvalidDataException("Encounter crew restart placements must exactly match required crew."); }
             if (placement.HostilePlacements is { } hostiles && !hostiles.Select(actor => actor.ActorId).ToHashSet().SetEquals(encounter.HostileIds))
             { throw new InvalidDataException("Encounter hostile placements must exactly match authored hostiles."); }
-            if (definition.Combat.Encounters.Skip(2).Any(item => item.Id == encounter.Id)
-                && (placement.CrewRestartPositions is null || placement.HostilePlacements is null))
-            { throw new InvalidDataException("New encounters require per-ID crew and hostile placements."); }
-            // Entry and retry read these fallbacks when per-ID placements are absent.
-            if (placement.CrewRestartPositions is null && encounter.RequiredCrewIds!.Count > 1
-                && placement.CompanionRestartPosition is not { IsFinite: true })
-            { throw new InvalidDataException($"Encounter '{encounter.Id}' needs crew restart placements."); }
+            if (definition.Combat.Encounters.Skip(2).Any(item => item.Id == encounter.Id) && placement.HostilePlacements is null)
+            { throw new InvalidDataException("New encounters require per-ID hostile placements."); }
             if (placement.HostilePlacements is null && encounter.HostileIds.Count > 1
                 && (placement.AdditionalHostiles is null || !placement.AdditionalHostiles.Select(actor => actor.ActorId)
                     .ToHashSet().SetEquals(encounter.HostileIds.Skip(1))))

@@ -43,13 +43,30 @@ public sealed partial class GameSession
 
     private static IEnumerable<(string Name, WorldPosition Position)> EncounterPositions(StationEncounterPlacement placement)
     {
-        var encounter = placement.EncounterId.Value;
-        yield return ($"{encounter} protagonist restart", placement.ProtagonistRestartPosition);
-        yield return ($"{encounter} hostile spawn", placement.HostileSpawnPosition);
-        if (placement.CompanionRestartPosition is { } companion) { yield return ($"{encounter} companion restart", companion); }
+        yield return ($"{placement.EncounterId.Value} hostile spawn", placement.HostileSpawnPosition);
         foreach (var actor in placement.AdditionalHostiles ?? []) { yield return (actor.ActorId.Value, actor.Position); }
-        foreach (var actor in placement.CrewRestartPositions ?? []) { yield return ($"{encounter} {actor.ActorId.Value} restart", actor.Position); }
         foreach (var hostile in placement.HostilePlacements ?? []) { yield return (hostile.ActorId.Value, hostile.Position); }
+    }
+
+    /// <summary>
+    /// The first living hostile of <paramref name="combat"/> that sees a living recruited crew member within the
+    /// detection range, with the crew member it saw. Hostiles are checked in authored order, crew in party order.
+    /// </summary>
+    private static (HostileRuntime Hostile, ActorRuntime Actor)? FindDetection(StationRouteRuntime station, CombatEncounterRuntime combat)
+    {
+        var range = station.Definition.Vision.HostileDetectionMeters;
+        foreach (var id in combat.Definition.HostileIds)
+        {
+            var hostile = combat.Hostiles[id];
+            if (hostile.Health <= 0) { continue; }
+            foreach (var actor in station.Actors.Values.OrderBy(actor => actor.PartyOrder))
+            {
+                if (actor.Health > 0 && actor.Position.DistanceTo(hostile.Position) <= range
+                    && HasClearSight(station, hostile.Position, actor.Position))
+                { return (hostile, actor); }
+            }
+        }
+        return null;
     }
 
     private static bool SightIntersectsBounds(WorldPosition from, WorldPosition to, WorldPosition minimum, WorldPosition maximum)

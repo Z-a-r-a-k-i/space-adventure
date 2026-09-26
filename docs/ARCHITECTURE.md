@@ -34,8 +34,8 @@ apply at release.
 `GameSession` advances at 30 Hz in stable entity order; any randomness comes
 from its explicit seed. Tactical pause stops gameplay, including movement,
 AI, action phases, and cooldowns, while camera, UI, selection, observation, and
-commands remain available. Combat pauses when readying begins, and defeat
-pauses for retry. Other pausing is manual. Development stepping requires pause
+commands remain available. Combat pauses when a hostile notices the crew and
+readying begins, and defeat pauses for retry. Other pausing is manual. Development stepping requires pause
 and is bounded to 3,000 ticks; it executes the same rules as ordinary play.
 
 Each actor has one current action and at most one replaceable pending primary
@@ -87,9 +87,9 @@ assigned basic-attack intent and spend cooldown only on release.
 
 All hostiles down means victory; all recruited crew down means defeat. Secured
 victory restores recruited crew health, fallen members, and cooldowns and clears
-combat orders, barriers, fields, and projectiles before travel. Retry restores
-the active encounter's crew/enemies at their authored placements and clears its
-temporary combat state.
+combat orders, barriers, fields, and projectiles before travel. Retry returns
+the crew to the positions and headings captured when the fight started, the
+enemies to their placements, and clears its temporary combat state.
 
 ## Content and spatial boundary
 
@@ -102,21 +102,23 @@ also rebuilds the matching Blender decks and recessed foundations. Both validate
 stable IDs; node paths and object IDs never identify gameplay entities.
 Loading also rejects routes that could not be completed: encounter objectives
 must be `combat_objective`, `main_combat_objective`, then distinct IDs, and the
-layout must place every encounter with its crew restarts and hostiles.
+layout must place every encounter's hostiles.
 
 `ISpatialPathfinder` accepts pure positions and returns validated waypoints.
 Godot checks navigation readiness, finite endpoints, bounded paths, and reachability;
 the core advances actors along those paths. Views interpolate observations.
 Root motion, physics bodies, and navigation agents cannot become movement authority.
+A point stopped inside a doorway lies on an enabled door link between two floors;
+Godot routes paths from or to it through the link's nearer endpoint, so crew
+spotted mid-passage can move and be reached. Pits and walls stay unreachable.
 
 An available service door enables its navigation link. Core approach movement
 completes the door interaction atomically; completion drives collision and leaf
 presentation. The solo-exit gate derives from victory. Recruitment and later
 gates derive from explicit content effects, without a generic quest framework.
-Encounters activate in authored order after their required recruited crew reach
-the entry zone, pausing once for readying. Completed encounters cannot restart
-or be skipped. Retry resets only the active attempt, preserving recruitment,
-dialogue consequences, inspection, and prior victories.
+Encounters start by sight ([encounter flow](#encounter-flow)). Completed
+encounters cannot restart or be skipped. Retry resets only the active attempt,
+preserving recruitment, dialogue consequences, inspection, and prior victories.
 
 Final airlock access follows launch-bay victory. Cutter boarding uses validated
 group approach movement. One interaction validates all three paths before
@@ -134,6 +136,21 @@ Its evasion and hazard-chance rolls come from one seeded stream per attempt
 (content seed, overridable in tests), so a seed, attempt and command log replay
 exactly; effects and audio variation use separate presentation-only randomness.
 
+## Encounter flow
+
+Hostiles stand at their placements from session start and never idle-walk. The
+next encounter in authored order (its objective is current and its required crew
+are recruited and alive) starts on the first tick one of its living hostiles has
+clear sight of a living recruited crew member within `vision.hostile_detection_meters`,
+which content keeps below crew sight so the crew usually see a room first. The
+whole encounter alerts together; the game pauses where everyone stands. Crew keep
+their positions and headings, their orders are cleared, and weapons draw during
+readying after resume. The start records the spotter and the crew member it saw
+(encounter observation and start event), and snapshots every recruited crew
+position and heading for retry. Godot never repositions actors or snaps the camera:
+it eases toward the contact only when the spotter or spotted crew is off-screen,
+fades newly revealed hostiles in, and briefly marks the spotter's line of sight.
+
 ## Shared crew vision
 
 Enemy perception belongs to the core. Any living recruited crew member supplies
@@ -145,11 +162,11 @@ is completed, not merely available. Godot supplies immutable world-space wall
 and door AABBs through the spatial layout; the core evaluates them without
 camera, rendered cutaway, or physics-query authority. Godot rejects off-axis
 walls and doors, whose enclosing boxes would over-block sight, and the core
-rejects any spawn or restart position whose eye point lies inside a blocker.
+rejects any spawn position whose eye point lies inside a blocker.
 
-Sight may reveal hostiles from a dormant encounter. Discovery does not activate
-AI or combat: the required crew must still reach the authored entry zone to
-start tactical pause. Enemies hide again when no living recruited crew member
+Sight may reveal hostiles from a dormant encounter before they notice the crew;
+only a hostile's own sight within detection range starts a fight (see
+[encounter flow](#encounter-flow)). Enemies hide again when no living recruited crew member
 can see them. Enemy-target commands require shared sight; knowing a diagnostic
 entity ID does not grant targeting permission. This is current sight without
 stealth, facing cones, or persistent discovery memory.

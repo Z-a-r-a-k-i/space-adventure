@@ -8,6 +8,10 @@ public sealed class GodotSpatialPathfinder(Rid navigationMap) : ISpatialPathfind
     private const float MaximumStartSnapDistance = 0.8f;
     private const float MaximumDestinationSnapDistance = 0.9f;
     private const float MaximumEndpointError = 0.35f;
+    // Half-width and vertical allowance of the walkable corridor along an enabled door link.
+    private const float LinkCorridorHalfWidth = 0.6f;
+    private const float LinkCorridorHeightTolerance = 0.5f;
+    private const float OffMeshTolerance = 0.05f;
     private const int MaximumWaypointCount = 128;
 
     private readonly Rid _navigationMap = navigationMap;
@@ -29,16 +33,27 @@ public sealed class GodotSpatialPathfinder(Rid navigationMap) : ISpatialPathfind
         var requestedDestination = ToGodot(destination);
         var snappedOrigin = NavigationServer3D.MapGetClosestPoint(_navigationMap, requestedOrigin);
         var snappedDestination = NavigationServer3D.MapGetClosestPoint(_navigationMap, requestedDestination);
+        Vector3? destinationOnLink = null;
 
-        if (requestedOrigin.DistanceTo(snappedOrigin) > MaximumStartSnapDistance
-            || requestedDestination.DistanceTo(snappedDestination) > MaximumDestinationSnapDistance)
+        // Anyone stopped inside a doorway stands on a door link, between two floors: a fight can start
+        // there, or the player can press Stop mid-passage. Such points join the path through the link's
+        // nearer endpoint instead of being unreachable; pits and walls are still rejected.
+        // The path must end exactly on such a point, or the rules treat a crew member in a doorway as unreachable.
+        if (requestedOrigin.DistanceTo(snappedOrigin) > OffMeshTolerance && NearestEnabledLinkEndpoint(requestedOrigin) is { } linkOrigin)
+        { snappedOrigin = linkOrigin; }
+        else if (requestedOrigin.DistanceTo(snappedOrigin) > MaximumStartSnapDistance) { return SpatialPathResult.Unreachable; }
+        if (requestedDestination.DistanceTo(snappedDestination) > OffMeshTolerance
+            && NearestEnabledLinkEndpoint(requestedDestination) is { } linkDestination)
         {
-            return SpatialPathResult.Unreachable;
+            snappedDestination = linkDestination;
+            destinationOnLink = requestedDestination;
         }
+        else if (requestedDestination.DistanceTo(snappedDestination) > MaximumDestinationSnapDistance) { return SpatialPathResult.Unreachable; }
 
         if (snappedOrigin.DistanceTo(snappedDestination) <= 0.01f)
         {
-            return SpatialPathResult.Reachable([FromGodot(snappedDestination)]);
+            return SpatialPathResult.Reachable(destinationOnLink is { } near
+                ? [FromGodot(snappedDestination), FromGodot(near)] : [FromGodot(snappedDestination)]);
         }
 
         var path = NavigationServer3D.MapGetPath(
@@ -70,9 +85,25 @@ public sealed class GodotSpatialPathfinder(Rid navigationMap) : ISpatialPathfind
             }
         }
 
+        if (destinationOnLink is { } onLink) { waypoints.Add(FromGodot(onLink)); }
         return waypoints.Count == 0
             ? SpatialPathResult.Unreachable
             : SpatialPathResult.Reachable(waypoints);
+    }
+
+    private Vector3? NearestEnabledLinkEndpoint(Vector3 point)
+    {
+        foreach (var link in NavigationServer3D.MapGetLinks(_navigationMap))
+        {
+            if (!NavigationServer3D.LinkGetEnabled(link)) { continue; }
+            var start = NavigationServer3D.LinkGetStartPosition(link);
+            var end = NavigationServer3D.LinkGetEndPosition(link);
+            var along = Geometry3D.GetClosestPointToSegment(point, start, end);
+            if (new Vector2(along.X - point.X, along.Z - point.Z).Length() > LinkCorridorHalfWidth
+                || Math.Abs(along.Y - point.Y) > LinkCorridorHeightTolerance) { continue; }
+            return point.DistanceTo(start) <= point.DistanceTo(end) ? start : end;
+        }
+        return null;
     }
 
     private static Vector3 ToGodot(WorldPosition position)

@@ -67,8 +67,9 @@ range, stop, telegraph, and fire without automatic retreat. Content owns tuning;
 
 Exploration can reveal dormant enemies before the crew enters combat.
 [Shared crew vision](ARCHITECTURE.md#shared-crew-vision) governs enemy visibility
-and targeting; moving the camera does not discover enemies. The authored
-all-crew entry zones still control encounter activation and tactical pause.
+and targeting; moving the camera does not discover enemies. A fight starts the
+moment one of its enemies sees the crew ([encounter flow](ARCHITECTURE.md#encounter-flow)):
+the level flows continuously, with no entry zones, repositioning, or pop-in.
 
 ## Acceptance
 
@@ -80,8 +81,8 @@ show radius and affected crew. Camera pan, yaw, pitch/zoom, reset, and focus
 remain usable around every area. Health, targets, pending orders, cooldowns,
 valid ability targets, and rejection reasons are legible with crowded fights.
 
-Each encounter starts in tactical pause once its recruited crew reach the
-entry zone. Pause supports deliberate order entry; attacks communicate source,
+Each encounter starts in tactical pause where the crew stand when an enemy
+spots them. Pause supports deliberate order entry; attacks communicate source,
 facing, wind-up, release/contact, and recovery. Threats create useful interrupt,
 positioning, healing, defensive, and coordinated targeting decisions. After
 securing victory, restore health, fallen crew, and cooldowns and clear combat

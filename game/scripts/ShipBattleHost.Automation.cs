@@ -201,7 +201,8 @@ public partial class ShipBattleHost
     /// <summary>Plays the ordinary battle with the suppress pilot until a crew member is working a hazard, then pauses.</summary>
     private void PlayUntilHazardWork()
     {
-        var pilot = new ShipBattlePilot(_session, ShipBattleStrategy.SuppressWeapons);
+        // Silencing the interceptor early prevents every hazard in the first battle; the volley pilot lets one land.
+        var pilot = new ShipBattlePilot(_session, ShipBattleStrategy.OverwhelmDefenses);
         pilot.Open();
         Select(DefaultCrew[2].Id, false);
         var frames = 0;
@@ -397,6 +398,13 @@ public partial class ShipBattleHost
         Check("handoff: battle entered paused at tick 0 attempt 1", observation.Paused && observation.Tick == 0 && observation.Attempt == 1);
         Check("handoff: crew identity carried from the station", ExpectedCrewIds is not null && observation.Crew.Select(crew => crew.Id).SequenceEqual(ExpectedCrewIds));
         Check("handoff: fresh full health on entry", observation.Crew.All(crew => crew.Health == crew.MaxHealth));
+        Check("handoff: the station arrival intro plays", IntroPlaying);
+        // Real time drives the intro; sample it after the interceptor warps in, then let it settle.
+        for (var frame = 0; frame < 60 * 8 && IntroPlaying && _introSeconds < WarpInSeconds + .45f; frame++) { await WaitFrames(1); }
+        if (HandoffReviewMode == "capture") { await Capture($"ship-intro-{(int)GetViewportRect().Size.X}x{(int)GetViewportRect().Size.Y}"); }
+        for (var frame = 0; frame < 60 * 10 && IntroPlaying; frame++) { await WaitFrames(1); }
+        Check("handoff: the intro ends settled, framed and with the HUD shown", !IntroPlaying && _playerView.IsFramedAll && _enemyView.IsFramedAll
+            && _enemyView.Ship.Visible && GetNode<Control>("Hud").Modulate.A >= .999f);
         for (var frame = 0; frame < 30; frame++) { _session.Advance(TimeSpan.FromSeconds(1 / 60.0)); }
         await WaitFrames(5);
         Check("handoff: no hidden simulation while presented paused", _session.Tick == 0);

@@ -6,6 +6,9 @@ namespace SpaceAdventure.Game;
 public partial class GameHost
 {
     private PanelContainer _objectivePanel = null!;
+    private VBoxContainer _objectiveColumn = null!;
+    private Label _objectiveDetail = null!;
+    private string _pauseTagMode = "";
     private VBoxContainer _crewCluster = null!;
     private PanelContainer _actionPanel = null!;
     private Label _selectionCountLabel = null!;
@@ -55,37 +58,65 @@ public partial class GameHost
         return tile;
     }
 
+    private static StyleBoxFlat PillStyle(string background, float alpha, Color border) => new()
+    {
+        BgColor = new Color(background, alpha), BorderColor = border,
+        BorderWidthLeft = 1, BorderWidthRight = 1, BorderWidthTop = 1, BorderWidthBottom = 1,
+        CornerRadiusTopLeft = 17, CornerRadiusTopRight = 17, CornerRadiusBottomLeft = 17, CornerRadiusBottomRight = 17,
+        ContentMarginLeft = 14, ContentMarginRight = 14, ContentMarginTop = 4, ContentMarginBottom = 4,
+        ShadowColor = new Color(0, 0, 0, .3f), ShadowSize = 6,
+    };
+
     private void CreateTacticalHud(CanvasLayer canvas)
     {
-        _objectivePanel = HudPanel();
-        _objectivePanel.AddThemeStyleboxOverride("panel", TacticalUi.FieldPanel(TacticalUi.Cyan));
-        _objectivePanel.OffsetLeft = 20; _objectivePanel.OffsetTop = 20; _objectivePanel.OffsetRight = 360;
-        canvas.AddChild(_objectivePanel);
-        var objectiveContent = new VBoxContainer();
-        objectiveContent.AddThemeConstantOverride("separation", 7);
+        // Top-left: compact objective tracker, with short dismissible tips stacked beneath it.
+        _objectiveColumn = new VBoxContainer { Name = "ObjectiveColumn", OffsetLeft = 20, OffsetTop = 18, OffsetRight = 344,
+            MouseFilter = Control.MouseFilterEnum.Ignore, ZIndex = 10 };
+        _objectiveColumn.AddThemeConstantOverride("separation", 8);
+        canvas.AddChild(_objectiveColumn);
+        _objectivePanel = new PanelContainer { Name = "ObjectiveTracker" };
+        _objectivePanel.AddThemeStyleboxOverride("panel", TacticalUi.TrackerBox(TacticalUi.Cyan));
+        _objectiveColumn.AddChild(_objectivePanel);
+        var objectiveContent = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        objectiveContent.AddThemeConstantOverride("separation", 3);
         _objectivePanel.AddChild(objectiveContent);
-        _sectorLabel = TacticalUi.Eyebrow("FRONTIER STATION / ARRIVALS", "a0efd8");
+        _sectorLabel = TacticalUi.Eyebrow("◆  ARRIVALS", "a0efd8");
         objectiveContent.AddChild(_sectorLabel);
-        _objectiveLabel = HudLabel("", 18);
-        _objectiveLabel.CustomMinimumSize = new Vector2(312, 42);
+        _objectiveLabel = HudLabel("", 15, "eef4f5");
+        _objectiveLabel.CustomMinimumSize = new Vector2(296, 0);
         objectiveContent.AddChild(_objectiveLabel);
+        _objectiveDetail = TacticalUi.Label("", 12, "9fb4ba");
+        _objectiveDetail.Visible = false;
+        objectiveContent.AddChild(_objectiveDetail);
 
-        _pauseButton = HudButton("SPACE   Pause", () => Dispatch(new SetPauseCommand(NextHumanCommandId("pause"), !_session!.IsPaused)));
-        _pauseButton.AddThemeStyleboxOverride("normal", TacticalUi.FieldPanel(TacticalUi.Amber, bottom: true));
+        // Top-centre: nothing while exploring; a small pause control in live combat; an amber
+        // TACTICAL PAUSE tag (click or Space resumes) only while the simulation is frozen.
+        _pauseButton = HudButton("", () => Dispatch(new SetPauseCommand(NextHumanCommandId("pause"), !_session!.IsPaused)));
+        _pauseButton.Name = "PauseTag";
+        _pauseButton.CustomMinimumSize = Vector2.Zero;
         _pauseButton.AnchorLeft = _pauseButton.AnchorRight = .5f;
-        _pauseButton.OffsetLeft = -110; _pauseButton.OffsetRight = 110; _pauseButton.OffsetTop = 20;
+        _pauseButton.OffsetTop = 16; _pauseButton.OffsetBottom = 50;
+        _pauseButton.Icon = TacticalUi.Icon("ship/pause");
+        _pauseButton.ExpandIcon = false;
+        _pauseButton.AddThemeConstantOverride("h_separation", 10);
+        _pauseButton.AddThemeConstantOverride("icon_max_width", 14);
         canvas.AddChild(_pauseButton);
         _pauseLabel = HudLabel("", 11, "afc1c5");
         _pauseLabel.HorizontalAlignment = HorizontalAlignment.Center;
         _pauseLabel.AnchorLeft = _pauseLabel.AnchorRight = .5f;
-        _pauseLabel.OffsetLeft = -180; _pauseLabel.OffsetRight = 180; _pauseLabel.OffsetTop = 64;
+        _pauseLabel.OffsetLeft = -260; _pauseLabel.OffsetRight = 260; _pauseLabel.OffsetTop = 56;
+        _pauseLabel.AddThemeColorOverride("font_shadow_color", new Color("030910"));
+        _pauseLabel.AddThemeConstantOverride("shadow_offset_x", 1);
+        _pauseLabel.AddThemeConstantOverride("shadow_offset_y", 1);
         canvas.AddChild(_pauseLabel);
 
-        _controlsButton = HudButton("F1   Field manual", ToggleControls);
-        _controlsButton.CustomMinimumSize = new Vector2(138, 34);
+        _controlsButton = HudButton("F1   Manual", ToggleControls);
+        _controlsButton.CustomMinimumSize = new Vector2(104, 30);
         _controlsButton.AddThemeFontSizeOverride("font_size", 12);
+        _controlsButton.AddThemeStyleboxOverride("normal", PillStyle("0a141b", .7f, new Color("36534f")));
+        _controlsButton.AddThemeColorOverride("font_color", new Color("afc1c5"));
         _controlsButton.AnchorLeft = _controlsButton.AnchorRight = 1;
-        _controlsButton.OffsetLeft = -158; _controlsButton.OffsetRight = -20; _controlsButton.OffsetTop = 20;
+        _controlsButton.OffsetLeft = -124; _controlsButton.OffsetRight = -20; _controlsButton.OffsetTop = 18;
         canvas.AddChild(_controlsButton);
 
         _crewCluster = new VBoxContainer { AnchorTop = 1, AnchorBottom = 1, OffsetLeft = 20,
@@ -136,15 +167,22 @@ public partial class GameHost
         _combatLabel.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
         _combatLabel.AutowrapMode = TextServer.AutowrapMode.Off;
         actionColumn.AddChild(_combatLabel);
+        // Transient feedback: a slim translucent strip above the bottom edge, not a panel.
         _feedbackLabel = HudLabel("", 13, "dce6e9");
-        _feedbackLabel.AddThemeStyleboxOverride("normal", TacticalUi.FieldPanel(TacticalUi.Cyan, margin: 10));
+        var feedbackStyle = new StyleBoxFlat { BgColor = new Color("0a141b", .72f), BorderColor = new Color(TacticalUi.Cyan, .7f), BorderWidthBottom = 1,
+            ContentMarginLeft = 16, ContentMarginRight = 16, ContentMarginTop = 7, ContentMarginBottom = 7 };
+        _feedbackLabel.AddThemeStyleboxOverride("normal", feedbackStyle);
+        _feedbackLabel.AddThemeColorOverride("font_shadow_color", new Color("030910"));
+        _feedbackLabel.AddThemeConstantOverride("shadow_offset_y", 1);
         _feedbackLabel.HorizontalAlignment = HorizontalAlignment.Center;
+        _feedbackLabel.VerticalAlignment = VerticalAlignment.Center;
         _feedbackLabel.AnchorTop = _feedbackLabel.AnchorBottom = 1;
         _feedbackLabel.AnchorRight = 1;
-        _feedbackLabel.OffsetLeft = 330; _feedbackLabel.OffsetRight = -370;
-        _feedbackLabel.OffsetTop = -99; _feedbackLabel.OffsetBottom = -43;
+        _feedbackLabel.OffsetLeft = 420; _feedbackLabel.OffsetRight = -460;
+        _feedbackLabel.OffsetTop = -92; _feedbackLabel.OffsetBottom = -52;
         canvas.AddChild(_feedbackLabel);
-        var help = _worldControlsHint = TacticalUi.Label("RMB  Order    DRAG  Select    TAB  Ability focus", 11, "afc1c5");
+        var help = _worldControlsHint = TacticalUi.Label("RMB  Order    DRAG  Select    TAB  Ability focus    SPACE  Pause", 11, "afc1c5");
+        help.Modulate = new Color(1, 1, 1, .6f);
         help.AnchorTop = help.AnchorBottom = 1;
         help.OffsetLeft = 20; help.OffsetTop = -27;
         canvas.AddChild(help);
@@ -285,7 +323,7 @@ public partial class GameHost
             _actionPanel.AddThemeStyleboxOverride("panel", TacticalUi.FieldPanel(accent, bottom: true));
             _displayedAbilityOwner = actor.Id;
         }
-        _sectorLabel.Text = "FRONTIER STATION  /  " + CurrentSector(route);
+        _sectorLabel.Text = "◆  " + CurrentSector(route);
         _outcomePanel.Visible = encounter.Phase == EncounterPhase.Defeat;
         _outcomeTitle.Text = "CREW LOST";
         _outcomeTitle.AddThemeColorOverride("font_color", TacticalUi.Danger);
@@ -307,12 +345,7 @@ public partial class GameHost
         _stopButton.Disabled = selectedLiving.Length == 0 || encounter.Phase is EncounterPhase.Defeat or EncounterPhase.Securing || route.ActiveDialogue is not null;
         _abilityButton.Visible = _secondaryAbilityButton.Visible = _stopButton.Visible = encounter.Phase != EncounterPhase.Defeat;
         _stopButton.SetState("Stop", "stop", selectedLiving.Length > 1 ? $"{selectedLiving.Length} crew" : selectedLiving.FirstOrDefault()?.DisplayName ?? "No crew", 1);
-        _pauseButton.Disabled = encounter.Phase == EncounterPhase.Defeat || route.ActiveDialogue is not null;
-        _pauseButton.Text = encounter.Phase == EncounterPhase.Defeat ? "ENCOUNTER LOST"
-            : observation.Paused ? "SPACE   Resume" : "SPACE   Pause";
-        _pauseLabel.Text = encounter.Phase == EncounterPhase.Defeat ? "ENTER · RETRY FIGHT"
-            : encounter.Phase == EncounterPhase.Victory ? "AREA SECURED · CREW RECOVERED"
-            : observation.Paused ? "TACTICAL PAUSE · PLAN YOUR ORDERS" : active ? "LIVE COMBAT" : "EXPLORATION";
+        UpdatePauseTag(observation, route, encounter, active);
         _selectionCountLabel.Text = $"{selectedLiving.Length} selected";
         var target = route.VisibleHostiles.FirstOrDefault(hostile => hostile.Id == combat.RememberedAttackTargetId);
         _combatLabel.Text = target is null ? "Awaiting target order" : $"Target · {target.DisplayName.Replace("Security ", "", StringComparison.Ordinal)}";
@@ -321,10 +354,62 @@ public partial class GameHost
         else if (actor.PendingAction is { } pending) { _combatLabel.Text = $"NEXT · {PendingOrderText(route, pending)}"; }
         if (combat.IsDefeated) { _combatLabel.Text = "Select a living crew member"; }
         _objectiveLabel.Text = encounter.Phase == EncounterPhase.Securing ? "Threats neutralized" : route.Objective.Text;
+        UpdateObjectiveDetail(route, encounter);
         _crewCluster.Visible = route.ActiveDialogue is null;
         _actionPanel.Visible = route.ActiveDialogue is null && encounter.Phase != EncounterPhase.Defeat;
-        _pauseButton.Visible = _pauseLabel.Visible = route.ActiveDialogue is null;
         _controlsButton.Visible = route.ActiveDialogue is null;
-        if (_reviewDrivesClock && _reviewMode == "record") { _pauseLabel.Text = "COMBAT REVIEW"; }
+        if (_reviewDrivesClock && _reviewMode == "record") { _pauseLabel.Text = "COMBAT REVIEW"; _pauseLabel.Visible = true; }
+    }
+
+    private void UpdatePauseTag(GameObservation observation, StationRouteObservation route, EncounterObservation encounter, bool active)
+    {
+        var dialogue = route.ActiveDialogue is not null;
+        var mode = dialogue || encounter.Phase == EncounterPhase.Defeat ? "hidden"
+            : observation.Paused ? "paused" : active ? "live" : "hidden";
+        if (mode != _pauseTagMode)
+        {
+            _pauseTagMode = mode;
+            var paused = mode == "paused";
+            _pauseButton.Text = paused ? "TACTICAL PAUSE" : "";
+            _pauseButton.TooltipText = paused ? "Resume (Space)" : "Pause (Space)";
+            var halfWidth = paused ? 118 : 20;
+            _pauseButton.OffsetLeft = -halfWidth; _pauseButton.OffsetRight = halfWidth;
+            var accent = new Color("ffc45c");
+            _pauseButton.AddThemeStyleboxOverride("normal", paused ? PillStyle("2a2110", .92f, accent) : PillStyle("0a141b", .6f, new Color("36534f")));
+            _pauseButton.AddThemeStyleboxOverride("hover", paused ? PillStyle("3a2d12", .95f, accent) : PillStyle("16262c", .8f, TacticalUi.Cyan));
+            _pauseButton.AddThemeStyleboxOverride("pressed", PillStyle("3a2d12", .95f, accent));
+            _pauseButton.AddThemeColorOverride("font_color", paused ? accent : TacticalUi.Muted);
+            _pauseButton.AddThemeColorOverride("font_hover_color", paused ? Colors.White : TacticalUi.Cyan);
+            _pauseButton.AddThemeColorOverride("icon_normal_color", paused ? accent : TacticalUi.Muted);
+            _pauseButton.AddThemeColorOverride("icon_hover_color", paused ? Colors.White : TacticalUi.Cyan);
+            _pauseButton.AddThemeFontSizeOverride("font_size", 13);
+        }
+        _pauseButton.Visible = mode != "hidden";
+        _pauseFrame.Shown = mode == "paused";
+        // One line under the tag: who noticed whom when a fight begins, then how to resume.
+        var spotter = encounter.SpotterId is { } id ? route.VisibleHostiles.FirstOrDefault(hostile => hostile.Id == id) : null;
+        var spotted = route.Party.FirstOrDefault(actor => actor.Id == encounter.SpottedActorId);
+        _pauseLabel.Text = encounter.Phase == EncounterPhase.Victory && !observation.Paused ? "AREA SECURED  ·  CREW RECOVERED"
+            : mode != "paused" ? ""
+            : encounter.Phase == EncounterPhase.Readying && encounter.Attempt == 1 && spotter is not null && spotted is not null
+                ? $"CONTACT  ·  {spotter.DisplayName.Replace("Security ", "", StringComparison.Ordinal)} spotted {spotted.DisplayName}  ·  plan, then SPACE"
+                : "SPACE  resume  ·  orders take effect when time runs";
+        _pauseLabel.Visible = !dialogue && _pauseLabel.Text.Length > 0;
+    }
+
+    private void UpdateObjectiveDetail(StationRouteObservation route, EncounterObservation encounter)
+    {
+        var detail = "";
+        if (encounter.Phase is EncounterPhase.Readying or EncounterPhase.Active && route.Hostiles is { } hostiles)
+        {
+            var remaining = hostiles.Count(hostile => !hostile.Combat.IsDefeated);
+            detail = $"Hostiles remaining  {remaining} / {hostiles.Count}";
+        }
+        else if (route.VisibleHostiles.Count(enemy => enemy.EncounterPhase == EncounterPhase.Dormant && !enemy.Combat.IsDefeated) is > 0 and var sighted)
+        {
+            detail = sighted == 1 ? "1 hostile sighted  ·  not yet alerted" : $"{sighted} hostiles sighted  ·  not yet alerted";
+        }
+        _objectiveDetail.Text = detail;
+        _objectiveDetail.Visible = detail.Length > 0;
     }
 }

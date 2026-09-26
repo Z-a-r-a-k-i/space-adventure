@@ -142,7 +142,7 @@ static int RunStationRoute(JsonLinesOutput output, bool party = false, bool defe
     output.Emit(new
     {
         kind = "run_metadata",
-        schema_version = 11,
+        schema_version = 12,
         scenario_id = complete ? (extensionDefeat ? "station-escape-defeat" : "station-escape") : party ? (defeat ? "station-party-defeat" : "station-party") : StationRouteScenarioId,
         content_scenario_id = definition.ScenarioId.Value,
         content_revision = definition.ContentRevision,
@@ -264,7 +264,8 @@ static int RunStationRoute(JsonLinesOutput output, bool party = false, bool defe
             && FindInteraction(afterTerminal, terminal.Id).ResultText == terminal.ResultText
             && afterTerminal.Phase == ScenarioPhase.InProgress);
 
-    var arenaDestination = layout.Encounter!.TriggerCenter;
+    // Walk into the solo arena; the Enforcer notices the Vanguard on the way.
+    var arenaDestination = new WorldPosition(-10, 0, 2.75);
     var arenaSequence = session.Observe().LatestEventSequence;
     var arenaMoveCommand = session.Execute(new MoveActorCommand(
         new CommandId("station-route.enter-solo-arena"),
@@ -432,13 +433,16 @@ static void RunPartyContinuation(GameSession session, StationRouteDefinition def
     Until(state => state.Encounter!.Id == definition.Combat.PartyEncounter.Id, 600);
     assertions.Check("party_entry_pauses_and_resets_both_kits", session.IsPaused && State().Party.Count == 2
         && State().Party.All(actor => actor.Combat!.Health == actor.Combat.MaximumHealth));
+    // The fight starts wherever the crew were spotted; they advance into the arena before the scripted plan.
+    Order(new MovePartyCommand(new CommandId("party.advance"), [protagonist, protector], new WorldPosition(0, 0, 4.5)));
+    Order(new SetPauseCommand(new CommandId("party.resume"), false));
+    Until(state => state.Encounter!.Phase == EncounterPhase.Active, 30);
+    Until(state => state.Party.All(actor => actor.CurrentAction is null && actor.PendingAction is null), 300);
     if (!defeat)
     {
         Order(new AssignBasicAttackTargetCommand(new CommandId("party.vanguard.target"), protagonist, new EntityId("actor.enemy.gun_sentry.main")));
         Order(new AssignBasicAttackTargetCommand(new CommandId("party.protector.target"), protector, new EntityId("actor.enemy.security_enforcer.main")));
     }
-    Order(new SetPauseCommand(new CommandId("party.resume"), false));
-    Until(state => state.Encounter!.Phase == EncounterPhase.Active, 30);
     if (defeat)
     {
         Until(state => state.Party.Any(actor => actor.Combat!.IsDefeated), 900);
@@ -453,11 +457,18 @@ static void RunPartyContinuation(GameSession session, StationRouteDefinition def
     else
     {
         session.AdvanceTicks(definition.Combat.GetAttack(definition.Companion.Loadout!.BasicAttackId).WindupTicks);
+        // The fight starts where the crew were spotted: raise the Barrier a metre toward the Enforcer.
+        var guard = State().Party.Single(actor => actor.Id == protector).Position;
+        var threat = State().Hostiles!.Single(hostile => hostile.Id == new EntityId("actor.enemy.security_enforcer.main")).Position;
+        var toward = new WorldPosition(threat.X - guard.X, 0, threat.Z - guard.Z);
+        var reach = Math.Sqrt(toward.X * toward.X + toward.Z * toward.Z);
+        var facing = new WorldPosition(toward.X / reach, 0, toward.Z / reach);
+        var barrierPoint = new WorldPosition(guard.X + facing.X, 0, guard.Z + facing.Z);
         Order(new UseAbilityCommand(new CommandId("party.barrier"), protector, definition.Combat.Barrier.Id,
-            new BarrierAbilityTarget(new WorldPosition(.55, 0, 5.3), new WorldPosition(0, 0, 1))));
+            new BarrierAbilityTarget(barrierPoint, facing)));
         session.AdvanceTicks(definition.Combat.Barrier.WindupTicks);
         assertions.Check("barrier_observes_fixed_position_and_facing", State().Encounter!.Barrier is { } barrier
-            && barrier.SourceId == protector && barrier.Position == definition.Combat.Barrier.CenterAt(new WorldPosition(.55, 0, 5.3)));
+            && barrier.SourceId == protector && barrier.Position == definition.Combat.Barrier.CenterAt(barrierPoint));
         Order(new UseAbilityCommand(new CommandId("party.taunt"), protector, definition.Combat.Taunt.Id, new SelfAbilityTarget()));
         session.AdvanceTicks(definition.Combat.Taunt.WindupTicks);
         assertions.Check("taunt_redirects_nearby_hostiles", State().Hostiles!.All(enemy => enemy.Combat.TauntedBy == protector));
@@ -510,10 +521,14 @@ static void RunStationCompletion(GameSession session, StationRouteDefinition def
         && State().Party.Single(actor => actor.Id == medic).Combat!.Cooldowns.Count == 2);
     foreach (var placement in StationRouteFixture.CreateExtensionEncounters(definition))
     {
-        Order(new MovePartyCommand(new CommandId($"complete.enter.{placement.EncounterId}"), [protagonist, protector, medic], placement.TriggerCenter));
+        // Walk toward the room; its hostiles notice the crew on the way.
+        Order(new MovePartyCommand(new CommandId($"complete.enter.{placement.EncounterId}"), [protagonist, protector, medic],
+            new WorldPosition(placement.HostileSpawnPosition.X - 5, 0, 8)));
         Order(new SetPauseCommand(new CommandId("complete.travel.resume"), false));
         Until(state => state.Encounter!.Id == placement.EncounterId, 1000);
-        assertions.Check($"{placement.EncounterId}.ready", session.IsPaused && State().Encounter!.Phase == EncounterPhase.Readying);
+        assertions.Check($"{placement.EncounterId}.ready", session.IsPaused && State().Encounter!.Phase == EncounterPhase.Readying
+            && State().Encounter!.SpotterId is not null);
+        var spotted = State().Party.ToDictionary(actor => actor.Id, actor => actor.Position);
         Order(new SetPauseCommand(new CommandId("complete.combat.resume"), false));
         Until(state => state.Encounter!.Phase == EncounterPhase.Active, 30);
         if (forceDefeat && placement.EncounterId == combat.Encounters[2].Id)
@@ -525,11 +540,11 @@ static void RunStationCompletion(GameSession session, StationRouteDefinition def
             assertions.Check("extension_retry_preserves_two_victories_and_three_crew", State().CompletedEncounterIds!.Count == 2
                 && State().Party.Count == 3 && State().Encounter!.HealingField is null && State().Encounter!.Projectiles!.Count == 0
                 && State().Party.All(actor => actor.Combat!.Health == actor.Combat.MaximumHealth));
-            // Retry restarts this encounter from its authored placements without carried-over orders.
-            assertions.Check("extension_retry_restores_placements_and_clears_orders",
+            // Retry restarts this encounter where the crew were spotted, without carried-over orders.
+            assertions.Check("extension_retry_restores_spotted_positions_and_clears_orders",
                 State().Party.All(actor => actor.CurrentAction is null && actor.PendingAction is null
                     && actor.Combat!.RememberedAttackTargetId is null
-                    && actor.Position == placement.CrewRestartPositions!.Single(item => item.ActorId == actor.Id).Position)
+                    && actor.Position == spotted[actor.Id])
                 && State().Hostiles!.All(hostile => hostile.CurrentAction is null && hostile.Combat.Health == hostile.Combat.MaximumHealth
                     && hostile.Position == placement.HostilePlacements!.Single(item => item.ActorId == hostile.Id).Position));
             Order(new SetPauseCommand(new CommandId("complete.retry.resume"), false));
@@ -843,6 +858,8 @@ internal sealed class GameplayEventOutput(JsonLinesOutput output)
                 detail_type = "encounter",
                 encounter_id = encounter.EncounterId.Value,
                 encounter.Attempt,
+                spotter_id = encounter.SpotterId?.Value,
+                spotted_actor_id = encounter.SpottedActorId?.Value,
             },
             AttackEventDetail attack => new
             {
@@ -995,6 +1012,8 @@ internal static class ObservationProjection
                     observation.Encounter.TransitionTicksRemaining,
                     observation.Encounter.TransitionTicksTotal,
                     observation.Encounter.PhaseStartedTick,
+                    spotter_id = observation.Encounter.SpotterId?.Value,
+                    spotted_actor_id = observation.Encounter.SpottedActorId?.Value,
                     hostile_ids = observation.Encounter.HostileIds.Select(id => id.Value),
                     barrier = observation.Encounter.Barrier is { } barrier ? new
                     {
@@ -1161,11 +1180,9 @@ internal static class StationRouteFixture
         .Select((encounter, index) =>
         {
             double center = ExtensionCenters[index];
-            var crew = encounter.RequiredCrewIds!.Select((id, crewIndex) => new StationActorPlacement(id, new WorldPosition(center - 4, 0, 7 + crewIndex))).ToArray();
             var hostiles = encounter.HostileIds.Select((id, enemyIndex) => new StationHostilePlacement(id,
                 new WorldPosition(center + 1 + enemyIndex / 3 * 2, 0, 5.5 + enemyIndex % 3 * 2.5), new WorldPosition(-1, 0, 0))).ToArray();
-            return new StationEncounterPlacement(encounter.Id, new WorldPosition(center - 4, 0, 8), 3,
-                crew[0].Position, hostiles[0].Position, CrewRestartPositions: crew, HostilePlacements: hostiles);
+            return new StationEncounterPlacement(encounter.Id, hostiles[0].Position, HostilePlacements: hostiles);
         }).ToArray();
 
     private static readonly Dictionary<string, (WorldPosition Position, WorldPosition Approach)>
@@ -1216,14 +1233,8 @@ internal static class StationRouteFixture
             [new StationActorPlacement(definition.Companion.Id, new WorldPosition(-1.5, 0, 0)),
                 new StationActorPlacement(definition.Medic.Id, new WorldPosition(9, 0, 8))],
             placements,
-            new StationEncounterPlacement(
-                definition.Combat.SoloEncounter.Id,
-                new WorldPosition(-10, 0, 2.75),
-                0.75,
-                new WorldPosition(-10, 0, 2.35),
-                new WorldPosition(-10, 0, -1.4)),
-            new StationEncounterPlacement(definition.Combat.PartyEncounter.Id, new WorldPosition(0, 0, 5), 2,
-                new WorldPosition(-.55, 0, 4.5), partyHostiles[0].Position, new WorldPosition(.55, 0, 4.5),
+            new StationEncounterPlacement(definition.Combat.SoloEncounter.Id, new WorldPosition(-10, 0, -1.4)),
+            new StationEncounterPlacement(definition.Combat.PartyEncounter.Id, partyHostiles[0].Position,
                 partyHostiles.Skip(1).ToArray(), new WorldPosition(0, 0, -1)), CreateExtensionEncounters(definition));
     }
 }

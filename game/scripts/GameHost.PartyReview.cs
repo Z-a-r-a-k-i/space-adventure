@@ -42,7 +42,12 @@ public partial class GameHost
         ReviewOrder(new MovePartyCommand(new CommandId("party.setup.enter.main"), [protagonist, protector], new WorldPosition(0, 0, 5)));
         await ReviewUntil(state => state.Encounter!.Id == _definition.Combat.PartyEncounter.Id, 600, fast: true);
         _camera.DistanceMeters = float.Parse(ReviewArgument("review-distance", "14.5"), System.Globalization.CultureInfo.InvariantCulture);
-        if (_camera.DistanceMeters < 10) { _camera.FocusOn(ToGodot(ReviewState().Party[1].Position)); }
+        // Fights start where the crew were noticed and the game no longer reframes the view; the review frames
+        // crew and hostiles itself (close distances keep the Protector in view for pose checks).
+        var combatants = ReviewState().Party.Select(actor => ToGodot(actor.Position))
+            .Concat(ReviewState().Hostiles!.Select(hostile => ToGodot(hostile.Position))).ToArray();
+        _camera.FocusOn(_camera.DistanceMeters < 10 ? ToGodot(ReviewState().Party[1].Position)
+            : combatants.Aggregate(Vector3.Zero, (sum, position) => sum + position) / combatants.Length);
         await InputFrame();
         InputCheck("party entry resets and pauses both crew", _session!.IsPaused && ReviewState().Party.Count == 2
             && ReviewState().Party.All(actor => actor.Combat!.Health == actor.Combat.MaximumHealth));
@@ -112,13 +117,16 @@ public partial class GameHost
             return;
         }
 
+        await AdvancePartyIntoArena();
         if (_reviewMode == "input") { await CheckPartySelectionAndOrders(); }
         else
         {
             ReviewOrder(new AssignBasicAttackTargetCommand(new CommandId("party.attack.vanguard"), protagonist, new EntityId("actor.enemy.gun_sentry.main")));
             ReviewOrder(new AssignBasicAttackTargetCommand(new CommandId("party.attack.protector"), protector, new EntityId("actor.enemy.security_enforcer.main")));
         }
-        await ReviewTicks(_definition.Combat.GetAttack(_definition.Companion.Loadout!.BasicAttackId).WindupTicks);
+        // The Protector may first close in from where the Enforcer noticed him; watch his first release.
+        await ReviewUntil(state => state.Party[1].CurrentAction is { Kind: PrimaryActionKind.Attack, Phase: PrimaryActionPhase.Windup }, 900, fast: true);
+        await ReviewTicks(ReviewState().Party[1].CurrentAction!.PhaseTicksRemaining);
         await InputFrame();
         InputCheck("shotgun emits five visible pellets", _combatPresentationEffects.Select(effect => effect.Node)
             .OfType<CarbineProjectile>().Count(bolt => bolt.LaunchPosition.DistanceTo(_protectorPartyPresentation.MuzzlePosition) < .02f) == 5);
@@ -152,7 +160,12 @@ public partial class GameHost
                 && ReviewState().Party[1].Combat!.Cooldowns.Single(cd => cd.AbilityId == _definition.Combat.Barrier.Id).RemainingTicks == 0);
             await InputKey(Key.Key1);
             var owner = ReviewState().Party[1];
-            var distantFloor = ToGodot(owner.Position) + Vector3.Back * (float)(_definition.Combat.Barrier.RangeMeters + 1);
+            // Beyond Barrier range but on walkable deck: the arena's central trench lies straight behind the Protector.
+            var reach = (float)(_definition.Combat.Barrier.RangeMeters + 1);
+            var distantFloor = new[] { Vector3.Left, Vector3.Right, Vector3.Back, Vector3.Forward }
+                .Select(direction => ToGodot(owner.Position) + direction * reach)
+                .First(point => LayoutFloorAt(ToCore(point)) && !_camera.IsPositionBehind(point)
+                    && GetViewport().GetVisibleRect().Grow(-40).HasPoint(_camera.UnprojectPosition(point)));
             await InputWorldClick(distantFloor, MouseButton.Left);
             InputCheck("invalid first click keeps placement active without changing the order or cooldown", _abilityTargeting
                 && _feedbackLabel.Text.StartsWith("OUT OF RANGE", StringComparison.Ordinal)
@@ -281,15 +294,31 @@ public partial class GameHost
         }
     }
 
+    // Fights now start where the crew were noticed; the scripted checks after this point were written for the
+    // crew standing inside the arena, so they walk in first (through ordinary move commands) as a player would.
+    private async Task AdvancePartyIntoArena()
+    {
+        var party = ReviewState().Party;
+        var spots = new[] { new WorldPosition(-.55, 0, 4.5), new WorldPosition(.55, 0, 4.5) };
+        for (var index = 0; index < 2; index++)
+        { ReviewOrder(new MoveActorCommand(new CommandId($"party.setup.stage.{index}"), party[index].Id, spots[index])); }
+        await ReviewUntil(state => state.Party.Take(2).All(actor => actor.CurrentAction is null && actor.PendingAction is null), 300, fast: true);
+    }
     private void CheckPartyAbilityEnvelope()
     {
-        string Command(object payload) => JsonSerializer.Serialize(new { schema_version = 11,
+        string Command(object payload) => JsonSerializer.Serialize(new { schema_version = 12,
             command_id = "party.adapter.barrier", type = "use_ability", payload });
         var actor = _definition!.Companion.Id.Value;
         var ability = _definition.Combat.Barrier.Id.Value;
+        // The fight starts where the Protector was noticed: aim the shield a metre toward the Enforcer.
+        var guard = ReviewState().Party[1].Position;
+        var threat = ReviewState().Hostiles!.First(hostile => _enemyViews[hostile.Id].Sentry is null).Position;
+        var toward = new Vector2((float)(threat.X - guard.X), (float)(threat.Z - guard.Z)).Normalized();
         InputCheck("adapter accepts ground position and shield facing", IsAccepted(_automationBridge!.SubmitCommandJson(Command(new
-        { actor_id = actor, ability_id = ability, target_position = new { x = .55, y = 0, z = 5.3 }, target_facing = new { x = 0, y = 0, z = 1 } })))
-            && ReviewState().Party[1].PendingAction?.AbilityFacing is { Z: 1 });
+        { actor_id = actor, ability_id = ability, target_position = new { x = guard.X + toward.X, y = 0.0, z = guard.Z + toward.Y },
+            target_facing = new { x = (double)toward.X, y = 0.0, z = (double)toward.Y } })))
+            && ReviewState().Party[1].PendingAction?.AbilityFacing is { } facing
+            && Math.Abs(facing.X - toward.X) < .001 && Math.Abs(facing.Z - toward.Y) < .001);
         var pending = ReviewState().Party[1].PendingAction;
         foreach (var payload in new object[]
         {
@@ -304,7 +333,7 @@ public partial class GameHost
         }
         foreach (var removed in new[] { "set_auto_attack", "use_item", "face_actors" })
         {
-            var json = JsonSerializer.Serialize(new { schema_version = 11, command_id = $"party.adapter.removed.{removed}",
+            var json = JsonSerializer.Serialize(new { schema_version = 12, command_id = $"party.adapter.removed.{removed}",
                 type = removed, payload = new { actor_id = actor } });
             using var result = JsonDocument.Parse(_automationBridge.SubmitCommandJson(json));
             InputCheck("removed commands reject without replacing orders", !result.RootElement.GetProperty("accepted").GetBoolean()

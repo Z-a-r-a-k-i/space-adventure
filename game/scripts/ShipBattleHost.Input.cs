@@ -13,6 +13,7 @@ public partial class ShipBattleHost
 {
     public override void _Input(InputEvent @event)
     {
+        if (HandleIntroInput(@event)) { return; }
         if (@event is not InputEventKey { Pressed: true, Echo: false } key) { return; }
         switch (key.Keycode)
         {
