@@ -70,7 +70,9 @@ public partial class GameHost : Node3D
     private Node3D? _airlockSouthLeaf;
     private Node3D? _airlockCenterLock;
     private StandardMaterial3D _serviceDoorLockedMaterial = null!;
+    private StandardMaterial3D _serviceDoorUnlockedMaterial = null!;
     private StandardMaterial3D _serviceDoorOpenMaterial = null!;
+    private readonly Dictionary<string, InteractionState> _serviceDoorStates = new(StringComparer.Ordinal);
     private ArmedHumanoidPresentation _vanguardPresentation = null!;
     private HumanoidPresentation _survivorPresentation = null!;
     private ArmedHumanoidPresentation _protectorPartyPresentation = null!;
@@ -501,6 +503,7 @@ public partial class GameHost : Node3D
     private void CacheServiceDoorPresentationNodes()
     {
         _serviceDoorLockedMaterial = CreateServiceDoorStatusMaterial(new Color("f58f29"));
+        _serviceDoorUnlockedMaterial = CreateServiceDoorStatusMaterial(new Color("57e37f"));
         _serviceDoorOpenMaterial = CreateServiceDoorStatusMaterial(new Color("19bde8"));
         CacheServiceDoorPresentation(
             "interaction.service_door.entry",
@@ -929,7 +932,15 @@ public partial class GameHost : Node3D
             }
             door.StatusStrip.MaterialOverride = open
                 ? _serviceDoorOpenMaterial
-                : _serviceDoorLockedMaterial;
+                : unlocked ? _serviceDoorUnlockedMaterial : _serviceDoorLockedMaterial;
+            // Announce the moment a locked door becomes usable, not doors already unlocked on load.
+            if (_serviceDoorStates.TryGetValue(interactionId, out var previous)
+                && previous == InteractionState.Unavailable && interaction.State == InteractionState.Available
+                && _interactionDefinitions[interactionId].UnlockedText is { } unlockedText)
+            {
+                SetFeedback(unlockedText, new Color("72f2a8"));
+            }
+            _serviceDoorStates[interactionId] = interaction.State;
 
             if (door.TargetOpen is null)
             {
@@ -1342,6 +1353,13 @@ public partial class GameHost : Node3D
                 _ => "Order accepted.",
             };
             SetFeedback(message, new Color("8fe6ff"));
+        }
+        else if (command is InteractCommand interact
+            && acknowledgement.RejectionCode == CommandRejectionCode.InteractionUnavailable
+            && _interactionDefinitions.TryGetValue(interact.TargetId.Value, out var locked))
+        {
+            // A locked door or a not-yet-relevant interaction is route state, not an input error.
+            SetFeedback(locked.LockedText ?? $"{locked.Prompt} · not available right now.", TacticalUi.Amber);
         }
         else
         {
@@ -2142,6 +2160,13 @@ public partial class GameHost : Node3D
             new WorldPosition(11.0, 0.0, 8.0));
 
         var pause = automationBridge.SetPaused(true);
+        // Before the briefing, a human order on the entry door explains the lock instead of an error code.
+        RenderObservation(_session!.Observe());
+        Dispatch(new InteractCommand(new CommandId("godot.route.entry-locked"), definition.Protagonist.Id, entryDoor.Id));
+        var entryDoorLockedBeforeBriefing = _feedbackLabel.Text == entryDoor.LockedText
+            && _serviceDoors[entryDoor.Id.Value].StatusStrip.MaterialOverride == _serviceDoorLockedMaterial
+            && _session.Observe().StationRoute!.Interactions.Single(item => item.Id == entryDoor.Id).State
+                == InteractionState.Unavailable;
         var survivorOrder = SubmitInteraction("godot.route.survivor", actorId, survivor.Id.Value);
         var survivorSequence = _session!.Observe().LatestEventSequence;
         var dialogueWait = automationBridge.AdvanceUntilEventJson(
@@ -2173,6 +2198,7 @@ public partial class GameHost : Node3D
             },
         }));
         RenderObservation(_session.Observe());
+        var entryDoorUnlockAnnounced = _feedbackLabel.Text == entryDoor.UnlockedText;
         await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         var survivorReturnedToIdle =
@@ -2204,7 +2230,7 @@ public partial class GameHost : Node3D
                 entryDoorPresentation.ClosedLeftPosition)
             && entryDoorPresentation.Right.Position.IsEqualApprox(
                 entryDoorPresentation.ClosedRightPosition)
-            && entryDoorPresentation.StatusStrip.MaterialOverride == _serviceDoorLockedMaterial
+            && entryDoorPresentation.StatusStrip.MaterialOverride == _serviceDoorUnlockedMaterial
             && !soloExitPresentation.NavigationLink.Enabled;
 
         var terminalOrder = SubmitInteraction("godot.route.terminal", actorId, terminal.Id.Value);
@@ -2330,6 +2356,8 @@ public partial class GameHost : Node3D
 
         var final = _session.Observe().StationRoute!;
         var passed = IsAccepted(pause)
+            && entryDoorLockedBeforeBriefing
+            && entryDoorUnlockAnnounced
             && IsAccepted(survivorOrder)
             && IsReached(dialogueWait)
             && survivorDialoguePresentation
@@ -2382,6 +2410,8 @@ public partial class GameHost : Node3D
             objective = final.Objective.Id.Value,
             entry_door_open = final.Interactions.Single(
                 interaction => interaction.Id == entryDoor.Id).State == InteractionState.Completed,
+            entry_door_locked_before_briefing = entryDoorLockedBeforeBriefing,
+            entry_door_unlock_announced = entryDoorUnlockAnnounced,
             entry_door_navigation_unlocked_before_open = doorNavigationUnlocked,
             entry_door_auto_opened_before_encounter = entryDoorOpened is not null
                 && encounterStarted is not null

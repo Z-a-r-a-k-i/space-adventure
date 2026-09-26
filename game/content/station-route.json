@@ -489,7 +489,9 @@
       "prompt": "Open the entry service door",
       "use_radius_meters": 1.25,
       "effect": "open_entry_service_door",
-      "result_text": "The entry service door unlocks and slides open."
+      "result_text": "The entry service door slides open.",
+      "locked_text": "The service door is locked. Speak with the survivor first.",
+      "unlocked_text": "The survivor unlocks the service door. Right-click it to open."
     },
     {
       "id": "interaction.service_door.solo_exit",
@@ -497,7 +499,9 @@
       "prompt": "Open the arena exit service door",
       "use_radius_meters": 1.25,
       "effect": "open_solo_exit_service_door",
-      "result_text": "The arena exit unlocks after the security threat is cleared."
+      "result_text": "The arena exit slides open.",
+      "locked_text": "The arena exit is locked until the Enforcer is defeated.",
+      "unlocked_text": "The arena exit unlocks."
     },
     {
       "id": "interaction.protector",
@@ -550,6 +554,7 @@
       "prompt": "Cycle the evacuation airlock",
       "use_radius_meters": 1.5,
       "effect": "open_evacuation_airlock",
+      "locked_text": "The evacuation airlock stays sealed until every security position is cleared.",
       "result_text": "The evacuation airlock opens onto the escape cutter boarding ramp."
     },
     {
@@ -567,7 +572,9 @@
       "use_radius_meters": 1.25,
       "effect": "open_route_door",
       "required_encounter_id": "encounter.station.party",
-      "result_text": "Service access opens."
+      "result_text": "Service access opens.",
+      "locked_text": "Service access is locked. Secure the switchyard and recruit the Medic first.",
+      "unlocked_text": "Service access unlocks."
     },
     {
       "id": "interaction.service_door.security",
@@ -576,7 +583,9 @@
       "use_radius_meters": 1.5,
       "effect": "open_route_door",
       "required_encounter_id": "encounter.station.service",
-      "result_text": "The security service door opens."
+      "result_text": "The security service door opens.",
+      "locked_text": "The security door is locked until the service lanes are clear.",
+      "unlocked_text": "The security service door unlocks."
     },
     {
       "id": "interaction.service_door.dock",
@@ -585,7 +594,9 @@
       "use_radius_meters": 1.5,
       "effect": "open_route_door",
       "required_encounter_id": "encounter.station.security",
-      "result_text": "The dock service door opens."
+      "result_text": "The dock service door opens.",
+      "locked_text": "The dock door is locked until security control is broken.",
+      "unlocked_text": "The dock service door unlocks."
     },
     {
       "id": "interaction.service_door.launch",
@@ -594,7 +605,9 @@
       "use_radius_meters": 1.5,
       "effect": "open_route_door",
       "required_encounter_id": "encounter.station.dock",
-      "result_text": "The launch service door opens."
+      "result_text": "The launch service door opens.",
+      "locked_text": "The launch door is locked until the docking approach is secure.",
+      "unlocked_text": "The launch service door unlocks."
     }
   ],
   "medic": {

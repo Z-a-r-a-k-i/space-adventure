@@ -82,7 +82,9 @@ public sealed record StationInteractionDefinition(
     string? ResultText,
     string? PreservedResultText,
     StationDialogueDefinition? Dialogue,
-    EncounterId? RequiredEncounterId = null);
+    EncounterId? RequiredEncounterId = null,
+    string? LockedText = null,
+    string? UnlockedText = null);
 
 public sealed class StationRouteDefinition
 {
@@ -487,7 +489,9 @@ public static class StationRouteContent
         var preservedResultText = OptionalText(
             interaction.PreservedResultText,
             $"interactions[{id}].preserved_result_text");
-        ValidateInteractionShape(id, kind, effect, dialogue, resultText, preservedResultText);
+        var lockedText = OptionalText(interaction.LockedText, $"interactions[{id}].locked_text");
+        var unlockedText = OptionalText(interaction.UnlockedText, $"interactions[{id}].unlocked_text");
+        ValidateInteractionShape(id, kind, effect, dialogue, resultText, preservedResultText, lockedText, unlockedText);
 
         return new StationInteractionDefinition(
             id,
@@ -497,7 +501,9 @@ public static class StationRouteContent
             effect,
             resultText,
             preservedResultText,
-            dialogue, interaction.RequiredEncounterId is null ? null : new EncounterId(RequireText(interaction.RequiredEncounterId, "required_encounter_id", MaximumIdLength)));
+            dialogue, interaction.RequiredEncounterId is null ? null : new EncounterId(RequireText(interaction.RequiredEncounterId, "required_encounter_id", MaximumIdLength)),
+            lockedText,
+            unlockedText);
     }
 
     private static StationInteractionKind ParseInteractionKind(string? value, EntityId id)
@@ -549,8 +555,22 @@ public static class StationRouteContent
         StationInteractionEffect effect,
         StationDialogueDefinition? dialogue,
         string? resultText,
-        string? preservedResultText)
+        string? preservedResultText,
+        string? lockedText,
+        string? unlockedText)
     {
+        var isServiceDoor = effect is StationInteractionEffect.OpenEntryServiceDoor
+            or StationInteractionEffect.OpenSoloExitServiceDoor or StationInteractionEffect.OpenRouteDoor;
+        // Doors say why they are locked and announce when they unlock; a destination may explain its lock.
+        if (isServiceDoor && (lockedText is null || unlockedText is null))
+        {
+            throw new InvalidDataException($"Service-door interaction '{id}' requires locked_text and unlocked_text.");
+        }
+        if (!isServiceDoor && (unlockedText is not null || lockedText is not null && kind != StationInteractionKind.Destination))
+        {
+            throw new InvalidDataException($"Interaction '{id}' cannot define locked_text or unlocked_text.");
+        }
+
         if (effect is StationInteractionEffect.BeginSurvivorDialogue
             or StationInteractionEffect.BeginRecruitmentDialogue or StationInteractionEffect.BeginMedicRecruitmentDialogue)
         {
@@ -1062,6 +1082,9 @@ public static class StationRouteContent
 
         [JsonPropertyName("preserved_result_text")]
         public string? PreservedResultText { get; init; }
+
+        [JsonPropertyName("locked_text")] public string? LockedText { get; init; }
+        [JsonPropertyName("unlocked_text")] public string? UnlockedText { get; init; }
 
         [JsonPropertyName("dialogue")]
         public DialogueDto? Dialogue { get; init; }

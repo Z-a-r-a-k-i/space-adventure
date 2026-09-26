@@ -110,6 +110,36 @@ public sealed class StationRouteSessionTests
     }
 
     [Fact]
+    public void EveryServiceDoorExplainsItsLockAndAnnouncesItsUnlock()
+    {
+        var definition = LoadDefinition();
+        var doors = definition.Interactions.Where(interaction => interaction.Effect is StationInteractionEffect.OpenEntryServiceDoor
+            or StationInteractionEffect.OpenSoloExitServiceDoor or StationInteractionEffect.OpenRouteDoor).ToArray();
+        Assert.Equal(6, doors.Length);
+        Assert.All(doors, door => Assert.False(string.IsNullOrWhiteSpace(door.LockedText) || string.IsNullOrWhiteSpace(door.UnlockedText)));
+        Assert.Contains("survivor", doors.Single(door => door.Id == EntryDoorId).LockedText!, StringComparison.OrdinalIgnoreCase);
+
+        string Without(string interactionId, string field)
+        {
+            var root = JsonNode.Parse(LoadContentJson())!.AsObject();
+            root["interactions"]!.AsArray().Single(item => (string?)item!["id"] == interactionId)!.AsObject().Remove(field);
+            return root.ToJsonString();
+        }
+        string With(string interactionId, string field)
+        {
+            var root = JsonNode.Parse(LoadContentJson())!.AsObject();
+            root["interactions"]!.AsArray().Single(item => (string?)item!["id"] == interactionId)![field] = "Locked.";
+            return root.ToJsonString();
+        }
+
+        Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(Without(EntryDoorId.Value, "locked_text")));
+        Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(Without("interaction.service_door.dock", "unlocked_text")));
+        Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(With(SurvivorId.Value, "locked_text")));
+        Assert.Throws<InvalidDataException>(() => StationRouteContent.ParseJson(With(AirlockId.Value, "unlocked_text")));
+        Assert.NotNull(definition.Interactions.Single(interaction => interaction.Id == AirlockId).LockedText);
+    }
+
+    [Fact]
     public void ContentParserRequiresExactlyOneProtagonistKit()
     {
         var sourceJson = LoadContentJson();

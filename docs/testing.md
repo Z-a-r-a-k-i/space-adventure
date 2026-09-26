@@ -207,8 +207,10 @@ flicker. Live Godot inspection is required for lintel and camera changes.
 Use a fresh `dev.ps1 run` process with physical pointer/keyboard input. Agent
 input injection is separate evidence. The [roadmap](ROADMAP.md) owns gate status.
 
-1. Complete either survivor response, inspect the optional terminal, and open
-   the entry door. The Enforcer must notice the Vanguard where he stands: combat
+1. Right-click the entry door first: it must say it is locked and point to the
+   survivor, not show an error. Complete either survivor response: the door's
+   strip turns green and an unlock message appears. Inspect the optional
+   terminal and open the entry door. The Enforcer must notice the Vanguard where he stands: combat
    auto-pauses once without moving him or snapping the camera; resume to finish draw.
 2. Queue and replace an order while paused. Resume attack, then repeatedly
    click the same enemy: cadence must remain stable. Check move/Stop cancellation
