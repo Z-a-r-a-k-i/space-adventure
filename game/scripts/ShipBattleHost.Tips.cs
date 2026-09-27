@@ -14,8 +14,9 @@ public partial class ShipBattleHost
     private const int PowerTipTick = 25 * ShipCombatSession.TicksPerSecond;
     private PanelContainer _tipCard = null!;
     private Label _tipTitle = null!;
-    private Label _tipBody = null!;
+    private RichTextLabel _tipBody = null!;
     private string _tipKey = "";
+    private int _tipPromptGeneration;
     private double _tipAge;
     private ulong _tipClockMs;
     private readonly HashSet<string> _retiredTips = new(StringComparer.Ordinal);
@@ -39,10 +40,25 @@ public partial class ShipBattleHost
         close.AddThemeColorOverride("font_color", TacticalUi.Muted);
         close.Pressed += () => { _retiredTips.Add(_tipKey); _tipCard.Visible = false; };
         header.AddChild(close);
-        _tipBody = TacticalUi.Label("", 11, "c3d0d4");
-        _tipBody.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+        _tipBody = TacticalUi.RichLabel("", 11, "c3d0d4", wrap: true);
         _tipBody.CustomMinimumSize = new Vector2(150, 0);
         content.AddChild(_tipBody);
+    }
+
+    /// <summary>Controller wording for tips that name keys or clicks; a tip keeps its mouse text as its identity.</summary>
+    private static string? PadTipBody(string title)
+    {
+        static string G(PadButton button) => InputPrompts.Bb(button, 15);
+        return title switch
+        {
+            "AIM YOUR WEAPONS" => $"Press {G(PadButton.X)} or {G(PadButton.Y)}, pick an enemy room with {G(PadButton.LS)} and fire with {G(PadButton.A)}. Hit their Weapons first to silence them.",
+            "LET TIME RUN" => $"Press {G(PadButton.RT)} to resume. Pause whenever you need to give new orders.",
+            "FIRE ABOARD" => $"Crew fight fires in their own room. Pick crew with {G(PadButton.LB)}{G(PadButton.RB)}, highlight the burning room with {G(PadButton.LS)} and press {G(PadButton.A)}.",
+            "INJURED CREW" => $"The Medic heals her room. Select her alone, highlight the injured crew member's room and press {G(PadButton.A)} to treat them.",
+            "SHIELDS DOWN" => $"Every shot lands now. Hold ({G(PadButton.LT)}) readies all weapons to fire together next time.",
+            "POWER" => $"{G(PadButton.DpadHorizontal)} picks a system, {G(PadButton.DpadVertical)} adds or removes a bar. The reactor cannot run everything.",
+            _ => null,
+        };
     }
 
     private void UpdateTips(ShipBattleObservation observation)
@@ -57,9 +73,15 @@ public partial class ShipBattleHost
             if (_tipKey.Length > 0) { _retiredTips.Add(_tipKey); }
             _tipKey = tip;
             _tipAge = 0;
+            _tipPromptGeneration = InputDevice.Generation - 1;
+        }
+        if (_tipPromptGeneration != InputDevice.Generation)
+        {
+            // Switching device rewrites the same tip in the other device's words without restarting it.
+            _tipPromptGeneration = InputDevice.Generation;
             var lines = tip.Split('\n', 2);
             _tipTitle.Text = lines[0];
-            _tipBody.Text = lines.Length > 1 ? lines[1] : "";
+            _tipBody.Text = InputDevice.UsingGamepad && PadTipBody(lines[0]) is { } pad ? pad : lines.Length > 1 ? lines[1] : "";
         }
         if (tip.Length == 0 || _retiredTips.Contains(tip)) { _tipCard.Visible = false; return; }
         if (!observation.Paused) { _tipAge += Math.Min(elapsed, .25); }

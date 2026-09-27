@@ -106,8 +106,11 @@ public partial class ShipBattleHost
             var weapon = player.Weapons[index];
             _weaponCards[index].Present(weapon, _aimingWeapon == weapon.Id, player.HoldFire, pulse);
         }
-        _holdButton.Text = player.HoldFire ? "HELD\n(H)" : "Hold\n(H)";
+        var pad = InputDevice.UsingGamepad;
+        _holdButton.Text = (player.HoldFire ? "HELD" : "Hold") + (pad ? "" : "\n(H)");
+        _holdButton.Icon = pad ? InputPrompts.Glyph(PadButton.LT) : TacticalUi.Icon("ship/hold");
         _holdButton.Modulate = player.HoldFire ? TacticalUi.Amber : Colors.White;
+        _power.PadFocus = pad && !IntroPlaying ? PowerPanel.Order[_padSystem] : null;
         for (var index = 0; index < _enemyRows.Count; index++)
         {
             var intent = observation.Intents[index];
@@ -119,11 +122,11 @@ public partial class ShipBattleHost
             : repair.ReserveBars > 0 ? $"Repair drone idle ({repair.ReserveBars} bars left)" : "Repair drone spent";
         var clock = TimeSpan.FromSeconds(observation.Tick / (double)ShipCombatSession.TicksPerSecond).ToString(@"mm\:ss", CultureInfo.InvariantCulture);
         _clock.Text = observation.Phase != ShipBattlePhase.Active ? $"{observation.Phase.ToString().ToUpperInvariant()}  {clock}"
-            : observation.Paused ? $"PAUSED  {clock}  (SPACE)" : $"{clock}";
+            : observation.Paused ? $"PAUSED  {clock}  ({(pad ? "RT" : "SPACE")})" : $"{clock}";
         _clock.Modulate = observation.Paused && observation.Phase == ShipBattlePhase.Active ? TacticalUi.Cyan : Colors.White;
         _pausedFrame.Visible = observation.Paused && observation.Phase == ShipBattlePhase.Active;
-        _pauseButton.Text = observation.Paused ? "Resume (Space)" : "Pause (Space)";
-        _pauseButton.Icon = TacticalUi.Icon(observation.Paused ? "ship/play" : "ship/pause");
+        _pauseButton.Text = (observation.Paused ? "Resume" : "Pause") + (pad ? "" : " (Space)");
+        _pauseButton.Icon = pad ? InputPrompts.Glyph(PadButton.RT) : TacticalUi.Icon(observation.Paused ? "ship/play" : "ship/pause");
         var airlock = observation.Doors.First(door => door.Exterior);
         _airlockButton.Text = airlock.CommandedOpen ? "Airlock VENTING" : "Airlock sealed";
         _airlockButton.Modulate = airlock.CommandedOpen ? new Color("ff8a7a") : Colors.White;
@@ -159,8 +162,9 @@ public partial class ShipBattleHost
     {
         var spin = (float)(tick / ShipCombatSession.TicksPerSecond * 1.3);
         var player = new List<Action<ShipOverlay>>();
-        // Hover preview: where a right-click would send the selected crew.
-        if (_hoverView == _playerView && _hoverPoint is { } hover && _selected.Count > 0 && _aimingWeapon is null && RoomAt(hover) is { } hoverRoom)
+        // Hover preview: where a right-click would send the selected crew. The hidden cursor's last hover is stale.
+        var mouseHover = !InputDevice.UsingGamepad;
+        if (mouseHover && _hoverView == _playerView && _hoverPoint is { } hover && _selected.Count > 0 && _aimingWeapon is null && RoomAt(hover) is { } hoverRoom)
         {
             var room = _definition.Rooms.First(item => item.Id == hoverRoom);
             var rect = _playerView.ScreenRect(new Vector2((float)room.X, (float)room.Z), new Vector2((float)room.Width, (float)room.Depth));
@@ -199,10 +203,9 @@ public partial class ShipBattleHost
                 fraction > .5f ? TacticalUi.Power : fraction > .25f ? TacticalUi.Amber : TacticalUi.Damaged));
         }
         player.AddRange(FloatingTexts(_playerView, tick));
-        _playerView.Overlay2D.Present(player);
 
         var enemy = new List<Action<ShipOverlay>>();
-        var hoverEnemy = _hoverView == _enemyView && _hoverPoint is { } enemyPoint ? EnemyRoomAt(enemyPoint) : null;
+        var hoverEnemy = mouseHover && _hoverView == _enemyView && _hoverPoint is { } enemyPoint ? EnemyRoomAt(enemyPoint) : null;
         foreach (var system in observation.Enemy.Systems)
         {
             var rect = EnemyRoomRect(system.Id);
@@ -231,13 +234,17 @@ public partial class ShipBattleHost
         {
             var rect = EnemyRoomRect(group.Key);
             var centre = _enemyView.ToScreen(new Vector3(rect.GetCenter().X, ShipBattleView.FloorY, rect.GetCenter().Y)) + new Vector2(0, 18);
-            var numbers = string.Join(" ", group.Select(item => (item.index + 1).ToString(CultureInfo.InvariantCulture)));
+            // Weapons are named by their key on the keyboard and by their face button on the controller.
+            var numbers = string.Join(" ", group.Select(item => mouseHover ? (item.index + 1).ToString(CultureInfo.InvariantCulture)
+                : item.index == 0 ? "X" : "Y"));
             var live = group.Any(item => item.weapon.Powered);
             var color = new Color(TacticalUi.Cyan, live ? .95f : .45f);
             enemy.Add(overlay => overlay.Reticle(centre, 16, color, spin));
             enemy.Add(overlay => overlay.Text(centre + new Vector2(0, 26), numbers, 12, color, bold: true));
         }
         enemy.AddRange(FloatingTexts(_enemyView, tick));
+        PadOverlays(observation, player, enemy);
+        _playerView.Overlay2D.Present(player);
         _enemyView.Overlay2D.Present(enemy);
     }
 }

@@ -62,6 +62,10 @@ Selection and ability focus belong to the Godot adapter. Drag selection collects
 living crew; Tab cycles ability focus without changing a selected group. Group
 orders and individual abilities still use the same validated core commands.
 Party members own independent health, skill cooldowns, and orders.
+The input device (keyboard/mouse or controller) is adapter state too. Controller
+walking and paused planned moves submit ordinary move commands (followers take
+the group move aimed behind the walker), and a highlighted target stands in for
+the pointer ([ADR 0037](DECISIONS.md)).
 Barrier validates a ground position and facing, then keeps that world pose
 independently of Protector's movement, heading, or defeat. Expiry and encounter
 completion remove it. Hostile rifle and sentry projectiles have

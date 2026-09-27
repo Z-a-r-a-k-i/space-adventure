@@ -30,6 +30,7 @@ public partial class ShipBattleHost
         else if (_arguments.Contains("--ship-battle-smoke")) { ReviewDrivesClock = true; _ = RunGuarded(RunSmokeAsync); }
         else if (_arguments.Contains("--ship-review=capture")) { ReviewDrivesClock = true; _ = RunGuarded(RunCaptureAsync); }
         else if (_arguments.Contains("--ship-review=input")) { ReviewDrivesClock = true; _ = RunGuarded(RunInputReviewAsync); }
+        else if (_arguments.Contains("--ship-review=gamepad")) { ReviewDrivesClock = true; _ = RunGuarded(RunGamepadReviewAsync); }
         else if (_arguments.Contains("--ship-review=performance")) { _ = RunGuarded(RunPerformanceAsync); }
         else if (_autoQuitSeconds > 0) { GetTree().CreateTimer(_autoQuitSeconds).Timeout += () => GetTree().Quit(); }
     }

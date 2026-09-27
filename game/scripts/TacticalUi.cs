@@ -56,6 +56,17 @@ internal static class TacticalUi
 
     public static Label Eyebrow(string text, string color = "8fa7b6") => Label(text, 11, color);
 
+    /// <summary>A label that can inline controller glyphs (<see cref="InputPrompts.Bb"/>) between words.</summary>
+    public static RichTextLabel RichLabel(string text, int size = 13, string color = "e1e8eb", bool wrap = false)
+    {
+        var label = new RichTextLabel { BbcodeEnabled = true, FitContent = true, ScrollActive = false, Text = text,
+            AutowrapMode = wrap ? TextServer.AutowrapMode.WordSmart : TextServer.AutowrapMode.Off,
+            MouseFilter = Control.MouseFilterEnum.Ignore };
+        label.AddThemeFontSizeOverride("normal_font_size", size);
+        label.AddThemeColorOverride("default_color", new Color(color));
+        return label;
+    }
+
     public static ColorRect Rule(Color color) => new()
     {
         Color = color, CustomMinimumSize = new Vector2(0, 2), MouseFilter = Control.MouseFilterEnum.Ignore,

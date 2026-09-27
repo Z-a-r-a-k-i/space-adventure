@@ -12,7 +12,9 @@ public partial class GameHost
     private bool _selectionAdditive;
     private bool _selectionDragging;
     private Vector2? _inputPointerPosition;
-    private Vector2 PointerPosition => _inputPointerPosition ?? GetViewport().GetMousePosition();
+    // With a controller the "pointer" is the highlighted target or the placement circle projected to the screen.
+    private Vector2 PointerPosition => InputDevice.UsingGamepad && PadPointer() is { } pad ? pad
+        : _inputPointerPosition ?? GetViewport().GetMousePosition();
 
     private void CreateSelectionBox(CanvasLayer canvas)
     {

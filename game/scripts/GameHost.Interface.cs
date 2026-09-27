@@ -14,6 +14,10 @@ public partial class GameHost
     private Button _muteButton = null!;
     private ScrollContainer _manualScroll = null!;
     private Button _manualCloseButton = null!;
+    private RichTextLabel _dialogueHint = null!;
+    private Label _manualHeader = null!, _manualIntro = null!, _manualCancel = null!, _manualMedic = null!;
+    private Label _manualNumbers = null!, _manualAudioHint = null!, _manualResume = null!;
+    private GridContainer _manualKeys = null!, _manualPad = null!;
     private Control _fieldOrderOverlay = null!;
     private readonly Dictionary<EntityId, FieldOrderView> _fieldOrders = [];
     private Control _worldHealthOverlay = null!;
@@ -63,8 +67,12 @@ public partial class GameHost
         _dialogueResponses = new VBoxContainer();
         _dialogueResponses.AddThemeConstantOverride("separation", 7);
         dialogue.AddChild(_dialogueResponses);
-        dialogue.AddChild(TacticalUi.Eyebrow("1 / 2  Respond     TAB / ARROWS  Focus     ENTER  Confirm", "afc1c5"));
+        _dialogueHint = TacticalUi.RichLabel(DialogueHintText(), 11, "afc1c5");
+        dialogue.AddChild(_dialogueHint);
     }
+
+    private static string DialogueHintText() => InputPrompts.Pick("1 / 2  Respond     TAB / ARROWS  Focus     ENTER  Confirm",
+        $"{InputPrompts.Bb(PadButton.DpadVertical, 16)}  Focus     {InputPrompts.Bb(PadButton.A, 16)}  Confirm");
 
     private void CreateFieldOrderOverlay(CanvasLayer canvas)
     {
@@ -378,19 +386,16 @@ public partial class GameHost
         panel.AddThemeStyleboxOverride("panel", TacticalUi.FieldPanel(TacticalUi.Cyan, bottom: true, margin: 28));
         _controlsOverlay.AddChild(panel);
         _manualScroll = new ScrollContainer { CustomMinimumSize = new Vector2(680, 560),
-            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled, FollowFocus = true };
         panel.AddChild(_manualScroll);
         var content = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         content.AddThemeConstantOverride("separation", 8);
         _manualScroll.AddChild(content);
-        content.AddChild(TacticalUi.Eyebrow("FIELD MANUAL  /  CREW COMMAND      ↑ / ↓ SCROLL", "8bddd9"));
+        content.AddChild(_manualHeader = TacticalUi.Eyebrow("", "8bddd9"));
         content.AddChild(TacticalUi.Label("Field operations", 26));
-        content.AddChild(HudLabel("Pause with Space to plan. Each crew member keeps one queued order; a new order replaces it.", 14, "bdccd1"));
+        content.AddChild(_manualIntro = HudLabel("", 14, "bdccd1"));
         content.AddChild(TacticalUi.Rule(TacticalUi.Cyan.Darkened(.5f)));
-        var grid = new GridContainer { Columns = 2 };
-        grid.AddThemeConstantOverride("h_separation", 28);
-        grid.AddThemeConstantOverride("v_separation", 8);
-        content.AddChild(grid);
+        _manualKeys = ManualGrid(content);
         foreach (var (key, meaning) in new[]
         {
             ("RIGHT-CLICK", "Move, interact, or assign an attack target"),
@@ -404,15 +409,40 @@ public partial class GameHost
             ("F · HOME / R", "Focus selected crew · reset camera orientation"),
         })
         {
-            grid.AddChild(TacticalUi.Label(key, 12, "8bddd9"));
-            grid.AddChild(TacticalUi.Label(meaning, 13, "cfdbde"));
+            _manualKeys.AddChild(TacticalUi.Label(key, 12, "8bddd9"));
+            _manualKeys.AddChild(TacticalUi.Label(meaning, 13, "cfdbde"));
+        }
+        _manualPad = ManualGrid(content);
+        foreach (var (buttons, meaning) in new (PadButton[], string)[]
+        {
+            ([PadButton.LS], "Walk the selected crew member; the squad follows. Paused: drag a planned move"),
+            ([PadButton.A], "Attack the highlighted enemy · use a door or person · confirm"),
+            ([PadButton.B], "Cancel aiming or a planned move · back"),
+            ([PadButton.X, PadButton.Y], "Abilities of the selected crew member"),
+            ([PadButton.LB, PadButton.RB], "Previous / next crew member"),
+            ([PadButton.DpadHorizontal], "Change the highlighted enemy, ally or object"),
+            ([PadButton.DpadUp], "Squad follows or solo"),
+            ([PadButton.DpadDown], "Stop selected crew · queued while paused"),
+            ([PadButton.RT], "Tactical pause / resume"),
+            ([PadButton.LT], "Hold to look around with the left stick"),
+            ([PadButton.RS, PadButton.R3], "Rotate and zoom · press the stick to reset the view"),
+            ([PadButton.Menu], "Open or close this manual"),
+        })
+        {
+            var glyphs = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+            glyphs.AddThemeConstantOverride("separation", 4);
+            foreach (var button in buttons) { glyphs.AddChild(InputPrompts.GlyphRect(button, 22)); }
+            _manualPad.AddChild(glyphs);
+            var label = TacticalUi.Label(meaning, 13, "cfdbde");
+            label.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+            _manualPad.AddChild(label);
         }
         content.AddChild(TacticalUi.Rule(new Color("344651")));
-        content.AddChild(TacticalUi.Label("Crew fire only at assigned targets. Escape cancels targeting.", 13, "e5bc7d"));
+        content.AddChild(_manualCancel = TacticalUi.Label("", 13, "e5bc7d"));
         content.AddChild(TacticalUi.Label("Interrupt stops wind-ups. Barrier blocks shots; Taunt draws nearby threats.", 13));
-        content.AddChild(TacticalUi.Label("Medic: Heal (1) targets a living ally or portrait. Healing Field (2) restores crew inside its circle.", 13));
+        content.AddChild(_manualMedic = TacticalUi.Label("", 13));
         content.AddChild(TacticalUi.Label("Each victory restores the crew. Defeat retries this fight; prior route progress stays cleared.", 13));
-        content.AddChild(TacticalUi.Label("Numbers identify crew. The portrait marked 1 / 2 owns the ability keys.", 13));
+        content.AddChild(_manualNumbers = TacticalUi.Label("", 13));
         var audio = new HBoxContainer();
         audio.AddThemeConstantOverride("separation", 14);
         content.AddChild(audio);
@@ -429,11 +459,48 @@ public partial class GameHost
         _muteButton.CustomMinimumSize = new Vector2(120, 32);
         _muteButton.FocusMode = Control.FocusModeEnum.All;
         audio.AddChild(_muteButton);
-        content.AddChild(TacticalUi.Label("− / +  Volume    M  Mute    TAB  Focus · Applies to this session", 12, "afc1c5"));
-        _manualCloseButton = HudButton("ESC   Return to station", ToggleControls);
+        content.AddChild(_manualAudioHint = TacticalUi.Label("", 12, "afc1c5"));
+        _manualCloseButton = HudButton("", ToggleControls);
         _manualCloseButton.FocusMode = Control.FocusModeEnum.All;
+        _manualCloseButton.ExpandIcon = false;
+        _manualCloseButton.AddThemeConstantOverride("icon_max_width", 20);
         content.AddChild(_manualCloseButton);
-        content.AddChild(TacticalUi.Label("Play stays paused after closing. Press Space when ready.", 12, "afc1c5"));
+        content.AddChild(_manualResume = TacticalUi.Label("", 12, "afc1c5"));
+        ApplyManualPrompts();
+    }
+
+    private static GridContainer ManualGrid(VBoxContainer content)
+    {
+        var grid = new GridContainer { Columns = 2 };
+        grid.AddThemeConstantOverride("h_separation", 28);
+        grid.AddThemeConstantOverride("v_separation", 8);
+        content.AddChild(grid);
+        return grid;
+    }
+
+    /// <summary>Rewrites the manual for the device in use: the key list or the controller page.</summary>
+    private void ApplyManualPrompts()
+    {
+        var pad = InputDevice.UsingGamepad;
+        _manualKeys.Visible = !pad;
+        _manualPad.Visible = pad;
+        _manualHeader.Text = pad ? "FIELD MANUAL  /  CREW COMMAND      RIGHT STICK  SCROLL" : "FIELD MANUAL  /  CREW COMMAND      ↑ / ↓ SCROLL";
+        _manualIntro.Text = $"Pause with {(pad ? "RT" : "Space")} to plan. Each crew member keeps one queued order; a new order replaces it.";
+        _manualCancel.Text = $"Crew fire only at assigned targets. {(pad ? "B" : "Escape")} cancels targeting.";
+        _manualMedic.Text = pad ? "Medic: Heal (X) targets a living ally. Healing Field (Y) restores crew inside its circle."
+            : "Medic: Heal (1) targets a living ally or portrait. Healing Field (2) restores crew inside its circle.";
+        _manualNumbers.Text = pad ? "Numbers identify crew. The card marked X / Y owns the ability buttons."
+            : "Numbers identify crew. The portrait marked 1 / 2 owns the ability keys.";
+        _manualAudioHint.Text = pad ? "D-pad ↑ / ↓  Focus    ← / →  Volume    A  Select · Applies to this session"
+            : "− / +  Volume    M  Mute    TAB  Focus · Applies to this session";
+        _manualCloseButton.Text = pad ? "Return to station" : "ESC   Return to station";
+        _manualCloseButton.Icon = pad ? InputPrompts.Glyph(PadButton.B) : null;
+        _manualCloseButton.AddThemeColorOverride("icon_normal_color", InputPrompts.Tint(PadButton.B));
+        _manualCloseButton.AddThemeColorOverride("icon_focus_color", InputPrompts.Tint(PadButton.B));
+        _manualCloseButton.AddThemeColorOverride("icon_hover_color", InputPrompts.Tint(PadButton.B));
+        _manualResume.Text = $"Play stays paused after closing. Press {(pad ? "RT" : "Space")} when ready.";
+        var bus = AudioServer.GetBusIndex("Master");
+        _muteButton.Text = (pad ? "" : "M   ") + (bus >= 0 && AudioServer.IsBusMute(bus) ? "Unmute" : "Mute");
     }
 
     private void UpdateMasterVolume()
@@ -443,7 +510,7 @@ public partial class GameHost
         AudioServer.SetBusVolumeDb(bus, _masterVolume.Value <= 0 ? -80 : Mathf.LinearToDb((float)_masterVolume.Value / 100));
         var muted = AudioServer.IsBusMute(bus);
         _masterVolumeLabel.Text = muted ? "Sound muted" : $"Sound {_masterVolume.Value:0}%";
-        _muteButton.Text = muted ? "M   Unmute" : "M   Mute";
+        _muteButton.Text = (InputDevice.UsingGamepad ? "" : "M   ") + (muted ? "Unmute" : "Mute");
     }
 
     private void ToggleMasterMute()
@@ -477,9 +544,35 @@ public partial class GameHost
     {
         if (_session is null || _controlsOverlay is null) { return false; }
         if (@event is InputEventKey { Pressed: true, Echo: false } key
-            && (IsKey(key, Key.F1) || _controlsOverlay.Visible && IsKey(key, Key.Escape)))
+            && (IsKey(key, Key.F1) || _controlsOverlay.Visible && IsKey(key, Key.Escape))
+            || @event is InputEventJoypadButton { Pressed: true } pad
+            && (pad.ButtonIndex == JoyButton.Start || _controlsOverlay.Visible && pad.ButtonIndex == JoyButton.B))
         {
             ToggleControls();
+            GetViewport().SetInputAsHandled();
+            return true;
+        }
+        else if (_controlsOverlay.Visible && @event is InputEventJoypadButton or InputEventJoypadMotion)
+        {
+            // The D-pad walks the same three controls Tab does; A presses the focused one.
+            if (@event is InputEventJoypadButton { Pressed: true } padButton)
+            {
+                var controls = new Control[] { _masterVolume, _muteButton, _manualCloseButton };
+                var index = Math.Max(0, Array.FindIndex(controls, control => control.HasFocus()));
+                switch (padButton.ButtonIndex)
+                {
+                    case JoyButton.DpadUp or JoyButton.DpadDown:
+                        var next = controls[(index + (padButton.ButtonIndex == JoyButton.DpadUp ? controls.Length - 1 : 1)) % controls.Length];
+                        next.GrabFocus();
+                        _manualScroll.EnsureControlVisible(next);
+                        break;
+                    case JoyButton.DpadLeft or JoyButton.DpadRight when _masterVolume.HasFocus():
+                        _masterVolume.Value += padButton.ButtonIndex == JoyButton.DpadRight ? 5 : -5;
+                        break;
+                    case JoyButton.A when _muteButton.HasFocus(): ToggleMasterMute(); break;
+                    case JoyButton.A when _manualCloseButton.HasFocus(): ToggleControls(); break;
+                }
+            }
             GetViewport().SetInputAsHandled();
             return true;
         }

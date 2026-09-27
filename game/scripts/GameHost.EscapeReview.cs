@@ -212,5 +212,35 @@ public partial class GameHost
         await InputWorldClick(ToGodot(ReviewState().Party.Single(actor => actor.Id == _definition.Medic.Id).Position), MouseButton.Left);
         InputCheck("Ground field replaces pending Heal", IsHealingField(ReviewState().Party.Single(actor => actor.Id == _definition.Medic.Id).PendingAction?.AbilityId));
         CheckHudBounds("three crew medic controls");
+        await CheckMedicGamepadInput();
+    }
+
+    /// <summary>The same kit from a controller: Heal cycles allies with the D-pad, the field circle starts on the crew.</summary>
+    private async Task CheckMedicGamepadInput()
+    {
+        var medic = _definition!.Medic.Id;
+        ActorObservation Medic() => ReviewState().Party.Single(actor => actor.Id == medic);
+        await PadPress(JoyButton.DpadRight);
+        InputCheck("a controller button takes over during the Medic's turn", InputDevice.UsingGamepad && _focusedActorId == medic);
+        await PadPress(JoyButton.X);
+        var living = ReviewState().Party.Where(actor => actor.Combat?.IsDefeated == false).ToArray();
+        double Need(EntityId id) => living.Single(actor => actor.Id == id).Combat is { } combat ? combat.Health / (double)combat.MaximumHealth : 1;
+        InputCheck("controller Heal starts on an ally who needs it most", _abilityTargeting && _padHighlight is { } start
+            && living.Any(actor => actor.Id == start) && living.All(actor => Need(start) <= Need(actor.Id)));
+        var first = _padHighlight!.Value;
+        await PadPress(JoyButton.DpadRight);
+        InputCheck("the D-pad moves the Heal target to another ally", _padHighlight is { } next && next != first && living.Any(actor => actor.Id == next));
+        for (var attempt = 0; attempt < living.Length && _session!.CheckDirectHealTarget(medic, _padHighlight!.Value) is not null; attempt++)
+        { await PadPress(JoyButton.DpadRight); }
+        var target = _padHighlight!.Value;
+        await PadPress(JoyButton.A);
+        InputCheck("A queues Heal on the highlighted ally", IsHealingAbility(Medic().PendingAction?.AbilityId)
+            && Medic().PendingAction?.CombatTargetId == target && !_abilityTargeting);
+        await PadPress(JoyButton.Y);
+        InputCheck("controller Healing Field starts its circle on the crew", _abilityTargeting && _padAim is not null);
+        await PadPress(JoyButton.A);
+        InputCheck("A places Healing Field", IsHealingField(Medic().PendingAction?.AbilityId) && !_abilityTargeting);
+        await PadMouseMotion(new Vector2(30, 0));
+        InputCheck("the mouse takes over again", !InputDevice.UsingGamepad);
     }
 }

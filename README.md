@@ -46,6 +46,23 @@ console executable; an editor plugin is optional. `help` lists all commands.
 | F1; Escape | Open the field manual; close it. Opening the manual pauses play; Space resumes after closing |
 | Within field manual: −/+; M | Change session sound volume; mute/unmute. Tab focuses controls; Enter confirms |
 
+An Xbox controller works alongside the keyboard and mouse. The first button or
+stick push switches the prompts to controller glyphs and hides the cursor;
+moving the mouse or pressing a key switches back. Losing the active controller
+during live play pauses it.
+
+| Controller | Station | Ship battle |
+| --- | --- | --- |
+| Left stick | Walk the selected crew member; the selected squad follows. Paused: drag a planned move, queued on release. Aiming: move the placement circle | Hop the highlight between rooms |
+| A | Attack the highlighted enemy, use the highlighted door or person, confirm | Send the selected crew to the highlighted room (a lone Medic treats an injured ally there); fire while aiming |
+| B | Cancel aiming or a planned move; back | Cancel aiming; open or close the highlighted room's doors |
+| X / Y | The selected crew member's two abilities | Aim weapon 1 / 2; hold to switch its power |
+| LB / RB | Previous / next crew member | Previous / next crew member |
+| D-pad | ← → change the highlighted enemy, ally or object; ↑ squad or solo; ↓ Stop | ← → pick a system; ↑ ↓ add or remove a power bar |
+| RT / LT | Tactical pause; hold LT to look around with the left stick | Pause; hold the volley |
+| Right stick | Rotate and zoom; press to reset the view | Zoom; press to frame both ships |
+| Menu / View | Field manual / — | Doors, airlock and retry panel / select all crew |
+
 Stop is unavailable during dialogue, defeat, and victory securing. A fight
 starts, paused, the moment an enemy spots the crew, wherever they stand; resume
 to play the draw. Crew only attack assigned

@@ -8,8 +8,9 @@ public partial class GameHost
     private const double TipSeconds = 9;
     private PanelContainer _tipCard = null!;
     private Label _tipTitle = null!;
-    private Label _tipBody = null!;
+    private RichTextLabel _tipBody = null!;
     private string _tipKey = "";
+    private int _tipPromptGeneration;
     private double _tipAgeSeconds;
     private ulong _tipClockMs;
     private ulong _tipShownMs;
@@ -45,9 +46,26 @@ public partial class GameHost
         close.AddThemeColorOverride("font_hover_color", Colors.White);
         close.Pressed += () => { _retiredTips.Add(_tipKey); _tipCard.Visible = false; };
         header.AddChild(close);
-        _tipBody = HudLabel("", 12, "c3d0d4");
+        _tipBody = TacticalUi.RichLabel("", 12, "c3d0d4", wrap: true);
         _tipBody.CustomMinimumSize = new Vector2(296, 0);
         column.AddChild(_tipBody);
+    }
+
+    /// <summary>Controller wording for tips that name keys or clicks; a tip keeps its keyboard text as its identity.</summary>
+    private static string? PadTipBody(string title)
+    {
+        static string G(PadButton button) => InputPrompts.Bb(button, 16);
+        return title switch
+        {
+            "CONTROLLER" => $"{G(PadButton.LS)} walks the selected crew member and the squad follows. Walk up to a door or person and press {G(PadButton.A)}.",
+            "FIRST CONTACT" => $"The Enforcer is highlighted: {G(PadButton.A)} assigns fire, then {G(PadButton.RT)} resumes.",
+            "COUNTER THE STRIKE" => $"Pause with {G(PadButton.RT)}, press {G(PadButton.X)}, place the circle under the Enforcer with {G(PadButton.LS)} and confirm with {G(PadButton.A)}.",
+            "WATCH THE ENFORCER" => $"Its strike has a wind-up. When the warning appears, pause ({G(PadButton.RT)}) and Interrupt ({G(PadButton.X)}).",
+            "STRIKE INTERRUPTED" => $"Keep firing at your target. Walk or Stop ({G(PadButton.DpadDown)}) to break off.",
+            "THREE CREW" => $"{G(PadButton.LB)}{G(PadButton.RB)} switch to the Medic. Heal ({G(PadButton.X)}) starts on the most injured ally, {G(PadButton.DpadHorizontal)} changes it; Healing Field ({G(PadButton.Y)}) heals everyone inside.",
+            "COORDINATE THE CREW" => $"{G(PadButton.LB)}{G(PadButton.RB)} switch crew and {G(PadButton.DpadUp)} toggles squad or solo. {G(PadButton.A)} sends them at the highlighted enemy.",
+            _ => null,
+        };
     }
 
     private void ShowTip(string tip, bool paused, bool blocked)
@@ -63,9 +81,15 @@ public partial class GameHost
             _tipKey = tip;
             _tipAgeSeconds = 0;
             _tipShownMs = now;
+            _tipPromptGeneration = InputDevice.Generation - 1;
+        }
+        if (_tipPromptGeneration != InputDevice.Generation)
+        {
+            // Switching device rewrites the same tip in the other device's words without restarting it.
+            _tipPromptGeneration = InputDevice.Generation;
             var lines = tip.Split('\n', 2);
             _tipTitle.Text = lines[0];
-            _tipBody.Text = lines.Length > 1 ? lines[1] : "";
+            _tipBody.Text = InputDevice.UsingGamepad && PadTipBody(lines[0]) is { } pad ? pad : lines.Length > 1 ? lines[1] : "";
         }
         if (tip.Length == 0 || _retiredTips.Contains(tip)) { _tipCard.Visible = false; return; }
         if (!paused) { _tipAgeSeconds += Math.Min(elapsed, .25); }
@@ -119,6 +143,9 @@ public partial class GameHost
                 "PLAN TOGETHER\nEach crew member keeps one next order. Barrier blocks shots; Interrupt cancels a strike.",
             _ when route.VisibleHostiles.Any(enemy => enemy.EncounterPhase == EncounterPhase.Dormant && !enemy.Combat.IsDefeated) =>
                 "ENEMIES AHEAD\nYou see them before they see you. The fight starts the moment one of them spots the crew.",
+            // Only a controller player needs the walking tip; the mouse wording is its identity.
+            _ when InputDevice.UsingGamepad =>
+                "CONTROLLER\nWalk with the left stick; the squad follows. Walk up to a door or person and press A.",
             _ => "",
         };
         var blocked = route.ActiveDialogue is not null || _controlsOverlay.Visible || _abilityTargeting || _outcomePanel.Visible
@@ -142,7 +169,14 @@ public partial class GameHost
 
     private bool HandleDialogueInput(InputEvent @event)
     {
-        if (_session?.Observe().StationRoute?.ActiveDialogue is null || @event is not InputEventKey key)
+        if (_session?.Observe().StationRoute?.ActiveDialogue is null) { return false; }
+        if (@event is InputEventJoypadButton or InputEventJoypadMotion)
+        {
+            HandleDialoguePad(@event);
+            GetViewport().SetInputAsHandled();
+            return true;
+        }
+        if (@event is not InputEventKey key)
             return false;
         if (key.Pressed && !key.Echo)
         {
@@ -160,5 +194,34 @@ public partial class GameHost
         }
         GetViewport().SetInputAsHandled();
         return true;
+    }
+
+    private bool _dialogueStickHeld;
+
+    /// <summary>D-pad or left stick moves between responses and A confirms the focused one, as arrows and Enter do.</summary>
+    private void HandleDialoguePad(InputEvent @event)
+    {
+        var responses = _dialogueResponses.GetChildren().OfType<Button>().ToArray();
+        if (responses.Length == 0) { return; }
+        var focused = Array.FindIndex(responses, response => response.HasFocus());
+        int step;
+        switch (@event)
+        {
+            case InputEventJoypadButton { Pressed: true, ButtonIndex: JoyButton.A }:
+                ChooseVisibleDialogueResponse(Math.Max(0, focused));
+                return;
+            case InputEventJoypadButton { Pressed: true, ButtonIndex: JoyButton.DpadUp or JoyButton.DpadDown } button:
+                step = button.ButtonIndex == JoyButton.DpadUp ? -1 : 1;
+                break;
+            case InputEventJoypadMotion { Axis: JoyAxis.LeftY } stick:
+                if (_dialogueStickHeld) { _dialogueStickHeld = Math.Abs(stick.AxisValue) > .3f; return; }
+                if (Math.Abs(stick.AxisValue) < .6f) { return; }
+                _dialogueStickHeld = true;
+                step = stick.AxisValue > 0 ? 1 : -1;
+                break;
+            default:
+                return;
+        }
+        responses[(Math.Max(0, focused) + step + responses.Length) % responses.Length].GrabFocus();
     }
 }

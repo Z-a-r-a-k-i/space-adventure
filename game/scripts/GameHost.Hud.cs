@@ -26,7 +26,7 @@ public partial class GameHost
     private PanelContainer _outcomePanel = null!;
     private Label _outcomeTitle = null!;
     private Label _outcomeDetail = null!;
-    private Label _worldControlsHint = null!;
+    private RichTextLabel _worldControlsHint = null!;
 
     private static PanelContainer HudPanel()
     {
@@ -101,7 +101,7 @@ public partial class GameHost
         _pauseButton.AddThemeConstantOverride("h_separation", 10);
         _pauseButton.AddThemeConstantOverride("icon_max_width", 14);
         canvas.AddChild(_pauseButton);
-        _pauseLabel = HudLabel("", 11, "afc1c5");
+        _pauseLabel = TacticalUi.RichLabel("", 11, "afc1c5", wrap: true);
         _pauseLabel.HorizontalAlignment = HorizontalAlignment.Center;
         _pauseLabel.AnchorLeft = _pauseLabel.AnchorRight = .5f;
         _pauseLabel.OffsetLeft = -260; _pauseLabel.OffsetRight = 260; _pauseLabel.OffsetTop = 56;
@@ -181,7 +181,7 @@ public partial class GameHost
         _feedbackLabel.OffsetLeft = 420; _feedbackLabel.OffsetRight = -460;
         _feedbackLabel.OffsetTop = -92; _feedbackLabel.OffsetBottom = -52;
         canvas.AddChild(_feedbackLabel);
-        var help = _worldControlsHint = TacticalUi.Label("RMB  Order    DRAG  Select    TAB  Ability focus    SPACE  Pause", 11, "afc1c5");
+        var help = _worldControlsHint = TacticalUi.RichLabel(WorldControlsHintText(), 11, "afc1c5");
         help.Modulate = new Color(1, 1, 1, .6f);
         help.AnchorTop = help.AnchorBottom = 1;
         help.OffsetLeft = 20; help.OffsetTop = -27;
@@ -350,7 +350,13 @@ public partial class GameHost
         var target = route.VisibleHostiles.FirstOrDefault(hostile => hostile.Id == combat.RememberedAttackTargetId);
         _combatLabel.Text = target is null ? "Awaiting target order" : $"Target · {target.DisplayName.Replace("Security ", "", StringComparison.Ordinal)}";
         if (barrierAbility && encounter.Barrier is { } barrier) { _combatLabel.Text = $"Barrier deployed · {barrier.RemainingTicks / 30.0:0.0}s"; }
-        if (_abilityTargeting) { _combatLabel.Text = IsHealingAbility(_targetAbilityId) ? "Choose an ally or portrait · Esc cancels" : _targetAbilityKind == AbilityTargetKind.Entity ? "Choose an enemy · Esc cancels" : "Choose a ground position · Esc cancels"; }
+        if (_abilityTargeting && InputDevice.UsingGamepad)
+        {
+            _combatLabel.Text = _targetAbilityKind == AbilityTargetKind.Entity
+                ? $"D-pad picks {(IsHealingAbility(_targetAbilityId) ? "an ally" : "an enemy")} · A confirm · B cancel"
+                : "Left stick aims · A confirm · B cancel";
+        }
+        else if (_abilityTargeting) { _combatLabel.Text = IsHealingAbility(_targetAbilityId) ? "Choose an ally or portrait · Esc cancels" : _targetAbilityKind == AbilityTargetKind.Entity ? "Choose an enemy · Esc cancels" : "Choose a ground position · Esc cancels"; }
         else if (actor.PendingAction is { } pending) { _combatLabel.Text = $"NEXT · {PendingOrderText(route, pending)}"; }
         if (combat.IsDefeated) { _combatLabel.Text = "Select a living crew member"; }
         _objectiveLabel.Text = encounter.Phase == EncounterPhase.Securing ? "Threats neutralized" : route.Objective.Text;
@@ -389,11 +395,14 @@ public partial class GameHost
         // One line under the tag: who noticed whom when a fight begins, then how to resume.
         var spotter = encounter.SpotterId is { } id ? route.VisibleHostiles.FirstOrDefault(hostile => hostile.Id == id) : null;
         var spotted = route.Party.FirstOrDefault(actor => actor.Id == encounter.SpottedActorId);
-        _pauseLabel.Text = encounter.Phase == EncounterPhase.Victory && !observation.Paused ? "AREA SECURED  ·  CREW RECOVERED"
+        var resume = InputPrompts.Pick("SPACE", InputPrompts.Bb(PadButton.RT, 16));
+        var text = encounter.Phase == EncounterPhase.Victory && !observation.Paused ? "AREA SECURED  ·  CREW RECOVERED"
             : mode != "paused" ? ""
             : encounter.Phase == EncounterPhase.Readying && encounter.Attempt == 1 && spotter is not null && spotted is not null
-                ? $"CONTACT  ·  {spotter.DisplayName.Replace("Security ", "", StringComparison.Ordinal)} spotted {spotted.DisplayName}  ·  plan, then SPACE"
-                : "SPACE  resume  ·  orders take effect when time runs";
+                ? $"CONTACT  ·  {spotter.DisplayName.Replace("Security ", "", StringComparison.Ordinal)} spotted {spotted.DisplayName}  ·  plan, then {resume}"
+                : $"{resume}  resume  ·  orders take effect when time runs";
+        // Rich text re-parses on every assignment; the line changes only a few times per fight.
+        if (_pauseLabel.Text != text) { _pauseLabel.Text = text; }
         _pauseLabel.Visible = !dialogue && _pauseLabel.Text.Length > 0;
     }
 

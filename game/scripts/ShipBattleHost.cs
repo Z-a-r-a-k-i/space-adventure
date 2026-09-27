@@ -50,7 +50,8 @@ public partial class ShipBattleHost : Control
     private Label _playerName = null!, _enemyName = null!, _playerStats = null!, _enemyStats = null!, _enemyRepair = null!;
     private Label _clock = null!, _alerts = null!, _feedback = null!, _terminalLabel = null!, _terminalDetail = null!;
     private PowerPanel _power = null!;
-    private Button _pauseButton = null!, _holdButton = null!, _airlockButton = null!;
+    private Button _pauseButton = null!, _holdButton = null!, _airlockButton = null!, _frameButton = null!;
+    private Label _doorsHint = null!;
     private Control _pausedFrame = null!;
     private CenterContainer _terminalOverlay = null!;
     private string? _aimingWeapon;
@@ -111,8 +112,13 @@ public partial class ShipBattleHost : Control
             return;
         }
         GameAudio.Ensure(this);
+        InputDevice.Attach(this);
         if (_missingPublications.Count > 0) { SetFeedback($"Missing publication: {string.Join(", ", _missingPublications.Select(System.IO.Path.GetFileName))}", TacticalUi.Damaged); }
-        else { SetFeedback("Paused. Space resumes. Click a weapon, then an enemy room.", TacticalUi.Muted); }
+        else
+        {
+            SetFeedback(InputPrompts.Pick("Paused. Space resumes. Click a weapon, then an enemy room.",
+                "Paused. RT resumes. X or Y aims a weapon at an enemy room."), TacticalUi.Muted);
+        }
         if (DisplayServer.GetName() != "headless") { DisplayServer.WindowSetMinSize(MinimumWindowSize); }
         CallDeferred(MethodName.FrameBoth);
         if (EnteredFromStation) { StartIntro(); }
@@ -138,6 +144,7 @@ public partial class ShipBattleHost : Control
         var started = System.Diagnostics.Stopwatch.GetTimestamp();
         if (!ReviewDrivesClock) { _session.Advance(TimeSpan.FromSeconds(delta)); }
         AdvanceTerminalClock(delta);
+        ProcessPad(delta);
         Synchronize();
         AdvanceIntro(delta);
         MeasureProcess(started, delta);
@@ -194,7 +201,7 @@ public partial class ShipBattleHost : Control
         var doors = new VBoxContainer { Name = "Doors", MouseFilter = MouseFilterEnum.Ignore, Position = new Vector2(10, 262), Size = new Vector2(176, 90) };
         doors.AddThemeConstantOverride("separation", 4);
         hud.AddChild(doors);
-        doors.AddChild(TacticalUi.Eyebrow("DOORS  (click a door on the ship)"));
+        doors.AddChild(_doorsHint = TacticalUi.Eyebrow("DOORS  (click a door on the ship)"));
         var doorRow = new HBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
         doorRow.AddThemeConstantOverride("separation", 4);
         doors.AddChild(doorRow);
@@ -251,7 +258,7 @@ public partial class ShipBattleHost : Control
         controls.AddThemeConstantOverride("separation", 4);
         hud.AddChild(controls);
         _pauseButton = OrderButton(controls, "Pause", "Resume (Space)", TogglePause, 176, "ship/play");
-        OrderButton(controls, "FrameBoth", "Frame both (F)", FrameBoth, 176, "ship/frame");
+        _frameButton = OrderButton(controls, "FrameBoth", "Frame both (F)", FrameBoth, 176, "ship/frame");
         OrderButton(controls, "RetryBattle", "Retry battle", () => Send(new ShipRestartCommand(NextCommandId())), 176, "ship/retry");
 
         // Clock, alerts and feedback (top centre, above both ships).
@@ -293,6 +300,7 @@ public partial class ShipBattleHost : Control
         retry.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
         _controls.Remove(retry);
         AddChild(_terminalOverlay);
+        BuildPadPanel();
     }
 
     private static PanelContainer Panel(Control parent, string name, Color accent, Rect2 rect)
