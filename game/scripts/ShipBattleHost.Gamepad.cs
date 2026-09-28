@@ -151,8 +151,13 @@ public partial class ShipBattleHost
     /// <summary>RT pauses and LT holds the volley, once per pull of the analogue trigger.</summary>
     private bool HandlePadTrigger(InputEventJoypadMotion trigger)
     {
-        if (_padPanel.Visible || IntroPlaying) { return false; }
         var right = trigger.Axis == JoyAxis.TriggerRight;
+        if (_padPanel.Visible || IntroPlaying)
+        {
+            // Latch a pull made while the panel or intro is up, so it cannot fire once they close.
+            if (right) { _padRightTriggerDown = trigger.AxisValue >= .25f; } else { _padLeftTriggerDown = trigger.AxisValue >= .25f; }
+            return false;
+        }
         if (right ? _padRightTriggerDown : _padLeftTriggerDown)
         {
             if (trigger.AxisValue < .25f) { if (right) { _padRightTriggerDown = false; } else { _padLeftTriggerDown = false; } }

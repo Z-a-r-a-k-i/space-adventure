@@ -152,6 +152,16 @@ public partial class ShipBattleHost
         await PadTap(JoyButton.Start);
         await PadTap(JoyButton.B);
         Check("B closes the panel", !_padPanel.Visible);
+        var pausedBefore = _session.Paused;
+        await PadTap(JoyButton.Start);
+        PadAxisEvent(JoyAxis.TriggerRight, 1);
+        await WaitFrames(2);
+        await PadTap(JoyButton.B);
+        PadAxisEvent(JoyAxis.TriggerRight, .9f);
+        await WaitFrames(2);
+        PadAxisEvent(JoyAxis.TriggerRight, 0);
+        await WaitFrames(2);
+        Check("RT held through the panel does not pause once it closes", _session.Paused == pausedBefore && !_padPanel.Visible);
 
         var centre = GetViewportRect().GetCenter();
         Input.ParseInputEvent(new InputEventMouseMotion { Position = centre, GlobalPosition = centre, Relative = new Vector2(40, 10) });

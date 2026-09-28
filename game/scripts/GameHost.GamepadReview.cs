@@ -325,6 +325,18 @@ public partial class GameHost
         InputCheck("the manual blocks controller gameplay input", _controlsOverlay.Visible && _session!.IsPaused && _humanCommandSequence == manualCommands);
         await PadPress(JoyButton.B);
         InputCheck("B closes the manual and restores camera input", !_controlsOverlay.Visible && _camera.InputEnabled);
+        var pausedBeforeManual = _session!.IsPaused;
+        var commandsBeforeManual = _humanCommandSequence;
+        await PadPress(JoyButton.Start);
+        PadAxis(JoyAxis.TriggerRight, 1);
+        await InputFrame();
+        await PadPress(JoyButton.B);
+        PadAxis(JoyAxis.TriggerRight, .9f);
+        await InputFrame();
+        PadAxis(JoyAxis.TriggerRight, 0);
+        await InputFrame();
+        InputCheck("RT held through the manual does not toggle pause once it closes", !_controlsOverlay.Visible
+            && _session.IsPaused == pausedBeforeManual && _humanCommandSequence == commandsBeforeManual);
 
         // Real time: the walker leads and the rest of the squad follows.
         var before = ReviewState().Party.Select(actor => ToGodot(actor.Position)).ToArray();

@@ -124,6 +124,11 @@ public partial class GameHost
         if (!InputDevice.UsingGamepad) { ClearPadState(); return; }
         var observation = _session.Observe();
         if (observation.StationRoute is not { } route) { return; }
+        // The manual and dialogue swallow trigger motion: latch a pull made under them so it cannot pause once
+        // they close, and notice a release they swallowed so the next pull still counts.
+        var modal = _controlsOverlay.Visible || route.ActiveDialogue is not null;
+        var rightTrigger = Input.GetJoyAxis(InputDevice.Device, JoyAxis.TriggerRight);
+        if (rightTrigger < .25f) { _padRightTriggerDown = false; } else if (modal) { _padRightTriggerDown = true; }
         if (_controlsOverlay.Visible)
         {
             var scroll = PadStick(JoyAxis.RightX, JoyAxis.RightY).Y;
@@ -138,8 +143,6 @@ public partial class GameHost
         UpdatePadHighlight(route, leader);
         var stick = PadStick(JoyAxis.LeftX, JoyAxis.LeftY);
         var lookAround = Input.GetJoyAxis(InputDevice.Device, JoyAxis.TriggerLeft) > .4f;
-        // A trigger release swallowed by the manual or dialogue must not leave the next RT pull ignored.
-        if (Input.GetJoyAxis(InputDevice.Device, JoyAxis.TriggerRight) < .25f) { _padRightTriggerDown = false; }
         if (_padLookAround && !lookAround) { _padFollowSeconds = 1.2; }
         _padLookAround = lookAround;
         if (lookAround)
