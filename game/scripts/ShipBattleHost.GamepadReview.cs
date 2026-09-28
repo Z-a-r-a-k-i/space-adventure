@@ -90,6 +90,16 @@ public partial class ShipBattleHost
         Check("holding X switches the first weapon's power instead of aiming", _session.Observe().Player.Weapons[0].Armed != armed && AimingWeapon is null);
         await PadHold(JoyButton.X, .7);
         Check("holding X again restores it", _session.Observe().Player.Weapons[0].Armed == armed);
+        PadEvent(JoyButton.X, true);
+        await WaitFrames(2);
+        await PadTap(JoyButton.Start);
+        PadEvent(JoyButton.X, false);
+        await WaitFrames(2);
+        await PadTap(JoyButton.B);
+        var wait = System.Diagnostics.Stopwatch.StartNew();
+        while (wait.Elapsed.TotalSeconds < .7) { await WaitFrames(1); }
+        Check("a weapon tap interrupted by the Menu panel never turns into a power toggle",
+            _session.Observe().Player.Weapons[0].Armed == armed && AimingWeapon is null && !_padPanel.Visible);
 
         int Power(string system) => _session.Observe().Player.Systems.Single(item => item.Id == system).AllocatedPower;
         await PadTap(JoyButton.DpadRight);

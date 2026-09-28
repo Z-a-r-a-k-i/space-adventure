@@ -282,6 +282,15 @@ public partial class GameHost
         InputCheck("the Protector's Y taunts at once", ReviewState().Party[1].PendingAction?.AbilityId == _definition.Combat.Taunt.Id && !_abilityTargeting);
         await PadPress(JoyButton.DpadDown);
         InputCheck("D-pad down stops the whole squad", ReviewState().Party.All(actor => actor.PendingAction?.Kind == PrimaryActionKind.Stop));
+        PadAxis(JoyAxis.LeftX, push.X);
+        PadAxis(JoyAxis.LeftY, push.Y);
+        for (var frame = 0; frame < 6; frame++) { await InputFrame(); }
+        await PadPress(JoyButton.DpadDown);
+        PadAxis(JoyAxis.LeftX, 0);
+        PadAxis(JoyAxis.LeftY, 0);
+        await InputFrame();
+        InputCheck("Stop during a planned drag drops the plan instead of queuing it", _padPlan is null
+            && ReviewState().Party.All(actor => actor.PendingAction?.Kind == PrimaryActionKind.Stop));
         await PadPress(JoyButton.LeftShoulder);
 
         var yaw = _camera.YawRadians;
