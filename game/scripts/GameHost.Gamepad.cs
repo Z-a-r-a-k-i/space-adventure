@@ -138,6 +138,8 @@ public partial class GameHost
         UpdatePadHighlight(route, leader);
         var stick = PadStick(JoyAxis.LeftX, JoyAxis.LeftY);
         var lookAround = Input.GetJoyAxis(InputDevice.Device, JoyAxis.TriggerLeft) > .4f;
+        // A trigger release swallowed by the manual or dialogue must not leave the next RT pull ignored.
+        if (Input.GetJoyAxis(InputDevice.Device, JoyAxis.TriggerRight) < .25f) { _padRightTriggerDown = false; }
         if (_padLookAround && !lookAround) { _padFollowSeconds = 1.2; }
         _padLookAround = lookAround;
         if (lookAround)
@@ -205,7 +207,11 @@ public partial class GameHost
         static bool FromStick(PrimaryActionObservation? action) => action?.CommandId.Value.StartsWith("input.pad-walk.", StringComparison.Ordinal) == true;
         if (FromStick(leader.CurrentAction) || FromStick(leader.PendingAction))
         { _session.Execute(new StopActorsCommand(NextHumanCommandId("pad-halt"), [leader.Id])); }
-        var followers = PadFollowers(route, leader);
+        // Only followers still on a follow step settle; an order given since (A on an enemy) must survive.
+        static bool Following(ActorObservation actor) => actor.PendingAction is { } pending
+            ? pending.CommandId.Value.StartsWith("input.pad-follow.", StringComparison.Ordinal)
+            : actor.CurrentAction?.CommandId.Value.StartsWith("input.pad-follow.", StringComparison.Ordinal) == true;
+        var followers = PadFollowers(route, leader).Where(Following).ToArray();
         if (followers.Length == 0) { return; }
         // Followers settle just behind where the walker stopped.
         var origin = WithGroundHeight(ToGodot(leader.Position));
@@ -428,7 +434,13 @@ public partial class GameHost
                 break;
             case JoyButton.DpadLeft or JoyButton.DpadRight: CyclePadHighlight(route, button.ButtonIndex == JoyButton.DpadLeft ? -1 : 1); break;
             case JoyButton.DpadUp: TogglePadSquad(route); break;
-            case JoyButton.DpadDown: if (_stopButton.Visible && !_stopButton.Disabled) { StopSelectedActors(); } break;
+            case JoyButton.DpadDown:
+                if (!_stopButton.Visible || _stopButton.Disabled) { break; }
+                // Stop also drops a move still being dragged, so releasing the stick cannot replace the Stop.
+                _padPlanCancelled = _padPlan is not null;
+                _padPlan = null;
+                StopSelectedActors();
+                break;
             default: return false;
         }
         GetViewport().SetInputAsHandled();

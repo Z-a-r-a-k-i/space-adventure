@@ -64,6 +64,9 @@ public partial class ShipBattleHost
     private void OpenPadPanel()
     {
         CancelAim(clearTarget: false);
+        // The panel swallows button releases, so a weapon tap in progress must not later count as a hold.
+        _padPressedMs.Clear();
+        _padHeldFired.Clear();
         var airlock = _session.Observe().Doors.First(door => door.Exterior);
         _padAirlockButton.Text = airlock.CommandedOpen ? "Seal airlock" : "Vent airlock";
         _padPanel.Visible = true;
@@ -169,7 +172,15 @@ public partial class ShipBattleHost
             TogglePause();
             SetFeedback("Controller disconnected · paused", TacticalUi.Amber);
         }
+        // Trigger releases can be swallowed by the panel or the intro; read the axes so the next pull always counts.
+        if (Input.GetJoyAxis(InputDevice.Device, JoyAxis.TriggerRight) < .25f) { _padRightTriggerDown = false; }
+        if (Input.GetJoyAxis(InputDevice.Device, JoyAxis.TriggerLeft) < .25f) { _padLeftTriggerDown = false; }
         if (!InputDevice.UsingGamepad || IntroPlaying || _padPanel.Visible) { return; }
+        // Aiming may have started with the mouse before the controller took over.
+        if (_aimingWeapon is { } aiming && _padEnemyRoom is null)
+        {
+            _padEnemyRoom = _session.Observe().Player.Weapons.First(item => item.Id == aiming).Target ?? _definition.Enemy.Side.Systems[0].Id;
+        }
         var now = Time.GetTicksMsec();
         foreach (var (button, pressedMs) in _padPressedMs)
         {

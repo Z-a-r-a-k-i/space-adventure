@@ -218,6 +218,8 @@ public partial class GameHost : Node3D
     {
         if (_session is null)
         {
+            // A controller lost while the route loads must not pause its first live frame.
+            InputDevice.ConsumeDisconnect();
             return;
         }
 
