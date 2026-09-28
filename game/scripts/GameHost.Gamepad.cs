@@ -111,10 +111,12 @@ public partial class GameHost
 
     private void ProcessGamepad(double delta)
     {
+        // Consume the latch every frame, so a disconnect while the route is still loading cannot pause its first frame.
+        var disconnected = InputDevice.ConsumeDisconnect();
         if (_session is null || _visualCaptureRequested) { return; }
         if (_padPromptGeneration != InputDevice.Generation) { ApplyInputPrompts(); }
         var seconds = (float)delta;
-        if (InputDevice.ConsumeDisconnect() && !_session.IsPaused && !_session.IsStationRouteCompleted)
+        if (disconnected && !_session.IsPaused && !_session.IsStationRouteCompleted)
         {
             Dispatch(new SetPauseCommand(NextHumanCommandId("pad.disconnect"), true));
             SetFeedback("Controller disconnected · tactical pause engaged.", TacticalUi.Amber);
