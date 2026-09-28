@@ -1,0 +1,33 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/ArmedHumanoidPresentation.cs" id="1_presentation"]
+[ext_resource type="PackedScene" path="res://Assets/Published/character.crew.vanguard.v1.glb" id="2_model"]
+[ext_resource type="PackedScene" path="res://Assets/Published/weapon.crew.vanguard_carbine.v1.glb" id="3_weapon"]
+
+[sub_resource type="TorusMesh" id="TorusMesh_beacon"]
+inner_radius = 0.31
+outer_radius = 0.38
+rings = 8
+ring_segments = 24
+
+[sub_resource type="StandardMaterial3D" id="Material_beacon"]
+transparency = 1
+albedo_color = Color(0.08, 0.70, 0.95, 0.72)
+emission_enabled = true
+emission = Color(0.04, 0.45, 0.72, 1)
+emission_energy_multiplier = 2.2
+
+[node name="Vanguard" type="Node3D"]
+
+[node name="VanguardPresentation" type="Node3D" parent="."]
+visible = false
+script = ExtResource("1_presentation")
+
+[node name="Model" parent="VanguardPresentation" instance=ExtResource("2_model")]
+
+[node name="Weapon" parent="VanguardPresentation" instance=ExtResource("3_weapon")]
+
+[node name="SelectionBeacon" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.045, 0)
+mesh = SubResource("TorusMesh_beacon")
+material_override = SubResource("Material_beacon")
