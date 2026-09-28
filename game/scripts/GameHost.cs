@@ -84,7 +84,7 @@ public partial class GameHost : Node3D
     private MeshInstance3D _destinationMarker = null!;
     private MeshInstance3D _abilityTargetPreview = null!;
     private Label _objectiveLabel = null!;
-    private Label _pauseLabel = null!;
+    private RichTextLabel _pauseLabel = null!;
     private Label _feedbackLabel = null!;
     private Label _combatLabel = null!;
     private Button _retryButton = null!;
@@ -159,6 +159,7 @@ public partial class GameHost : Node3D
         CreateVignette();
         CreateHud();
         CreateOnboardingHint();
+        InputDevice.Attach(this);
         try
         {
             CacheInteractionViews();
@@ -217,6 +218,8 @@ public partial class GameHost : Node3D
     {
         if (_session is null)
         {
+            // A controller lost while the route loads must not pause its first live frame.
+            InputDevice.ConsumeDisconnect();
             return;
         }
 
@@ -226,6 +229,7 @@ public partial class GameHost : Node3D
         var observation = _session.Observe();
         AdvanceDefeatPresentation(observation, delta);
         UpdateHoveredInteraction(observation);
+        ProcessGamepad(delta);
         SynchronizePresentation();
         AdvanceServiceDoorPresentation((float)delta);
         if (!_reviewDrivesClock) { AdvanceDeparture(observation, delta); }
@@ -267,6 +271,8 @@ public partial class GameHost : Node3D
             GetViewport().SetInputAsHandled();
             return;
         }
+        if (@event is InputEventJoypadButton padButton && HandleGamepadButton(padButton)) { return; }
+        if (@event is InputEventJoypadMotion padMotion && HandleGamepadTrigger(padMotion)) { return; }
 
         if (@event is InputEventKey { Pressed: true, Echo: false } key)
         {
@@ -654,6 +660,7 @@ public partial class GameHost : Node3D
         CreateSelectionBox(canvas);
         CreateFieldDialogue(canvas);
         CreateControlsOverlay(canvas);
+        CreateGamepadPresentation(canvas);
 
         CreateDepartureCinematic();
     }
@@ -711,8 +718,11 @@ public partial class GameHost : Node3D
         var actionActor = selectedActors.FirstOrDefault(actor =>
             actor.PendingAction is not null || actor.CurrentAction is not null);
         var visibleAction = actionActor?.PendingAction ?? actionActor?.CurrentAction;
+        // A stick walk re-aims a step ahead several times a second; marking each step would only flicker.
+        var steppedByStick = visibleAction?.CommandId.Value is { } commandId
+            && (commandId.StartsWith("input.pad-walk.", StringComparison.Ordinal) || commandId.StartsWith("input.pad-follow.", StringComparison.Ordinal));
         _destinationMarker.Visible = (visibleAction?.Kind is PrimaryActionKind.Move or PrimaryActionKind.Interact)
-            && !(observation.Paused && actionActor?.PendingAction is not null);
+            && !(observation.Paused && actionActor?.PendingAction is not null) && !steppedByStick;
         if (visibleAction is not null)
         {
             _destinationMarker.GlobalPosition = ToGodot(visibleAction.Destination)
@@ -814,7 +824,8 @@ public partial class GameHost : Node3D
                                 == StationInteractionEffect.OpenSoloExitServiceDoor));
                 label.Visible = !combatSuppressesInteractionLabels && (isHovered || isObjectiveTarget
                     || interaction.State == InteractionState.DialogueActive);
-                if (isHovered && interaction.CanInteract)
+                // The controller's own prompt names its button next to the highlight.
+                if (isHovered && interaction.CanInteract && !InputDevice.UsingGamepad)
                 {
                     labelText += "\nRight-click to interact";
                 }
@@ -1379,6 +1390,13 @@ public partial class GameHost : Node3D
             || route.ActiveDialogue is not null)
         {
             _hoveredInteractionId = null;
+            return;
+        }
+        if (InputDevice.UsingGamepad)
+        {
+            // The controller "hovers" whatever object it highlights near the walker.
+            _hoveredInteractionId = _padHighlight is { } highlighted && route.Interactions.Any(item => item.Id == highlighted)
+                ? highlighted.Value : null;
             return;
         }
 

@@ -97,10 +97,11 @@ public partial class ShipBattleHost
         Synchronize();
     }
 
-    /// <summary>Any key or click during the arrival skips it and is not passed on to battle controls.</summary>
+    /// <summary>Any key, click or controller button during the arrival skips it and is not passed on to battle controls.</summary>
     private bool HandleIntroInput(InputEvent @event)
     {
-        if (!IntroPlaying || @event is not (InputEventKey { Pressed: true, Echo: false } or InputEventMouseButton { Pressed: true })) { return false; }
+        if (!IntroPlaying || @event is not (InputEventKey { Pressed: true, Echo: false } or InputEventMouseButton { Pressed: true }
+            or InputEventJoypadButton { Pressed: true })) { return false; }
         EndIntro();
         GetViewport().SetInputAsHandled();
         return true;

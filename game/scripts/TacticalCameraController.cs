@@ -242,7 +242,32 @@ public partial class TacticalCameraController : Camera3D
                 FocusOn(_followTarget);
                 GetViewport().SetInputAsHandled();
                 break;
+            case InputEventJoypadButton { Pressed: true, ButtonIndex: JoyButton.RightStick }:
+                ResetOrientation();
+                GetViewport().SetInputAsHandled();
+                break;
         }
+    }
+
+    /// <summary>Moves the focus across the floor, as keyboard panning does; it cancels a scripted glide.</summary>
+    public void PanBy(Vector3 worldDelta)
+    {
+        _glide = null;
+        _focus += new Vector3(worldDelta.X, 0.0f, worldDelta.Z);
+    }
+
+    /// <summary>
+    /// Eases the focus toward a point once it leaves the central part of the view, like a dead-zone follow
+    /// camera: small moves never shift the view, larger ones drag it along.
+    /// </summary>
+    public void KeepInView(Vector3 worldPosition, float seconds)
+    {
+        var view = GetViewport().GetVisibleRect();
+        var inner = new Rect2(view.Position + view.Size * new Vector2(.25f, .26f), view.Size * new Vector2(.5f, .46f));
+        var ground = new Vector3(worldPosition.X, 0.0f, worldPosition.Z);
+        if (!IsPositionBehind(ground) && inner.HasPoint(UnprojectPosition(ground))) { return; }
+        _glide = null;
+        _focus = _focus.Lerp(ground, 1 - Mathf.Exp(-5f * seconds));
     }
 
     public void FocusOn(Vector3 worldPosition)
@@ -424,6 +449,17 @@ public partial class TacticalCameraController : Camera3D
             pitchDirection -= 1.0f;
         }
         _pitch = Mathf.Clamp(_pitch + (pitchDirection * 0.9f * seconds), MinimumPitch, MaximumPitch);
+
+        // Right stick: rotate like a horizontal middle drag, zoom like the wheel (push up to close in).
+        if (InputDevice.UsingGamepad)
+        {
+            var stick = new Vector2(Input.GetJoyAxis(InputDevice.Device, JoyAxis.RightX), Input.GetJoyAxis(InputDevice.Device, JoyAxis.RightY));
+            if (stick.Length() > .2f)
+            {
+                _yaw -= stick.X * 1.9f * seconds;
+                _distance = Mathf.Clamp(_distance + (stick.Y * 11.0f * seconds), MinimumDistance, MaximumDistance);
+            }
+        }
     }
 
     private void CacheOccludingWalls()

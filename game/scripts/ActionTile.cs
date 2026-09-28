@@ -8,6 +8,8 @@ public partial class ActionTile : Button
     private Label _state = null!;
     private ProgressBar _meter = null!;
     private TextureRect _icon = null!;
+    private Label _hotkey = null!;
+    private TextureRect _padGlyph = null!;
     private string? _iconPath;
     private bool? _targeting;
     private Color _accent = TacticalUi.Cyan;
@@ -18,11 +20,14 @@ public partial class ActionTile : Button
         TacticalUi.Style(this);
         var badge = new PanelContainer { Position = new Vector2(6, 6), MouseFilter = MouseFilterEnum.Ignore };
         badge.AddThemeStyleboxOverride("panel", new StyleBoxEmpty());
-        var hotkey = TacticalUi.Label(key, 12, "dcebe9");
+        var hotkey = _hotkey = TacticalUi.Label(key, 12, "dcebe9");
         hotkey.CustomMinimumSize = new Vector2(12, 0);
         hotkey.HorizontalAlignment = HorizontalAlignment.Center;
         badge.AddChild(hotkey);
         AddChild(badge);
+        _padGlyph = new TextureRect { Position = new Vector2(5, 5), Size = new Vector2(20, 20), Visible = false,
+            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, MouseFilter = MouseFilterEnum.Ignore };
+        AddChild(_padGlyph);
         _icon = new TextureRect { Position = new Vector2(33, 8), Size = new Vector2(28, 28),
             ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, MouseFilter = MouseFilterEnum.Ignore };
         AddChild(_icon);
@@ -68,5 +73,17 @@ public partial class ActionTile : Button
     {
         _accent = accent;
         ((StyleBoxFlat)_meter.GetThemeStylebox("fill")).BgColor = accent;
+    }
+
+    internal bool PadGlyphShown => _padGlyph.Visible;
+
+    /// <summary>Shows the controller button in the corner badge instead of the keyboard key, or restores the key.</summary>
+    internal void ShowPadGlyph(PadButton? button)
+    {
+        _hotkey.Visible = button is null;
+        _padGlyph.Visible = button is not null;
+        if (button is not { } shown) { return; }
+        _padGlyph.Texture = InputPrompts.Glyph(shown);
+        _padGlyph.Modulate = InputPrompts.Tint(shown);
     }
 }

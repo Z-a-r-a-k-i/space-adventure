@@ -8,7 +8,7 @@ public partial class GameHost
     private PanelContainer _abilityContext = null!;
     private Label _abilityContextTitle = null!;
     private Label _abilityContextDetail = null!;
-    private Label _abilityContextTiming = null!;
+    private RichTextLabel _abilityContextTiming = null!;
     private int? _inspectedAbilitySlot;
     private readonly Dictionary<EntityId, MeshInstance3D> _affectedTargetRings = [];
 
@@ -23,7 +23,7 @@ public partial class GameHost
         _abilityContext.AddChild(column);
         _abilityContextTitle = TacticalUi.Label("", 13, "a0efd8");
         _abilityContextDetail = HudLabel("", 13);
-        _abilityContextTiming = HudLabel("", 12, "e5bc7d");
+        _abilityContextTiming = TacticalUi.RichLabel("", 12, "e5bc7d", wrap: true);
         _abilityContextDetail.CustomMinimumSize = _abilityContextTiming.CustomMinimumSize = new Vector2(268, 0);
         column.AddChild(_abilityContextTitle); column.AddChild(_abilityContextDetail); column.AddChild(_abilityContextTiming);
         _abilityButton.MouseEntered += () => _inspectedAbilitySlot = 0;
@@ -47,12 +47,28 @@ public partial class GameHost
         return when + (actor.PendingAction is null ? "." : ". Replaces this crew member's next order.");
     }
 
+    /// <summary>The card's pointer wording, in controller buttons when the controller is in use.</summary>
+    private static string PadCardHint(string timing)
+    {
+        if (!InputDevice.UsingGamepad) { return timing; }
+        var a = InputPrompts.Bb(PadButton.A, 15);
+        var b = InputPrompts.Bb(PadButton.B, 15);
+        var choose = InputPrompts.Bb(PadButton.DpadHorizontal, 15);
+        var text = timing.Replace("Left-click enemy · ", $"{choose} choose · ", StringComparison.Ordinal)
+            .Replace("Left-click ally · ", $"{choose} choose · ", StringComparison.Ordinal)
+            .Replace("Esc / RMB cancels", $"{b} cancels", StringComparison.Ordinal)
+            .Replace("Esc cancels", $"{b} cancels", StringComparison.Ordinal)
+            .Replace("One click fixes", $"{a} fixes", StringComparison.Ordinal);
+        return text.Contains("cancels", StringComparison.Ordinal) ? text : $"{text}  {a} confirm  {b} cancel";
+    }
+
     private void ShowAbilityContext(string title, string detail, string timing, Color accent, bool atPointer)
     {
         _abilityContextTitle.Text = title;
         _abilityContextTitle.AddThemeColorOverride("font_color", accent);
         _abilityContextDetail.Text = detail;
-        _abilityContextTiming.Text = timing;
+        var shownTiming = PadCardHint(timing);
+        if (_abilityContextTiming.Text != shownTiming) { _abilityContextTiming.Text = shownTiming; }
         ((StyleBoxFlat)_abilityContext.GetThemeStylebox("panel")).BorderColor = accent;
         // Fix the width so changing counts cannot make the pointer card jump across its target.
         _abilityContext.Size = new Vector2(288, 0);

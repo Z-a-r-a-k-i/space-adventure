@@ -79,6 +79,9 @@ pwsh -NoProfile -File scripts/dev.ps1 review -Mode record -Distance 14.5
 # Keyboard/mouse events through normal picking, buttons, and commands.
 pwsh -NoProfile -File scripts/dev.ps1 review -Mode input -Sequence victory
 pwsh -NoProfile -File scripts/dev.ps1 review -Mode input -Sequence defeat
+# Injected Xbox controller events through the same input path.
+pwsh -NoProfile -File scripts/dev.ps1 review -Encounter party -Mode input -Sequence gamepad
+pwsh -NoProfile -File scripts/dev.ps1 review -Encounter ship -Mode input -Sequence gamepad
 # Separate 30-second real-time frame-pacing sample.
 pwsh -NoProfile -File scripts/dev.ps1 review -Mode performance -Resolution 1920x1080
 ```
@@ -86,6 +89,12 @@ pwsh -NoProfile -File scripts/dev.ps1 review -Mode performance -Resolution 1920x
 Add `-Encounter party` to the same capture, record, input, or performance commands
 for the two-character arena. Review accepts victory/defeat sequences, 7.5–20 m
 camera distance, and 720p/1080p.
+The `gamepad` sequences switch devices in both directions (including drift and
+jitter thresholds), walk and steer with a following squad, plan moves while
+paused, cycle highlights, aim and confirm every party ability, drive the camera,
+manual and dialogue, and pause on disconnect; the ship profile covers room hops,
+orders, weapon tap/hold, the power bar, triggers, doors, zoom and the Menu panel.
+They write `gamepad-*` captures. Injected events are not physical-controller evidence.
 Use `-Encounter escape` for the expanded route in capture, live, input, record,
 or performance mode:
 
@@ -258,6 +267,14 @@ input injection is separate evidence. The [roadmap](ROADMAP.md) owns gate status
    floor clicks through open doors. At 7.5, 14.5, and 20 m judge weapon fit,
    motion, effects, text, and input readability. Record the first confusion or
    hitch even if the route completes.
+11. With a physical Xbox controller, repeat steps 1–9 without touching the
+   mouse: walking with the squad following through doors and around pits,
+   planned moves while paused, highlight cycling, every ability, Stop, squad or
+   solo, look-around, camera, manual and dialogue. Switch to the mouse and back
+   mid-fight; prompts, cursor and aiming must follow. Unplug the controller
+   during live play: the game must pause. In the ship battle, give room orders,
+   aim and power weapons (tap and hold), use the power bar, doors and the Menu
+   panel. Judge stick speed, dead zone and highlight choice.
 
 Record only date, operator type, commit/content revision, passed/blocked,
 checks covered, and named defects in [history](archive/prototype-history.md).

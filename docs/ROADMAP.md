@@ -24,6 +24,8 @@ consecutive blocker-free owner-operated full-route runs. Do not infer
 acceptance from the earlier solo/party reviews.
 Shared vision now has its own rule, actual-layout, and graphical results in
 the evidence record; the owner gate remains separate.
+Xbox controller play ([ADR 0037](DECISIONS.md)) covers the station and the ship
+battle; its physical-controller handling check (testing step 11) is open.
 
 The prior party slice and station/Field Ops polish established the baseline.
 Its completion evidence belongs in Git/PR history. Presentation rebuild

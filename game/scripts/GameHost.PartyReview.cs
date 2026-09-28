@@ -10,6 +10,7 @@ public partial class GameHost
 
     private async Task RunPartyReviewAsync()
     {
+        if (_reviewSequence == "gamepad") { await RunGamepadPartyReviewAsync(); return; }
         _reviewDrivesClock = true;
         _camera.InputEnabled = false;
         var protagonist = _definition!.Protagonist.Id;

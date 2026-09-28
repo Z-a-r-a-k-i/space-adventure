@@ -64,7 +64,7 @@ public partial class CrewCard : Button
         }
         var down = actor.Combat?.IsDefeated == true;
         _name.Text = $"{number:00}  {actor.DisplayName}";
-        _focusBadge.Text = down ? "DOWN" : focused ? "1 / 2 ▶" : selected ? "GROUP" : "";
+        _focusBadge.Text = down ? "DOWN" : focused ? InputPrompts.Pick("1 / 2 ▶", "X / Y ▶") : selected ? "GROUP" : "";
         _focusBadge.AddThemeColorOverride("font_color", down ? TacticalUi.Danger : focused ? color : TacticalUi.Muted);
         _vitals.Text = actor.Combat is { } combat ? $"{combat.Health}/{combat.MaximumHealth} HP" : "";
         _health.MaxValue = actor.Combat?.MaximumHealth ?? 100;

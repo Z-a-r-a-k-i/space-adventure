@@ -14,6 +14,7 @@ public partial class ShipBattleHost
     public override void _Input(InputEvent @event)
     {
         if (HandleIntroInput(@event)) { return; }
+        if (HandlePadInput(@event)) { return; }
         if (@event is not InputEventKey { Pressed: true, Echo: false } key) { return; }
         switch (key.Keycode)
         {
@@ -75,7 +76,8 @@ public partial class ShipBattleHost
         if (_aimingWeapon is not null)
         {
             GameAudio.Play("ui.aim");
-            SetFeedback($"{_definition.Player.Weapons.First(item => item.Id == weaponId).DisplayName}: click an enemy room (right-click cancels)", TacticalUi.Cyan);
+            SetFeedback($"{_definition.Player.Weapons.First(item => item.Id == weaponId).DisplayName}: "
+                + InputPrompts.Pick("click an enemy room (right-click cancels)", "choose an enemy room with the left stick (A fires, B cancels)"), TacticalUi.Cyan);
         }
     }
 
@@ -163,7 +165,7 @@ public partial class ShipBattleHost
     {
         var hold = !_session.Observe().Player.HoldFire;
         if (Send(new ShipSetHoldFireCommand(NextCommandId(), hold)).Accepted)
-        { SetFeedback(hold ? "Holding charged weapons: press H to release a synchronized volley" : "Volley released", hold ? TacticalUi.Amber : TacticalUi.Cyan); }
+        { SetFeedback(hold ? $"Holding charged weapons: press {InputPrompts.Pick("H", "LT")} to release a synchronized volley" : "Volley released", hold ? TacticalUi.Amber : TacticalUi.Cyan); }
     }
 
     public void ToggleWeaponPower(string weaponId)

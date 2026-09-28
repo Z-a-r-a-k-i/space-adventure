@@ -29,7 +29,8 @@ public partial class GameHost
             _reviewSequence = ReviewArgument("review-sequence", "victory");
             _reviewCheckpoint = ReviewArgument("review-checkpoint", _reviewMode == "live" ? "armed" : "all");
             if (_reviewMode is not ("capture" or "record" or "live" or "performance" or "input" or "smoke")
-                || _reviewSequence is not ("victory" or "defeat"))
+                || _reviewSequence is not ("victory" or "defeat" or "gamepad")
+                || _reviewSequence == "gamepad" && (_reviewMode != "input" || !IsPartyReview))
             {
                 throw new InvalidOperationException("Unknown solo review profile.");
             }

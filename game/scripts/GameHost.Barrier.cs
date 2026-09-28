@@ -50,6 +50,7 @@ public partial class GameHost
     private void CancelAbilityTargeting()
     {
         _abilityTargeting = false; _abilityTargetPreview.Visible = false;
+        _padAim = null;
         if (_barrierPreview is not null) { _barrierPreview.Visible = false; }
         HideAbilityContext();
     }
@@ -66,7 +67,14 @@ public partial class GameHost
         if (_targetAbilityKind == AbilityTargetKind.Self)
         { Dispatch(new UseAbilityCommand(NextHumanCommandId("taunt"), actor.Id, _targetAbilityId, new SelfAbilityTarget())); return; }
         _abilityTargeting = true;
-        SetFeedback(_targetAbilityKind switch
+        SetFeedback(InputDevice.UsingGamepad ? _targetAbilityKind switch
+        {
+            AbilityTargetKind.Barrier => "Barrier · left stick aims, facing away from Protector · A places · B cancels",
+            AbilityTargetKind.Entity when IsHealingAbility(_targetAbilityId) => "Heal · D-pad picks an ally · A heals · B cancels",
+            AbilityTargetKind.Position when IsHealingField(_targetAbilityId) => "Healing Field · left stick aims · A places · B cancels",
+            AbilityTargetKind.Entity => "Burst · D-pad picks an enemy · A fires · B cancels",
+            _ => "Interrupt · left stick aims · A fires · B cancels",
+        } : _targetAbilityKind switch
         {
             AbilityTargetKind.Barrier => "Barrier · click to place. Faces from Protector toward the pointer. Esc cancels.",
             AbilityTargetKind.Entity when IsHealingAbility(_targetAbilityId) => "Heal · choose a living ally or portrait. Esc cancels.",
@@ -128,11 +136,11 @@ public partial class GameHost
         if (actor?.Loadout is null || actor.Combat?.IsDefeated == true) { CancelAbilityTargeting(); return; }
         if (_targetAbilityKind == AbilityTargetKind.Entity)
         {
-            if ((IsHealingAbility(_targetAbilityId) ? PickCrew(screenPosition) : PickSkillEnemy(screenPosition)) is { } targetId) { ConfirmEntityAbility(targetId); }
+            if ((IsHealingAbility(_targetAbilityId) ? AimedCrew(screenPosition, route) : AimedEnemy(screenPosition, route)) is { } targetId) { ConfirmEntityAbility(targetId); }
             else { SetFeedback(IsHealingAbility(_targetAbilityId) ? "Choose a living ally." : "Choose an enemy.", TacticalUi.Danger); }
             return;
         }
-        if (!TryPickFloor(screenPosition, out var point)) { return; }
+        if (!TryAimedFloor(screenPosition, out var point)) { return; }
         AbilityTarget target = _targetAbilityKind == AbilityTargetKind.Barrier
             ? BarrierTargetAt(actor, point) : new PositionAbilityTarget(ToCore(point));
         var acknowledgement = _session.Execute(new UseAbilityCommand(NextHumanCommandId("skill"), actor.Id, _targetAbilityId, target));
@@ -161,7 +169,8 @@ public partial class GameHost
         if (route.ActiveDialogue is not null || _controlsOverlay.Visible || _completionOverlay.Visible) { return; }
         var pointer = PointerPosition;
         if (!GetViewport().GetVisibleRect().HasPoint(pointer)) { return; }
-        if (FieldHudBounds().Any(rect => rect.HasPoint(pointer))) { return; }
+        // A mouse over the HUD is not aiming into the world; the controller's circle always is.
+        if (!InputDevice.UsingGamepad && FieldHudBounds().Any(rect => rect.HasPoint(pointer))) { return; }
         var name = IsHealingAbility(_targetAbilityId) ? "HEAL" : IsHealingField(_targetAbilityId) ? "HEALING FIELD"
             : _targetAbilityKind == AbilityTargetKind.Barrier ? "BARRIER" : _targetAbilityKind == AbilityTargetKind.Entity ? "BURST" : "INTERRUPT";
         var title = $"{CrewNumber(route, actor.Id):00} {actor.DisplayName.ToUpperInvariant()} · {name}";
@@ -177,7 +186,7 @@ public partial class GameHost
         if (ShowMedicTargetPreview(observation, route, actor, pointer)) { return; }
         if (_targetAbilityKind == AbilityTargetKind.Entity)
         {
-            var picked = PickSkillEnemy(pointer, route);
+            var picked = AimedEnemy(pointer, route);
             var hostile = picked is null ? null : route.VisibleHostiles.FirstOrDefault(enemy => enemy.Id == picked && !enemy.Combat.IsDefeated);
             if (hostile is null)
             { ShowAbilityContext(title, "Choose a living enemy.", "Left-click enemy · Esc / RMB cancels", TacticalUi.Amber, atPointer: true); return; }
@@ -196,7 +205,7 @@ public partial class GameHost
             if (valid) { ShowAffectedTargets(route, [hostile.Id]); }
             return;
         }
-        if (!TryPickFloor(pointer, out var point))
+        if (!TryAimedFloor(pointer, out var point))
         { ShowAbilityContext(title, "NO FLOOR · aim on the station walkway.", "Esc / RMB cancels", TacticalUi.Danger, atPointer: true); return; }
         if (_targetAbilityKind == AbilityTargetKind.Barrier)
         {

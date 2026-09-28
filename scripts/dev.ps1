@@ -16,7 +16,7 @@ param(
     [ValidateSet("solo", "party", "escape", "vision", "ship")]
     [string]$Encounter = "solo",
 
-    [ValidateSet("victory", "defeat")]
+    [ValidateSet("victory", "defeat", "gamepad")]
     [string]$Sequence = "victory",
 
     [ValidateSet("restrained", "strong")]
@@ -403,7 +403,7 @@ SpaceAdventure development commands
   review                  Bounded combat review through ordinary typed commands
                           -Encounter solo|party|escape|vision|ship (ship: -Mode capture|input|performance|handoff,
                           -Resolution; PNG+JSON under artifacts/ship-review)
-                          -Mode live|capture|record|performance|input -Sequence victory|defeat
+                          -Mode live|capture|record|performance|input -Sequence victory|defeat|gamepad
                           -Recoil restrained|strong (restrained is the game default)
                           -Checkpoint all|armed|fire|... -Distance 7.5..20
                           -Pitch 0.45..1.15 -Yaw -3.14..3.14 (capture/live only)
@@ -816,13 +816,18 @@ Options:
                     @('--path', $gameProject, '--windowed', '--resolution', $Resolution, '--', '--solo-review=smoke', '--review-encounter=escape',
                         '--review-sequence=victory', '--review-continue=ship-capture')
                 } else {
-                    @('--path', $gameProject, '--windowed', '--resolution', $Resolution, 'res://scenes/ship_battle.tscn', '--', "--ship-review=$Mode")
+                    # -Sequence gamepad drives the input review with injected controller events.
+                    $shipMode = if ($Mode -eq 'input' -and $Sequence -eq 'gamepad') { 'gamepad' } else { $Mode }
+                    @('--path', $gameProject, '--windowed', '--resolution', $Resolution, 'res://scenes/ship_battle.tscn', '--', "--ship-review=$shipMode")
                 }
                 Invoke-GodotAutomated -UserDataScope "ship-review-$Mode" -Arguments $shipArguments
                 break
             }
             if ($Mode -eq 'handoff') {
                 throw "-Mode handoff is supported only with -Encounter ship."
+            }
+            if ($Sequence -eq 'gamepad' -and ($Mode -ne 'input' -or $Encounter -ne 'party')) {
+                throw "-Sequence gamepad is supported with -Mode input for -Encounter party or ship."
             }
             if (($PSBoundParameters.ContainsKey('Pitch') -or $PSBoundParameters.ContainsKey('Yaw')) -and
                 $Mode -notin @('capture', 'live')) {

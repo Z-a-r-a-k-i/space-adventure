@@ -129,6 +129,15 @@ public sealed partial class PowerPanel : Control
 
     public string? Hovered { get; private set; }
 
+    /// <summary>The column the controller's D-pad adds to or removes from; null with the mouse.</summary>
+    public string? PadFocus
+    {
+        get => _padFocus;
+        set { if (_padFocus != value) { _padFocus = value; QueueRedraw(); } }
+    }
+
+    private string? _padFocus;
+
     public static readonly IReadOnlyList<string> Order = ["shields", "engines", "life_support", "weapons"];
 
     public void Present(ShipSideObservation player)
@@ -179,7 +188,14 @@ public sealed partial class PowerPanel : Control
         foreach (var system in _systems)
         {
             var column = ColumnRect(system.Id);
-            var hover = Hovered == system.Id;
+            var hover = Hovered == system.Id || PadFocus == system.Id;
+            if (PadFocus == system.Id)
+            {
+                // D-pad up/down edits this column: frame it and mark the vertical direction.
+                DrawRect(new Rect2(column.Position.X, 14, column.Size.X, Size.Y - 14), new Color(TacticalUi.Cyan, .08f));
+                DrawRect(new Rect2(column.Position.X, 14, column.Size.X, Size.Y - 14), TacticalUi.Cyan, false, 1.5f);
+                ShipHudDraw.Icon(this, "pad/dpad_vertical", new Rect2(column.Position.X + (column.Size.X - 16) / 2, 15, 16, 16), InputPrompts.Neutral);
+            }
             for (var index = 0; index < system.MaxPower; index++)
             {
                 var rect = new Rect2(column.Position.X + 4, bottom - (index + 1) * (Pip + 3), column.Size.X - 8, Pip);
@@ -255,9 +271,17 @@ public sealed partial class WeaponCard : Control
         var rect = new Rect2(Vector2.Zero, Size);
         var kind = weapon.Kind == ShipWeaponKind.Missile ? TacticalUi.Amber : TacticalUi.Cyan;
         ShipHudDraw.Card(this, rect, _targeting ? Colors.White : kind, _targeting || _hover);
-        // Hotkey, icon and name.
-        DrawRect(new Rect2(8, 7, 16, 16), new Color("1a2c35"));
-        ShipHudDraw.Text(this, bold, new Vector2(8, 6), Number.ToString(CultureInfo.InvariantCulture), 12, TacticalUi.Muted, 16, HorizontalAlignment.Center);
+        // Hotkey (or the controller's face button), icon and name.
+        if (InputDevice.UsingGamepad && Number is 1 or 2)
+        {
+            var button = Number == 1 ? PadButton.X : PadButton.Y;
+            ShipHudDraw.Icon(this, $"pad/{InputPrompts.Name(button)}", new Rect2(6, 5, 20, 20), InputPrompts.Tint(button));
+        }
+        else
+        {
+            DrawRect(new Rect2(8, 7, 16, 16), new Color("1a2c35"));
+            ShipHudDraw.Text(this, bold, new Vector2(8, 6), Number.ToString(CultureInfo.InvariantCulture), 12, TacticalUi.Muted, 16, HorizontalAlignment.Center);
+        }
         ShipHudDraw.Icon(this, weapon.Kind == ShipWeaponKind.Missile ? "ship/missile" : "ship/laser", new Rect2(29, 5, 20, 20), kind);
         ShipHudDraw.Text(this, bold, new Vector2(53, 5), weapon.DisplayName.ToUpperInvariant(), 13, weapon.Powered ? Colors.White : TacticalUi.Muted, 100);
         // Power cost pips on the right.
@@ -364,7 +388,8 @@ public sealed partial class ShipCrewCard : Button
             DrawTextureRect(_portrait, new Rect2(7, 6, 44, 44), false, crew.Downed ? new Color(1, .4f, .4f, .6f) : Colors.White);
         }
         ShipHudDraw.Text(this, bold, new Vector2(57, 4), crew.DisplayName.ToUpperInvariant(), 13, Colors.White, 90);
-        ShipHudDraw.Text(this, bold, new Vector2(Size.X - 28, 5), $"F{Number}", 10, TacticalUi.Muted, 22, HorizontalAlignment.Right);
+        // Controller players cycle crew with the bumpers, so the function-key hint only shows with the keyboard.
+        if (!InputDevice.UsingGamepad) { ShipHudDraw.Text(this, bold, new Vector2(Size.X - 28, 5), $"F{Number}", 10, TacticalUi.Muted, 22, HorizontalAlignment.Right); }
         var fraction = crew.Health / (float)Math.Max(1, crew.MaxHealth);
         var bar = new Rect2(57, 23, Size.X - 66, 6);
         DrawRect(bar, new Color("1a262e"));

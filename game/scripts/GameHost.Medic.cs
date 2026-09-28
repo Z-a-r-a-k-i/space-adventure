@@ -82,7 +82,8 @@ public partial class GameHost
         var timing = AbilityResumeText(observation, route, actor, duringRecovery: true);
         if (IsHealingAbility(_targetAbilityId))
         {
-            var ally = route.Party.FirstOrDefault(crew => crew.Id == PickCrew(pointer) && crew.Combat?.IsDefeated == false);
+            var aimed = AimedCrew(pointer, route);
+            var ally = route.Party.FirstOrDefault(crew => crew.Id == aimed && crew.Combat?.IsDefeated == false);
             if (ally is null)
             { ShowAbilityContext(title, "Choose a living ally or their portrait. You may heal yourself.", "Left-click ally · Esc cancels", MedicAccent, true); return true; }
             var heal = _definition!.Combat.DirectHeal;
@@ -96,7 +97,7 @@ public partial class GameHost
             return true;
         }
         var field = _definition!.Combat.HealingField;
-        if (!TryPickFloor(pointer, out var point))
+        if (!TryAimedFloor(pointer, out var point))
         { ShowAbilityContext(title, "Aim on the station floor.", "Esc cancels", TacticalUi.Danger, true); return true; }
         var rejection = _session!.CheckHealingFieldPlacement(actor.Id, new PositionAbilityTarget(ToCore(point)));
         var valid = rejection is null;
